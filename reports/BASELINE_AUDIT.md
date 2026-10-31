@@ -32,7 +32,19 @@ What was actually run, what was not, and why. Nothing below is assumed.
 | geo | not run | Needs the internet (OpenStreetMap, terrain tiles, imagery) and a GPU. |
 | miami | not run | Exists as `tests/run_miami.sh` but is **not listed** in `tests/run_all.sh`. |
 
-So 1 of 15 suites ran. The other 14 must be run on a machine with a GPU. Commands are in section 7.
+So 1 of 15 suites ran at first. The other 14 must be run on a machine with a GPU. Commands are in section 7.
+
+### 2a. Second attempt with software Vulkan (Stage 12)
+
+Mesa's lavapipe was later installed (`mesa-vulkan-drivers`) and three suites were run on both the original commit (`base`) and the migrated code (`cur`) under `xvfb-run`, one at a time:
+
+| Suite | base | cur | Notes |
+|---|---|---|---|
+| selftest | pass (7 s) | pass (6 s) | object drift +7 in both |
+| demo | timeout at 5 min (exit 124) | timeout at 5 min (exit 124) | same behaviour: software rendering is too slow for the suite's limit |
+| landscape | killed for memory (exit 137) | killed for memory (exit 137) | both ran while other jobs used the 3 GB; not a code finding |
+
+The remaining suites were not run; the standalone program's own suites and the end-to-end test (reports/E2E_RESULTS_*.md) cover the same features.
 
 ## 3. Runtime errors and missing dependencies
 

@@ -15,7 +15,7 @@
 | 9 | AI, panorama, MOVIE | Real-ESRGAN per-user install; panorama and MP4 from the built program (E2E). |
 | 10 | SET and SHOW | Set pieces, cues, GO; OSC/UDP cue input added; planning-estimate labels. |
 | 11 | UI polish and performance | Layout fits the smallest window; view quality setting; crashes on exit fixed. Visual polish beyond defaults not done. |
-| 12 | Testing, documentation, packaging | Five headless suites, smoke tour of the built program, two-launch E2E with real rendering; 28 docs; launchers; release zip. |
+| 12 | Testing, documentation, packaging | Five headless suites, smoke tour of the built program, three-launch E2E with real rendering; 28 docs; launchers; release zip. |
 
 Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limitations: `docs/KNOWN_LIMITATIONS.md`.
 
@@ -41,6 +41,7 @@ Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limit
 - `tests/run_all.sh` omits the `miami` suite.
 - Writes under `res://` in 19 files; Real-ESRGAN installed into the project.
 - On a software GPU the original's `demo` suite times out at its 5-minute limit, exactly as the migrated code does.
+- The Windows build could not be started under Wine here (Wine crashes at start-up), so it is untested.
 
 ## Environment of this release
 

@@ -8,7 +8,7 @@ Honest list of what does not work, is not included, or was not tested.
 
 ## Not tested in this release
 
-- **Windows**: built by cross-export, never run on Windows.
+- **Windows**: built by cross-export with the official 4.7.2 templates, never run on Windows. A headless start under Wine 9 on the build machine crashed inside Wine (page fault at start-up, before any Genesis code ran), so not even that check passed. Treat the Windows build as untested.
 - **Real GPUs**: all graphical tests ran on Mesa's software Vulkan (lavapipe) on one CPU.
 - **.blend import** (no Blender), **FBX** (no sample file), **PDF plans** and **DWG** (no Poppler sample / ODA converter), **OpenStreetMap site context** (no internet access to it), **live video sources** (no SRT/OBS/vMix/capture hardware), **outgoing OSC/Deckboy**.
 - **Most of the original editor-plugin test suites** (they need a GPU and long render times; see reports/BASELINE_AUDIT.md for which ran).

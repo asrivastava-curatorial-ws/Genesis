@@ -6,7 +6,7 @@ Test evidence (all in this repository):
 
 - `tests/run_app_tests.sh`: five headless suites (app core, editor, projects and import, modules, smoke tour of the whole program). 260+ checks.
 - `tools/build_standalone.sh`: the exported Linux program's own smoke tour, with the bundled library.
-- `reports/E2E_RESULTS_build.md`, `reports/E2E_RESULTS_verify.md`: the end-to-end test of section 16, run on the **exported Linux program** in two separate launches with Godot's Forward+ renderer on Mesa's software Vulkan (no GPU on the build machine).
+- `reports/E2E_RESULTS_build.md`, `E2E_RESULTS_verify.md`, `E2E_RESULTS_media.md`: the end-to-end test of section 16, run on the **exported Linux program** in three separate launches with Godot's Forward+ renderer on Mesa's software Vulkan (no GPU on the build machine).
 - The original plugin's `selftest` suite, still passing with the plugin running through the new host layer.
 
 | # | Requirement | Status | Evidence / what is missing |
@@ -30,18 +30,18 @@ Test evidence (all in this repository):
 | 17 | Photo matching | Partly | module migrated (paths, host); not exercised by a test in this release |
 | 18 | Cameras | Met | saved views, look-through, looks (E2E steps 13–14, smoke) |
 | 19 | LOOK | Met | all 14 built-in looks present (module test), applied in E2E |
-| 20 | Rendering | see E2E | 1080p and 4K stills from the exported program (E2E steps 20–21) |
-| 21 | Panorama | see E2E | E2E step 22 |
-| 22 | MOVIE | see E2E | walkthrough between saved cameras, MP4 via FFmpeg, checked with ffprobe (E2E steps 24–26) |
+| 20 | Rendering | Met | 1080p and 4K stills rendered by the exported program after relaunch (E2E steps 20–21, `reports/E2E_RESULTS_verify.md`); 4K at Preview quality to fit the build machine's memory |
+| 21 | Panorama | Met | 360° equirectangular image, 2:1, from the exported program (E2E step 22) |
+| 22 | MOVIE | Met | walkthrough between saved cameras, MP4 via FFmpeg, checked with ffprobe: 640×360, 12 fps (E2E steps 24–26, `reports/E2E_RESULTS_media.md`) |
 | 23 | SET | Met | stage, LED wall with checked report arithmetic, truss, line array, moving heads, crowd, effects (E2E E1, module tests) |
 | 24 | SHOW | Partly | cues and GO (E2E E2), OSC/UDP cue input (module test, real UDP); live video sources and outgoing OSC untested (no sources here) |
-| 25 | Real-ESRGAN preserved | see E2E | installed the way the Render page does it (download, SHA-256 check) and run, E2E step 23 |
+| 25 | Real-ESRGAN preserved | Met | downloaded from the official GitHub release into the per-user tools folder, SHA-256 checked, run from the program: 480×270 → 1920×1080 ×4 and ×2 (E2E step 23) |
 | 26 | Other AI features preserved | Met | the repository has no other AI integration (Stage 1 keyword audit) |
 | 27 | Asset licences preserved | Met | every model's `.license.json` kept; library refuses models without one; `docs/ASSET_LICENSING.md`, `THIRD_PARTY_NOTICES.md` (engine notices generated from the engine itself) |
 | 28 | Linux build | Met | exported, smoke-tested, E2E-tested |
-| 29 | Windows build | Partly | exported with the official templates; headless start under Wine (see below); never run on real Windows |
+| 29 | Windows build | Partly | exported with the official templates; a headless start under Wine crashed inside Wine before Genesis code ran, so it is **untested**; never run on real Windows |
 | 30 | Works without Godot Editor | Met | as 1 and 2 |
-| 31 | Demo projects work | see below | `demos/architecture`, `demos/event-production`, built and rendered by the program itself |
+| 31 | Demo projects work | Met | `demos/architecture` (three scenes) and `demos/event-production`, built by the exported program (`--make-demos`) and rendered by it in separate launches (`--render-samples`); sample renders in `docs/screenshots/` |
 | 32 | Documentation complete | Met | 28 pages in `docs/` listed by the brief, describing what exists and what was not tested |
 | 33 | Automated tests executed | Met | as above |
 | 34 | Packaged release works independently | Partly | the release zip's Linux program is the one tested; not tested after unzipping on a second machine |
