@@ -503,7 +503,10 @@ func _command_line() -> void:
 		return
 	var r := args.find("--render-samples")
 	if r >= 0 and r + 1 < args.size():
-		var failures: int = await Demos.render_samples(self, args[r + 1])
+		# --quality preview|standard|high|max (standard when not given).
+		var q := args.find("--quality")
+		var quality: int = Demos.QUALITY.get(args[q + 1] if q >= 0 and q + 1 < args.size() else "standard", 0)
+		var failures: int = await Demos.render_samples(self, args[r + 1], quality)
 		print("GENESIS_DEMO RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return

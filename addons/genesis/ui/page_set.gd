@@ -28,7 +28,7 @@ var _message: Label
 
 func _init() -> void:
 	name = "Set"
-	GnUi.note(self, "Stage, screens and rigging at real sizes. Select one to change it in the Inspector.")
+	GnUi.note(self, "Stage, screens and rigging at real sizes. Select one to change it in the %s." % GnHost.properties_panel())
 	GnUi.heading(self, "Add")
 	GnUi.button(self, "LED wall", func(): _add(LedWall.new(), "LED wall", "led_wall"))
 	GnUi.button(self, "Stage deck", func(): _add(StageDeck.new(), "Stage", "stage"))
@@ -50,7 +50,7 @@ func _init() -> void:
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(area_row)
 	GnUi.heading(self, "Effects")
-	GnUi.note(self, "Warmed up, so a still shows them in full. Size and amount are in the Inspector.")
+	GnUi.note(self, "Warmed up, so a still shows them in full. Size and amount are in the %s." % GnHost.properties_panel())
 	var grid := GridContainer.new()
 	grid.columns = 2
 	for k in Effect.KINDS:

@@ -78,10 +78,11 @@ vulkaninfo --summary | grep -E "deviceName|driverName"
 2. Open `applications\windows-x86_64` and double-click **Genesis.bat**.
 3. SmartScreen may warn that the program is not recognised, because it is not code-signed. Choose *More info*, then *Run anyway*.
 
-For a Start-menu and desktop shortcut:
+From PowerShell in that folder:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File Genesis.ps1 -InstallShortcut
+powershell -ExecutionPolicy Bypass -File Genesis.ps1 -Check             # graphics card and optional tools found
+powershell -ExecutionPolicy Bypass -File Genesis.ps1 -InstallShortcut   # Start-menu and desktop shortcut
 ```
 
 Because this build has not yet been run on Windows, run the self-test first (section 6) and keep its result.
@@ -249,7 +250,7 @@ echo "GODOT=$HOME/tools/godot/Godot_v4.7.2-stable_linux.x86_64" | tee tests/loca
 bash tests/run_app_tests.sh                       # headless suites and the smoke tour, about 1.5 minutes
 bash tools/build_standalone.sh linux windows      # build/linux and build/windows; the Linux build is smoke-tested
 build/linux/Genesis.x86_64 -- --make-demos ~/genesis-demos                       # the two demo projects
-build/linux/Genesis.x86_64 -- --render-samples ~/genesis-demos/"Architecture demo"
+build/linux/Genesis.x86_64 -- --render-samples ~/genesis-demos/"Architecture demo" --quality preview   # or standard, high, max
 python3 tools/build_release.py --skip-build --demos ~/genesis-demos              # release/Genesis-Community-<version>.zip
 ```
 
@@ -261,7 +262,7 @@ python3 tools/build_release.py --skip-build --demos ~/genesis-demos             
 
 **Tested** on Ubuntu 24.04 with software Vulkan (lavapipe):
 
-- 277 headless checks.
+- 278 headless checks.
 - The built program's smoke tour.
 - The end-to-end test with real renders: 1080p, 4K, 360°, Real-ESRGAN, MP4 and a concert render.
 - Saving and reopening across launches.

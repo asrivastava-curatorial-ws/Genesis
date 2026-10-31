@@ -33,6 +33,9 @@ Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limit
 - Backups made within one second overwrote each other.
 - Arrow drags lost about 1% of the movement in perspective when the pointer wandered off the line.
 - Saved scenes referred to project files by absolute path (Godot's relative-path option covers only `res://`).
+- Folder clean-up skipped hidden entries (`.genesis/`), so test and smoke-tour folders were left behind, and a folder holding only hidden files counted as empty for a new project.
+- The smoke tour reset the user's panel layout; it now runs on throwaway settings.
+- The architecture demo's downlights were made with the fixture defaults (an 8° beam tilted 60°) instead of the Set page's downlight settings, so the night scene rendered nearly black.
 
 ## Findings about the original
 

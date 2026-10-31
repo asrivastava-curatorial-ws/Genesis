@@ -71,6 +71,10 @@ func log_panel() -> String:
 	return "Console"
 
 
+func properties_panel() -> String:
+	return "Properties panel"
+
+
 func dialog_parent() -> Node:
 	return App.main if is_instance_valid(App.main) else super()
 

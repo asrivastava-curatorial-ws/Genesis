@@ -105,6 +105,7 @@ func _paths_and_format() -> void:
 	check(GnPaths.at("res://genesis_assets/trees") == "res://genesis_assets/trees" and GnPaths.at("res://genesis_data/materials/brick.tres") == "res://genesis_data/materials/brick.tres", "paths: the bundled library is read where it ships")
 	check(GnPaths.tool_dir("realesrgan") == ProjectSettings.globalize_path("user://tools/realesrgan"), "paths: the AI upscaler installs per user, outside the program")
 	check(GnHost.log_panel() == "Console", "host: messages point to the Console panel, not the editor's Output panel")
+	check(GnHost.properties_panel() == "Properties panel", "host: settings are in the Properties panel, not the editor's Inspector")
 	check(GnUpscale.exe().begins_with(ProjectSettings.globalize_path("user://tools/realesrgan")), "paths: and the upscaler looks for itself there")
 	for sub in ProjectService.FOLDERS:
 		check(DirAccess.dir_exists_absolute(dir.path_join(sub)), "format: %s/ exists" % sub)

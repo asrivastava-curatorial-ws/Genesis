@@ -106,5 +106,9 @@ static func log_panel() -> String:
 	return _be().log_panel()
 
 
+static func properties_panel() -> String:
+	return _be().properties_panel()
+
+
 static func supports(feature: String) -> bool:
 	return _be().supports(feature)

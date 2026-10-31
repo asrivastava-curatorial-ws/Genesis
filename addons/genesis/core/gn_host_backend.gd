@@ -118,6 +118,11 @@ func log_panel() -> String:
 	return "Output"
 
 
+## The name of the panel that shows the selected object's settings.
+func properties_panel() -> String:
+	return "Inspector"
+
+
 ## Things only some hosts can do. "editor_import": models and images are
 ## brought in by the editor's importer, which only the editor has.
 func supports(feature: String) -> bool:

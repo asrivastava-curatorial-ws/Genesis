@@ -100,7 +100,10 @@ func _init() -> void:
 	GnUi.show_value(_lapse_to, 19.0)
 
 	GnUi.heading(self, "Moving objects")
-	GnUi.note(self, "Traffic, people, boats. Add a path, shape it with Godot's path tool, put things on it; set the speed in the Inspector.")
+	if GnHost.supports("editor"):
+		GnUi.note(self, "Traffic, people, boats. Add a path, shape it with Godot's path tool, put things on it; set the speed in the Inspector.")
+	else:
+		GnUi.note(self, "Traffic, people, boats. Add a path (a straight 20 m line: move, turn and stretch it with the handles), put things on it; set the speed in the Properties panel.")
 	var mrow := HBoxContainer.new()
 	GnUi.button(mrow, "Add a path", _add_mover)
 	GnUi.button(mrow, "Put selection on it", _ride)

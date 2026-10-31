@@ -8,7 +8,7 @@ extends RefCounted
 #   Architecture demo        a small museum pavilion: concrete, wood, glass and
 #                            paving; trees, furniture, people, cars; exterior,
 #                            interior and aerial cameras; daylight, golden hour
-#                            and night scenes
+#                            and night (blue hour, lights on) scenes
 #   Event production demo    a concert stage: deck, LED wall, truss, line
 #                            arrays, moving heads, audience, effects, haze, and
 #                            four show cues
@@ -37,6 +37,8 @@ const Effect := preload("res://addons/genesis/set/gn_effect.gd")
 const CueList := preload("res://addons/genesis/set/gn_cue_list.gd")
 
 const RENDER_SIZE := Vector2i(1920, 1080)
+## --render-samples --quality <name>: samples per pixel, as on the Render page.
+const QUALITY := {"preview": -1, "standard": 0, "high": 16, "max": 64}
 
 
 static func run(main: Node, out_dir: String) -> int:
@@ -110,15 +112,29 @@ static func _architecture(main: Node, out_dir: String) -> int:
 				var node := GnPlacement.place(pool[(i * 7) % pool.size()].path, cat, spots[cat][i])
 				if node and cat == "vehicles":
 					node.rotation.y = PI * 0.5
-	# Interior lights, off by day.
+	# Interior downlights, aimed and spread as the Set page makes them.
 	for x in [-3.0, 0.0, 3.0]:
 		var d: Node3D = Fixture.new()
 		d.kind = "Downlight"
 		d.name = "Downlight"
 		d.colour = Color(1.0, 0.86, 0.68)
 		d.lumens = 1800.0
+		d.beam_degrees = 60.0
+		d.tilt = -90.0
 		d.position = Vector3(x, 3.35, 0)
 		GnScene.add_node(d, root, "Add downlight")
+	# Uplights grazing the front columns and the roof's underside: night only.
+	for x in [-6.0, -2.0, 2.0, 6.0]:
+		var u: Node3D = Fixture.new()
+		u.kind = "Wash"
+		u.name = "Uplight"
+		u.colour = Color(1.0, 0.8, 0.55)
+		u.lumens = 1500.0
+		u.beam_degrees = 18.0
+		u.tilt = 90.0
+		u.dimmer = 0.0
+		u.position = Vector3(x, 0.32, 4.95)
+		GnScene.add_node(u, root, "Add uplight")
 	# Cameras.
 	var cams := []
 	for spec in [["Exterior", Vector3(14, 2.2, 16), Vector3(0, 1.6, 0), "Crisp daylight"], ["Interior", Vector3(-4.6, 1.6, 3.4), Vector3(2, 1.4, -2), "Natural"], ["Aerial", Vector3(26, 22, 28), Vector3(0, 0, 2), "Natural"]]:
@@ -132,13 +148,18 @@ static func _architecture(main: Node, out_dir: String) -> int:
 	GnEnvironment.apply("time_of_day", 11.0)
 	App.scenes.save()
 	var failures := 0
-	# Golden hour and night, as scenes of their own.
-	for variant in [["golden_hour", 17.6, false, "Golden glow"], ["night", 21.0, true, "Moody"]]:
+	# Golden hour and night (the blue hour after sunset, when the sky still
+	# has colour and the lights are on), as scenes of their own. The golden
+	# hour turns the site so the low sun falls on the glass front.
+	for variant in [["golden_hour", 17.75, -125.0, false, "Golden glow", 0.0], ["night", 18.3, 0.0, true, "Natural", 0.35]]:
 		var root_now := GnHost.edited_scene_root()
 		GnEnvironment.apply("time_of_day", variant[1])
-		for d in root_now.find_children("Downlight*", "", true, false):
-			d.dimmer = 1.0 if variant[2] else 0.0
-		GnLook.apply_preset(GnCameras.cameras()[0], GnLook.PRESETS[variant[3]])
+		GnEnvironment.apply("heading", variant[2])
+		for d in root_now.find_children("Downlight*", "", true, false) + root_now.find_children("Uplight*", "", true, false):
+			d.dimmer = 1.0 if variant[3] else 0.0
+		var cam0: Camera3D = GnCameras.cameras()[0]
+		GnLook.apply_preset(cam0, GnLook.PRESETS[variant[4]])
+		GnLook.set_value(cam0, "exposure", variant[5])
 		App.scenes.save_as(App.projects.folder.path_join("scenes/%s.tscn" % variant[0]))
 	App.scenes.open(App.projects.folder.path_join("scenes/main.tscn"))
 	_say("ok   built %s" % App.projects.folder)
@@ -200,6 +221,8 @@ static func _event(main: Node, out_dir: String) -> int:
 	GnCameras.add(foh)
 	foh.look_at_from_position(Vector3(0, 4.5, 30), Vector3(0, 4, 0))
 	GnLook.apply_preset(foh, GnLook.PRESETS["Cinematic"])
+	GnLook.set_value(foh, "dof", 0.0)
+	GnLook.set_value(foh, "exposure", 0.4)
 	var pit := Camera3D.new()
 	pit.name = "Photo pit"
 	pit.fov = 60.0
@@ -208,12 +231,16 @@ static func _event(main: Node, out_dir: String) -> int:
 	var cl: Node = CueList.new()
 	cl.name = "Show cues"
 	GnScene.add_node(cl, root, "Add cues", "cues")
-	for cue in [["Walk-in", Color(0.25, 0.4, 1.0), 0.0, 0.4], ["Opener", Color(1.0, 0.35, 0.1), -25.0, 1.0],
-			["Chorus", Color(0.9, 0.2, 0.8), 25.0, 1.0], ["Finale", Color(1.0, 0.95, 0.85), 0.0, 1.0]]:
+	# Name, colour, pan (alternate heads mirror it), tilt, dimmer. Tilt -70
+	# washes the stage; 20-40 fans the beams up behind the band; 115 throws
+	# them out over the audience.
+	for cue in [["Walk-in", Color(0.25, 0.4, 1.0), 0.0, -70.0, 0.4], ["Opener", Color(1.0, 0.35, 0.1), -25.0, 35.0, 1.0],
+			["Chorus", Color(0.9, 0.2, 0.8), 35.0, 20.0, 1.0], ["Finale", Color(1.0, 0.95, 0.85), 10.0, 115.0, 1.0]]:
 		for i in heads.size():
 			heads[i].colour = cue[1]
 			heads[i].pan = cue[2] * (1 if i % 2 == 0 else -1)
-			heads[i].dimmer = cue[3]
+			heads[i].tilt = cue[3]
+			heads[i].dimmer = cue[4]
 		cl.record(root, cue[0], 1.5, "Front of house", {})
 	cl.go_to(1, 0.0)
 	App.scenes.save()
@@ -223,9 +250,9 @@ static func _event(main: Node, out_dir: String) -> int:
 
 # ---------------------------------------------------------------- renders
 ## Renders a demo project's sample pictures (a launch of its own):
-##   Genesis -- --render-samples <project folder>
+##   Genesis -- --render-samples <project folder> [--quality preview|standard|high|max]
 ## Every camera of the main scene; the first camera of each other scene.
-static func render_samples(main: Node, folder: String) -> int:
+static func render_samples(main: Node, folder: String, quality := 0) -> int:
 	var err: String = App.projects.open(folder)
 	if err != "":
 		_say("FAIL %s" % err)
@@ -248,7 +275,7 @@ static func render_samples(main: Node, folder: String) -> int:
 			if FileAccess.file_exists(dest):
 				_say("ok   %s (already there)" % dest.get_file())
 				continue
-			var path: String = await GnRender.render(cam, RENDER_SIZE, main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0)
+			var path: String = await GnRender.render(cam, RENDER_SIZE, main, true, Viewport.DEBUG_DRAW_DISABLED, false, quality)
 			if path == "":
 				failures += 1
 				_say("FAIL %s %s render" % [scene.get_file(), cam.name])
