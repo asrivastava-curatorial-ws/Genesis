@@ -2,6 +2,7 @@
 extends RefCounted
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 
 # Photographic skies: HDRI panoramas (CC0, fetched by tools/fetch_assets.py)
 # used as the sky and as the light source for the whole scene.
@@ -21,10 +22,9 @@ const SKY_MEDIAN := 0.3
 
 static func names() -> Array[String]:
 	var out: Array[String] = []
-	if DirAccess.dir_exists_absolute(SKY_DIR):
-		for f in DirAccess.get_files_at(SKY_DIR):
-			if f.get_extension() == "hdr":
-				out.append(f.get_basename())
+	for f in GnAssets.list_files(SKY_DIR):
+		if f.get_extension() == "hdr":
+			out.append(f.get_basename())
 	out.sort()
 	return out
 

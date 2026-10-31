@@ -23,6 +23,9 @@ const Smoke := preload("res://app/smoke.gd")
 const ImportDialog := preload("res://app/ui/import_dialog.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 const GnImport := preload("res://addons/genesis/core/gn_import.gd")
+const PreviewStudio := preload("res://app/runtime/preview_studio.gd")
+const DependenciesDialog := preload("res://app/ui/dependencies_dialog.gd")
+const Dependencies := preload("res://app/runtime/dependencies.gd")
 
 var screen: Control
 
@@ -74,10 +77,16 @@ func _start_services() -> void:
 	App.projects = ProjectService.new(scenes, App.settings)
 	App.modules = ModuleHost.new()
 	add_child(App.modules)
+	var studio := PreviewStudio.new()
+	add_child(studio)
+	host.studio = studio
 	# Closing the window must be able to ask about unsaved changes first.
 	get_tree().auto_accept_quit = false
 	if settings_note != "":
 		App.notify.warning(settings_note)
+	App.settings.changed.connect(_on_setting)
+	_apply_osc.call_deferred()
+	print("Dependencies:\n" + Dependencies.report())
 
 
 func _restore_window() -> void:
@@ -128,6 +137,8 @@ func _register_actions() -> void:
 	A.add("app.preferences", "Preferences…", preferences, [K.key(KEY_COMMA, true)])
 	A.add("help.about", "About %s" % App.NAME, about)
 	A.add("help.logs", "Show the Log Folder", _show_logs)
+	A.add("tools.dependencies", "Dependencies…", dependencies)
+	A.add("help.docs", "Documentation", _open_docs, [])
 
 
 func _has_scene() -> bool:
@@ -164,6 +175,42 @@ func _undo_label() -> String:
 
 func _redo_label() -> String:
 	return "Redo: %s" % GnHost.undo_redo().redo_name() if _can_redo() else "Redo"
+
+
+func dependencies() -> void:
+	var d := DependenciesDialog.new()
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.ask()
+
+
+## The documentation beside the program, else the project's pages online.
+func _open_docs() -> void:
+	var here := OS.get_executable_path().get_base_dir()
+	for p in [here.path_join("docs/USER_MANUAL.md"), here.path_join("../../docs/USER_MANUAL.md")]:
+		if FileAccess.file_exists(p):
+			OS.shell_open(p.simplify_path())
+			return
+	OS.shell_open("https://github.com/Utopian-Academy/Genesis")
+
+
+func _on_setting(key: String) -> void:
+	if key in ["osc_listen", "osc_port"]:
+		_apply_osc()
+
+
+func _apply_osc() -> void:
+	var osc = App.modules.osc
+	if bool(App.settings.get_value("osc_listen", false)):
+		var port := int(App.settings.get_value("osc_port", 9000))
+		if osc.port != port:
+			var err: String = osc.listen(port)
+			if err != "":
+				App.notify.error("Show cues from outside are off.", err)
+			else:
+				App.notify.info("Listening for show cues on UDP port %d." % port)
+	elif osc.listening():
+		osc.stop()
 
 
 func _show_logs() -> void:

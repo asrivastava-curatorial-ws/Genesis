@@ -48,6 +48,21 @@ func map_path(res_path: String) -> String:
 	return base.path_join(rel)
 
 
+## Pictures for the asset and material browsers, from the preview studio.
+var studio: Node
+
+
+func mesh_previews(meshes: Array, size: int) -> Array:
+	return studio.meshes(meshes, size) if is_instance_valid(studio) else []
+
+
+func queue_resource_preview(path: String, receiver: Object, method: StringName, userdata: Variant) -> void:
+	if is_instance_valid(studio):
+		studio.material(path, receiver, method, userdata)
+	else:
+		super(path, receiver, method, userdata)
+
+
 func tool_dir(tool_name: String) -> String:
 	return ProjectSettings.globalize_path("user://tools").path_join(tool_name)
 

@@ -142,6 +142,10 @@ func report() -> Dictionary:
 	}
 
 
+## Every figure Genesis works out for a rig is for planning, not for building.
+const PLANNING_NOTE := "Planning estimate only, from the panel specification: not a certified structural, rigging or electrical approval."
+
+
 func report_text() -> String:
 	var r := report()
 	return "\n".join([
@@ -150,6 +154,7 @@ func report_text() -> String:
 		"Power %.1f kW max, %.1f kW typical: %.0f A at 230 V, %.0f A at 120 V" % [
 			r.power_max_w / 1000.0, r.power_typical_w / 1000.0, r.amps_230v, r.amps_120v],
 		"%d data port%s, best viewed from %.0f m" % [r.data_ports, "" if r.data_ports == 1 else "s", r.min_view_m],
+		PLANNING_NOTE,
 	])
 
 

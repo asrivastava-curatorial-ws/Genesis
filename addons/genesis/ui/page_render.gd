@@ -29,7 +29,8 @@ var _upscale_button: Button
 var _result: Label
 var _last_path := ""
 
-const QUALITY := {"Standard": 0, "Photoreal (16 samples)": 16, "Photoreal (64 samples)": 64}
+# -1 is the fast preview: the final-render quality settings stay off.
+const QUALITY := {"Preview (fast)": -1, "Standard": 0, "High quality (16 samples)": 16, "Maximum quality (64 samples)": 64}
 
 
 func _init() -> void:
@@ -39,7 +40,7 @@ func _init() -> void:
 	# Photoreal averages many renders: true lens blur, soft sun shadows and
 	# clean edges, for about twice the time at 16 samples.
 	_quality = GnUi.option(self, "Quality", QUALITY.keys(), func(_t): pass)
-	GnUi.select_text(_quality, "Photoreal (16 samples)")
+	GnUi.select_text(_quality, "High quality (16 samples)")
 	_button = GnUi.button(self, "Render still", _render)
 	_all_button = GnUi.button(self, "Render every camera", _render_all)
 	_study_button = GnUi.button(self, "Sun study: 9:00, 12:00, 15:00", _sun_study)
@@ -176,7 +177,7 @@ func _sun_study() -> void:
 	for hour in [9.0, 12.0, 15.0]:
 		_result.text = "Sun study: rendering %d:00…" % int(hour)
 		GnEnvironment.apply("time_of_day", hour, false)
-		var path: String = await GnRender.render(cam, size, self, true, Viewport.DEBUG_DRAW_DISABLED, false, _samples())
+		var path: String = await GnRender.render(cam, size, self, _samples() >= 0, Viewport.DEBUG_DRAW_DISABLED, false, maxi(_samples(), 0))
 		if path != "":
 			var named := "%s/%s_sun_study_%02d00.png" % [GnPaths.at(GnRender.OUTPUT_DIR), str(cam.name).replace(" ", ""), int(hour)]
 			DirAccess.rename_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(named))
@@ -195,7 +196,7 @@ func _render_all() -> void:
 	var done := 0
 	for cam in cams:
 		_result.text = "Rendering %s (%d of %d)…" % [cam.name, done + 1, cams.size()]
-		var path: String = await GnRender.render(cam, size, self, true, Viewport.DEBUG_DRAW_DISABLED, false, _samples())
+		var path: String = await GnRender.render(cam, size, self, _samples() >= 0, Viewport.DEBUG_DRAW_DISABLED, false, maxi(_samples(), 0))
 		if path != "":
 			_last_path = path
 			done += 1
@@ -212,7 +213,7 @@ func _render() -> void:
 	_button.disabled = true
 	_result.text = "Rendering…"
 	var size: Vector2i = GnRender.SIZES[_size.get_item_text(_size.selected)]
-	var path: String = await GnRender.render(cam, size, self, true, Viewport.DEBUG_DRAW_DISABLED, false, _samples())
+	var path: String = await GnRender.render(cam, size, self, _samples() >= 0, Viewport.DEBUG_DRAW_DISABLED, false, maxi(_samples(), 0))
 	_button.disabled = false
 	if path == "":
 		_result.text = "The render failed. See the Output panel."

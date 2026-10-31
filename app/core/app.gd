@@ -33,6 +33,7 @@ static func shutdown() -> void:
 		# The host and the scene service hold each other; break the ring.
 		host.scenes = null
 		host.viewport = null
+		host.studio = null
 	GnHost.backend = null
 	if logger:
 		logger.shutdown()

@@ -9,6 +9,7 @@ extends RefCounted
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
+const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 
 const PRESET_DIR := "res://genesis_data/materials"
 
@@ -27,10 +28,9 @@ class Surface:
 
 static func presets() -> Array[String]:
 	var out: Array[String] = []
-	if DirAccess.dir_exists_absolute(PRESET_DIR):
-		for f in DirAccess.get_files_at(PRESET_DIR):
-			if f.get_extension() == "tres":
-				out.append("%s/%s" % [PRESET_DIR, f])
+	for f in GnAssets.list_files(PRESET_DIR):
+		if f.get_extension() == "tres":
+			out.append("%s/%s" % [PRESET_DIR, f])
 	out.sort()
 	return out
 

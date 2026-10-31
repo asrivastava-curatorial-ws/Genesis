@@ -24,7 +24,7 @@ static func place(path: String, category := "", at = null) -> Node3D:
 	if packed == null:
 		push_warning("Genesis: %s is not a model Godot can import." % path)
 		return null
-	var node := packed.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE) as Node3D
+	var node := packed.instantiate(edit_state()) as Node3D
 	if node == null:
 		return null
 	node.name = path.get_file().get_basename().to_pascal_case()
@@ -87,7 +87,7 @@ static func along_line(path: String, category: String, a: Vector3, b: Vector3, s
 		if not hit.is_empty():
 			p.y = (hit.position as Vector3).y
 		var packed := load(_pick(path, category)) as PackedScene
-		var node := packed.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE) as Node3D
+		var node := packed.instantiate(edit_state()) as Node3D
 		node.name = "%s%d" % [path.get_file().get_basename().to_pascal_case(), i + 1]
 		node.position = p
 		match facing:
@@ -102,3 +102,9 @@ static func along_line(path: String, category: String, a: Vector3, b: Vector3, s
 		nodes.append(node)
 	GnScene.add_nodes(nodes, root, "Genesis: %d × %s along a line" % [count, path.get_file().get_basename()])
 	return nodes
+
+
+## How to make a copy of a model: in the editor, as an editable instance; in a
+## built program that state does not exist, and asking for it gives nothing.
+static func edit_state() -> PackedScene.GenEditState:
+	return PackedScene.GEN_EDIT_STATE_INSTANCE if Engine.is_editor_hint() else PackedScene.GEN_EDIT_STATE_DISABLED

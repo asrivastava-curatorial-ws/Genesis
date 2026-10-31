@@ -10,11 +10,14 @@ const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
 const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
 const GnLiveLink := preload("res://addons/genesis/core/gn_live_link.gd")
 const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
+const GnOscIn := preload("res://addons/genesis/core/gn_osc_in.gd")
 
 signal poll_changed
 
 var brush: GnBrush
 var measure: GnMeasure
+## Cues from outside (OSC or plain UDP text), when switched on in Preferences.
+var osc := GnOscIn.new()
 
 
 func _init() -> void:
@@ -44,5 +47,12 @@ func on_scene_opened(root: Node) -> void:
 		GnWeather.apply()
 
 
+func _process(_delta: float) -> void:
+	if osc.listening():
+		for cmd in osc.poll():
+			print("Genesis: cue command from outside: %s" % osc.last)
+
+
 func _exit_tree() -> void:
+	osc.stop()
 	GnLiveVideo.stop_all()

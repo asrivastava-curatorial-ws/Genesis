@@ -24,10 +24,10 @@ const MENUS := [
 		"edit.select_all", "edit.select_none", "-", "edit.group", "edit.ungroup", "-",
 		"edit.hide", "edit.show_all", "edit.lock", "-", "app.preferences"]],
 	["Add", ["add.empty", "add.box", "add.plane", "add.sphere", "add.cylinder", "-", "add.point_light", "add.spot_light", "-", "add.camera"]],
-	["Tools", ["tool.select", "tool.move", "tool.rotate", "tool.scale", "-", "tool.local", "tool.snap"]],
+	["Tools", ["tool.select", "tool.move", "tool.rotate", "tool.scale", "-", "tool.local", "tool.snap", "-", "tools.dependencies"]],
 	["View", ["view.frame_selection", "view.frame", "-", "view.top", "view.front", "view.right", "view.ortho", "-",
 		"view.look_through", "-", "view.grid", "view.outliner", "view.panel", "view.console"]],
-	["Help", ["help.shortcuts", "help.about", "help.logs"]],
+	["Help", ["help.docs", "help.shortcuts", "-", "help.logs", "help.about"]],
 ]
 const CHECKED := {"view.outliner": "_left", "view.panel": "_side", "view.console": "console"}
 const DEFAULT_LEFT_OFFSET := 300
@@ -70,7 +70,32 @@ func _ready() -> void:
 	GnHost.selection().selection_changed.connect(_refresh)
 	viewport_panel.view_changed.connect(_refresh_status)
 	_set_tool(TransformGizmo.Mode.MOVE)
+	App.settings.changed.connect(_on_setting)
+	_apply_view_quality()
 	_refresh()
+
+
+func _on_setting(key: String) -> void:
+	if key == "view_quality":
+		_apply_view_quality()
+
+
+## How hard the 3D view works while you edit. Renders are not affected.
+func _apply_view_quality() -> void:
+	var vp: SubViewport = viewport_panel.viewport
+	match str(App.settings.get_value("view_quality", "balanced")):
+		"fast":
+			vp.scaling_3d_scale = 0.6
+			vp.msaa_3d = Viewport.MSAA_DISABLED
+			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
+		"best":
+			vp.scaling_3d_scale = 1.0
+			vp.msaa_3d = Viewport.MSAA_4X
+			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+		_:
+			vp.scaling_3d_scale = 0.85
+			vp.msaa_3d = Viewport.MSAA_2X
+			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
 
 
 func _exit_tree() -> void:
@@ -80,6 +105,8 @@ func _exit_tree() -> void:
 		for pair in [[App.scenes.opened, _on_opened], [App.scenes.closed, _refresh], [App.scenes.dirty_changed, _on_dirty]]:
 			if pair[0].is_connected(pair[1]):
 				pair[0].disconnect(pair[1])
+	if App.settings and App.settings.changed.is_connected(_on_setting):
+		App.settings.changed.disconnect(_on_setting)
 	if App.host:
 		var undo := GnHost.undo_redo()
 		if undo.changed.is_connected(_refresh_menus):

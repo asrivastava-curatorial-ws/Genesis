@@ -32,9 +32,7 @@ static func scan() -> Dictionary:
 	var unlicensed: Array = []
 	for category in CATEGORIES:
 		var dir := "%s/%s" % [ROOT, category]
-		if not DirAccess.dir_exists_absolute(dir):
-			continue
-		for file in DirAccess.get_files_at(dir):
+		for file in list_files(dir):
 			if file.get_extension().to_lower() not in MODEL_EXTENSIONS:
 				continue
 			var path := "%s/%s" % [dir, file]
@@ -49,6 +47,21 @@ static func scan() -> Dictionary:
 			a.license = license
 			assets.append(a)
 	return {"assets": assets, "unlicensed": unlicensed}
+
+
+## The files in a folder of the library. In a built program the models are
+## stored in their imported form under other names; the engine's resource list
+## still gives them by the names they were made with.
+static func list_files(dir: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	if Engine.is_editor_hint():
+		return DirAccess.get_files_at(dir) if DirAccess.dir_exists_absolute(dir) else out
+	for f in ResourceLoader.list_directory(dir):
+		if not f.ends_with("/"):
+			out.append(f)
+	if out.is_empty() and DirAccess.dir_exists_absolute(dir):
+		out = DirAccess.get_files_at(dir)
+	return out
 
 
 static func _read_license(model_path: String) -> Dictionary:

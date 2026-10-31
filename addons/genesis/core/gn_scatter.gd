@@ -16,6 +16,7 @@ extends RefCounted
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 
 const SOURCE := "gn_source"
 const LOCAL := "gn_local"
@@ -29,7 +30,7 @@ static func variants(path: String) -> Array[String]:
 	var dir := path.get_base_dir().path_join("variants")
 	var stem := path.get_file().get_basename()
 	var more: Array = []
-	for f in DirAccess.get_files_at(dir) if DirAccess.dir_exists_absolute(dir) else PackedStringArray():
+	for f in GnAssets.list_files(dir):
 		if f.begins_with(stem + "_v") and f.get_extension() in ["tscn", path.get_extension()] and f.get_basename().substr(stem.length() + 2).is_valid_int():
 			more.append(dir.path_join(f))
 	more.sort()
