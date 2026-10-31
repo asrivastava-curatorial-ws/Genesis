@@ -19,8 +19,9 @@ The Genesis editor plugin as a standalone desktop application.
 - Show cues from outside: OSC and plain UDP text.
 - Dependency manager (FFmpeg, Blender, Real-ESRGAN, Poppler, ODA File Converter).
 - Launchers for Linux and Windows, desktop shortcuts.
-- Documentation, third-party notices, asset licensing table.
-- Automated tests: 200+ headless checks, a smoke tour of the built program, and a two-launch end-to-end test with real rendering.
+- Two demonstration projects, built and rendered by the program itself (`--make-demos`, `--render-samples`): a museum pavilion with daylight, golden-hour and night scenes, and a concert stage with four show cues.
+- Documentation: START_HERE.md, a section-by-section guide to the Genesis panel, 30 topic pages, and the whole manual as one HTML page and PDF (`tools/build_manual.py`, Help > Documentation); third-party notices; asset licensing table.
+- Automated tests: 278 headless checks, a smoke tour of the built program (it runs on throwaway settings and leaves nothing behind), and a three-launch end-to-end test with real rendering.
 
 ### Changed
 - Genesis code reaches its surroundings through one host layer (`GnHost`); the editor plugin keeps working through the same layer.
@@ -32,3 +33,5 @@ The Genesis editor plugin as a standalone desktop application.
 - Several crashes on exit with a real renderer (render resources held in static variables, the open scene never freed).
 - Undo history objects leaking on every use.
 - Library listing and placement failing in built programs.
+- Messages in the panel named the editor's panels (Inspector, Output, Godot's path tool) inside the standalone program.
+- Folders holding only hidden files counted as empty, and clean-up left hidden folders behind.

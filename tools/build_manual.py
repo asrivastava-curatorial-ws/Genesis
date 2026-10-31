@@ -41,6 +41,8 @@ code { font-family: "Noto Sans Mono", Consolas, monospace; font-size: 0.9em;
   background: #f2f2f4; padding: 0.05em 0.3em; border-radius: 3px; }
 pre { background: #f2f2f4; padding: 0.8rem 1rem; overflow-x: auto; border-radius: 5px; line-height: 1.4; }
 pre code { background: none; padding: 0; }
+pre > code.sourceCode { white-space: pre; }
+pre > code.sourceCode > span { text-indent: 0; padding-left: 0; display: inline; }
 table { border-collapse: collapse; margin: 1rem 0; font-size: 0.95em; }
 th, td { border: 1px solid #ccc; padding: 0.35rem 0.6rem; vertical-align: top; text-align: left; }
 th { background: #f2f2f4; }
@@ -53,8 +55,11 @@ a { color: #0b5cad; }
   body { background: #1b1b1d; color: #e6e6e6; } a { color: #7db4ff; }
   code, pre, th, nav#TOC { background: #2a2a2e; } th, td, img { border-color: #444; }
   blockquote { background: #332a10; } h1 { border-color: #444; } }
-@media print { body { max-width: none; font-size: 11pt; } h1 { page-break-before: always; border: 0; }
-  h1.title { page-break-before: avoid; } pre, table, img { page-break-inside: avoid; } }
+@media print { body { max-width: none; font-size: 10.5pt; } h1 { page-break-before: always; border: 0; }
+  h1.title { page-break-before: avoid; } pre, table, img, blockquote { page-break-inside: avoid; }
+  h2, h3 { page-break-after: avoid; break-after: avoid; }
+  pre, pre code, pre > code.sourceCode { font-size: 7.6pt; white-space: pre-wrap; overflow: visible; }
+  nav#TOC { page-break-inside: avoid; } nav#TOC li { margin: 0 !important; font-size: 9.5pt; } }
 """
 
 
@@ -140,7 +145,7 @@ def main():
         page.goto("file://" + html)
         page.pdf(path=pdf, format="A4", print_background=True, display_header_footer=True,
                  header_template="<span></span>",
-                 footer_template='<div style="font-size:8px;width:100%;text-align:center;color:#777">'
+                 footer_template='<div style="font-size:8px;width:100%%;text-align:center;color:#777">'
                                  'Genesis Community %s &middot; <span class="pageNumber"></span> / '
                                  '<span class="totalPages"></span></div>' % version,
                  margin={"top": "16mm", "bottom": "16mm", "left": "15mm", "right": "15mm"})
