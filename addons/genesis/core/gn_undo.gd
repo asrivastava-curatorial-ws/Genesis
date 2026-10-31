@@ -33,6 +33,16 @@ func add_undo_method(object: Object, method: StringName, ...args: Array) -> void
 	_ur.add_undo_method(Callable(object, method).bindv(args))
 
 
+## Runtime-only extras: a Callable as the step (used by the application's own
+## edit commands; Genesis systems stick to the editor-compatible calls above).
+func add_do_callable(c: Callable) -> void:
+	_ur.add_do_method(c)
+
+
+func add_undo_callable(c: Callable) -> void:
+	_ur.add_undo_method(c)
+
+
 func add_do_property(object: Object, property: StringName, value: Variant) -> void:
 	_ur.add_do_property(object, property, value)
 

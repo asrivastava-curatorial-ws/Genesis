@@ -60,6 +60,38 @@ static func run(main: Node) -> int:
 	_check(App.actions.run("edit.undo") and cam.get_parent() == null, "Undo takes the camera out")
 	_check(edit.is_item_disabled(0) and not edit.is_item_disabled(1), "Undo is greyed, Redo is on")
 	_check(App.actions.run("edit.redo") and cam.get_parent() == root, "Redo puts it back")
+	# The editor: scene tree, properties, tools, and keys that act once.
+	_check(ws.scene_tree.is_inside_tree() and ws.inspector.is_inside_tree(), "the scene tree and the properties are in the window")
+	GnHost.select(cam)
+	await tree.process_frame
+	await tree.process_frame
+	_check(ws.scene_tree.item_of(cam) != null and ws.scene_tree.item_of(cam).is_selected(0) and ws.inspector.target == cam, "selecting shows the object in the tree and its properties")
+	main.get_viewport().push_input(_key(KEY_E))
+	await tree.process_frame
+	_check(ws.viewport_panel.gizmo.mode == 2, "the E key switches to Turn")
+	main.get_viewport().push_input(_key(KEY_W))
+	await tree.process_frame
+	_check(ws.viewport_panel.gizmo.mode == 1, "the W key switches back to Move")
+	var before := root.get_child_count()
+	main.get_viewport().push_input(_key(KEY_D, true))
+	await tree.process_frame
+	_check(root.get_child_count() == before + 1, "Ctrl+D duplicates exactly once (%d -> %d)" % [before, root.get_child_count()])
+	main.get_viewport().push_input(_key(KEY_DELETE))
+	await tree.process_frame
+	_check(root.get_child_count() == before, "Delete removes the copy")
+	App.actions.run("add.box")
+	await tree.process_frame
+	var box: Node = GnHost.selected_nodes()[0] if not GnHost.selected_nodes().is_empty() else null
+	_check(box is MeshInstance3D and box.get_parent() == root, "Add > Box puts a selected box in the scene")
+	App.actions.run("edit.undo")
+	App.actions.run("view.top")
+	_check(ws.viewport_panel.camera.global_basis.z.y > 0.99, "View > From Above looks straight down")
+	App.actions.run("view.ortho")
+	_check(ws.viewport_panel.camera.projection == Camera3D.PROJECTION_ORTHOGONAL, "the view can be orthographic")
+	App.actions.run("view.ortho")
+	GnHost.select(cam)
+	_check(App.actions.run("view.look_through") and ws.viewport_panel.camera.global_transform.is_equal_approx(cam.global_transform), "the view can look through a saved camera")
+	GnHost.selection().clear()
 	# Notices, saving, layout.
 	App.notify.info("smoke notice")
 	await tree.process_frame
@@ -98,6 +130,15 @@ static func run(main: Node) -> int:
 	await tree.process_frame
 	_remove_tree(parent)
 	return _failures
+
+
+static func _key(code: Key, ctrl := false) -> InputEventKey:
+	var e := InputEventKey.new()
+	e.keycode = code
+	e.physical_keycode = code
+	e.ctrl_pressed = ctrl
+	e.pressed = true
+	return e
 
 
 static func _remove_tree(dir: String) -> void:

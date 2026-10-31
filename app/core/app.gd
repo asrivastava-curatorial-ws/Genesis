@@ -30,6 +30,9 @@ static func shutdown() -> void:
 	if host:
 		host.undo_redo().clear_history()
 		host.selection().clear()
+		# The host and the scene service hold each other; break the ring.
+		host.scenes = null
+		host.viewport = null
 	GnHost.backend = null
 	if logger:
 		logger.shutdown()

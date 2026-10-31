@@ -17,6 +17,11 @@ timeout 240 "$GODOT" --headless --path "$TMP" -s res://tests/app/app_tests.gd > 
 code=$?
 grep -E "APP_TEST|SCRIPT ERROR|Parse Error" "$TMP/log.txt"
 echo "unit tests exit $code"
+timeout 240 "$GODOT" --headless --path "$TMP" -s res://tests/app/editor_tests.gd > "$TMP/edit.txt" 2>&1
+edit=$?
+grep -E "EDIT_TEST|SCRIPT ERROR|Parse Error" "$TMP/edit.txt"
+echo "editor tests exit $edit"
+[ $edit -ne 0 ] && tail -25 "$TMP/edit.txt"
 timeout 200 "$GODOT" --headless --path "$TMP" -- --smoke > "$TMP/smoke.txt" 2>&1
 smoke=$?
 grep -E "GENESIS_SMOKE|SCRIPT ERROR|Parse Error" "$TMP/smoke.txt"
@@ -24,4 +29,4 @@ echo "smoke exit $smoke"
 [ $smoke -ne 0 ] && tail -25 "$TMP/smoke.txt"
 [ $code -ne 0 ] && tail -25 "$TMP/log.txt"
 rm -rf "$TMP"
-[ $code -eq 0 ] && [ $smoke -eq 0 ]
+[ $code -eq 0 ] && [ $edit -eq 0 ] && [ $smoke -eq 0 ]

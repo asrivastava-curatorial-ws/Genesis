@@ -22,7 +22,13 @@ const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const GnImport := preload("res://addons/genesis/core/gn_import.gd")
 const GnPanel := preload("res://addons/genesis/ui/gn_panel.gd")
 
+## Fewer than this means a script error cut the run short.
+const MIN_CHECKS := 75
+## Errors the tests raise on purpose.
+const EXPECTED_ERRORS := ["canary: this error is deliberate", "test warning"]
+
 var _checks := 0
+var _watch: RefCounted
 var _fails := 0
 var _tmp := ""
 
@@ -35,9 +41,15 @@ func check(ok: bool, what: String) -> void:
 
 
 func _initialize() -> void:
+	_watch = LogService.new()
+	_watch.start(ProjectSettings.globalize_path("user://test_logs"))
 	_tmp = ProjectSettings.globalize_path("user://app_tests_%d" % (Time.get_ticks_usec() % 100000))
 	DirAccess.make_dir_recursive_absolute(_tmp)
 	await _run()
+	var errors: Array = _watch.lines.filter(func(e): return e.level == LogService.Level.ERROR and not EXPECTED_ERRORS.any(func(x): return x in e.text))
+	check(errors.is_empty(), "no unexpected errors were logged %s" % [errors.map(func(e): return "%s (%s)" % [e.text, e.where]).slice(0, 5)])
+	check(_checks >= MIN_CHECKS, "the run was complete (%d checks of at least %d)" % [_checks, MIN_CHECKS])
+	_watch.shutdown()
 	print("APP_TEST %d checks, %d failed" % [_checks, _fails])
 	print("APP_TEST RESULT %s" % ("PASS" if _fails == 0 else "FAIL"))
 	_remove_tree(_tmp)
