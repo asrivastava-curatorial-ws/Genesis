@@ -160,7 +160,8 @@ static func _build(main: Node, out_dir: String) -> void:
 	brush.active = true
 	var cam: Camera3D = ws.viewport_panel.camera
 	ws.viewport_panel.set_view("top")
-	ws.viewport_panel.pivot = Vector3(0, 0, 14)
+	# Behind and beside the building, clear of where the cameras will stand.
+	ws.viewport_panel.pivot = Vector3(-16, 0, -10)
 	ws.viewport_panel.distance = 40.0
 	ws.viewport_panel._apply_camera()
 	await _frames(main, 2)
@@ -321,12 +322,12 @@ static func _verify(main: Node, out_dir: String) -> void:
 	var cam: Camera3D = cams[0] if not cams.is_empty() else null
 	var still: String = await GnRender.render(cam, Vector2i(1920, 1080), main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0) if cam else ""
 	_step("20", _image_ok(still, Vector2i(1920, 1080)), "Produce a 1080p render (%s)" % still.get_file())
-	var k4: String = await GnRender.render(cam, Vector2i(3840, 2160), main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0) if cam else ""
-	_step("21", _image_ok(k4, Vector2i(3840, 2160)), "Produce a 4K render (%s)" % k4.get_file())
+	var k4: String = await GnRender.render(cam, Vector2i(3840, 2160), main, false, Viewport.DEBUG_DRAW_DISABLED, false, 0) if cam else ""
+	_step("21", _image_ok(k4, Vector2i(3840, 2160)), "Produce a 4K render, Preview quality to keep the software-GPU test short (%s)" % k4.get_file())
 	var pano: String = await GnPanorama.render(cam, 2048, main) if cam else ""
 	_step("22", _image_ok(pano, Vector2i(2048, 1024)), "Produce a 360° panorama (%s)" % pano.get_file())
 	# 23. AI upscaling with Real-ESRGAN, installed the way the Render page does it.
-	var small: String = await GnRender.render(cam, Vector2i(480, 270), main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0) if cam else ""
+	var small: String = await GnRender.render(cam, Vector2i(480, 270), main, false, Viewport.DEBUG_DRAW_DISABLED, false, 0) if cam else ""
 	var up_err := ""
 	if not GnUpscale.installed():
 		up_err = await GnUpscale.install(main)
@@ -339,7 +340,7 @@ static func _verify(main: Node, out_dir: String) -> void:
 	var shots := [GnMovie.path_shot([str(cams[0].name), str(cams[1].name)], 2.0)] if cams.size() >= 2 else []
 	GnMovie.set_shots(shots, "Walkthrough")
 	_step("24", GnMovie.duration(GnMovie.shots()) > 1.9, "Create a camera walkthrough (2 s between the saved cameras)")
-	var film: String = await GnMovie.render(GnMovie.shots(), Vector2i(640, 360), main, "walkthrough", Callable(), 12)
+	var film: String = await GnMovie.render(GnMovie.shots(), Vector2i(640, 360), main, "walkthrough", Callable(), 6)
 	var mp4_ok := film.ends_with(".mp4") and FileAccess.file_exists(film) and FileAccess.get_file_as_bytes(film).size() > 2000
 	_step("25", mp4_ok if GnFfmpeg.find() != "" else "FFmpeg is not installed", "Export an MP4 (%s)" % film.get_file())
 	var probe := []
