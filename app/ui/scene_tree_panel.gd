@@ -24,7 +24,7 @@ var _rebuild_queued := false
 
 func _init() -> void:
 	name = "SceneTreePanel"
-	custom_minimum_size = Vector2(240, 160)
+	custom_minimum_size = Vector2(200, 120)
 	var title := Label.new()
 	title.text = "Scene"
 	add_child(title)

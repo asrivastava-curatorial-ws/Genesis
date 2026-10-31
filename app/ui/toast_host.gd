@@ -20,12 +20,12 @@ var _column: VBoxContainer
 
 func _init() -> void:
 	name = "ToastHost"
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_column = VBoxContainer.new()
 	_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_column.alignment = BoxContainer.ALIGNMENT_END
-	_column.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_column.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE)
 	_column.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_column.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_column.offset_right = -16

@@ -22,3 +22,4 @@ __pycache__/
 # Per-machine test settings (the path to Godot).
 /tests/local.env
 /build/
+/release/

@@ -418,7 +418,7 @@ func _build_body() -> void:
 	add_child(_outer)
 	var left := VSplitContainer.new()
 	left.name = "LeftColumn"
-	left.custom_minimum_size = Vector2(240, 0)
+	left.custom_minimum_size = Vector2(210, 0)
 	_outer.add_child(left)
 	_left = left
 	scene_tree = SceneTreePanel.new()
@@ -441,7 +441,7 @@ func _build_body() -> void:
 	_vsplit.add_child(console)
 	var side := PanelContainer.new()
 	side.name = "SidePanel"
-	side.custom_minimum_size = Vector2(340, 0)
+	side.custom_minimum_size = Vector2(300, 0)
 	_hsplit.add_child(side)
 	_side = side
 	genesis_panel = GnPanel.new()

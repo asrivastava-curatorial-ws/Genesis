@@ -71,7 +71,7 @@ func _init() -> void:
 	focus_mode = Control.FOCUS_CLICK
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
-	custom_minimum_size = Vector2(480, 320)
+	custom_minimum_size = Vector2(320, 240)
 	viewport = SubViewport.new()
 	viewport.name = "View3D"
 	viewport.own_world_3d = true
@@ -88,7 +88,7 @@ func _init() -> void:
 	_overlay = Control.new()
 	_overlay.name = "Overlay"
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_overlay.draw.connect(_draw_overlay)
 	add_child(_overlay)
 	_hint = Label.new()
@@ -96,7 +96,7 @@ func _init() -> void:
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hint.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_hint)
 
 

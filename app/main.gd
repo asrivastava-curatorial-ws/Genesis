@@ -21,6 +21,7 @@ const SettingsDialog := preload("res://app/ui/settings_dialog.gd")
 const AboutDialog := preload("res://app/ui/about_dialog.gd")
 const Smoke := preload("res://app/smoke.gd")
 const E2E := preload("res://app/e2e.gd")
+const Demos := preload("res://app/demos.gd")
 const ImportDialog := preload("res://app/ui/import_dialog.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 const GnImport := preload("res://addons/genesis/core/gn_import.gd")
@@ -450,7 +451,7 @@ func _show(new_screen: Control) -> void:
 		screen.queue_free()
 	screen = new_screen
 	add_child(screen)
-	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	move_child(_toasts, -1)
 
 
@@ -487,6 +488,12 @@ func _command_line() -> void:
 		if DirAccess.dir_exists_absolute(a) and not ProjectService.manifest_of(a).is_empty():
 			open_project_at(a)
 			break
+	var d := args.find("--make-demos")
+	if d >= 0 and d + 1 < args.size():
+		var failures: int = await Demos.run(self, args[d + 1])
+		print("GENESIS_DEMO RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
+		get_tree().quit(failures)
+		return
 	var e := args.find("--e2e")
 	if e >= 0 and e + 2 < args.size():
 		var failures: int = await E2E.run(self, args[e + 1], args[e + 2])

@@ -33,7 +33,7 @@ var _refresh_queued := false
 
 func _init() -> void:
 	name = "InspectorPanel"
-	custom_minimum_size = Vector2(240, 160)
+	custom_minimum_size = Vector2(200, 120)
 	horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var col := VBoxContainer.new()
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL

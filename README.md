@@ -1,93 +1,47 @@
-# Genesis
+# Genesis Community
 
-**Import your building. Make it beautiful.**
+**Import your building. Make it beautiful.** Now as a program of its own.
 
-> **Work in progress.** Genesis is under active development and not yet released: expect
-> rough edges, missing pieces and changes that break saved scenes. There are no release
-> downloads yet; to try it, clone the repository and follow Getting started below.
+Genesis Community is free, open architectural and event visualisation, built on the Godot engine. Bring in a building, put it in its surroundings, light it with the real sun, dress it with materials, plants, people and furniture, stage it with LED walls, truss and moving lights, and make stills, 360° panoramas, fly-throughs and live show run-throughs.
 
-Genesis is free, open architectural and event visualization built on the Godot engine. You
-bring in a building, drop it into a real neighbourhood or a photo of the site, light it with a
-photographed sky and the real sun, dress it with scanned materials and plants, stage it with
-LED walls and lights, and get stills, fly-throughs and 360° panoramas out of it.
+It is the [Genesis](https://github.com/Utopian-Academy/Genesis) editor plugin by Utopian Academy, turned into a standalone desktop application: **no Godot editor is needed**. Every Genesis feature is kept; the plugin itself still works for those who prefer it.
 
-![Demo render](docs/demo.png)
+> **Release candidate 1.0.0-rc1.** Built and tested on Linux with software rendering; the Windows build has not yet been run on Windows. See [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) before relying on it.
 
-## Getting started (Windows)
+## Get started
 
-1. Get **Godot 4.7** from [godotengine.org](https://godotengine.org). The standard build is
-   fine; nothing to install, just unzip it.
-2. Put it in `%USERPROFILE%\tools\godot\`, or set `GENESIS_GODOT` to the Godot executable.
-3. Double-click **`Genesis.bat`**. The first time, it downloads the free photographic assets
-   and builds the materials and plants (Python 3 needed, a few minutes, once).
+- Linux: `applications/linux-x86_64/Genesis.sh` ([installation](docs/INSTALLATION_LINUX.md))
+- Windows: `applications\windows-x86_64\Genesis.bat` ([installation](docs/INSTALLATION_WINDOWS.md))
+- Then the [quick start](docs/QUICK_START.md), and the [user manual](docs/USER_MANUAL.md).
+- Two demo projects are in `demos/`: open them with *Open Project…*.
 
-The Genesis panel sits on the right of the Godot editor. Its sections are, roughly, the
-order you work in.
+## What it does
 
 | Section | What it does |
 |---|---|
-| **SCENE** | New scene in one click. Bring in a building (GLB, FBX, OBJ, or .blend with Blender); **live link** brings in each re-export automatically. **Site context:** type an address and the real neighbourhood arrives: OpenStreetMap buildings, roads and water on the real ground (open elevation data), under an aerial photograph. **Measure** by clicking two points; **layers** show and hide sets of objects. |
-| **PLANS** | Build on the real drawings. A **floor plan** (image or PDF page) laid on the ground at true scale, set exactly with two clicks and a known distance. **CAD drawings** (DXF, a PDF plotted from CAD, or DWG through the free ODA File Converter) at true size, in their layers and colours, with their text, blocks and arcs; tick layers to show them, or to raise their lines as walls. The tape measure snaps to a drawing's corners and ends, to the millimetre. |
-| **ASSETS** | A library of 54 plant species (broadleaf trees in every season, conifers, palms, hedges, topiary, flowers, grasses, potted plants), people, furniture and a full production kit (speakers, lighting fixtures, consoles, racks, DJ gear, cameras, projectors, screens, barriers, road cases, tents), each with its licence recorded. Click Place, or **place along a line**. |
-| **ENVIRONMENT** | Time of day, sun direction, photographed skies, **real sun** for any place and date, haze, stage haze (makes light beams visible), exposure. |
-| **LANDSCAPE** | Paint vegetation by dragging in the 3D view; Shift-drag erases. Can paint onto roofs and terrain. |
-| **SET** | Event staging at real sizes: **LED walls** from panel specs (with power, weight, data and pixel-map reports), box, triangle, ladder and circle truss, stage decks, **flown line arrays** with real splay, a **flying screen** (an LED wall on a long line under a helicopter), moving heads that really pan and tilt, washes and downlights. **Crowds** of thousands at a set density, in a mood: concert, seated, milling about, or a frustrated queue. **Effects:** fire, smoke, fountains, falling leaves, confetti, CO2 jets, cold sparks, flame projectors. |
-| **MATERIALS** | Select a building, pick a surface, click a scanned material: brick, concrete, plaster, wood, paving, stone, metal, glass. |
-| **CAMERAS** | Save views, set the lens, cut the view open, make **plans, sections and elevations** in one click, and **photo match**: put the design into a photo of the real site, with its shadows on the photographed ground. |
-| **LOOK** | Per-camera finishing: exposure, colour, warmth, depth of field, 2-point perspective, vignette, grain, pencil sketch. Eight built-in looks, plus your own. |
-| **RENDER** | Stills up to 4K (supersampled), every camera at once, a sun study (9:00, 12:00, 15:00), and 360° panoramas. |
-| **SHOW** | Run the event before it happens. **Live video** on the LED walls: Deckboy's Stream output (SRT), OBS or vMix, a window or display, a capture card, a video file. **Cues** record each look (lights, screens, effects, time of day, haze, camera); **GO** fades from one to the next, in a full-screen show view if you like, and can tell Deckboy (or anything that takes OSC) to go at the same moment. |
-| **MOVIE** | Fly-throughs: glide through saved cameras or orbit the building, preview, render to MP4. It warns you if the camera would pass through a tree. **Time-lapse** sun, and **moving objects** (traffic, boats) along paths you draw. |
+| **SCENE** | New scenes; bring in a building (GLB, glTF, FBX, OBJ, .blend via Blender) with **live link** for re-exports; real neighbourhoods from OpenStreetMap; measuring; layers. |
+| **PLANS** | Floor plans from images and PDF pages at true scale; CAD drawings (DXF, CAD-plotted PDF, DWG via ODA) in their layers and colours; walls from lines; snapping to the millimetre. |
+| **ASSETS** | 295 CC0 models (people, animals, vehicles, boats, aircraft, furniture, a full production kit), each with its licence; plants. |
+| **ENVIRONMENT** | Time of day, real sun for any place and date (NOAA), skies, haze and stage haze, exposure, weather and seasons. |
+| **LANDSCAPE** | Paint plants onto ground, roofs and terrain; sculpt terrain. |
+| **SET** | LED walls from panel specs with planning reports, truss, stage decks, flown line arrays, moving heads, crowds of thousands, effects. |
+| **MATERIALS** | Presets, images as materials at real size, tiles and grout, weathering. |
+| **CAMERAS** | Saved views (the main view really moves to them), plans, sections, elevations, photo matching. |
+| **LOOK** | Per-camera finish and 14 built-in looks. |
+| **RENDER** | Stills to 4K at Preview, Standard, High and Maximum quality; all cameras; sun studies; passes; 360° panoramas and VR tours; local AI upscaling with Real-ESRGAN. |
+| **MOVIE** | Fly-throughs, orbits, time-lapse sun, moving traffic and boats, phasing, MP4. |
+| **SHOW** | Live video on screens (SRT, OBS, vMix, capture, files), cues with GO and fades, full-screen show view, OSC out and (new) in. |
 
-To start a separate project for a job: `python tools/new_project.py "C:/Projects/My Job"`.
+New in the standalone program: a project manager; a 3D view with orbit, pan, fly, and move/turn/resize handles; a scene tree and a properties panel for every object (including all set-piece settings); undo for everything; a project format you can move between computers, with backups, autosave and recovery; importing old Genesis projects; a dependency manager; a console and log.
 
 ## What's free about it
 
-Everything. The code, and every asset it ships or downloads:
-- **Skies and materials:** photographed and scanned, CC0 from [Poly Haven](https://polyhaven.com)
-  and [ambientCG](https://ambientcg.com).
-- **Plants:** built by Genesis from CC0 leaf and bark photographs.
-- **Site context:** comes from OpenStreetMap, whose data is ODbL. Renders that show it should
-  credit "© OpenStreetMap contributors".
-- **AI upscaling:** [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (BSD-3-Clause), downloaded the
-  first time it is used, with its licence kept beside it.
-
-Every asset carries a `.license.json` saying where it came from.
-
-## Honest limits
-
-- **Assets:** Lumion ships more than 10,000; this has a few hundred, all generated or fully
-  licensed. People are MakeHuman figures (real bodies, simple clothes): posed crowds, and walkers
-  that stride along paths. Animals are modelled and posed, not animated.
-- **Rendering:** no path tracer. Photoreal stills average many real-time renders (true lens
-  blur, soft sun shadows, clean edges), but reflections and bounce light stay screen-space.
-- **Views:** Godot doesn't let a plugin move the editor's camera, so a saved view is recalled
-  by its live preview. Press F to frame a selection.
-- **Site context:** buildings without a mapped height get a typical height for their type.
-  Aerial photographs are sharpest in the United States (USGS); elsewhere they come from
-  Sentinel-2 at about 10 m per pixel.
+Everything. The code is MIT. The models are CC0. OpenStreetMap data is ODbL ("© OpenStreetMap contributors" on renders that show it). Real-ESRGAN is BSD-3-Clause and runs on your own computer. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [docs/ASSET_LICENSING.md](docs/ASSET_LICENSING.md).
 
 ## For developers
 
-- [ARCHITECTURE.md](ARCHITECTURE.md): how it's built, and what Godot provides vs what
-  Genesis adds.
-- Tests: `bash tests/run_all.sh` runs every suite (each opens a Godot window briefly).
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/BUILDING_FROM_SOURCE.md](docs/BUILDING_FROM_SOURCE.md), [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md). Tests: `bash tests/run_app_tests.sh` (headless) and the plugin's `bash tests/run_all.sh` (needs a GPU).
 
-## Screenshots
+## Credits
 
-| | |
-|---|---|
-| ![Looks](docs/looks.png) | ![Photo match](docs/photomatch.png) |
-| Eight looks on one camera | A design composited into a real photographed field |
-| ![Site context](docs/site_mall_road.png) | ![Stage at night](docs/set_night.png) |
-| Mall Road, Hammersmith, from OpenStreetMap, with the real sun | LED wall, truss and beams in haze |
-| ![Miami rooftop, aerial](docs/miami_aerial_dusk.png) | ![Miami rooftop at night](docs/miami_rooftop_night.png) |
-| A rooftop concert on the 1 Hotel South Beach, Miami, with the neighbourhood and shoreline from OpenStreetMap, at golden hour on 5 December (map data © OpenStreetMap contributors) | The same show at 20:30, by moonlight |
-| ![A show from front of house](docs/show_foh.png) | ![The crowd from the photo pit](docs/show_crowd.png) |
-| A concert built from the kit: 1,800 people, flown line arrays, moving heads, audience light | The audience from the photo pit |
-
-## Licence
-
-Genesis's code is released under the [MIT licence](LICENSE). The assets it ships or fetches
-keep their own licences, recorded beside each one in its `.license.json`: most are CC0,
-OpenStreetMap data is ODbL, and Real-ESRGAN is BSD-3-Clause.
+Genesis was created by Utopian Academy. Genesis Community is the standalone edition of that work, under the same MIT licence.

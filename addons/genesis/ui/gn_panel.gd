@@ -45,7 +45,7 @@ var _files: Object
 
 
 func _init() -> void:
-	custom_minimum_size = Vector2(300, 0)
+	custom_minimum_size = Vector2(280, 0)
 	# Seven sections do not fit a dock's tab bar (it hides most behind
 	# arrows), so they are a grid of buttons that always shows all of them.
 	var nav := GridContainer.new()

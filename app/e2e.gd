@@ -227,6 +227,8 @@ static func _build(main: Node, out_dir: String) -> void:
 		"planted": planted, "cameras": 2, "children": root.get_child_count(),
 		"time_of_day": 16.5, "project": parent.path_join(PROJECT)}))
 	_step("16", true, "Close Genesis (this launch ends here)")
+	App.settings.remove_recent(parent.path_join(PROJECT))
+	App.settings.save()
 
 
 static func _event_scene(main: Node, ws: Control) -> void:

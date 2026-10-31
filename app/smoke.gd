@@ -29,6 +29,7 @@ static func run(main: Node) -> int:
 	var tree := main.get_tree()
 	await tree.process_frame
 	_check(main.screen is ProjectManager, "starts on the project manager")
+	_check(main.screen.size == main.size and main.size == Vector2(main.get_viewport().get_visible_rect().size), "the screen fills the window (%s in %s)" % [main.screen.size, main.get_viewport().get_visible_rect().size])
 	var parent := ProjectSettings.globalize_path("user://smoke_%d" % (Time.get_ticks_usec() % 1000000))
 	DirAccess.make_dir_recursive_absolute(parent)
 	var err: String = App.projects.create(parent, "Smoke")
@@ -36,6 +37,7 @@ static func run(main: Node) -> int:
 	await tree.process_frame
 	await tree.process_frame
 	_check(main.screen is Workspace, "shows the workspace once a project is open")
+	_check(main.screen.size == main.size, "the workspace fills the window (%s)" % main.screen.size)
 	var ws: Control = main.screen
 	if not ws is Workspace:
 		return _failures + 1
@@ -149,6 +151,9 @@ static func run(main: Node) -> int:
 	_check(main.screen is Workspace and GnScene.find_role("smoke_cam") != null, "the project reopens with its contents")
 	App.projects.close()
 	await tree.process_frame
+	# Leave the user's list of recent projects as it was.
+	App.settings.remove_recent(parent.path_join("Smoke"))
+	App.settings.save()
 	_remove_tree(parent)
 	return _failures
 
