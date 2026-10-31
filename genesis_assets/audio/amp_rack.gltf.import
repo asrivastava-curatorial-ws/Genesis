@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dv0pgtha0nl6m"
-path="res://.godot/imported/amp_rack.gltf-485fc2621b77ada96f2c986d00b6c7f6.scn"
+path="res://.godot/imported/amp_rack.gltf-77349ea39fc4cb16397dbae8a9af5e11.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/amp_rack.gltf"
-dest_files=["res://.godot/imported/amp_rack.gltf-485fc2621b77ada96f2c986d00b6c7f6.scn"]
+dest_files=["res://.godot/imported/amp_rack.gltf-77349ea39fc4cb16397dbae8a9af5e11.scn"]
 
 [params]
 

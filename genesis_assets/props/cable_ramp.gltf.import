@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://lgblnbvqp0qr"
-path="res://.godot/imported/cable_ramp.gltf-6d6c36209cf7aa5f1ca4dc189002d7bf.scn"
+path="res://.godot/imported/cable_ramp.gltf-e3982fa459bfd803b60b706d7d120f70.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/cable_ramp.gltf"
-dest_files=["res://.godot/imported/cable_ramp.gltf-6d6c36209cf7aa5f1ca4dc189002d7bf.scn"]
+dest_files=["res://.godot/imported/cable_ramp.gltf-e3982fa459bfd803b60b706d7d120f70.scn"]
 
 [params]
 

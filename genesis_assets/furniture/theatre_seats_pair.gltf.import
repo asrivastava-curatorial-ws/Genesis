@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://brni3s0emxe5l"
-path="res://.godot/imported/theatre_seats_pair.gltf-c51b1d2e9e4078edbd4f83b31ada17e2.scn"
+path="res://.godot/imported/theatre_seats_pair.gltf-915868355bef50b7e1858bf2b2c619c0.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/theatre_seats_pair.gltf"
-dest_files=["res://.godot/imported/theatre_seats_pair.gltf-c51b1d2e9e4078edbd4f83b31ada17e2.scn"]
+dest_files=["res://.godot/imported/theatre_seats_pair.gltf-915868355bef50b7e1858bf2b2c619c0.scn"]
 
 [params]
 

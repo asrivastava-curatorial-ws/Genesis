@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://ckbaeko4yf2r2"
-path="res://.godot/imported/ottoman.gltf-772c25f74b7215b1eb431af571efa47c.scn"
+path="res://.godot/imported/ottoman.gltf-8a0332a40e3425c8b3ed8c5e1c5684ee.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/ottoman.gltf"
-dest_files=["res://.godot/imported/ottoman.gltf-772c25f74b7215b1eb431af571efa47c.scn"]
+dest_files=["res://.godot/imported/ottoman.gltf-8a0332a40e3425c8b3ed8c5e1c5684ee.scn"]
 
 [params]
 

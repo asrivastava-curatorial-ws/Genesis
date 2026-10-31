@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bjaprqgkrwvmm"
-path="res://.godot/imported/batten_1m.gltf-4a5bd4e6ff7ca3b5d00fefe38bca6a2e.scn"
+path="res://.godot/imported/batten_1m.gltf-5a42d91f223b0f57531d6c6271cb8022.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/batten_1m.gltf"
-dest_files=["res://.godot/imported/batten_1m.gltf-4a5bd4e6ff7ca3b5d00fefe38bca6a2e.scn"]
+dest_files=["res://.godot/imported/batten_1m.gltf-5a42d91f223b0f57531d6c6271cb8022.scn"]
 
 [params]
 

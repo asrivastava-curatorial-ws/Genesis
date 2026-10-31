@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://lrroh5taxkes"
-path="res://.godot/imported/lighting_wing_compact.gltf-3d718d215357f49ca48f6cd781548e70.scn"
+path="res://.godot/imported/lighting_wing_compact.gltf-7caab59ba6c710d25443feae08f21606.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/lighting_wing_compact.gltf"
-dest_files=["res://.godot/imported/lighting_wing_compact.gltf-3d718d215357f49ca48f6cd781548e70.scn"]
+dest_files=["res://.godot/imported/lighting_wing_compact.gltf-7caab59ba6c710d25443feae08f21606.scn"]
 
 [params]
 

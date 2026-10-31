@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cso7r5c31hcnu"
-path="res://.godot/imported/blinder_moley_4.gltf-d4454f03b021230a455289060c832fc2.scn"
+path="res://.godot/imported/blinder_moley_4.gltf-6bff543dc4ce45808babacf8e8a384b5.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/blinder_moley_4.gltf"
-dest_files=["res://.godot/imported/blinder_moley_4.gltf-d4454f03b021230a455289060c832fc2.scn"]
+dest_files=["res://.godot/imported/blinder_moley_4.gltf-6bff543dc4ce45808babacf8e8a384b5.scn"]
 
 [params]
 

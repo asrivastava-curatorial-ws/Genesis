@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bgbqrw8n4qutb"
-path.s3tc="res://.godot/imported/middleage_darkskinned_male_diffuse.jpg-8eb0f259f857b8b1c33a49c9cb960aa7.s3tc.ctex"
+path.s3tc="res://.godot/imported/middleage_darkskinned_male_diffuse.jpg-7fba60fc7648a22b127027f5b3f363b5.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/middleage_darkskinned_male_diffuse.jpg"
-dest_files=["res://.godot/imported/middleage_darkskinned_male_diffuse.jpg-8eb0f259f857b8b1c33a49c9cb960aa7.s3tc.ctex"]
+dest_files=["res://.godot/imported/middleage_darkskinned_male_diffuse.jpg-7fba60fc7648a22b127027f5b3f363b5.s3tc.ctex"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b2430vcu54mjx"
-path="res://.godot/imported/camera_shoulder.gltf-aea41efbb9169fc0603fb093a66945d4.scn"
+path="res://.godot/imported/camera_shoulder.gltf-292b97f34a739a08fad5e8f8b7565ab6.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/camera_shoulder.gltf"
-dest_files=["res://.godot/imported/camera_shoulder.gltf-aea41efbb9169fc0603fb093a66945d4.scn"]
+dest_files=["res://.godot/imported/camera_shoulder.gltf-292b97f34a739a08fad5e8f8b7565ab6.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://1jqa5ncvpx64"
-path="res://.godot/imported/truck_artic_white.gltf-2bb29b75263843fb32d3c4a73085f7c5.scn"
+path="res://.godot/imported/truck_artic_white.gltf-35427cfe94866ced1551857123bd0194.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/truck_artic_white.gltf"
-dest_files=["res://.godot/imported/truck_artic_white.gltf-2bb29b75263843fb32d3c4a73085f7c5.scn"]
+dest_files=["res://.godot/imported/truck_artic_white.gltf-35427cfe94866ced1551857123bd0194.scn"]
 
 [params]
 

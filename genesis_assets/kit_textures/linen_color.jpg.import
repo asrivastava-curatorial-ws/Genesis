@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bppggkdng02xb"
-path="res://.godot/imported/linen_color.jpg-dbed7d73b46da254385406b67b221ab3.ctex"
+path="res://.godot/imported/linen_color.jpg-16152c3b777ac5e71ec169167bef3562.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/linen_color.jpg"
-dest_files=["res://.godot/imported/linen_color.jpg-dbed7d73b46da254385406b67b221ab3.ctex"]
+dest_files=["res://.godot/imported/linen_color.jpg-16152c3b777ac5e71ec169167bef3562.ctex"]
 
 [params]
 

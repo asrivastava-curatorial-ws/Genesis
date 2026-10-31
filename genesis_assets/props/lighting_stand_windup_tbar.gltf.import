@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cfni3vd2se48h"
-path="res://.godot/imported/lighting_stand_windup_tbar.gltf-4a4910fcd9e30b0b9d856498be3442bf.scn"
+path="res://.godot/imported/lighting_stand_windup_tbar.gltf-9d4b06a90b082d9d35aab644c09c573e.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/lighting_stand_windup_tbar.gltf"
-dest_files=["res://.godot/imported/lighting_stand_windup_tbar.gltf-4a4910fcd9e30b0b9d856498be3442bf.scn"]
+dest_files=["res://.godot/imported/lighting_stand_windup_tbar.gltf-9d4b06a90b082d9d35aab644c09c573e.scn"]
 
 [params]
 

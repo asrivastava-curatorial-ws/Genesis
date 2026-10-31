@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://de5s8x0navnqa"
-path="res://.godot/imported/fabric_black_normal.jpg-e3521cea6a27f7133a1670a03fa00e87.ctex"
+path="res://.godot/imported/fabric_black_normal.jpg-40cc76a9049ca120507d6d864594aa54.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/fabric_black_normal.jpg"
-dest_files=["res://.godot/imported/fabric_black_normal.jpg-e3521cea6a27f7133a1670a03fa00e87.ctex"]
+dest_files=["res://.godot/imported/fabric_black_normal.jpg-40cc76a9049ca120507d6d864594aa54.ctex"]
 
 [params]
 

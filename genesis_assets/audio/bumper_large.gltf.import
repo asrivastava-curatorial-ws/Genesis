@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://d2ta0ebxp8t5u"
-path="res://.godot/imported/bumper_large.gltf-e4c10f0eb0c0f1cf3bbbe41966e42ced.scn"
+path="res://.godot/imported/bumper_large.gltf-2e69e3a5b2354d88b97136eabe50cc1a.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/bumper_large.gltf"
-dest_files=["res://.godot/imported/bumper_large.gltf-e4c10f0eb0c0f1cf3bbbe41966e42ced.scn"]
+dest_files=["res://.godot/imported/bumper_large.gltf-2e69e3a5b2354d88b97136eabe50cc1a.scn"]
 
 [params]
 

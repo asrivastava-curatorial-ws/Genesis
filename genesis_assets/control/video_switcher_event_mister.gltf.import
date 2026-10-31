@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b8a5buerf3d8v"
-path="res://.godot/imported/video_switcher_event_mister.gltf-6ad72cf480f58353a9f8c97a63dddf80.scn"
+path="res://.godot/imported/video_switcher_event_mister.gltf-b57cf7a64c48d79f4b19e7dc2b9e9dd2.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/video_switcher_event_mister.gltf"
-dest_files=["res://.godot/imported/video_switcher_event_mister.gltf-6ad72cf480f58353a9f8c97a63dddf80.scn"]
+dest_files=["res://.godot/imported/video_switcher_event_mister.gltf-b57cf7a64c48d79f4b19e7dc2b9e9dd2.scn"]
 
 [params]
 

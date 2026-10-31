@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cyohk62w08r0g"
-path="res://.godot/imported/bus_city_white.gltf-f499d0608d2a179fa5b6777cd3a55e38.scn"
+path="res://.godot/imported/bus_city_white.gltf-e2eb85a702a853ec7394472b642ea9c5.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/bus_city_white.gltf"
-dest_files=["res://.godot/imported/bus_city_white.gltf-f499d0608d2a179fa5b6777cd3a55e38.scn"]
+dest_files=["res://.godot/imported/bus_city_white.gltf-e2eb85a702a853ec7394472b642ea9c5.scn"]
 
 [params]
 

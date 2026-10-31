@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://d03owrvi7xq60"
-path="res://.godot/imported/pointing_3.gltf-9bf9bafa797d2a4f5ede19ed6f355d15.scn"
+path="res://.godot/imported/pointing_3.gltf-e631bff79b40d5c9811cd5b021098501.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/pointing_3.gltf"
-dest_files=["res://.godot/imported/pointing_3.gltf-9bf9bafa797d2a4f5ede19ed6f355d15.scn"]
+dest_files=["res://.godot/imported/pointing_3.gltf-e631bff79b40d5c9811cd5b021098501.scn"]
 
 [params]
 

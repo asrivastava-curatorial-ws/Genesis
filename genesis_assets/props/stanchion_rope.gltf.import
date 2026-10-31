@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://c3ftjm3e6yrmb"
-path="res://.godot/imported/stanchion_rope.gltf-c293ae514c8083091d433da7e80877e5.scn"
+path="res://.godot/imported/stanchion_rope.gltf-f6410e5745f3b514c089d63c3e0ec3cd.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/stanchion_rope.gltf"
-dest_files=["res://.godot/imported/stanchion_rope.gltf-c293ae514c8083091d433da7e80877e5.scn"]
+dest_files=["res://.godot/imported/stanchion_rope.gltf-f6410e5745f3b514c089d63c3e0ec3cd.scn"]
 
 [params]
 

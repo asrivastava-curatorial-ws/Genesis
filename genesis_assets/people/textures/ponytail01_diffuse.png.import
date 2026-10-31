@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://1wjas5jv03it"
-path.s3tc="res://.godot/imported/ponytail01_diffuse.png-f36fd080ad989f2069f3a464fc56aefa.s3tc.ctex"
+path.s3tc="res://.godot/imported/ponytail01_diffuse.png-c1ce195957bac8d52c3f4f5cee02d682.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/ponytail01_diffuse.png"
-dest_files=["res://.godot/imported/ponytail01_diffuse.png-f36fd080ad989f2069f3a464fc56aefa.s3tc.ctex"]
+dest_files=["res://.godot/imported/ponytail01_diffuse.png-c1ce195957bac8d52c3f4f5cee02d682.s3tc.ctex"]
 
 [params]
 

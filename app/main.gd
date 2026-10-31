@@ -1,0 +1,313 @@
+extends Control
+
+# The program. It starts the services, registers the commands, and shows either
+# the project manager or, once a project is open, the workspace.
+
+const App := preload("res://app/core/app.gd")
+const SettingsService := preload("res://app/core/settings_service.gd")
+const LogService := preload("res://app/core/log_service.gd")
+const NotifyService := preload("res://app/core/notify_service.gd")
+const ActionRegistry := preload("res://app/core/action_registry.gd")
+const ProjectService := preload("res://app/core/project_service.gd")
+const SceneService := preload("res://app/runtime/scene_service.gd")
+const RuntimeHost := preload("res://app/runtime/runtime_host.gd")
+const ModuleHost := preload("res://app/runtime/module_host.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const ProjectManager := preload("res://app/ui/project_manager.gd")
+const Workspace := preload("res://app/ui/workspace.gd")
+const ToastHost := preload("res://app/ui/toast_host.gd")
+const NewProjectDialog := preload("res://app/ui/new_project_dialog.gd")
+const SettingsDialog := preload("res://app/ui/settings_dialog.gd")
+const AboutDialog := preload("res://app/ui/about_dialog.gd")
+const Smoke := preload("res://app/smoke.gd")
+
+var screen: Control
+
+var _toasts: Control
+var _settings_dialog: AcceptDialog
+
+
+func _ready() -> void:
+	_start_services()
+	_restore_window()
+	_register_actions()
+	_toasts = ToastHost.new()
+	add_child(_toasts)
+	App.projects.opened.connect(_show_workspace)
+	App.projects.closed.connect(_show_project_manager)
+	App.scenes.opened.connect(App.modules.on_scene_opened)
+	App.scenes.opened.connect(_on_scene_opened)
+	App.scenes.closed.connect(_update_title)
+	App.scenes.dirty_changed.connect(_on_dirty)
+	_show_project_manager()
+	_update_title()
+	print("%s %s ready" % [App.NAME, App.VERSION])
+	_command_line()
+
+
+func _start_services() -> void:
+	App.main = self
+	App.settings = SettingsService.new()
+	var settings_note: String = App.settings.load_from_disk()
+	App.logger = LogService.new()
+	App.logger.start()
+	print("%s %s on Godot %s, %s" % [App.NAME, App.VERSION, Engine.get_version_info().string, OS.get_name()])
+	App.notify = NotifyService.new()
+	App.actions = ActionRegistry.new()
+	var host := RuntimeHost.new()
+	var scenes := SceneService.new(host)
+	host.scenes = scenes
+	GnHost.backend = host
+	App.host = host
+	App.scenes = scenes
+	App.projects = ProjectService.new(scenes, App.settings)
+	App.modules = ModuleHost.new()
+	add_child(App.modules)
+	# Closing the window must be able to ask about unsaved changes first.
+	get_tree().auto_accept_quit = false
+	if settings_note != "":
+		App.notify.warning(settings_note)
+
+
+func _restore_window() -> void:
+	var w := get_window()
+	w.title = App.NAME
+	w.min_size = App.MIN_WINDOW
+	w.content_scale_factor = float(App.settings.get_value("ui_scale", 1.0))
+	if DisplayServer.get_name() == "headless":
+		return
+	var usable := DisplayServer.screen_get_usable_rect(w.current_screen)
+	var saved: Dictionary = App.settings.get_value("window", {})
+	var size := Vector2i(int(saved.get("width", 0)), int(saved.get("height", 0)))
+	if size.x < App.MIN_WINDOW.x or size.y < App.MIN_WINDOW.y:
+		size = Vector2i(1500, 900)
+	w.size = Vector2i(mini(size.x, usable.size.x), mini(size.y, usable.size.y))
+	var pos := Vector2i(int(saved.get("x", 0)), int(saved.get("y", 0)))
+	if saved.get("width", 0) > 0 and usable.has_point(pos + Vector2i(80, 40)):
+		w.position = pos
+	else:
+		w.move_to_center()
+	if saved.get("maximized", false):
+		w.mode = Window.MODE_MAXIMIZED
+
+
+func _save_window() -> void:
+	var w := get_window()
+	App.settings.set_value("window/maximized", w.mode == Window.MODE_MAXIMIZED)
+	if w.mode == Window.MODE_WINDOWED:
+		App.settings.set_value("window/width", w.size.x)
+		App.settings.set_value("window/height", w.size.y)
+		App.settings.set_value("window/x", w.position.x)
+		App.settings.set_value("window/y", w.position.y)
+
+
+func _register_actions() -> void:
+	var K := ActionRegistry
+	var A: RefCounted = App.actions
+	A.add("project.new", "New Project…", new_project, [K.key(KEY_N, true)])
+	A.add("project.open", "Open Project…", open_project, [K.key(KEY_O, true)])
+	A.add("project.save", "Save", save_scene, [K.key(KEY_S, true)], _has_scene)
+	A.add("project.close", "Close Project", close_project, [], _has_project)
+	A.add("app.quit", "Exit", request_quit, [K.key(KEY_Q, true)])
+	A.add("edit.undo", "Undo", _undo, [K.key(KEY_Z, true)], _can_undo, _undo_label)
+	A.add("edit.redo", "Redo", _redo, [K.key(KEY_Z, true, true), K.key(KEY_Y, true)], _can_redo, _redo_label)
+	A.add("app.preferences", "Preferences…", preferences, [K.key(KEY_COMMA, true)])
+	A.add("help.about", "About %s" % App.NAME, about)
+	A.add("help.logs", "Show the Log Folder", _show_logs)
+
+
+func _has_scene() -> bool:
+	return App.scenes.has_scene()
+
+
+func _has_project() -> bool:
+	return App.projects.is_open()
+
+
+func _undo() -> void:
+	GnHost.undo_redo().undo()
+
+
+func _redo() -> void:
+	GnHost.undo_redo().redo()
+
+
+func _can_undo() -> bool:
+	return GnHost.undo_redo().has_undo()
+
+
+func _can_redo() -> bool:
+	return GnHost.undo_redo().has_redo()
+
+
+func _undo_label() -> String:
+	return "Undo: %s" % GnHost.undo_redo().undo_name() if _can_undo() else "Undo"
+
+
+func _redo_label() -> String:
+	return "Redo: %s" % GnHost.undo_redo().redo_name() if _can_redo() else "Redo"
+
+
+func _show_logs() -> void:
+	OS.shell_show_in_file_manager(ProjectSettings.globalize_path("user://logs"))
+
+
+# ------------------------------------------------------------ the commands
+func new_project() -> void:
+	confirm_unsaved(_new_project_now)
+
+
+func _new_project_now() -> void:
+	var d := NewProjectDialog.new()
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.ask()
+
+
+func open_project() -> void:
+	confirm_unsaved(_open_project_now)
+
+
+func _open_project_now() -> void:
+	var d := FileDialog.new()
+	d.access = FileDialog.ACCESS_FILESYSTEM
+	d.file_mode = FileDialog.FILE_MODE_OPEN_DIR
+	d.use_native_dialog = true
+	d.title = "Open a Genesis project folder"
+	d.dir_selected.connect(open_project_at)
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.popup_centered_ratio(0.6)
+
+
+## Opens a project folder, and says why if it cannot.
+func open_project_at(folder: String) -> void:
+	var err: String = App.projects.open(folder)
+	if err != "":
+		App.notify.error("The project could not be opened.", err)
+
+
+func save_scene() -> void:
+	var err: String = App.scenes.save()
+	if err == "":
+		App.notify.success("Saved %s." % App.scenes.path.get_file())
+	else:
+		App.notify.error("The scene was not saved.", err)
+
+
+func close_project() -> void:
+	confirm_unsaved(_close_project_now)
+
+
+func _close_project_now() -> void:
+	App.projects.close()
+
+
+func preferences() -> void:
+	if _settings_dialog == null:
+		_settings_dialog = SettingsDialog.new()
+		_settings_dialog.layout_reset.connect(_reset_layout)
+		add_child(_settings_dialog)
+	_settings_dialog.ask()
+
+
+func _reset_layout() -> void:
+	if screen is Workspace:
+		screen.reset_layout()
+
+
+func about() -> void:
+	var d := AboutDialog.new()
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.popup_centered()
+
+
+func request_quit() -> void:
+	confirm_unsaved(_quit_now)
+
+
+func _quit_now() -> void:
+	_save_window()
+	App.settings.save()
+	get_tree().quit()
+
+
+func _exit_tree() -> void:
+	App.shutdown()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		request_quit()
+
+
+## Runs `proceed` straight away if nothing is unsaved; otherwise asks first.
+## Cancel does nothing at all.
+func confirm_unsaved(proceed: Callable) -> void:
+	if not App.scenes.dirty:
+		proceed.call()
+		return
+	var d := ConfirmationDialog.new()
+	d.title = "Unsaved changes"
+	d.dialog_text = "%s has changes that are not saved." % App.scenes.root.name
+	d.ok_button_text = "Save"
+	d.cancel_button_text = "Cancel"
+	d.add_button("Don't save", true, "discard")
+	d.confirmed.connect(func():
+		var err: String = App.scenes.save()
+		if err == "":
+			proceed.call()
+		else:
+			App.notify.error("The scene was not saved.", err))
+	d.custom_action.connect(func(_action):
+		d.hide()
+		proceed.call())
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.popup_centered()
+
+
+# ------------------------------------------------------------- the screens
+func _show(new_screen: Control) -> void:
+	if screen:
+		remove_child(screen)
+		screen.queue_free()
+	screen = new_screen
+	add_child(screen)
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	move_child(_toasts, -1)
+
+
+func _show_project_manager() -> void:
+	_show(ProjectManager.new())
+
+
+func _show_workspace() -> void:
+	_show(Workspace.new())
+
+
+func _on_scene_opened(_root: Node) -> void:
+	_update_title()
+
+
+func _on_dirty(_dirty: bool) -> void:
+	_update_title()
+
+
+func _update_title() -> void:
+	var title := App.NAME
+	if App.projects.is_open():
+		title = "%s%s — %s" % [App.projects.project_name, "*" if App.scenes.dirty else "", App.NAME]
+	get_window().title = title
+
+
+func _command_line() -> void:
+	var args := OS.get_cmdline_user_args()
+	var i := args.find("--project")
+	if i >= 0 and i + 1 < args.size():
+		open_project_at(args[i + 1])
+	if "--smoke" in args:
+		var failures: int = await Smoke.run(self)
+		print("GENESIS_SMOKE RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
+		get_tree().quit(failures)

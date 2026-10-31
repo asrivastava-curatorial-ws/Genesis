@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bh7qg3hm24rgt"
-path.s3tc="res://.godot/imported/bob01_diffuse.png-e7bedaa80279567af0689b9fc85f6e10.s3tc.ctex"
+path.s3tc="res://.godot/imported/bob01_diffuse.png-060c9e6038f5e616088255ab2d6e85fc.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/bob01_diffuse.png"
-dest_files=["res://.godot/imported/bob01_diffuse.png-e7bedaa80279567af0689b9fc85f6e10.s3tc.ctex"]
+dest_files=["res://.godot/imported/bob01_diffuse.png-060c9e6038f5e616088255ab2d6e85fc.s3tc.ctex"]
 
 [params]
 

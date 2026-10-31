@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://c58pgpnflaqh3"
-path="res://.godot/imported/phone_2.gltf-1826eb88d163da3e2c9e4d83b69858a4.scn"
+path="res://.godot/imported/phone_2.gltf-2371a43fdc816e000f56756ede94b099.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/phone_2.gltf"
-dest_files=["res://.godot/imported/phone_2.gltf-1826eb88d163da3e2c9e4d83b69858a4.scn"]
+dest_files=["res://.godot/imported/phone_2.gltf-2371a43fdc816e000f56756ede94b099.scn"]
 
 [params]
 

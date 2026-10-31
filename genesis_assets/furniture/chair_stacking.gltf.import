@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dcrhspnaly7pb"
-path="res://.godot/imported/chair_stacking.gltf-4a7a301ff52c9c0529b14d812e037528.scn"
+path="res://.godot/imported/chair_stacking.gltf-5e2ec26aca70418e893e4ebe0904fc59.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/chair_stacking.gltf"
-dest_files=["res://.godot/imported/chair_stacking.gltf-4a7a301ff52c9c0529b14d812e037528.scn"]
+dest_files=["res://.godot/imported/chair_stacking.gltf-5e2ec26aca70418e893e4ebe0904fc59.scn"]
 
 [params]
 

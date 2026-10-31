@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b4t1kk7brdvrp"
-path="res://.godot/imported/saloon_blue.gltf-e1ff372fed6209f2236e10c04b6166fd.scn"
+path="res://.godot/imported/saloon_blue.gltf-38c6201f06fc40bf72ee81645fa018a7.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/saloon_blue.gltf"
-dest_files=["res://.godot/imported/saloon_blue.gltf-e1ff372fed6209f2236e10c04b6166fd.scn"]
+dest_files=["res://.godot/imported/saloon_blue.gltf-38c6201f06fc40bf72ee81645fa018a7.scn"]
 
 [params]
 

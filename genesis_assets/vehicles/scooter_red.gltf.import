@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cxgwrtbrp108"
-path="res://.godot/imported/scooter_red.gltf-e9b7c2ac313e581386531edaf423ed72.scn"
+path="res://.godot/imported/scooter_red.gltf-5a9e324b16d4113ea2187f944a71439c.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/scooter_red.gltf"
-dest_files=["res://.godot/imported/scooter_red.gltf-e9b7c2ac313e581386531edaf423ed72.scn"]
+dest_files=["res://.godot/imported/scooter_red.gltf-5a9e324b16d4113ea2187f944a71439c.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://c6lq7rrp3i58u"
-path="res://.godot/imported/mic_stand_straight.gltf-e42d7f2e1feb0772d9a371f0135b2323.scn"
+path="res://.godot/imported/mic_stand_straight.gltf-38bc7e6998cf39fcdfa377136036ef57.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/mic_stand_straight.gltf"
-dest_files=["res://.godot/imported/mic_stand_straight.gltf-e42d7f2e1feb0772d9a371f0135b2323.scn"]
+dest_files=["res://.godot/imported/mic_stand_straight.gltf-38bc7e6998cf39fcdfa377136036ef57.scn"]
 
 [params]
 

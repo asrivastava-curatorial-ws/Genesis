@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b2j4wk33w1gfk"
-path="res://.godot/imported/alu_brushed_metalness-alu_brushed_roughness.png-04bba0593ccac99a0188e1a6175b2543.ctex"
+path="res://.godot/imported/alu_brushed_metalness-alu_brushed_roughness.png-ea31c666dec78d7b62cdc022c2d149bc.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/alu_brushed_metalness-alu_brushed_roughness.png"
-dest_files=["res://.godot/imported/alu_brushed_metalness-alu_brushed_roughness.png-04bba0593ccac99a0188e1a6175b2543.ctex"]
+dest_files=["res://.godot/imported/alu_brushed_metalness-alu_brushed_roughness.png-ea31c666dec78d7b62cdc022c2d149bc.ctex"]
 
 [params]
 

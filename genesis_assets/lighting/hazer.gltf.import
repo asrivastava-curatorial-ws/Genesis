@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://d146jymbc36yo"
-path="res://.godot/imported/hazer.gltf-6b71838de03e559bed584bf340736d69.scn"
+path="res://.godot/imported/hazer.gltf-98d2d4f798efe57cb829ea9d5be4e35a.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/hazer.gltf"
-dest_files=["res://.godot/imported/hazer.gltf-6b71838de03e559bed584bf340736d69.scn"]
+dest_files=["res://.godot/imported/hazer.gltf-98d2d4f798efe57cb829ea9d5be4e35a.scn"]
 
 [params]
 

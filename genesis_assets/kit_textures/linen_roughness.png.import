@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://y4jbw4qt8b6r"
-path="res://.godot/imported/linen_roughness.png-04a94572fcdc50525f7b1f4d8e4423ca.ctex"
+path="res://.godot/imported/linen_roughness.png-083c2e284b770f6ba1c03a687b6d9950.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/linen_roughness.png"
-dest_files=["res://.godot/imported/linen_roughness.png-04a94572fcdc50525f7b1f4d8e4423ca.ctex"]
+dest_files=["res://.godot/imported/linen_roughness.png-083c2e284b770f6ba1c03a687b6d9950.ctex"]
 
 [params]
 

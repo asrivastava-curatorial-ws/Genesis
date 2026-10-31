@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dvx4nt48glepm"
-path="res://.godot/imported/screen_lighting.png-0aef685961cd23a0bd3ff33b666cd846.ctex"
+path="res://.godot/imported/screen_lighting.png-6dfed7a0dbb7ca8bbe301ecd1ca82783.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/screen_lighting.png"
-dest_files=["res://.godot/imported/screen_lighting.png-0aef685961cd23a0bd3ff33b666cd846.ctex"]
+dest_files=["res://.godot/imported/screen_lighting.png-6dfed7a0dbb7ca8bbe301ecd1ca82783.ctex"]
 
 [params]
 

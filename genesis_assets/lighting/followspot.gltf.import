@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://ctq887e5b5txa"
-path="res://.godot/imported/followspot.gltf-006b759dfe018a41f1a21b3a3280fcb4.scn"
+path="res://.godot/imported/followspot.gltf-a64bbc45640970f14c67daac9bf3e5b8.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/followspot.gltf"
-dest_files=["res://.godot/imported/followspot.gltf-006b759dfe018a41f1a21b3a3280fcb4.scn"]
+dest_files=["res://.godot/imported/followspot.gltf-a64bbc45640970f14c67daac9bf3e5b8.scn"]
 
 [params]
 

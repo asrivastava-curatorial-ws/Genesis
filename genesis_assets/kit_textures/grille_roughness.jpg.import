@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b68fw0yrutegq"
-path="res://.godot/imported/grille_roughness.jpg-4e78fb7b853c15ce67e2f7739320c207.ctex"
+path="res://.godot/imported/grille_roughness.jpg-d8a77fa715942d813f7220e34e9127e5.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/grille_roughness.jpg"
-dest_files=["res://.godot/imported/grille_roughness.jpg-4e78fb7b853c15ce67e2f7739320c207.ctex"]
+dest_files=["res://.godot/imported/grille_roughness.jpg-d8a77fa715942d813f7220e34e9127e5.ctex"]
 
 [params]
 

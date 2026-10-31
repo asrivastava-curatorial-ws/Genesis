@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://1uv86fuvbrlw"
-path="res://.godot/imported/truss_base_plate.gltf-283da1053f4b421f7fda1be9d815bb6a.scn"
+path="res://.godot/imported/truss_base_plate.gltf-6bdf449ba2aeb60eecea99d1acd6fb82.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/truss_base_plate.gltf"
-dest_files=["res://.godot/imported/truss_base_plate.gltf-283da1053f4b421f7fda1be9d815bb6a.scn"]
+dest_files=["res://.godot/imported/truss_base_plate.gltf-6bdf449ba2aeb60eecea99d1acd6fb82.scn"]
 
 [params]
 

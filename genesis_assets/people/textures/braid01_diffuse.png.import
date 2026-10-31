@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dmph1l6n7n46f"
-path.s3tc="res://.godot/imported/braid01_diffuse.png-ecdad6a4f0e60f4fac5c1b1b091b6ab4.s3tc.ctex"
+path.s3tc="res://.godot/imported/braid01_diffuse.png-ce1e24f51ddd31b959983c75db4ca840.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/braid01_diffuse.png"
-dest_files=["res://.godot/imported/braid01_diffuse.png-ecdad6a4f0e60f4fac5c1b1b091b6ab4.s3tc.ctex"]
+dest_files=["res://.godot/imported/braid01_diffuse.png-ce1e24f51ddd31b959983c75db4ca840.s3tc.ctex"]
 
 [params]
 

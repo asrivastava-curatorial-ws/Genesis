@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bipsfoadyrere"
-path="res://.godot/imported/lighting_console_mysticq.gltf-3dd7d9ff99420b5aba955d659fefb972.scn"
+path="res://.godot/imported/lighting_console_mysticq.gltf-079e0b534a3444ee8d5b8b5400739430.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/lighting_console_mysticq.gltf"
-dest_files=["res://.godot/imported/lighting_console_mysticq.gltf-3dd7d9ff99420b5aba955d659fefb972.scn"]
+dest_files=["res://.godot/imported/lighting_console_mysticq.gltf-079e0b534a3444ee8d5b8b5400739430.scn"]
 
 [params]
 

@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bfxvwy4h7tcob"
-path.s3tc="res://.godot/imported/young_darkskinned_male_diffuse.jpg-c48d3ac8e863319b16b4a0d3aa84012b.s3tc.ctex"
+path.s3tc="res://.godot/imported/young_darkskinned_male_diffuse.jpg-afcba6ed7aacbcbadeb808cbca01c42e.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/young_darkskinned_male_diffuse.jpg"
-dest_files=["res://.godot/imported/young_darkskinned_male_diffuse.jpg-c48d3ac8e863319b16b4a0d3aa84012b.s3tc.ctex"]
+dest_files=["res://.godot/imported/young_darkskinned_male_diffuse.jpg-afcba6ed7aacbcbadeb808cbca01c42e.s3tc.ctex"]
 
 [params]
 

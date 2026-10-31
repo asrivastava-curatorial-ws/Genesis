@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dg1q0eukqcubt"
-path="res://.godot/imported/lectern.gltf-846ea04f561aa1740d261892b8f4a4a7.scn"
+path="res://.godot/imported/lectern.gltf-4b1fae59480efb6b0a4275100c6ffca4.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/lectern.gltf"
-dest_files=["res://.godot/imported/lectern.gltf-846ea04f561aa1740d261892b8f4a4a7.scn"]
+dest_files=["res://.godot/imported/lectern.gltf-4b1fae59480efb6b0a4275100c6ffca4.scn"]
 
 [params]
 

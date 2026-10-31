@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://diwxoycprjtnm"
-path="res://.godot/imported/fogger.gltf-c6269bcfc3f76148130defe69094f1a8.scn"
+path="res://.godot/imported/fogger.gltf-ca4b649a0fa4a9a21e3900a4ec2e3431.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/fogger.gltf"
-dest_files=["res://.godot/imported/fogger.gltf-c6269bcfc3f76148130defe69094f1a8.scn"]
+dest_files=["res://.godot/imported/fogger.gltf-ca4b649a0fa4a9a21e3900a4ec2e3431.scn"]
 
 [params]
 

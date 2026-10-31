@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://ee6w5h4d3asx"
-path="res://.godot/imported/golf_buggy_green.gltf-900969fb59a8cae96541250157c08548.scn"
+path="res://.godot/imported/golf_buggy_green.gltf-0ffdfe266a8cab8468cb73e768528188.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/golf_buggy_green.gltf"
-dest_files=["res://.godot/imported/golf_buggy_green.gltf-900969fb59a8cae96541250157c08548.scn"]
+dest_files=["res://.godot/imported/golf_buggy_green.gltf-0ffdfe266a8cab8468cb73e768528188.scn"]
 
 [params]
 

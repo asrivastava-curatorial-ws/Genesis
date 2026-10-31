@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://e7kglehhxd77"
-path="res://.godot/imported/lift_boom_orange.gltf-0801e4e2adb8b80ee16e26c041677989.scn"
+path="res://.godot/imported/lift_boom_orange.gltf-f4365c30f22c885dc680364eddc63145.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/lift_boom_orange.gltf"
-dest_files=["res://.godot/imported/lift_boom_orange.gltf-0801e4e2adb8b80ee16e26c041677989.scn"]
+dest_files=["res://.godot/imported/lift_boom_orange.gltf-f4365c30f22c885dc680364eddc63145.scn"]
 
 [params]
 

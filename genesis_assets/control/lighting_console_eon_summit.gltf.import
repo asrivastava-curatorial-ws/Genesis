@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cwbiqbvryh8su"
-path="res://.godot/imported/lighting_console_eon_summit.gltf-12795333006be7a71006e196a58244a2.scn"
+path="res://.godot/imported/lighting_console_eon_summit.gltf-26a7c1329d02f7e0baca37369b4523a1.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/lighting_console_eon_summit.gltf"
-dest_files=["res://.godot/imported/lighting_console_eon_summit.gltf-12795333006be7a71006e196a58244a2.scn"]
+dest_files=["res://.godot/imported/lighting_console_eon_summit.gltf-26a7c1329d02f7e0baca37369b4523a1.scn"]
 
 [params]
 

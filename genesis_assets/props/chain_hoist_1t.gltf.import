@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bf8cmmt7y12tx"
-path="res://.godot/imported/chain_hoist_1t.gltf-c896b9816e1684685954041722b90309.scn"
+path="res://.godot/imported/chain_hoist_1t.gltf-edd0a47c7f2482cf889b28524d2fa380.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/chain_hoist_1t.gltf"
-dest_files=["res://.godot/imported/chain_hoist_1t.gltf-c896b9816e1684685954041722b90309.scn"]
+dest_files=["res://.godot/imported/chain_hoist_1t.gltf-edd0a47c7f2482cf889b28524d2fa380.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://oqq256xanavt"
-path="res://.godot/imported/minivan_white.gltf-27212e8fef916dc3f734bd0c2e67fbc4.scn"
+path="res://.godot/imported/minivan_white.gltf-2dda42f416251b60d86c185c49f52cb0.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/minivan_white.gltf"
-dest_files=["res://.godot/imported/minivan_white.gltf-27212e8fef916dc3f734bd0c2e67fbc4.scn"]
+dest_files=["res://.godot/imported/minivan_white.gltf-2dda42f416251b60d86c185c49f52cb0.scn"]
 
 [params]
 

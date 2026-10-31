@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b3yvoao27kh3c"
-path="res://.godot/imported/sofa_lounge.gltf-63975c6dea42ac29d79659077a5d3623.scn"
+path="res://.godot/imported/sofa_lounge.gltf-1f0eb92fb1537f59cfc330d920d92d52.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/sofa_lounge.gltf"
-dest_files=["res://.godot/imported/sofa_lounge.gltf-63975c6dea42ac29d79659077a5d3623.scn"]
+dest_files=["res://.godot/imported/sofa_lounge.gltf-1f0eb92fb1537f59cfc330d920d92d52.scn"]
 
 [params]
 

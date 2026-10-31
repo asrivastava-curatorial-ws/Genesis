@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dskg6tv13nb6r"
-path="res://.godot/imported/facepalm_3.gltf-a216f63a70ec3a4898e1d737af7cfc12.scn"
+path="res://.godot/imported/facepalm_3.gltf-8ac181e96765d38b0296daee45080d44.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/facepalm_3.gltf"
-dest_files=["res://.godot/imported/facepalm_3.gltf-a216f63a70ec3a4898e1d737af7cfc12.scn"]
+dest_files=["res://.godot/imported/facepalm_3.gltf-8ac181e96765d38b0296daee45080d44.scn"]
 
 [params]
 

@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://r6s02g1g363m"
-path.s3tc="res://.godot/imported/afro_diffuse.png-8d502a790b94dea3b2b32b13b47a9e4c.s3tc.ctex"
+path.s3tc="res://.godot/imported/afro_diffuse.png-0c38590097a92403f5e6ccd7da3ef303.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/afro_diffuse.png"
-dest_files=["res://.godot/imported/afro_diffuse.png-8d502a790b94dea3b2b32b13b47a9e4c.s3tc.ctex"]
+dest_files=["res://.godot/imported/afro_diffuse.png-0c38590097a92403f5e6ccd7da3ef303.s3tc.ctex"]
 
 [params]
 

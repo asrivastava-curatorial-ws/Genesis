@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://blk8n4f6cw5vl"
-path="res://.godot/imported/beam_sharply.gltf-0103ec241a257ec19c7c5d00c126ee59.scn"
+path="res://.godot/imported/beam_sharply.gltf-2f62a5f064c2657ca404eca40c96175c.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/beam_sharply.gltf"
-dest_files=["res://.godot/imported/beam_sharply.gltf-0103ec241a257ec19c7c5d00c126ee59.scn"]
+dest_files=["res://.godot/imported/beam_sharply.gltf-2f62a5f064c2657ca404eca40c96175c.scn"]
 
 [params]
 

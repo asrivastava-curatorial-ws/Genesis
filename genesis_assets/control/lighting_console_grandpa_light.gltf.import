@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dgkjwt617uclu"
-path="res://.godot/imported/lighting_console_grandpa_light.gltf-5baa10eb645f7a542d904a21eededd84.scn"
+path="res://.godot/imported/lighting_console_grandpa_light.gltf-4541fb513b87d636db41784cbeccf9ff.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/lighting_console_grandpa_light.gltf"
-dest_files=["res://.godot/imported/lighting_console_grandpa_light.gltf-5baa10eb645f7a542d904a21eededd84.scn"]
+dest_files=["res://.godot/imported/lighting_console_grandpa_light.gltf-4541fb513b87d636db41784cbeccf9ff.scn"]
 
 [params]
 

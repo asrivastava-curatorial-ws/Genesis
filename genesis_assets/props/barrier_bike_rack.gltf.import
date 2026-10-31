@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dc7b5smth0xuf"
-path="res://.godot/imported/barrier_bike_rack.gltf-7da1e6be1da70171aa7ea886499b2abf.scn"
+path="res://.godot/imported/barrier_bike_rack.gltf-0408d87079885724d108ac303d6257b1.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/barrier_bike_rack.gltf"
-dest_files=["res://.godot/imported/barrier_bike_rack.gltf-7da1e6be1da70171aa7ea886499b2abf.scn"]
+dest_files=["res://.godot/imported/barrier_bike_rack.gltf-0408d87079885724d108ac303d6257b1.scn"]
 
 [params]
 

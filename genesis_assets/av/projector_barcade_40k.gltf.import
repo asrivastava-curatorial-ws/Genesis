@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dt210ajsyf1wj"
-path="res://.godot/imported/projector_barcade_40k.gltf-67867100ee9d32304485584d0c67a1f3.scn"
+path="res://.godot/imported/projector_barcade_40k.gltf-60d8ea7d6359bde2a2a01bc86e1b9859.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/projector_barcade_40k.gltf"
-dest_files=["res://.godot/imported/projector_barcade_40k.gltf-67867100ee9d32304485584d0c67a1f3.scn"]
+dest_files=["res://.godot/imported/projector_barcade_40k.gltf-60d8ea7d6359bde2a2a01bc86e1b9859.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://1abq2p0yylvw"
-path="res://.godot/imported/line_array_jay8.gltf-8629c3c235d320677e47c4143f6a6e81.scn"
+path="res://.godot/imported/line_array_jay8.gltf-80c8b992e96cc52ff8c3d04091b674e6.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/line_array_jay8.gltf"
-dest_files=["res://.godot/imported/line_array_jay8.gltf-8629c3c235d320677e47c4143f6a6e81.scn"]
+dest_files=["res://.godot/imported/line_array_jay8.gltf-80c8b992e96cc52ff8c3d04091b674e6.scn"]
 
 [params]
 

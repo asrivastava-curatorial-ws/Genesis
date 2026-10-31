@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://hxr1y354mwyg"
-path="res://.godot/imported/dj_player_cdj.gltf-94fd38083e519286861582c4c80ca012.scn"
+path="res://.godot/imported/dj_player_cdj.gltf-54f78abc1c444a6ae3a5c4024c9ba8da.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/dj_player_cdj.gltf"
-dest_files=["res://.godot/imported/dj_player_cdj.gltf-94fd38083e519286861582c4c80ca012.scn"]
+dest_files=["res://.godot/imported/dj_player_cdj.gltf-54f78abc1c444a6ae3a5c4024c9ba8da.scn"]
 
 [params]
 

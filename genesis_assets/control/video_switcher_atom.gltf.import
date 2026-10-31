@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://p6uirrx8oaea"
-path="res://.godot/imported/video_switcher_atom.gltf-7552330a86d43fc8b1b820fe520f6cea.scn"
+path="res://.godot/imported/video_switcher_atom.gltf-8196377cd97854b8aaa98148d5bb6e7a.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/video_switcher_atom.gltf"
-dest_files=["res://.godot/imported/video_switcher_atom.gltf-7552330a86d43fc8b1b820fe520f6cea.scn"]
+dest_files=["res://.godot/imported/video_switcher_atom.gltf-8196377cd97854b8aaa98148d5bb6e7a.scn"]
 
 [params]
 

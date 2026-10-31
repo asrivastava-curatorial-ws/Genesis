@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://drhmp0qx88oc5"
-path="res://.godot/imported/camera_studio_box_lens.gltf-0e3d0c8e78853bab76e9646da6bc73da.scn"
+path="res://.godot/imported/camera_studio_box_lens.gltf-8dd46c49d97375b06525bbcb91e6eafd.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/camera_studio_box_lens.gltf"
-dest_files=["res://.godot/imported/camera_studio_box_lens.gltf-0e3d0c8e78853bab76e9646da6bc73da.scn"]
+dest_files=["res://.godot/imported/camera_studio_box_lens.gltf-8dd46c49d97375b06525bbcb91e6eafd.scn"]
 
 [params]
 

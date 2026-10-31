@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://wiq1rsd3lybb"
-path="res://.godot/imported/powder_grey_roughness.jpg-d06a4591492da1bec9323c9b325c5336.ctex"
+path="res://.godot/imported/powder_grey_roughness.jpg-19e443c1bd916549ba0881fd4796c3d7.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/powder_grey_roughness.jpg"
-dest_files=["res://.godot/imported/powder_grey_roughness.jpg-d06a4591492da1bec9323c9b325c5336.ctex"]
+dest_files=["res://.godot/imported/powder_grey_roughness.jpg-19e443c1bd916549ba0881fd4796c3d7.ctex"]
 
 [params]
 

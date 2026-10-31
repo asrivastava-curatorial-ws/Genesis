@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dpyv4f1nq2mdu"
-path="res://.godot/imported/deck_roughness.png-f5a2192839032bf2bcc2b7105455f68e.ctex"
+path="res://.godot/imported/deck_roughness.png-f3dec910f67f8ed678b11461dc87038e.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/deck_roughness.png"
-dest_files=["res://.godot/imported/deck_roughness.png-f5a2192839032bf2bcc2b7105455f68e.ctex"]
+dest_files=["res://.godot/imported/deck_roughness.png-f3dec910f67f8ed678b11461dc87038e.ctex"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bk0s8w8o5p7no"
-path="res://.godot/imported/talking_1.gltf-cba32dbac238daf84c7bcaa3c5406e06.scn"
+path="res://.godot/imported/talking_1.gltf-e08646b7eac675d5a56c517920ff7f93.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/talking_1.gltf"
-dest_files=["res://.godot/imported/talking_1.gltf-cba32dbac238daf84c7bcaa3c5406e06.scn"]
+dest_files=["res://.godot/imported/talking_1.gltf-e08646b7eac675d5a56c517920ff7f93.scn"]
 
 [params]
 

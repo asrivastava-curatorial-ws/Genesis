@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dufadg50tb7al"
-path="res://.godot/imported/fist_up_3.gltf-967841d800229e9367cfae446acfd7c8.scn"
+path="res://.godot/imported/fist_up_3.gltf-d2f45de226081414b9d888e147344cbb.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/fist_up_3.gltf"
-dest_files=["res://.godot/imported/fist_up_3.gltf-967841d800229e9367cfae446acfd7c8.scn"]
+dest_files=["res://.godot/imported/fist_up_3.gltf-d2f45de226081414b9d888e147344cbb.scn"]
 
 [params]
 

@@ -8,6 +8,8 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"
 GODOT="${GODOT:-godot}"
 TMP="$(mktemp -d)"
 cp -r "$HERE/project.godot" "$HERE/addons" "$TMP/"
+# The throwaway project holds only the plugin, not the standalone app.
+sed -i '/^run\/main_scene=/d' "$TMP/project.godot"
 mkdir -p "$TMP/addons/gn_selftest" && cp "$HERE/tests/selftest_plugin/"* "$TMP/addons/gn_selftest/"
 sed -i 's#enabled=PackedStringArray("res://addons/genesis/plugin.cfg")#enabled=PackedStringArray("res://addons/genesis/plugin.cfg", "res://addons/gn_selftest/plugin.cfg")#' "$TMP/project.godot"
 timeout 300 "$GODOT" --headless --editor --path "$TMP" > "$TMP/log.txt" 2>&1

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://jrbwv5ppxyb6"
-path="res://.godot/imported/camera_dolly_track.gltf-fda404e3bfa00b4edffddc0b21896f0f.scn"
+path="res://.godot/imported/camera_dolly_track.gltf-271f30f2c0a728b77166c6cdd94c27c9.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/camera_dolly_track.gltf"
-dest_files=["res://.godot/imported/camera_dolly_track.gltf-fda404e3bfa00b4edffddc0b21896f0f.scn"]
+dest_files=["res://.godot/imported/camera_dolly_track.gltf-271f30f2c0a728b77166c6cdd94c27c9.scn"]
 
 [params]
 

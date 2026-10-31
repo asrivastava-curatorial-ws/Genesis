@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cank4epx61ou6"
-path="res://.godot/imported/hands_on_hips_2.gltf-73a64694a594f848bd571b35f9328c56.scn"
+path="res://.godot/imported/hands_on_hips_2.gltf-928a35ce72f506f639fd04fc0d114f21.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/hands_on_hips_2.gltf"
-dest_files=["res://.godot/imported/hands_on_hips_2.gltf-73a64694a594f848bd571b35f9328c56.scn"]
+dest_files=["res://.godot/imported/hands_on_hips_2.gltf-928a35ce72f506f639fd04fc0d114f21.scn"]
 
 [params]
 

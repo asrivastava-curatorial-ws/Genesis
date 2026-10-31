@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clculeunwfmjh"
-path="res://.godot/imported/rubber_normal.jpg-02cd847b4b02f9825b7ab5e6159777fe.ctex"
+path="res://.godot/imported/rubber_normal.jpg-6b06705e573a8fab893d5372bd12d375.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/rubber_normal.jpg"
-dest_files=["res://.godot/imported/rubber_normal.jpg-02cd847b4b02f9825b7ab5e6159777fe.ctex"]
+dest_files=["res://.godot/imported/rubber_normal.jpg-6b06705e573a8fab893d5372bd12d375.ctex"]
 
 [params]
 

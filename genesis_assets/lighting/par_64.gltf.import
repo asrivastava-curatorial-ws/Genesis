@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cous15086x833"
-path="res://.godot/imported/par_64.gltf-5e6cd67733d1a10a024223d54a35e774.scn"
+path="res://.godot/imported/par_64.gltf-87132f5fc45e23036d1fc9c6c47393db.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/par_64.gltf"
-dest_files=["res://.godot/imported/par_64.gltf-5e6cd67733d1a10a024223d54a35e774.scn"]
+dest_files=["res://.godot/imported/par_64.gltf-87132f5fc45e23036d1fc9c6c47393db.scn"]
 
 [params]
 

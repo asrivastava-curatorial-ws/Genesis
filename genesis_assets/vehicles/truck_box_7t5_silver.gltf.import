@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cgjxumif08csu"
-path="res://.godot/imported/truck_box_7t5_silver.gltf-f7f6abda53c9d1cc30b91d446636a13e.scn"
+path="res://.godot/imported/truck_box_7t5_silver.gltf-3589e95e1bd7a4f07de16f4dc6eeb94e.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/truck_box_7t5_silver.gltf"
-dest_files=["res://.godot/imported/truck_box_7t5_silver.gltf-f7f6abda53c9d1cc30b91d446636a13e.scn"]
+dest_files=["res://.godot/imported/truck_box_7t5_silver.gltf-3589e95e1bd7a4f07de16f4dc6eeb94e.scn"]
 
 [params]
 

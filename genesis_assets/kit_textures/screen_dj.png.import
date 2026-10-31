@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://vahxvlwiv0ja"
-path="res://.godot/imported/screen_dj.png-799be7e39fc3ad4b8629869b4876d4a6.ctex"
+path="res://.godot/imported/screen_dj.png-c356528015ee9f0e2977d5374ab39f5c.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/screen_dj.png"
-dest_files=["res://.godot/imported/screen_dj.png-799be7e39fc3ad4b8629869b4876d4a6.ctex"]
+dest_files=["res://.godot/imported/screen_dj.png-c356528015ee9f0e2977d5374ab39f5c.ctex"]
 
 [params]
 

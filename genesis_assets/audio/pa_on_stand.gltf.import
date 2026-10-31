@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bc5u4w3i32e70"
-path="res://.godot/imported/pa_on_stand.gltf-aabac22b95f1f5d201f17805ff8f3f50.scn"
+path="res://.godot/imported/pa_on_stand.gltf-a7f87ff067e88fec7ed7328ac499e926.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/pa_on_stand.gltf"
-dest_files=["res://.godot/imported/pa_on_stand.gltf-aabac22b95f1f5d201f17805ff8f3f50.scn"]
+dest_files=["res://.godot/imported/pa_on_stand.gltf-a7f87ff067e88fec7ed7328ac499e926.scn"]
 
 [params]
 

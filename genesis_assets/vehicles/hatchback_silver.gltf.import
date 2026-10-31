@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://iq0ww122pb6h"
-path="res://.godot/imported/hatchback_silver.gltf-46763b93323d1a63c47a2f6304d976e2.scn"
+path="res://.godot/imported/hatchback_silver.gltf-21f8d104d91203ea3616b1edb9c99ac3.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/hatchback_silver.gltf"
-dest_files=["res://.godot/imported/hatchback_silver.gltf-46763b93323d1a63c47a2f6304d976e2.scn"]
+dest_files=["res://.godot/imported/hatchback_silver.gltf-21f8d104d91203ea3616b1edb9c99ac3.scn"]
 
 [params]
 

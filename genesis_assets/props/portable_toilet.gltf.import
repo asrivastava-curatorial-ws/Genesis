@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://8x2axlq42qib"
-path="res://.godot/imported/portable_toilet.gltf-0f3f391decddf1c5bb0ec9efcb886b3f.scn"
+path="res://.godot/imported/portable_toilet.gltf-d5a1f293974139eb9cb6f1086f186d7f.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/portable_toilet.gltf"
-dest_files=["res://.godot/imported/portable_toilet.gltf-0f3f391decddf1c5bb0ec9efcb886b3f.scn"]
+dest_files=["res://.godot/imported/portable_toilet.gltf-d5a1f293974139eb9cb6f1086f186d7f.scn"]
 
 [params]
 

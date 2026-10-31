@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://w6vaai7hp1iq"
-path="res://.godot/imported/camera_studio_zoom.gltf-a95bc52802de584770190ce486ac5b35.scn"
+path="res://.godot/imported/camera_studio_zoom.gltf-eb78946328d3b42299ad7c7623024ce3.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/camera_studio_zoom.gltf"
-dest_files=["res://.godot/imported/camera_studio_zoom.gltf-a95bc52802de584770190ce486ac5b35.scn"]
+dest_files=["res://.godot/imported/camera_studio_zoom.gltf-eb78946328d3b42299ad7c7623024ce3.scn"]
 
 [params]
 

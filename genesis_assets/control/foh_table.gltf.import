@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://rcpygfrqi67h"
-path="res://.godot/imported/foh_table.gltf-05c9427b915843d2c9f19427b08d4f5e.scn"
+path="res://.godot/imported/foh_table.gltf-291fd095289dbda6645680d193aaae22.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/foh_table.gltf"
-dest_files=["res://.godot/imported/foh_table.gltf-05c9427b915843d2c9f19427b08d4f5e.scn"]
+dest_files=["res://.godot/imported/foh_table.gltf-291fd095289dbda6645680d193aaae22.scn"]
 
 [params]
 

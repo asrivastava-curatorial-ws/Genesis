@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cr2uq7cub8dlu"
-path="res://.godot/imported/arms_crossed_1.gltf-1e03e267edc2bcd6d3734037d894eb0c.scn"
+path="res://.godot/imported/arms_crossed_1.gltf-b8fbe6c4f7137dbea24ab6fd6a7b3e32.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/arms_crossed_1.gltf"
-dest_files=["res://.godot/imported/arms_crossed_1.gltf-1e03e267edc2bcd6d3734037d894eb0c.scn"]
+dest_files=["res://.godot/imported/arms_crossed_1.gltf-b8fbe6c4f7137dbea24ab6fd6a7b3e32.scn"]
 
 [params]
 

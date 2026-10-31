@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://casuummkwm6s1"
-path="res://.godot/imported/table_trestle_6ft.gltf-998bce2578e10c01eca6a8872c30d9ef.scn"
+path="res://.godot/imported/table_trestle_6ft.gltf-534e07030f75c6ddb182793a6d93fcaa.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/table_trestle_6ft.gltf"
-dest_files=["res://.godot/imported/table_trestle_6ft.gltf-998bce2578e10c01eca6a8872c30d9ef.scn"]
+dest_files=["res://.godot/imported/table_trestle_6ft.gltf-534e07030f75c6ddb182793a6d93fcaa.scn"]
 
 [params]
 

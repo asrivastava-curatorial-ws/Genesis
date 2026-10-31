@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dvs3du02052x1"
-path="res://.godot/imported/generator_trailer_grey.gltf-1f4df3131443c568515d452188a4c803.scn"
+path="res://.godot/imported/generator_trailer_grey.gltf-52e3a76f48ea9664ce0d99c1d3238b71.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/generator_trailer_grey.gltf"
-dest_files=["res://.godot/imported/generator_trailer_grey.gltf-1f4df3131443c568515d452188a4c803.scn"]
+dest_files=["res://.godot/imported/generator_trailer_grey.gltf-52e3a76f48ea9664ce0d99c1d3238b71.scn"]
 
 [params]
 

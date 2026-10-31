@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b5vhygqty5cfb"
-path="res://.godot/imported/line_array_puma.gltf-dcd62f686494fdb2c41e753658db283b.scn"
+path="res://.godot/imported/line_array_puma.gltf-423ef566cc121464d9897504ebb3b955.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/line_array_puma.gltf"
-dest_files=["res://.godot/imported/line_array_puma.gltf-dcd62f686494fdb2c41e753658db283b.scn"]
+dest_files=["res://.godot/imported/line_array_puma.gltf-423ef566cc121464d9897504ebb3b955.scn"]
 
 [params]
 

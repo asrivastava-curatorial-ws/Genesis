@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://tqejulw76j33"
-path="res://.godot/imported/fabric_burgundy_roughness.jpg-d287149855656db2a07842dd3a7b57fa.ctex"
+path="res://.godot/imported/fabric_burgundy_roughness.jpg-8fb6aa1ac4502d800f3c7993b46b58c7.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/fabric_burgundy_roughness.jpg"
-dest_files=["res://.godot/imported/fabric_burgundy_roughness.jpg-d287149855656db2a07842dd3a7b57fa.ctex"]
+dest_files=["res://.godot/imported/fabric_burgundy_roughness.jpg-8fb6aa1ac4502d800f3c7993b46b58c7.ctex"]
 
 [params]
 

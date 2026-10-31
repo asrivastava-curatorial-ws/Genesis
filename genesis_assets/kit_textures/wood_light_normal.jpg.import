@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dfyj1bmjjgida"
-path="res://.godot/imported/wood_light_normal.jpg-3c7e4f95e9c16b5f11d7d50742eaa2bc.ctex"
+path="res://.godot/imported/wood_light_normal.jpg-c5496d6c2a501e48d09ecdf044521e40.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/wood_light_normal.jpg"
-dest_files=["res://.godot/imported/wood_light_normal.jpg-3c7e4f95e9c16b5f11d7d50742eaa2bc.ctex"]
+dest_files=["res://.godot/imported/wood_light_normal.jpg-c5496d6c2a501e48d09ecdf044521e40.ctex"]
 
 [params]
 

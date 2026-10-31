@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://i54nocqsbnbv"
-path="res://.godot/imported/media_server_small.gltf-8300d4f4af94ad9c483b490e8794051f.scn"
+path="res://.godot/imported/media_server_small.gltf-0c856c0038b5421c5242fc37e902f237.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/media_server_small.gltf"
-dest_files=["res://.godot/imported/media_server_small.gltf-8300d4f4af94ad9c483b490e8794051f.scn"]
+dest_files=["res://.godot/imported/media_server_small.gltf-0c856c0038b5421c5242fc37e902f237.scn"]
 
 [params]
 

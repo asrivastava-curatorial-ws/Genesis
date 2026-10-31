@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bve8gu3umuqdp"
-path="res://.godot/imported/sub_sl_cardio.gltf-53861058291728bacecffa705a64bafc.scn"
+path="res://.godot/imported/sub_sl_cardio.gltf-dc6af2a6954a982e8b0127a6c44c02cf.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/sub_sl_cardio.gltf"
-dest_files=["res://.godot/imported/sub_sl_cardio.gltf-53861058291728bacecffa705a64bafc.scn"]
+dest_files=["res://.godot/imported/sub_sl_cardio.gltf-dc6af2a6954a982e8b0127a6c44c02cf.scn"]
 
 [params]
 

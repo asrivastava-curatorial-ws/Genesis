@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dybwpg2urughy"
-path="res://.godot/imported/cheering_1.gltf-ad29b7c327e225ce5f1ce12389dee6a1.scn"
+path="res://.godot/imported/cheering_1.gltf-16a91b903c3a35ec8d68deb69dfc6b1c.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/cheering_1.gltf"
-dest_files=["res://.godot/imported/cheering_1.gltf-ad29b7c327e225ce5f1ce12389dee6a1.scn"]
+dest_files=["res://.godot/imported/cheering_1.gltf-16a91b903c3a35ec8d68deb69dfc6b1c.scn"]
 
 [params]
 

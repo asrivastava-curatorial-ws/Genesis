@@ -7,6 +7,8 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"
 GODOT="${GODOT:-godot}"
 TMP="$(mktemp -d)"
 cp -r "$HERE/project.godot" "$HERE/addons" "$HERE/genesis_assets" "$HERE/genesis_data" "$TMP/"
+# The throwaway project holds only the plugin, not the standalone app.
+sed -i '/^run\/main_scene=/d' "$TMP/project.godot"
 mkdir -p "$TMP/addons/gn_pm" && cp "$HERE/tests/photomatch_plugin/"* "$TMP/addons/gn_pm/"
 # First open only imports the assets, with the test still off.
 timeout 300 "$GODOT" --headless --editor --import --path "$TMP" > /dev/null 2>&1

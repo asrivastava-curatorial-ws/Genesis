@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://beh5igkrc333s"
-path="res://.godot/imported/audio_console_avidly_s7l.gltf-0e9d2d1aa0a6ce90a1cedd178743aed6.scn"
+path="res://.godot/imported/audio_console_avidly_s7l.gltf-312508a194d432129ce67c5c506c86d0.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/audio_console_avidly_s7l.gltf"
-dest_files=["res://.godot/imported/audio_console_avidly_s7l.gltf-0e9d2d1aa0a6ce90a1cedd178743aed6.scn"]
+dest_files=["res://.godot/imported/audio_console_avidly_s7l.gltf-312508a194d432129ce67c5c506c86d0.scn"]
 
 [params]
 

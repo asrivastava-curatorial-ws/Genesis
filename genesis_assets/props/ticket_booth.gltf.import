@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://de874eywwheb5"
-path="res://.godot/imported/ticket_booth.gltf-32f22a7edda267ab8ef41ea6faf21ac1.scn"
+path="res://.godot/imported/ticket_booth.gltf-6a917470103b9465c148fc944b27e54b.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/ticket_booth.gltf"
-dest_files=["res://.godot/imported/ticket_booth.gltf-32f22a7edda267ab8ef41ea6faf21ac1.scn"]
+dest_files=["res://.godot/imported/ticket_booth.gltf-6a917470103b9465c148fc944b27e54b.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bsn5iwfa8pcbf"
-path="res://.godot/imported/camera_ptz.gltf-417d04ee4e2b728ab77e1bb0e7e366d7.scn"
+path="res://.godot/imported/camera_ptz.gltf-fb78c17c731bd714b4e553fcfbc04a8c.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/camera_ptz.gltf"
-dest_files=["res://.godot/imported/camera_ptz.gltf-417d04ee4e2b728ab77e1bb0e7e366d7.scn"]
+dest_files=["res://.godot/imported/camera_ptz.gltf-fb78c17c731bd714b4e553fcfbc04a8c.scn"]
 
 [params]
 

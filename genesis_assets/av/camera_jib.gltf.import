@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://1eo7vlvwiemq"
-path="res://.godot/imported/camera_jib.gltf-f6e829948f4019d43d777bdc8b7e21d7.scn"
+path="res://.godot/imported/camera_jib.gltf-494fa1387d9ba4dd709b279081d71ad6.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/camera_jib.gltf"
-dest_files=["res://.godot/imported/camera_jib.gltf-f6e829948f4019d43d777bdc8b7e21d7.scn"]
+dest_files=["res://.godot/imported/camera_jib.gltf-494fa1387d9ba4dd709b279081d71ad6.scn"]
 
 [params]
 

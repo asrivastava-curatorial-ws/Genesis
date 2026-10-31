@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cejbc6ygidyj0"
-path="res://.godot/imported/wash_impresso.gltf-9df44cba37128de76892633cbafbc529.scn"
+path="res://.godot/imported/wash_impresso.gltf-9c8a8cbce5d1e9f2b02788f1c6a6ceb7.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/wash_impresso.gltf"
-dest_files=["res://.godot/imported/wash_impresso.gltf-9df44cba37128de76892633cbafbc529.scn"]
+dest_files=["res://.godot/imported/wash_impresso.gltf-9c8a8cbce5d1e9f2b02788f1c6a6ceb7.scn"]
 
 [params]
 

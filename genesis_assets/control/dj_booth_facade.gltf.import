@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://crljtxpt4md7y"
-path="res://.godot/imported/dj_booth_facade.gltf-c1f0fccba2aa7e03b39eb62b4bbe51dd.scn"
+path="res://.godot/imported/dj_booth_facade.gltf-7a85182d2e3f0ba86c1e2d8c65c559ca.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/dj_booth_facade.gltf"
-dest_files=["res://.godot/imported/dj_booth_facade.gltf-c1f0fccba2aa7e03b39eb62b4bbe51dd.scn"]
+dest_files=["res://.godot/imported/dj_booth_facade.gltf-7a85182d2e3f0ba86c1e2d8c65c559ca.scn"]
 
 [params]
 

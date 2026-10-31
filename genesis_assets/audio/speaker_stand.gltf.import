@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://16ukbvr8id2i"
-path="res://.godot/imported/speaker_stand.gltf-bac078ace4e6f8254e7819f21d1552a3.scn"
+path="res://.godot/imported/speaker_stand.gltf-6de4db9a698690b3990c715a5b27dff9.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/speaker_stand.gltf"
-dest_files=["res://.godot/imported/speaker_stand.gltf-bac078ace4e6f8254e7819f21d1552a3.scn"]
+dest_files=["res://.godot/imported/speaker_stand.gltf-6de4db9a698690b3990c715a5b27dff9.scn"]
 
 [params]
 

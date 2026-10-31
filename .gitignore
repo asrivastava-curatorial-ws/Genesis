@@ -21,3 +21,4 @@ __pycache__/
 /private-notes/
 # Per-machine test settings (the path to Godot).
 /tests/local.env
+/build/

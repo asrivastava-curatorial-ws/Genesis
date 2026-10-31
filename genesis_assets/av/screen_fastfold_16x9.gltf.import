@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bkk6f61enxsjt"
-path="res://.godot/imported/screen_fastfold_16x9.gltf-039a34673c087a90305b3ab61473c976.scn"
+path="res://.godot/imported/screen_fastfold_16x9.gltf-eb30960db9a8128215289761cc6d6dfb.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/screen_fastfold_16x9.gltf"
-dest_files=["res://.godot/imported/screen_fastfold_16x9.gltf-039a34673c087a90305b3ab61473c976.scn"]
+dest_files=["res://.godot/imported/screen_fastfold_16x9.gltf-eb30960db9a8128215289761cc6d6dfb.scn"]
 
 [params]
 

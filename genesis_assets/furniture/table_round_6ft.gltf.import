@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://djkes5a463i5s"
-path="res://.godot/imported/table_round_6ft.gltf-6d0de5ddc05bd3bc0441314c24ed7d3e.scn"
+path="res://.godot/imported/table_round_6ft.gltf-762899e47612bdd961a47a346862c0df.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/table_round_6ft.gltf"
-dest_files=["res://.godot/imported/table_round_6ft.gltf-6d0de5ddc05bd3bc0441314c24ed7d3e.scn"]
+dest_files=["res://.godot/imported/table_round_6ft.gltf-762899e47612bdd961a47a346862c0df.scn"]
 
 [params]
 

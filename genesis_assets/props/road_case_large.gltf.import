@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://d4f8aynqaamh0"
-path="res://.godot/imported/road_case_large.gltf-428185776095a51eac0a6c4312d8ff5c.scn"
+path="res://.godot/imported/road_case_large.gltf-4e2e4d77c972af56c3da989eabfbbaa5.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/road_case_large.gltf"
-dest_files=["res://.godot/imported/road_case_large.gltf-428185776095a51eac0a6c4312d8ff5c.scn"]
+dest_files=["res://.godot/imported/road_case_large.gltf-4e2e4d77c972af56c3da989eabfbbaa5.scn"]
 
 [params]
 

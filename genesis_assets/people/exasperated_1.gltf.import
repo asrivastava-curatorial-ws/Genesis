@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://muteswctm3ip"
-path="res://.godot/imported/exasperated_1.gltf-d3eedc47b4885bc313ac4d31593349f1.scn"
+path="res://.godot/imported/exasperated_1.gltf-4e1e8a4817c0140eced0745ab76a0100.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/exasperated_1.gltf"
-dest_files=["res://.godot/imported/exasperated_1.gltf-d3eedc47b4885bc313ac4d31593349f1.scn"]
+dest_files=["res://.godot/imported/exasperated_1.gltf-4e1e8a4817c0140eced0745ab76a0100.scn"]
 
 [params]
 

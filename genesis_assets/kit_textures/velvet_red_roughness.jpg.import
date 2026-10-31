@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://nwk00oovmfhc"
-path="res://.godot/imported/velvet_red_roughness.jpg-281ab182c45d6cc1de4c30e0ec43137b.ctex"
+path="res://.godot/imported/velvet_red_roughness.jpg-975bbf5b8368965cf8b46874867bbf1f.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/velvet_red_roughness.jpg"
-dest_files=["res://.godot/imported/velvet_red_roughness.jpg-281ab182c45d6cc1de4c30e0ec43137b.ctex"]
+dest_files=["res://.godot/imported/velvet_red_roughness.jpg-975bbf5b8368965cf8b46874867bbf1f.ctex"]
 
 [params]
 

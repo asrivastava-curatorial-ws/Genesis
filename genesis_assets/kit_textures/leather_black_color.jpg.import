@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c3qfa6in82oba"
-path="res://.godot/imported/leather_black_color.jpg-7b96be1fc2b4b8a8909937136c381c49.ctex"
+path="res://.godot/imported/leather_black_color.jpg-07bf6542ac60de746390d4ce6c901139.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/leather_black_color.jpg"
-dest_files=["res://.godot/imported/leather_black_color.jpg-7b96be1fc2b4b8a8909937136c381c49.ctex"]
+dest_files=["res://.godot/imported/leather_black_color.jpg-07bf6542ac60de746390d4ce6c901139.ctex"]
 
 [params]
 

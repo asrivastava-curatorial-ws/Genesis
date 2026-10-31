@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b3mkk74lefrp2"
-path="res://.godot/imported/walking_1.gltf-0a19d99b457c1bf3e8bcbf3c69943528.scn"
+path="res://.godot/imported/walking_1.gltf-44e6da002ca898c2915e33aea4e08ac2.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/walking_1.gltf"
-dest_files=["res://.godot/imported/walking_1.gltf-0a19d99b457c1bf3e8bcbf3c69943528.scn"]
+dest_files=["res://.godot/imported/walking_1.gltf-44e6da002ca898c2915e33aea4e08ac2.scn"]
 
 [params]
 

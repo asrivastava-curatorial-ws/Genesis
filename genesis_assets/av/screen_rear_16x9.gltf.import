@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dl5evuhqigdsn"
-path="res://.godot/imported/screen_rear_16x9.gltf-d1f8e0d641f76f7bb28fbcb938f6cceb.scn"
+path="res://.godot/imported/screen_rear_16x9.gltf-2c8c9113acc0159da8dba6a82145974f.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/screen_rear_16x9.gltf"
-dest_files=["res://.godot/imported/screen_rear_16x9.gltf-d1f8e0d641f76f7bb28fbcb938f6cceb.scn"]
+dest_files=["res://.godot/imported/screen_rear_16x9.gltf-2c8c9113acc0159da8dba6a82145974f.scn"]
 
 [params]
 

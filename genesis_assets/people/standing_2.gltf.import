@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://hpy2u6abdvm7"
-path="res://.godot/imported/standing_2.gltf-ddf3b08eae723df3ea9976a7ab6a37f9.scn"
+path="res://.godot/imported/standing_2.gltf-a16099ca3cc0378493094a0256d5c300.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/standing_2.gltf"
-dest_files=["res://.godot/imported/standing_2.gltf-ddf3b08eae723df3ea9976a7ab6a37f9.scn"]
+dest_files=["res://.godot/imported/standing_2.gltf-a16099ca3cc0378493094a0256d5c300.scn"]
 
 [params]
 

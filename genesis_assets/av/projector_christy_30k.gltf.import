@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://do7u6pvldmeau"
-path="res://.godot/imported/projector_christy_30k.gltf-061b96f61f79afea42d6153ecdfd3056.scn"
+path="res://.godot/imported/projector_christy_30k.gltf-89b6abfebffc8eeeaa33f535da872084.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/projector_christy_30k.gltf"
-dest_files=["res://.godot/imported/projector_christy_30k.gltf-061b96f61f79afea42d6153ecdfd3056.scn"]
+dest_files=["res://.godot/imported/projector_christy_30k.gltf-89b6abfebffc8eeeaa33f535da872084.scn"]
 
 [params]
 

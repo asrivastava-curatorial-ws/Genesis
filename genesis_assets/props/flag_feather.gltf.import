@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bvgijkx2g6fqq"
-path="res://.godot/imported/flag_feather.gltf-4f5fa1f300786e6e50b7627b2a37977f.scn"
+path="res://.godot/imported/flag_feather.gltf-24c724f62fc8e8cd91cf1a18f0aaf426.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/flag_feather.gltf"
-dest_files=["res://.godot/imported/flag_feather.gltf-4f5fa1f300786e6e50b7627b2a37977f.scn"]
+dest_files=["res://.godot/imported/flag_feather.gltf-24c724f62fc8e8cd91cf1a18f0aaf426.scn"]
 
 [params]
 

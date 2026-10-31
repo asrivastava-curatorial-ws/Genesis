@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b0jdnk5ti2d57"
-path="res://.godot/imported/table_cocktail.gltf-392d6537343b40bed3bad98fcce5e790.scn"
+path="res://.godot/imported/table_cocktail.gltf-59063b590ed78b647ef2e345a2503044.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/table_cocktail.gltf"
-dest_files=["res://.godot/imported/table_cocktail.gltf-392d6537343b40bed3bad98fcce5e790.scn"]
+dest_files=["res://.godot/imported/table_cocktail.gltf-59063b590ed78b647ef2e345a2503044.scn"]
 
 [params]
 

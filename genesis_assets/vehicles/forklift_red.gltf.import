@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://baykixewnvhim"
-path="res://.godot/imported/forklift_red.gltf-68554fc4442c946d8644411945c0d898.scn"
+path="res://.godot/imported/forklift_red.gltf-c925a973acb1aedf27caf8e39b166683.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/forklift_red.gltf"
-dest_files=["res://.godot/imported/forklift_red.gltf-68554fc4442c946d8644411945c0d898.scn"]
+dest_files=["res://.godot/imported/forklift_red.gltf-c925a973acb1aedf27caf8e39b166683.scn"]
 
 [params]
 

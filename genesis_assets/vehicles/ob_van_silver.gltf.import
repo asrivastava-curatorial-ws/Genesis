@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://d15slcse1cjn8"
-path="res://.godot/imported/ob_van_silver.gltf-4990f2db001c9c0d57b75e4cb8faa335.scn"
+path="res://.godot/imported/ob_van_silver.gltf-91b19560f1b71b155a76c257d0094cae.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/ob_van_silver.gltf"
-dest_files=["res://.godot/imported/ob_van_silver.gltf-4990f2db001c9c0d57b75e4cb8faa335.scn"]
+dest_files=["res://.godot/imported/ob_van_silver.gltf-91b19560f1b71b155a76c257d0094cae.scn"]
 
 [params]
 

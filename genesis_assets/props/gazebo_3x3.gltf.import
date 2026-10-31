@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cni2e73q6hkvv"
-path="res://.godot/imported/gazebo_3x3.gltf-024ef4157e758c3301f8ccdcd578708a.scn"
+path="res://.godot/imported/gazebo_3x3.gltf-8eb7adb952603f1d7163fc30e7c0945c.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/gazebo_3x3.gltf"
-dest_files=["res://.godot/imported/gazebo_3x3.gltf-024ef4157e758c3301f8ccdcd578708a.scn"]
+dest_files=["res://.godot/imported/gazebo_3x3.gltf-8eb7adb952603f1d7163fc30e7c0945c.scn"]
 
 [params]
 

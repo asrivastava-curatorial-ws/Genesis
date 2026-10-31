@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dhnrmkw8vxnas"
-path="res://.godot/imported/dj_turntable.gltf-803dcc29e01c29e4d3f84e3c75f2a60e.scn"
+path="res://.godot/imported/dj_turntable.gltf-7cbb496d4bb1b66f77204b37bb0a3268.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/dj_turntable.gltf"
-dest_files=["res://.godot/imported/dj_turntable.gltf-803dcc29e01c29e4d3f84e3c75f2a60e.scn"]
+dest_files=["res://.godot/imported/dj_turntable.gltf-7cbb496d4bb1b66f77204b37bb0a3268.scn"]
 
 [params]
 

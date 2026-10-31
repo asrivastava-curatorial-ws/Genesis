@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://djp7rj8a6rh7k"
-path="res://.godot/imported/audio_console_yamanaka_cl6.gltf-bdf85a2cc78c8801e87ebbca85a1febe.scn"
+path="res://.godot/imported/audio_console_yamanaka_cl6.gltf-949cf22ad6166dff9d505b0e9cbc5f0a.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/audio_console_yamanaka_cl6.gltf"
-dest_files=["res://.godot/imported/audio_console_yamanaka_cl6.gltf-bdf85a2cc78c8801e87ebbca85a1febe.scn"]
+dest_files=["res://.godot/imported/audio_console_yamanaka_cl6.gltf-949cf22ad6166dff9d505b0e9cbc5f0a.scn"]
 
 [params]
 

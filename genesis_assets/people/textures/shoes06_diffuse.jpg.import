@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b4mgqowww257p"
-path.s3tc="res://.godot/imported/shoes06_diffuse.jpg-183c0ae2490d4b7a548f8d2788b61e0a.s3tc.ctex"
+path.s3tc="res://.godot/imported/shoes06_diffuse.jpg-0e0acd8875f32094aae465e7b06ad872.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/shoes06_diffuse.jpg"
-dest_files=["res://.godot/imported/shoes06_diffuse.jpg-183c0ae2490d4b7a548f8d2788b61e0a.s3tc.ctex"]
+dest_files=["res://.godot/imported/shoes06_diffuse.jpg-0e0acd8875f32094aae465e7b06ad872.s3tc.ctex"]
 
 [params]
 

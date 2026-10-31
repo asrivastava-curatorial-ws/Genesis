@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dyd3d8v4s4uo4"
-path="res://.godot/imported/wash_diablito.gltf-4ec2c1e1f6beaef62fe970e21203fb15.scn"
+path="res://.godot/imported/wash_diablito.gltf-c6a1a3478468dd0510e57c2e9247f97e.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/wash_diablito.gltf"
-dest_files=["res://.godot/imported/wash_diablito.gltf-4ec2c1e1f6beaef62fe970e21203fb15.scn"]
+dest_files=["res://.godot/imported/wash_diablito.gltf-c6a1a3478468dd0510e57c2e9247f97e.scn"]
 
 [params]
 

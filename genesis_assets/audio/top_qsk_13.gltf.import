@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dpkcantn47ybt"
-path="res://.godot/imported/top_qsk_13.gltf-0995c2a9fa9d62fbd288fb412cd78c9e.scn"
+path="res://.godot/imported/top_qsk_13.gltf-1ee8993e64c48c021e0be4a7358c06be.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/top_qsk_13.gltf"
-dest_files=["res://.godot/imported/top_qsk_13.gltf-0995c2a9fa9d62fbd288fb412cd78c9e.scn"]
+dest_files=["res://.godot/imported/top_qsk_13.gltf-1ee8993e64c48c021e0be4a7358c06be.scn"]
 
 [params]
 

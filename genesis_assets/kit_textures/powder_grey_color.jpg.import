@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dethgicfybolu"
-path="res://.godot/imported/powder_grey_color.jpg-3f4296b5a826971a3ab1c995dafe5930.ctex"
+path="res://.godot/imported/powder_grey_color.jpg-8c0ee9259fc728da1b6d9cc74ec76469.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/powder_grey_color.jpg"
-dest_files=["res://.godot/imported/powder_grey_color.jpg-3f4296b5a826971a3ab1c995dafe5930.ctex"]
+dest_files=["res://.godot/imported/powder_grey_color.jpg-8c0ee9259fc728da1b6d9cc74ec76469.ctex"]
 
 [params]
 

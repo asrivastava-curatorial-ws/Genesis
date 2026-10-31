@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bov2xkjpojlpx"
-path="res://.godot/imported/wash_aurora.gltf-032508567b554d8f770643c0037656f9.scn"
+path="res://.godot/imported/wash_aurora.gltf-1ef7a809fb6e4e4989ba199ca5b00d0d.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/wash_aurora.gltf"
-dest_files=["res://.godot/imported/wash_aurora.gltf-032508567b554d8f770643c0037656f9.scn"]
+dest_files=["res://.godot/imported/wash_aurora.gltf-1ef7a809fb6e4e4989ba199ca5b00d0d.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bxh2kfxdpsla8"
-path="res://.godot/imported/strobe_atomik.gltf-a8daf2bff361ef8deb56c5a5fb2da58c.scn"
+path="res://.godot/imported/strobe_atomik.gltf-27dfa09fc23c6c51542d26bb7ab87f05.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/strobe_atomik.gltf"
-dest_files=["res://.godot/imported/strobe_atomik.gltf-a8daf2bff361ef8deb56c5a5fb2da58c.scn"]
+dest_files=["res://.godot/imported/strobe_atomik.gltf-27dfa09fc23c6c51542d26bb7ab87f05.scn"]
 
 [params]
 

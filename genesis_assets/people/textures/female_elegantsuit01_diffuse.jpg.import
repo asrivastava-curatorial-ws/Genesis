@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cg0jfuqb1cxhd"
-path.s3tc="res://.godot/imported/female_elegantsuit01_diffuse.jpg-3510097d7ca4a357b04fe43550d4f74c.s3tc.ctex"
+path.s3tc="res://.godot/imported/female_elegantsuit01_diffuse.jpg-51c05d9672ed75928c0a2959383ce9a0.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/female_elegantsuit01_diffuse.jpg"
-dest_files=["res://.godot/imported/female_elegantsuit01_diffuse.jpg-3510097d7ca4a357b04fe43550d4f74c.s3tc.ctex"]
+dest_files=["res://.godot/imported/female_elegantsuit01_diffuse.jpg-51c05d9672ed75928c0a2959383ce9a0.s3tc.ctex"]
 
 [params]
 

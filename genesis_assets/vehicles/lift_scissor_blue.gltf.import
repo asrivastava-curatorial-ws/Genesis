@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bojqa8hj7jb2g"
-path="res://.godot/imported/lift_scissor_blue.gltf-cc0a7e9b909d5f666ee19eeb89c720e9.scn"
+path="res://.godot/imported/lift_scissor_blue.gltf-0e1974a373f97cf44152f65ed82fa51d.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/lift_scissor_blue.gltf"
-dest_files=["res://.godot/imported/lift_scissor_blue.gltf-cc0a7e9b909d5f666ee19eeb89c720e9.scn"]
+dest_files=["res://.godot/imported/lift_scissor_blue.gltf-0e1974a373f97cf44152f65ed82fa51d.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://d3qr1bb1x2a1m"
-path="res://.godot/imported/profile_source_five.gltf-d82985dd4e7d0ddff4203b7b8eb23709.scn"
+path="res://.godot/imported/profile_source_five.gltf-e764be3b75ab62ed121270b3de726c3a.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/profile_source_five.gltf"
-dest_files=["res://.godot/imported/profile_source_five.gltf-d82985dd4e7d0ddff4203b7b8eb23709.scn"]
+dest_files=["res://.godot/imported/profile_source_five.gltf-e764be3b75ab62ed121270b3de726c3a.scn"]
 
 [params]
 

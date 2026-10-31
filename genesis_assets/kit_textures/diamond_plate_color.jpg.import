@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://di1jax0q6ecor"
-path="res://.godot/imported/diamond_plate_color.jpg-00595799438b91d3e6a6c6d5d6fec406.ctex"
+path="res://.godot/imported/diamond_plate_color.jpg-9ab46d3e98581cca81e7154beada660b.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/diamond_plate_color.jpg"
-dest_files=["res://.godot/imported/diamond_plate_color.jpg-00595799438b91d3e6a6c6d5d6fec406.ctex"]
+dest_files=["res://.godot/imported/diamond_plate_color.jpg-9ab46d3e98581cca81e7154beada660b.ctex"]
 
 [params]
 

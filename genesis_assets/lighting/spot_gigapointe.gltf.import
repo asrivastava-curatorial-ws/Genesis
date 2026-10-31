@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://ca5uo8efaa7ul"
-path="res://.godot/imported/spot_gigapointe.gltf-e213b0251ef76cc2961c9e79f7704bb3.scn"
+path="res://.godot/imported/spot_gigapointe.gltf-9a2122dd2072ea78da81f2879fb948a5.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/spot_gigapointe.gltf"
-dest_files=["res://.godot/imported/spot_gigapointe.gltf-e213b0251ef76cc2961c9e79f7704bb3.scn"]
+dest_files=["res://.godot/imported/spot_gigapointe.gltf-9a2122dd2072ea78da81f2879fb948a5.scn"]
 
 [params]
 

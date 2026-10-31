@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bh2dvy0nck518"
-path="res://.godot/imported/prompter_glass.gltf-6ee90eb1189f6e26c4da0502dcb814d9.scn"
+path="res://.godot/imported/prompter_glass.gltf-0ed6dc92700318a870640a78443c892b.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/prompter_glass.gltf"
-dest_files=["res://.godot/imported/prompter_glass.gltf-6ee90eb1189f6e26c4da0502dcb814d9.scn"]
+dest_files=["res://.godot/imported/prompter_glass.gltf-0ed6dc92700318a870640a78443c892b.scn"]
 
 [params]
 

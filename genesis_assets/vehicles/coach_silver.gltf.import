@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://biowaby03x3ax"
-path="res://.godot/imported/coach_silver.gltf-57ff1fcf8f645801f1d51fa3725ecc9b.scn"
+path="res://.godot/imported/coach_silver.gltf-bee89039e7fd28af3bef10753b456a09.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/coach_silver.gltf"
-dest_files=["res://.godot/imported/coach_silver.gltf-57ff1fcf8f645801f1d51fa3725ecc9b.scn"]
+dest_files=["res://.godot/imported/coach_silver.gltf-bee89039e7fd28af3bef10753b456a09.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cso4k7l7hp87b"
-path="res://.godot/imported/stretch_tent_10x15.gltf-76ba83cee1efc12118da00b32a03880d.scn"
+path="res://.godot/imported/stretch_tent_10x15.gltf-084e828bfa6893d4a510d25ec02bc361.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/stretch_tent_10x15.gltf"
-dest_files=["res://.godot/imported/stretch_tent_10x15.gltf-76ba83cee1efc12118da00b32a03880d.scn"]
+dest_files=["res://.godot/imported/stretch_tent_10x15.gltf-084e828bfa6893d4a510d25ec02bc361.scn"]
 
 [params]
 

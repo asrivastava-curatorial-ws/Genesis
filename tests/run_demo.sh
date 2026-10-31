@@ -9,6 +9,8 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"
 GODOT="${GODOT:-godot}"
 TMP="$(mktemp -d)"
 cp -r "$HERE/project.godot" "$HERE/addons" "$HERE/genesis_assets" "$HERE/genesis_data" "$TMP/"
+# The throwaway project holds only the plugin, not the standalone app.
+sed -i '/^run\/main_scene=/d' "$TMP/project.godot"
 mkdir -p "$TMP/addons/gn_demo" && cp "$HERE/tests/demo_plugin/"* "$TMP/addons/gn_demo/"
 # First open only imports the assets, with the demo builder still off;
 # otherwise it runs twice and the editor reopens the half-built scene.

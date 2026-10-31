@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://xq2a1arqt0k3"
-path="res://.godot/imported/wood_light_roughness.jpg-b30ae06ef84b09187e42ef1ac0a38caf.ctex"
+path="res://.godot/imported/wood_light_roughness.jpg-a18b45f9318432983b12211d08048695.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/wood_light_roughness.jpg"
-dest_files=["res://.godot/imported/wood_light_roughness.jpg-b30ae06ef84b09187e42ef1ac0a38caf.ctex"]
+dest_files=["res://.godot/imported/wood_light_roughness.jpg-a18b45f9318432983b12211d08048695.ctex"]
 
 [params]
 

@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cxd8nvgrmf7xl"
-path="res://.godot/imported/rubber_roughness.jpg-781ca57f237815b9aef0c856e1c63b7d.ctex"
+path="res://.godot/imported/rubber_roughness.jpg-903ea7bc9b94d90b9b2663d96ae4e5bf.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/rubber_roughness.jpg"
-dest_files=["res://.godot/imported/rubber_roughness.jpg-781ca57f237815b9aef0c856e1c63b7d.ctex"]
+dest_files=["res://.godot/imported/rubber_roughness.jpg-903ea7bc9b94d90b9b2663d96ae4e5bf.ctex"]
 
 [params]
 

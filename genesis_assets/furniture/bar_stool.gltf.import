@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bccqd5rnxjna"
-path="res://.godot/imported/bar_stool.gltf-628854a7069b97cef006b5bd48596763.scn"
+path="res://.godot/imported/bar_stool.gltf-dff01fde5e4993482e07a1405eef28dd.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/bar_stool.gltf"
-dest_files=["res://.godot/imported/bar_stool.gltf-628854a7069b97cef006b5bd48596763.scn"]
+dest_files=["res://.godot/imported/bar_stool.gltf-dff01fde5e4993482e07a1405eef28dd.scn"]
 
 [params]
 

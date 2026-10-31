@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bydb6co75ohsc"
-path="res://.godot/imported/linen_normal.jpg-226761bd0b4e2ed34580b1b1ad1c0786.ctex"
+path="res://.godot/imported/linen_normal.jpg-5302c4957d5997306167f685f635cb82.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/linen_normal.jpg"
-dest_files=["res://.godot/imported/linen_normal.jpg-226761bd0b4e2ed34580b1b1ad1c0786.ctex"]
+dest_files=["res://.godot/imported/linen_normal.jpg-5302c4957d5997306167f685f635cb82.ctex"]
 
 [params]
 

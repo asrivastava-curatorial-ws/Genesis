@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://butog7g885ut0"
-path="res://.godot/imported/estate_silver.gltf-827c15cfcc4d16fa15f0e8cc51ef085b.scn"
+path="res://.godot/imported/estate_silver.gltf-0590a143dc0875bdbaf6d6d1b7e199a4.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/estate_silver.gltf"
-dest_files=["res://.godot/imported/estate_silver.gltf-827c15cfcc4d16fa15f0e8cc51ef085b.scn"]
+dest_files=["res://.godot/imported/estate_silver.gltf-0590a143dc0875bdbaf6d6d1b7e199a4.scn"]
 
 [params]
 

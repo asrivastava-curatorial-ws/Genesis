@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://ch4gg1yd5dj03"
-path="res://.godot/imported/projector_panorama_20k.gltf-b62cc7bc3e660dc6fbb6e867e0a3b534.scn"
+path="res://.godot/imported/projector_panorama_20k.gltf-d1b0a2a1e9938f62f34ce8c4f824d96c.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/projector_panorama_20k.gltf"
-dest_files=["res://.godot/imported/projector_panorama_20k.gltf-b62cc7bc3e660dc6fbb6e867e0a3b534.scn"]
+dest_files=["res://.godot/imported/projector_panorama_20k.gltf-d1b0a2a1e9938f62f34ce8c4f824d96c.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://df8plsyswrowf"
-path="res://.godot/imported/relaxed_1.gltf-ef7790197dfc81dbf6ceacffe0e522ac.scn"
+path="res://.godot/imported/relaxed_1.gltf-84719aece5936373ca20d9a8ca207178.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/relaxed_1.gltf"
-dest_files=["res://.godot/imported/relaxed_1.gltf-ef7790197dfc81dbf6ceacffe0e522ac.scn"]
+dest_files=["res://.godot/imported/relaxed_1.gltf-84719aece5936373ca20d9a8ca207178.scn"]
 
 [params]
 

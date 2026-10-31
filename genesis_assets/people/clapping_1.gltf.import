@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://das1s4b0g3v0f"
-path="res://.godot/imported/clapping_1.gltf-0c8a460db921f7ae2c98ba06180440d5.scn"
+path="res://.godot/imported/clapping_1.gltf-f9805e3713a9a5435cf3f866cbc43b25.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/clapping_1.gltf"
-dest_files=["res://.godot/imported/clapping_1.gltf-0c8a460db921f7ae2c98ba06180440d5.scn"]
+dest_files=["res://.godot/imported/clapping_1.gltf-f9805e3713a9a5435cf3f866cbc43b25.scn"]
 
 [params]
 

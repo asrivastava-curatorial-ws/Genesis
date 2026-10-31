@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b8g7q06thln4s"
-path="res://.godot/imported/projector_meeting.gltf-d173677542e4a0e65286becc3c48d478.scn"
+path="res://.godot/imported/projector_meeting.gltf-c1d55f200813f702d2b0c85276e06624.scn"
 
 [deps]
 
 source_file="res://genesis_assets/av/projector_meeting.gltf"
-dest_files=["res://.godot/imported/projector_meeting.gltf-d173677542e4a0e65286becc3c48d478.scn"]
+dest_files=["res://.godot/imported/projector_meeting.gltf-c1d55f200813f702d2b0c85276e06624.scn"]
 
 [params]
 

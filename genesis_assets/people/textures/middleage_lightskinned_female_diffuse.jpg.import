@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c4qsjxhgh6c6t"
-path.s3tc="res://.godot/imported/middleage_lightskinned_female_diffuse.jpg-cf77798c5caa572f1376faec7d3303ba.s3tc.ctex"
+path.s3tc="res://.godot/imported/middleage_lightskinned_female_diffuse.jpg-50306b424473c54f7444cc5b617e5bc8.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/middleage_lightskinned_female_diffuse.jpg"
-dest_files=["res://.godot/imported/middleage_lightskinned_female_diffuse.jpg-cf77798c5caa572f1376faec7d3303ba.s3tc.ctex"]
+dest_files=["res://.godot/imported/middleage_lightskinned_female_diffuse.jpg-50306b424473c54f7444cc5b617e5bc8.s3tc.ctex"]
 
 [params]
 

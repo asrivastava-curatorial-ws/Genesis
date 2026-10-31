@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bqia2fld04va7"
-path.s3tc="res://.godot/imported/eyebrow009.png-81b57028d3272cbf61465fc7d1565e2a.s3tc.ctex"
+path.s3tc="res://.godot/imported/eyebrow009.png-ff84492b6a1a4e141f9c5ebcbab546fd.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,7 +12,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/people/textures/eyebrow009.png"
-dest_files=["res://.godot/imported/eyebrow009.png-81b57028d3272cbf61465fc7d1565e2a.s3tc.ctex"]
+dest_files=["res://.godot/imported/eyebrow009.png-ff84492b6a1a4e141f9c5ebcbab546fd.s3tc.ctex"]
 
 [params]
 

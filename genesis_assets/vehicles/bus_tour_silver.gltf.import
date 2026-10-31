@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://txvuof6hwb58"
-path="res://.godot/imported/bus_tour_silver.gltf-6bfc49d3c19ea8d4aac6cac1cecedbe3.scn"
+path="res://.godot/imported/bus_tour_silver.gltf-e00948b69beef55573d3e2d85f6a86e7.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/bus_tour_silver.gltf"
-dest_files=["res://.godot/imported/bus_tour_silver.gltf-6bfc49d3c19ea8d4aac6cac1cecedbe3.scn"]
+dest_files=["res://.godot/imported/bus_tour_silver.gltf-e00948b69beef55573d3e2d85f6a86e7.scn"]
 
 [params]
 

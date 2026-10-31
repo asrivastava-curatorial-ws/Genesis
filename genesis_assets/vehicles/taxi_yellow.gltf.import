@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dmg8kxew8wwxp"
-path="res://.godot/imported/taxi_yellow.gltf-bf68a176578b7efbe43d9c59e3cba87b.scn"
+path="res://.godot/imported/taxi_yellow.gltf-d40d0ab98a0d1c5d62227ee306f68d90.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/taxi_yellow.gltf"
-dest_files=["res://.godot/imported/taxi_yellow.gltf-bf68a176578b7efbe43d9c59e3cba87b.scn"]
+dest_files=["res://.godot/imported/taxi_yellow.gltf-d40d0ab98a0d1c5d62227ee306f68d90.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cus3yvexhpk3c"
-path="res://.godot/imported/fresnel_1k.gltf-58dbc560ee11079fd3fe338e347d1e70.scn"
+path="res://.godot/imported/fresnel_1k.gltf-1e33d5d09d105aa2a9ecf60e383955cf.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/fresnel_1k.gltf"
-dest_files=["res://.godot/imported/fresnel_1k.gltf-58dbc560ee11079fd3fe338e347d1e70.scn"]
+dest_files=["res://.godot/imported/fresnel_1k.gltf-1e33d5d09d105aa2a9ecf60e383955cf.scn"]
 
 [params]
 

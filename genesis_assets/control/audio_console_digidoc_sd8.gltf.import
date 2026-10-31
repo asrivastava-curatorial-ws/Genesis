@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cyadwl3y4wwoq"
-path="res://.godot/imported/audio_console_digidoc_sd8.gltf-3841946cae4654676817b8aa281827f7.scn"
+path="res://.godot/imported/audio_console_digidoc_sd8.gltf-4c49cdad5c93b3c768c0cb92a49e7fee.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/audio_console_digidoc_sd8.gltf"
-dest_files=["res://.godot/imported/audio_console_digidoc_sd8.gltf-3841946cae4654676817b8aa281827f7.scn"]
+dest_files=["res://.godot/imported/audio_console_digidoc_sd8.gltf-4c49cdad5c93b3c768c0cb92a49e7fee.scn"]
 
 [params]
 

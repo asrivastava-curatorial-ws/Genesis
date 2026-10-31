@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://koi6bds6f214"
-path="res://.godot/imported/dj_booth_shroud.gltf-2d27e8ffef202e0da5ef047847ea6e49.scn"
+path="res://.godot/imported/dj_booth_shroud.gltf-b3996947e1d07435424c1aa8cc4139ad.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/dj_booth_shroud.gltf"
-dest_files=["res://.godot/imported/dj_booth_shroud.gltf-2d27e8ffef202e0da5ef047847ea6e49.scn"]
+dest_files=["res://.godot/imported/dj_booth_shroud.gltf-b3996947e1d07435424c1aa8cc4139ad.scn"]
 
 [params]
 

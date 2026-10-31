@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dr70sunn3woky"
-path="res://.godot/imported/lighting_console_warthog.gltf-98eb3419e9cf9c703c6aa4d5c2fdbab3.scn"
+path="res://.godot/imported/lighting_console_warthog.gltf-56a4b63007b6dd9b34fb771eb7315089.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/lighting_console_warthog.gltf"
-dest_files=["res://.godot/imported/lighting_console_warthog.gltf-98eb3419e9cf9c703c6aa4d5c2fdbab3.scn"]
+dest_files=["res://.godot/imported/lighting_console_warthog.gltf-56a4b63007b6dd9b34fb771eb7315089.scn"]
 
 [params]
 

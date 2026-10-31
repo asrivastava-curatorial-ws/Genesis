@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dy63mn6vucbe4"
-path="res://.godot/imported/coach_white.gltf-519984037560675824eb2ff668916804.scn"
+path="res://.godot/imported/coach_white.gltf-998ead647735b4d889519ac43b5cc281.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/coach_white.gltf"
-dest_files=["res://.godot/imported/coach_white.gltf-519984037560675824eb2ff668916804.scn"]
+dest_files=["res://.godot/imported/coach_white.gltf-998ead647735b4d889519ac43b5cc281.scn"]
 
 [params]
 

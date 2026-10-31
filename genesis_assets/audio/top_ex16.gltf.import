@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cmldawk77r4gm"
-path="res://.godot/imported/top_ex16.gltf-79f00843ec5ad9592c3ec72a9ea02930.scn"
+path="res://.godot/imported/top_ex16.gltf-4e4b38555e85a18dafc1f2daba73b423.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/top_ex16.gltf"
-dest_files=["res://.godot/imported/top_ex16.gltf-79f00843ec5ad9592c3ec72a9ea02930.scn"]
+dest_files=["res://.godot/imported/top_ex16.gltf-4e4b38555e85a18dafc1f2daba73b423.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://ksul8d2memmt"
-path="res://.godot/imported/shrugging_3.gltf-2d2f507800f075ab10e60af21ed70071.scn"
+path="res://.godot/imported/shrugging_3.gltf-ef9824399e8d03fd4826e66f8b193a3e.scn"
 
 [deps]
 
 source_file="res://genesis_assets/people/shrugging_3.gltf"
-dest_files=["res://.godot/imported/shrugging_3.gltf-2d2f507800f075ab10e60af21ed70071.scn"]
+dest_files=["res://.godot/imported/shrugging_3.gltf-ef9824399e8d03fd4826e66f8b193a3e.scn"]
 
 [params]
 

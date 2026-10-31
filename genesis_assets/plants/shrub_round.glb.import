@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b0xryws2fuvav"
-path="res://.godot/imported/shrub_round.glb-855de89ae3fad251ffe7c451b76487d3.scn"
+path="res://.godot/imported/shrub_round.glb-c713a5fe79bf19b12273b32cbd6fe9a4.scn"
 
 [deps]
 
 source_file="res://genesis_assets/plants/shrub_round.glb"
-dest_files=["res://.godot/imported/shrub_round.glb-855de89ae3fad251ffe7c451b76487d3.scn"]
+dest_files=["res://.godot/imported/shrub_round.glb-c713a5fe79bf19b12273b32cbd6fe9a4.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://3j83vwtd4q1c"
-path="res://.godot/imported/chair_banquet.gltf-005a25c5d7ee7f6a57f5956360516963.scn"
+path="res://.godot/imported/chair_banquet.gltf-a4b6b55815eedd2bab852734ce292d92.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/chair_banquet.gltf"
-dest_files=["res://.godot/imported/chair_banquet.gltf-005a25c5d7ee7f6a57f5956360516963.scn"]
+dest_files=["res://.godot/imported/chair_banquet.gltf-a4b6b55815eedd2bab852734ce292d92.scn"]
 
 [params]
 

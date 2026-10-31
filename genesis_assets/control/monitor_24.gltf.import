@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cswlci86ha1s3"
-path="res://.godot/imported/monitor_24.gltf-a2dfb26f490ce57d2884f99454a6d68e.scn"
+path="res://.godot/imported/monitor_24.gltf-42ac4f59691c84ec4703671a80306f7d.scn"
 
 [deps]
 
 source_file="res://genesis_assets/control/monitor_24.gltf"
-dest_files=["res://.godot/imported/monitor_24.gltf-a2dfb26f490ce57d2884f99454a6d68e.scn"]
+dest_files=["res://.godot/imported/monitor_24.gltf-42ac4f59691c84ec4703671a80306f7d.scn"]
 
 [params]
 

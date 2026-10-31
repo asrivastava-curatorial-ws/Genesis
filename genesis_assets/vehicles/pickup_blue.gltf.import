@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bo2pw5pp6i24v"
-path="res://.godot/imported/pickup_blue.gltf-3520275090377b28b9c67927a046e5d8.scn"
+path="res://.godot/imported/pickup_blue.gltf-69ebd59369119fdafe8de987eabc5949.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/pickup_blue.gltf"
-dest_files=["res://.godot/imported/pickup_blue.gltf-3520275090377b28b9c67927a046e5d8.scn"]
+dest_files=["res://.godot/imported/pickup_blue.gltf-69ebd59369119fdafe8de987eabc5949.scn"]
 
 [params]
 

@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bojknlwiky20e"
-path="res://.godot/imported/ob_van_white.gltf-8af8e6c43e6b296063b74bbc9e70a8cf.scn"
+path="res://.godot/imported/ob_van_white.gltf-f9c9bf9544c7969a0c6b913adb146151.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/ob_van_white.gltf"
-dest_files=["res://.godot/imported/ob_van_white.gltf-8af8e6c43e6b296063b74bbc9e70a8cf.scn"]
+dest_files=["res://.godot/imported/ob_van_white.gltf-f9c9bf9544c7969a0c6b913adb146151.scn"]
 
 [params]
 

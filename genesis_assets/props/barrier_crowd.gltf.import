@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://ct5mic12x80yr"
-path="res://.godot/imported/barrier_crowd.gltf-827bc549e16c1ed4afd1c5cfae585f24.scn"
+path="res://.godot/imported/barrier_crowd.gltf-7bbec5480e0f40e099e55e1038af80e6.scn"
 
 [deps]
 
 source_file="res://genesis_assets/props/barrier_crowd.gltf"
-dest_files=["res://.godot/imported/barrier_crowd.gltf-827bc549e16c1ed4afd1c5cfae585f24.scn"]
+dest_files=["res://.godot/imported/barrier_crowd.gltf-7bbec5480e0f40e099e55e1038af80e6.scn"]
 
 [params]
 

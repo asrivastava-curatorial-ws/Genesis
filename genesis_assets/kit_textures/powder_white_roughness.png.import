@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d3u05ehqyvokj"
-path="res://.godot/imported/powder_white_roughness.png-428b9c1b0c4532d7d66af39cae8d6bf2.ctex"
+path="res://.godot/imported/powder_white_roughness.png-a0bb7bc2a77884a946b6afc7e1ba070a.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/powder_white_roughness.png"
-dest_files=["res://.godot/imported/powder_white_roughness.png-428b9c1b0c4532d7d66af39cae8d6bf2.ctex"]
+dest_files=["res://.godot/imported/powder_white_roughness.png-a0bb7bc2a77884a946b6afc7e1ba070a.ctex"]
 
 [params]
 

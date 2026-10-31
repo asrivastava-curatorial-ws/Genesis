@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b4hjv0hkpoxwl"
-path="res://.godot/imported/wedge_compact.gltf-8948c32e45faaa1049536e2f739f51e8.scn"
+path="res://.godot/imported/wedge_compact.gltf-aa7a650786400be073b8609ed2759181.scn"
 
 [deps]
 
 source_file="res://genesis_assets/audio/wedge_compact.gltf"
-dest_files=["res://.godot/imported/wedge_compact.gltf-8948c32e45faaa1049536e2f739f51e8.scn"]
+dest_files=["res://.godot/imported/wedge_compact.gltf-aa7a650786400be073b8609ed2759181.scn"]
 
 [params]
 

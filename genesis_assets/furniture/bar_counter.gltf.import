@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://fnfv84lmpyxx"
-path="res://.godot/imported/bar_counter.gltf-7f0898c62b29cf445e2ea021c9d77eb0.scn"
+path="res://.godot/imported/bar_counter.gltf-17fb80b8bf7c9c409b8027a89ca150c5.scn"
 
 [deps]
 
 source_file="res://genesis_assets/furniture/bar_counter.gltf"
-dest_files=["res://.godot/imported/bar_counter.gltf-7f0898c62b29cf445e2ea021c9d77eb0.scn"]
+dest_files=["res://.godot/imported/bar_counter.gltf-17fb80b8bf7c9c409b8027a89ca150c5.scn"]
 
 [params]
 

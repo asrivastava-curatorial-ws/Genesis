@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dgve1x5svngrl"
-path="res://.godot/imported/suv_blue.gltf-cd56184008428589b0e74f08d67f65ee.scn"
+path="res://.godot/imported/suv_blue.gltf-8f9427e26f0412ccac4319f3509ab4ec.scn"
 
 [deps]
 
 source_file="res://genesis_assets/vehicles/suv_blue.gltf"
-dest_files=["res://.godot/imported/suv_blue.gltf-cd56184008428589b0e74f08d67f65ee.scn"]
+dest_files=["res://.godot/imported/suv_blue.gltf-8f9427e26f0412ccac4319f3509ab4ec.scn"]
 
 [params]
 

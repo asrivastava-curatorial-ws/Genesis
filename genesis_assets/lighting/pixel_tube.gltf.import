@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cv01i5yptguyw"
-path="res://.godot/imported/pixel_tube.gltf-fd7fa465844642f6eeaabc27a75570d0.scn"
+path="res://.godot/imported/pixel_tube.gltf-a59daba5536cfe80f5a3c869826b6e23.scn"
 
 [deps]
 
 source_file="res://genesis_assets/lighting/pixel_tube.gltf"
-dest_files=["res://.godot/imported/pixel_tube.gltf-fd7fa465844642f6eeaabc27a75570d0.scn"]
+dest_files=["res://.godot/imported/pixel_tube.gltf-a59daba5536cfe80f5a3c869826b6e23.scn"]
 
 [params]
 

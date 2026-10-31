@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bf42fic6tux4h"
-path="res://.godot/imported/fabric_burgundy_normal.jpg-ccd4e14114b356200a3579c3a58b48d4.ctex"
+path="res://.godot/imported/fabric_burgundy_normal.jpg-b23195acf1ea6de75d992b1c5da324bd.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://genesis_assets/kit_textures/fabric_burgundy_normal.jpg"
-dest_files=["res://.godot/imported/fabric_burgundy_normal.jpg-ccd4e14114b356200a3579c3a58b48d4.ctex"]
+dest_files=["res://.godot/imported/fabric_burgundy_normal.jpg-b23195acf1ea6de75d992b1c5da324bd.ctex"]
 
 [params]
 
