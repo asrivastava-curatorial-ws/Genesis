@@ -9,6 +9,7 @@ signal opened
 signal closed
 
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
+const SettingsService := preload("res://app/core/settings_service.gd")
 
 const MANIFEST := "genesis.project.json"
 const FORMAT := 0
@@ -51,7 +52,7 @@ static func manifest_of(dir: String) -> Dictionary:
 	var file := dir.path_join(MANIFEST)
 	if not FileAccess.file_exists(file):
 		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(file))
+	var parsed: Variant = SettingsService.read_json(file)
 	return parsed if parsed is Dictionary else {}
 
 

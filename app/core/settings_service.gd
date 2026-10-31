@@ -30,12 +30,23 @@ static func defaults() -> Dictionary:
 	}
 
 
+## A JSON file's contents, or null when it cannot be read. Quiet: a damaged
+## file is the caller's to report, in words the user understands.
+static func read_json(file: String) -> Variant:
+	if not FileAccess.file_exists(file):
+		return null
+	var j := JSON.new()
+	if j.parse(FileAccess.get_file_as_string(file)) != OK:
+		return null
+	return j.data
+
+
 ## Reads the file. Returns "" normally, or a sentence for the user when the file
 ## was unreadable and has been set aside.
 func load_from_disk() -> String:
 	if not FileAccess.file_exists(path):
 		return ""
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var parsed: Variant = read_json(path)
 	if not parsed is Dictionary:
 		var aside := path + ".bad"
 		if FileAccess.file_exists(aside):
