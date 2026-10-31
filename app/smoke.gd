@@ -10,6 +10,9 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const Workspace := preload("res://app/ui/workspace.gd")
 const ProjectManager := preload("res://app/ui/project_manager.gd")
 const ToastHost := preload("res://app/ui/toast_host.gd")
+const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
+const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
+const LedWall := preload("res://addons/genesis/set/gn_led_wall.gd")
 
 static var _failures := 0
 
@@ -60,6 +63,24 @@ static func run(main: Node) -> int:
 	_check(App.actions.run("edit.undo") and cam.get_parent() == null, "Undo takes the camera out")
 	_check(edit.is_item_disabled(0) and not edit.is_item_disabled(1), "Undo is greyed, Redo is on")
 	_check(App.actions.run("edit.redo") and cam.get_parent() == root, "Redo puts it back")
+	# The bundled library, as a built program sees it.
+	var lib := GnAssets.scan()
+	if not lib.assets.is_empty() or "--expect-library" in OS.get_cmdline_user_args():
+		_check(lib.assets.size() >= 290 and lib.unlicensed.is_empty(), "the bundled library lists %d licensed models" % lib.assets.size())
+		var car := ""
+		for a in lib.assets:
+			if a.category == "vehicles":
+				car = a.path
+				break
+		var placed := GnPlacement.place(car, "vehicles", Vector3(4, 0, 0)) if car != "" else null
+		_check(placed != null and not placed.find_children("*", "MeshInstance3D", true, false).is_empty(), "a vehicle from the library is placed, with its geometry")
+		if placed:
+			App.actions.run("edit.undo")
+	var wall: Node3D = LedWall.new()
+	GnScene.add_node(wall, root, "Add wall")
+	await tree.process_frame
+	_check(wall.report().cabinets > 0 and wall.report_text().contains("Planning estimate"), "an LED wall works, with its planning report")
+	App.actions.run("edit.undo")
 	# The editor: scene tree, properties, tools, and keys that act once.
 	_check(ws.scene_tree.is_inside_tree() and ws.inspector.is_inside_tree(), "the scene tree and the properties are in the window")
 	GnHost.select(cam)

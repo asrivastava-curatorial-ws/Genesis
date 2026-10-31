@@ -56,6 +56,12 @@ func _ready() -> void:
 	_sphere.mesh = s
 
 
+func _exit_tree() -> void:
+	# The sphere is only in the studio while it poses; free it either way.
+	if is_instance_valid(_sphere) and _sphere.get_parent() == null:
+		_sphere.free()
+
+
 static func can_draw() -> bool:
 	return DisplayServer.get_name() != "headless"
 
