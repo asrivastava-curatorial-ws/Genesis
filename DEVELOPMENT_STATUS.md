@@ -15,7 +15,7 @@
 | 9 | AI, panorama, MOVIE | Real-ESRGAN per-user install; panorama and MP4 from the built program (E2E). |
 | 10 | SET and SHOW | Set pieces, cues, GO; OSC/UDP cue input added; planning-estimate labels. |
 | 11 | UI polish and performance | Layout fits the smallest window; view quality setting; crashes on exit fixed. Visual polish beyond defaults not done. |
-| 12 | Testing, documentation, packaging | Five headless suites, smoke tour of the built program, three-launch E2E with real rendering; 28 docs; launchers; release zip. |
+| 12 | Testing, documentation, packaging | Five headless suites, smoke tour of the built program, three-launch E2E with real rendering; 32 pages in docs/, START_HERE.md and the manual as one HTML/PDF file; launchers; release zip. |
 
 Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limitations: `docs/KNOWN_LIMITATIONS.md`.
 

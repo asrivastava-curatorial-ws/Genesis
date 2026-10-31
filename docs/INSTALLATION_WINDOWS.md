@@ -10,10 +10,18 @@ Nothing is installed and no administrator rights are needed. Settings, logs and 
 
 Windows SmartScreen may warn that the program is unrecognised (it is not code-signed). Choose *More info > Run anyway*.
 
-## 2. A Start menu and desktop shortcut (optional)
+## 2. Check, and a Start menu and desktop shortcut (optional)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File Genesis.ps1 -InstallShortcut
+powershell -ExecutionPolicy Bypass -File Genesis.ps1 -Check             # graphics card and optional tools found
+powershell -ExecutionPolicy Bypass -File Genesis.ps1 -InstallShortcut   # Start menu and desktop shortcut
+```
+
+To check that the program works on this computer, run its self-test (about 20 seconds; it makes and deletes a project of its own):
+
+```powershell
+Start-Process -Wait .\Genesis.exe -ArgumentList '--headless','--','--smoke','--expect-library'
+Select-String -Path "$env:APPDATA\Genesis\logs\godot.log" -Pattern 'GENESIS_SMOKE (RESULT|FAIL)'
 ```
 
 ## 3. Graphics

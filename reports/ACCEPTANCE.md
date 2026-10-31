@@ -4,7 +4,7 @@ Each of the 34 release blockers in section 21 of the brief, with the evidence. *
 
 Test evidence (all in this repository):
 
-- `tests/run_app_tests.sh`: five headless suites (app core, editor, projects and import, modules, smoke tour of the whole program). 260+ checks.
+- `tests/run_app_tests.sh`: five headless suites (app core, editor, projects and import, modules, smoke tour of the whole program): 278 checks plus the tour.
 - `tools/build_standalone.sh`: the exported Linux program's own smoke tour, with the bundled library.
 - `reports/E2E_RESULTS_build.md`, `E2E_RESULTS_verify.md`, `E2E_RESULTS_media.md`: the end-to-end test of section 16, run on the **exported Linux program** in three separate launches with Godot's Forward+ renderer on Mesa's software Vulkan (no GPU on the build machine).
 - The original plugin's `selftest` suite, still passing with the plugin running through the new host layer.
@@ -42,7 +42,7 @@ Test evidence (all in this repository):
 | 29 | Windows build | Partly | exported with the official templates; a headless start under Wine crashed inside Wine before Genesis code ran, so it is **untested**; never run on real Windows |
 | 30 | Works without Godot Editor | Met | as 1 and 2 |
 | 31 | Demo projects work | Met | `demos/architecture` (three scenes) and `demos/event-production`, built by the exported program (`--make-demos`) and rendered by it in separate launches (`--render-samples`); sample renders in `docs/screenshots/` |
-| 32 | Documentation complete | Met | 28 pages in `docs/` listed by the brief, describing what exists and what was not tested |
+| 32 | Documentation complete | Met | the pages of `docs/` the brief lists, plus a section-by-section guide (`docs/SECTION_GUIDE.md`) and `START_HERE.md`; the release also has all of them as one manual (`docs/Genesis-Community-Manual.html` and `.pdf`). They describe what exists and say what was not tested |
 | 33 | Automated tests executed | Met | as above |
 | 34 | Packaged release works independently | Partly | the release zip's Linux program is the one tested; not tested after unzipping on a second machine |
 

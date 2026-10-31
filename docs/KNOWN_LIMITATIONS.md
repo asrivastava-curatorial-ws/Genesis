@@ -16,7 +16,7 @@ Honest list of what does not work, is not included, or was not tested.
 
 ## Known gaps against the brief
 
-- No interactive path editor for moving objects yet (paths are made in the scene tree by adding points).
+- No path editor for moving objects yet: a new path is a straight 20 m line that you move, turn and stretch with the handles. Curved paths need the Godot editor (the plugin) for now.
 - Site context has no offline cache of the fetched OpenStreetMap data beyond the imagery kept in the project.
 - The material browser has no user material library across projects yet; custom looks are per project.
 - Render queue with cancel and resume is not implemented; renders run one at a time from the Render page.

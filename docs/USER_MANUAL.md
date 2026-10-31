@@ -16,6 +16,7 @@ The layout is remembered; Preferences > Reset the window layout puts it back.
 
 | Chapter | What it covers |
 |---|---|
+| [The Genesis panel, section by section](SECTION_GUIDE.md) | what every button in the twelve sections does, with short recipes |
 | [Projects](PROJECT_MANAGEMENT.md) | making, opening, saving, backups, recovery, moving a project, old Genesis projects |
 | [The scene editor](SCENE_EDITOR.md) | the 3D view, selecting, moving, the scene tree, properties, undo |
 | [Importing models](IMPORTING_MODELS.md) | GLB, glTF, FBX, OBJ, Blender; live link |

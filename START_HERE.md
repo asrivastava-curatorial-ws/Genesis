@@ -104,7 +104,8 @@ Because this build has not yet been run on Windows, run the self-test first (sec
 4. **Change it in the Properties panel.** Every setting of the selected object is there, down to an LED wall's panel size and pixel pitch.
 5. **Use the Genesis panel on the right.** Its twelve sections run in working order: Scene, Plans, Assets, Environment, Landscape, Set, Materials, Cameras, Look, Render, Movie and Show.
    - Try *Environment*: change the time of day and watch the sun move.
-6. **Render.** Go to *Render*, choose a camera, a size and a quality, and press render.
+   - [docs/SECTION_GUIDE.md](docs/SECTION_GUIDE.md) explains every button in every section.
+6. **Render.** Go to *Render*, choose a camera, a size and a quality, and press *Render still*.
    - *Preview* is quick. *Standard* is for most stills. *High* and *Maximum* take 16 and 64 samples.
    - Pictures go to the project's `renders/` folder.
    - After a still, *Upscale ×2/×4* sharpens it with Real-ESRGAN. The first time, it downloads the upscaler (about 47 MB).
