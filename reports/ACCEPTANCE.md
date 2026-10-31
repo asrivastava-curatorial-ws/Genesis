@@ -1,0 +1,49 @@
+# Acceptance against the brief (1.0.0-rc1)
+
+Each of the 34 release blockers in section 21 of the brief, with the evidence. **Met** means it works in the standalone program and an automated test or the end-to-end test exercised it. **Partly** means it works but part of it was not tested or is missing. **Not met** means it does not yet hold.
+
+Test evidence (all in this repository):
+
+- `tests/run_app_tests.sh`: five headless suites (app core, editor, projects and import, modules, smoke tour of the whole program). 260+ checks.
+- `tools/build_standalone.sh`: the exported Linux program's own smoke tour, with the bundled library.
+- `reports/E2E_RESULTS_build.md`, `reports/E2E_RESULTS_verify.md`: the end-to-end test of section 16, run on the **exported Linux program** in two separate launches with Godot's Forward+ renderer on Mesa's software Vulkan (no GPU on the build machine).
+- The original plugin's `selftest` suite, still passing with the plugin running through the new host layer.
+
+| # | Requirement | Status | Evidence / what is missing |
+|---|---|---|---|
+| 1 | Launches as an independent application | Met | exported program, E2E step 1 |
+| 2 | Godot Editor not required | Met | built program has no editor classes or plugin files (smoke check); an automated check fails if any runtime script names an Editor class |
+| 3 | Own project manager | Met | smoke tour; screenshot `docs/screenshots/01_project_manager.png` |
+| 4 | Own 3D viewport | Met | orbit, pan, zoom, fly, views, orthographic, look-through (editor and smoke tests) |
+| 5 | Selection and manipulation | Met | picking, box select, move/turn/resize handles with constraints and snapping (editor tests: 72 checks) |
+| 6 | Scene hierarchy | Met | tree with rename, reorder, reparent, group, hide, lock, search (editor tests) |
+| 7 | Runtime inspector | Met | every exported setting of Genesis set pieces gets an editor (editor tests, LED wall) |
+| 8 | Undo/redo | Met | every edit command and drag; named steps (editor and smoke tests) |
+| 9 | Save and reopen | Met | E2E steps 15–19 across two launches: 13 of 13 objects, cameras, 44 painted trees, material, sun settings |
+| 10 | Existing Genesis projects can be migrated | Partly | File > Import an Old Genesis Project, tested on a constructed plugin project (models converted, data copied, paths rewritten, original untouched). Not tested on a real user project |
+| 11 | Original import workflows preserved | Partly | GLB/glTF and OBJ tested, DXF tested (E2E); FBX reader present but untested; .blend, PDF, DWG need tools not on the build machine |
+| 12 | Materials | Partly | images as materials, tiles, weathering work without the editor (E2E step 6); the scanned presets are not bundled (need `tools/setup.py` with internet) |
+| 13 | Asset library | Met | 295 licensed models listed and placed in the exported program |
+| 14 | Landscape | Met | brush painting through the real viewport (E2E step 9), kept after relaunch |
+| 15 | Environment | Partly | sun, real sun (NOAA values checked against published figures), haze, time of day (E2E step 10); photographed HDRI skies not bundled |
+| 16 | Geographic context | Not met here | code carried over and paths moved to the project, but OpenStreetMap was unreachable from the build machine: untested |
+| 17 | Photo matching | Partly | module migrated (paths, host); not exercised by a test in this release |
+| 18 | Cameras | Met | saved views, look-through, looks (E2E steps 13–14, smoke) |
+| 19 | LOOK | Met | all 14 built-in looks present (module test), applied in E2E |
+| 20 | Rendering | see E2E | 1080p and 4K stills from the exported program (E2E steps 20–21) |
+| 21 | Panorama | see E2E | E2E step 22 |
+| 22 | MOVIE | see E2E | walkthrough between saved cameras, MP4 via FFmpeg, checked with ffprobe (E2E steps 24–26) |
+| 23 | SET | Met | stage, LED wall with checked report arithmetic, truss, line array, moving heads, crowd, effects (E2E E1, module tests) |
+| 24 | SHOW | Partly | cues and GO (E2E E2), OSC/UDP cue input (module test, real UDP); live video sources and outgoing OSC untested (no sources here) |
+| 25 | Real-ESRGAN preserved | see E2E | installed the way the Render page does it (download, SHA-256 check) and run, E2E step 23 |
+| 26 | Other AI features preserved | Met | the repository has no other AI integration (Stage 1 keyword audit) |
+| 27 | Asset licences preserved | Met | every model's `.license.json` kept; library refuses models without one; `docs/ASSET_LICENSING.md`, `THIRD_PARTY_NOTICES.md` (engine notices generated from the engine itself) |
+| 28 | Linux build | Met | exported, smoke-tested, E2E-tested |
+| 29 | Windows build | Partly | exported with the official templates; headless start under Wine (see below); never run on real Windows |
+| 30 | Works without Godot Editor | Met | as 1 and 2 |
+| 31 | Demo projects work | see below | `demos/architecture`, `demos/event-production`, built and rendered by the program itself |
+| 32 | Documentation complete | Met | 28 pages in `docs/` listed by the brief, describing what exists and what was not tested |
+| 33 | Automated tests executed | Met | as above |
+| 34 | Packaged release works independently | Partly | the release zip's Linux program is the one tested; not tested after unzipping on a second machine |
+
+**Verdict:** this is a release candidate, not 1.0.0. The blockers marked *Partly* or *Not met* need a machine with a GPU, Windows, Blender, the ODA converter and internet access to close; see `docs/KNOWN_LIMITATIONS.md`.

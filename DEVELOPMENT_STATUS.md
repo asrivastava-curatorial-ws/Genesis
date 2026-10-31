@@ -1,65 +1,47 @@
-# Development status: Genesis Community 1.0.0
-
-Updated at the end of Stage 1.
+# Development status: Genesis Community 1.0.0-rc1
 
 ## Stages
 
 | Stage | Scope | State |
 |---|---|---|
-| 1 | Repository audit and feature inventory | audit written; baseline partly run (1 of 15 suites) |
-| 2 | Standalone shell and runtime services | not started |
-| 3 | Viewport, hierarchy, inspector, gizmos, undo/redo | not started |
-| 4 | Project management and migration | not started |
-| 5 | Import, plans and CAD | not started |
-| 6 | Materials, assets and landscape | not started |
-| 7 | Environment, geography, cameras, photo match | not started |
-| 8 | Rendering and LOOK | not started |
-| 9 | AI, panorama and MOVIE | not started |
-| 10 | SET and SHOW | not started |
-| 11 | UI polish and performance | not started |
-| 12 | Testing, documentation, packaging | not started |
+| 1 | Repository audit and feature inventory | Done. `reports/ORIGINAL_FEATURE_INVENTORY.md` (84 features), `FEATURE_MIGRATION_MATRIX.md`, `BASELINE_AUDIT.md`. |
+| 2 | Standalone shell and runtime services | Done. Host layer (`GnHost`), services, project manager, workspace. |
+| 3 | Viewport, hierarchy, inspector, gizmos, undo/redo | Done. Picking, handles, camera navigation, scene tree, properties, edit commands. |
+| 4 | Project management and migration | Done. Format 1, backups, autosave and recovery, moved projects, relinking, importing plugin projects. |
+| 5 | Import, plans and CAD | Done for glTF/GLB, OBJ, DXF (tested); FBX, .blend, PDF, DWG paths in place but untested here. |
+| 6 | Materials, assets, landscape | Done; library works in built programs; runtime thumbnails. Scanned presets not bundled. |
+| 7 | Environment, geography, cameras, photo match | Migrated; sun checked numerically; site context untested (no internet to OSM). |
+| 8 | Rendering and LOOK | Preview/Standard/High/Maximum quality; renders from the built program (E2E). |
+| 9 | AI, panorama, MOVIE | Real-ESRGAN per-user install; panorama and MP4 from the built program (E2E). |
+| 10 | SET and SHOW | Set pieces, cues, GO; OSC/UDP cue input added; planning-estimate labels. |
+| 11 | UI polish and performance | Layout fits the smallest window; view quality setting; crashes on exit fixed. Visual polish beyond defaults not done. |
+| 12 | Testing, documentation, packaging | Five headless suites, smoke tour of the built program, two-launch E2E with real rendering; 28 docs; launchers; release zip. |
 
-## Links
+Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limitations: `docs/KNOWN_LIMITATIONS.md`.
 
-- Feature inventory: `reports/ORIGINAL_FEATURE_INVENTORY.md` (84 features)
-- Migration matrix: `reports/FEATURE_MIGRATION_MATRIX.md`
-- Baseline: `reports/BASELINE_AUDIT.md`
+## Bugs found and fixed during the migration
 
-## Completed tasks
+- Callables and render resources held in static variables crashed the program on exit with a real renderer; released at shutdown (`App.shutdown`, `gn_caches.gd`).
+- The open scene was never freed at exit (the 3D view hands it back when the window closes).
+- `UndoRedo` leaked on every use; an undo adapter was tied to its owner by a signal.
+- A host/scene-service reference ring leaked both.
+- In built programs, folders of the library listed Godot's internal remap files, and models were instanced with editor-only state (returning nothing).
+- `PortableCompressedTexture2D` loaded with a not-yet-created texture in release builds; standalone textures are stored as compressed `ImageTexture` files.
+- Screens and overlays did not fill the window (`set_anchors_preset` keeps old offsets).
+- The workspace was wider than the smallest window.
+- A damaged settings file produced an engine error as well as the user notice.
+- Backups made within one second overwrote each other.
+- Arrow drags lost about 1% of the movement in perspective when the pointer wandered off the line.
+- Saved scenes referred to project files by absolute path (Godot's relative-path option covers only `res://`).
 
-- Cloned the repository, tagged the original as `checkpoint/original-dfea606`, created branch `standalone`.
-- Static scan of all 80 addon files; inventory and matrix written.
-- Installed Godot 4.7.2 in the sandbox; ran the selftest suite (PASS).
+## Findings about the original
 
-## Remaining tasks
-
-- Run the other 14 suites on a GPU machine and record results.
-- Run `tools/setup.py` to build the material, plant and sky library; confirm its licence records.
-- Stages 2 to 12 as in the matrix.
-
-## Files changed
-
-- Added `DEVELOPMENT_STATUS.md` and `reports/*.md`. No original file was modified.
-
-## Bugs and findings discovered
-
+- 14 built-in looks, not the eight the README says.
+- SHOW only sent OSC; it did not receive it (now it does).
 - `tests/run_all.sh` omits the `miami` suite.
-- Real-ESRGAN installs under `res://`, which is read-only in an exported build.
-- README says eight built-in looks; the code has 14.
-- No Linux launcher; no `THIRD_PARTY_NOTICES.md`; no `docs/ASSET_LICENSING.md`.
+- Writes under `res://` in 19 files; Real-ESRGAN installed into the project.
+- On a software GPU the original's `demo` suite times out at its 5-minute limit, exactly as the migrated code does.
 
-## Bugs fixed
+## Environment of this release
 
-- None yet.
-
-## Tests performed
-
-- selftest on Godot 4.7.2, headless editor: PASS.
-
-## Build status
-
-- No standalone build yet.
-
-## Known limitations
-
-- This audit environment has no GPU, Blender, Windows or access to the asset and map hosts; graphical tests, Windows builds and the asset build must run elsewhere.
+Ubuntu 24.04 container, 1 vCPU, about 3 GB usable memory, no GPU (Mesa lavapipe for Vulkan), no Windows, no Blender, no access to Poly Haven, ambientCG or OpenStreetMap. The workspace was reset once mid-project; work was rebuilt from the record and saved as a git bundle after every stage from then on.
