@@ -7,6 +7,7 @@ extends RefCounted
 # and the original material comes back on undo.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const PRESET_DIR := "res://genesis_data/materials"
 
@@ -66,7 +67,7 @@ static func apply_preset(s: Surface, preset_path: String) -> void:
 	if preset == null:
 		return
 	var copy := preset.duplicate()
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: %s" % preset_name(preset_path), UndoRedo.MERGE_DISABLE, GnScene.root())
 	_allow_override(ur, s.mesh)
 	ur.add_do_property(s.mesh, s.property(), copy)
@@ -78,7 +79,7 @@ static func apply_preset(s: Surface, preset_path: String) -> void:
 # surface still showing its imported material makes an override copy of it,
 # in the same undo step, so undo returns to the import.
 static func set_param(s: Surface, prop: String, value: Variant) -> void:
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: %s" % prop.capitalize(), UndoRedo.MERGE_ENDS, GnScene.root())
 	var mat := s.mesh.get(s.property()) as BaseMaterial3D
 	if mat == null:
@@ -100,7 +101,7 @@ static func set_param(s: Surface, prop: String, value: Variant) -> void:
 # A mesh inside an instanced model (a building brought in as a .glb) only
 # keeps edits if its instance is marked "editable children"; otherwise the
 # override is silently dropped on save.
-static func _allow_override(ur: EditorUndoRedoManager, mi: Node) -> void:
+static func _allow_override(ur: Object, mi: Node) -> void:
 	# Inside an instance, a node's owner is the instance's root node.
 	var root := GnScene.root()
 	var inst := mi.owner
@@ -148,10 +149,12 @@ static func partner_maps(colour_path: String) -> Dictionary:
 ## images are copied into the project and imported first. Returns an error
 ## message, or "".
 static func apply_image(s: Surface, colour_path: String, tile_m: float) -> String:
+	if not GnHost.supports("editor_import"):
+		return "Using an image as a material needs the runtime importer, which is not built yet."
 	var maps := partner_maps(colour_path)
 	var sources := {"albedo": colour_path, "normal": maps.normal, "roughness": maps.roughness}
 	DirAccess.make_dir_recursive_absolute(OWN_DIR)
-	var efs := EditorInterface.get_resource_filesystem()
+	var efs := GnHost.filesystem()
 	var dests := {}
 	for k in sources:
 		if sources[k] == "":
@@ -184,7 +187,7 @@ static func apply_image(s: Surface, colour_path: String, tile_m: float) -> Strin
 	mat.uv1_world_triplanar = true
 	mat.uv1_scale = Vector3.ONE / maxf(tile_m, 0.01)
 	mat.set_meta("gn_tile_m", tile_m)
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: %s" % mat.resource_name, UndoRedo.MERGE_DISABLE, GnScene.root())
 	_allow_override(ur, s.mesh)
 	ur.add_do_property(s.mesh, s.property(), mat)

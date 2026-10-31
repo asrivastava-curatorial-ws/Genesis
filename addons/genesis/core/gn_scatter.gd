@@ -15,6 +15,7 @@ extends RefCounted
 # stands, so the same point is always the same tree through undo and redo.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const SOURCE := "gn_source"
 const LOCAL := "gn_local"
@@ -141,7 +142,7 @@ static func create_group(path: String) -> Node3D:
 # then holds two flat arrays per stroke instead of thousands of calls.
 static func set_points(group: Node3D, new_points: Array[Transform3D], action: String,
 		old_points: Array[Transform3D] = points(group)) -> void:
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action(action, UndoRedo.MERGE_DISABLE, GnScene.root())
 	# `old_points` must be the state before the stroke. The brush draws its
 	# stroke into the MultiMeshes as it paints, so it passes the points it

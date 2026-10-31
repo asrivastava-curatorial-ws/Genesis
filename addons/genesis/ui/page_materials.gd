@@ -7,6 +7,7 @@ const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
 const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
 const GnWeathering := preload("res://addons/genesis/core/gn_weathering.gd")
 const GnTiles := preload("res://addons/genesis/core/gn_tiles.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var _hint: Label
 var _body: VBoxContainer
@@ -23,7 +24,7 @@ var _list: Array = []
 var _preset_paths: Array[String] = []
 var _tile: HSlider
 var _own_note: Label
-var _image_dialog: EditorFileDialog
+var _image_dialog: Node
 var _tile_layout: OptionButton
 var _tile_sliders := {}
 var _tile_colours := {}
@@ -126,7 +127,7 @@ func _init() -> void:
 
 
 func refresh() -> void:
-	var picked := EditorInterface.get_selection().get_selected_nodes()
+	var picked := GnHost.selected_nodes()
 	var target: Node = picked[0] if not picked.is_empty() else null
 	var keep := _surfaces.get_selected_items()
 	_list = GnMaterials.surfaces(target)
@@ -146,7 +147,7 @@ func _fill_presets() -> void:
 	_preset_paths = GnMaterials.presets()
 	for i in _preset_paths.size():
 		_presets.add_item(GnMaterials.preset_name(_preset_paths[i]))
-		EditorInterface.get_resource_previewer().queue_resource_preview(_preset_paths[i], self, "_on_preview", i)
+		GnHost.queue_resource_preview(_preset_paths[i], self, "_on_preview", i)
 
 
 func _on_preview(_path: String, preview: Texture2D, _thumb: Texture2D, index: int) -> void:
@@ -256,14 +257,11 @@ func _pick_image() -> void:
 		_own_note.text = "Pick a surface first."
 		return
 	if _image_dialog == null:
-		_image_dialog = EditorFileDialog.new()
-		_image_dialog.access = EditorFileDialog.ACCESS_FILESYSTEM
-		_image_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-		_image_dialog.title = "Use an image as a material"
+		_image_dialog = GnHost.make_file_dialog("Use an image as a material")
 		for ext in ["png", "jpg", "jpeg", "webp", "tga", "exr"]:
 			_image_dialog.add_filter("*.%s" % ext)
 		_image_dialog.file_selected.connect(_use_image)
-		EditorInterface.get_base_control().add_child(_image_dialog)
+		GnHost.dialog_parent().add_child(_image_dialog)
 	_image_dialog.popup_file_dialog()
 
 

@@ -18,6 +18,7 @@ const LineArray := preload("res://addons/genesis/set/gn_line_array.gd")
 const Effect := preload("res://addons/genesis/set/gn_effect.gd")
 const FlyingScreen := preload("res://addons/genesis/set/gn_flying_screen.gd")
 const AreaLight := preload("res://addons/genesis/set/gn_area_light.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var _report: Label
 var _export: Button
@@ -72,7 +73,7 @@ func refresh() -> void:
 	_report.text = "Select an LED wall, flying screen, line array or crowd to see its numbers."
 	if wall:
 		_report.text = wall.report_text()
-	for n in EditorInterface.get_selection().get_selected_nodes():
+	for n in GnHost.selected_nodes():
 		if n.get_script() == LineArray or n.get_script() == FlyingScreen or n.get_script() == AreaLight:
 			_report.text = n.report_text()
 		elif n.get_script() == Crowd:
@@ -80,7 +81,7 @@ func refresh() -> void:
 
 
 func _wall() -> Node:
-	var picked := EditorInterface.get_selection().get_selected_nodes()
+	var picked := GnHost.selected_nodes()
 	for n in picked:
 		if n.get_script() == LedWall:
 			return n

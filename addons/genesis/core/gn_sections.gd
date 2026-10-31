@@ -10,6 +10,7 @@ extends RefCounted
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 # What is not "the design": the world around it and our own helpers.
 const NOT_DESIGN := ["ground", "environment", "sun", "site", "cameras", "dimension", "weather", "terrain", "movie"]
@@ -18,7 +19,7 @@ const NOT_DESIGN := ["ground", "environment", "sun", "site", "cameras", "dimensi
 ## The bounding box of the selection, or of the whole design if nothing
 ## usable is selected.
 static func design_bounds() -> AABB:
-	var nodes: Array = EditorInterface.get_selection().get_selected_nodes()
+	var nodes: Array = GnHost.selected_nodes()
 	var box := _bounds(nodes)
 	if box.size == Vector3.ZERO and GnScene.root():
 		box = _bounds(GnScene.root().get_children())

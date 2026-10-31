@@ -12,14 +12,15 @@ const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
 const GnCadImport := preload("res://addons/genesis/cad/gn_cad_import.gd")
 const Underlay := preload("res://addons/genesis/cad/gn_underlay.gd")
 const Drawing := preload("res://addons/genesis/cad/gn_drawing.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var measure: GnMeasure
 
 var _plan_width: SpinBox
 var _pdf_ratio: SpinBox
 var _pdf_page: SpinBox
-var _plan_dialog: EditorFileDialog
-var _cad_dialog: EditorFileDialog
+var _plan_dialog: Node
+var _cad_dialog: Node
 var _scale_button: Button
 var _real_row: HBoxContainer
 var _real: SpinBox
@@ -120,7 +121,7 @@ func refresh() -> void:
 
 
 func _selected(script: Script) -> Node:
-	for n in EditorInterface.get_selection().get_selected_nodes():
+	for n in GnHost.selected_nodes():
 		if n.get_script() == script:
 			return n
 	return null
@@ -154,11 +155,8 @@ func _pick_cad() -> void:
 	_cad_dialog.popup_file_dialog()
 
 
-func _file_dialog(title: String, extensions: Array, chosen: Callable) -> EditorFileDialog:
-	var d := EditorFileDialog.new()
-	d.access = EditorFileDialog.ACCESS_FILESYSTEM
-	d.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-	d.title = title
+func _file_dialog(title: String, extensions: Array, chosen: Callable) -> Node:
+	var d := GnHost.make_file_dialog(title)
 	d.add_filter(", ".join(extensions.map(func(e): return "*." + e)), title)
 	d.file_selected.connect(chosen)
 	add_child(d)
@@ -201,7 +199,7 @@ func _apply_scale() -> void:
 	if _picked.size() != 3:
 		return
 	var plan: Node3D = _picked[0]
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	var old_mpp: float = plan.metres_per_pixel
 	var old_pos: Vector3 = plan.position
 	var k: float = plan.calibrate(_picked[1], _picked[2], _real.value)
@@ -240,7 +238,7 @@ func _toggle_layer(on: bool, drawing: Node, layer: String, property: String, inv
 
 
 func _change(node: Object, property: String, value: Variant, action: String) -> void:
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action(action, UndoRedo.MERGE_DISABLE, GnScene.root())
 	ur.add_do_property(node, property, value)
 	ur.add_undo_property(node, property, node.get(property))

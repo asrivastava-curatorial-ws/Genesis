@@ -8,6 +8,7 @@ extends Control
 
 const GnLook := preload("res://addons/genesis/core/gn_look.gd")
 const GnPhotomatch := preload("res://addons/genesis/core/gn_photomatch.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var camera: Camera3D
 
@@ -45,7 +46,7 @@ func _process(_delta: float) -> void:
 	if not visible:
 		return
 	if _vp.world_3d == null:
-		var editor_vp := EditorInterface.get_editor_viewport_3d(0)
+		var editor_vp := GnHost.viewport_3d()
 		if editor_vp:
 			_vp.world_3d = editor_vp.find_world_3d()
 	var look := GnLook.get_look(camera)

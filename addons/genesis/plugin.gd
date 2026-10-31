@@ -4,6 +4,8 @@ extends EditorPlugin
 # Registration only, plus the one job only an EditorPlugin can do: receive
 # mouse input from the 3D viewport and hand it to the scatter brush.
 
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const EditorHost := preload("res://addons/genesis/editor_host.gd")
 const GenesisDock := preload("res://addons/genesis/ui/gn_dock.gd")
 const GnBrush := preload("res://addons/genesis/core/gn_brush.gd")
 const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
@@ -17,6 +19,8 @@ var _measure: GnMeasure
 
 
 func _enter_tree() -> void:
+	# Everything Genesis asks of its surroundings, the editor answers.
+	GnHost.backend = EditorHost.new()
 	_brush = GnBrush.new()
 	_brush.changed.connect(update_overlays)
 	_measure = GnMeasure.new()
@@ -49,6 +53,7 @@ func _exit_tree() -> void:
 		_dock = null
 	_brush = null
 	_measure = null
+	GnHost.backend = null
 
 
 # The editor only forwards viewport input to a plugin that handles the

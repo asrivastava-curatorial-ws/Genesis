@@ -8,6 +8,7 @@ const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var _search: LineEdit
 var _category: OptionButton
@@ -129,7 +130,7 @@ static func _thumbnail(path: String) -> Texture2D:
 		return _thumbs[path]
 	# Not while the editor imports (see above), and not remembered, so it is
 	# tried again once the import is done.
-	var efs := EditorInterface.get_resource_filesystem()
+	var efs := GnHost.filesystem()
 	if efs.is_scanning() or efs.is_importing() or not ResourceLoader.exists(path):
 		return null
 	var packed := load(path) as PackedScene
@@ -145,7 +146,7 @@ static func _thumbnail(path: String) -> Texture2D:
 	var tex: Texture2D = null
 	# Without a GPU (headless runs, tests) there is nothing to render with.
 	if biggest and DisplayServer.get_name() != "headless":
-		var made := EditorInterface.make_mesh_previews([biggest], 96)
+		var made := GnHost.mesh_previews([biggest], 96)
 		tex = made[0] if not made.is_empty() else null
 	_thumbs[path] = tex
 	return tex

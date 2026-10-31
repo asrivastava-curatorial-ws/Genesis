@@ -12,6 +12,7 @@ extends RefCounted
 
 const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const DIR := "res://genesis_data/weathering"
 const LEVELS := 5
@@ -26,7 +27,7 @@ static func amount(s: GnMaterials.Surface) -> float:
 
 ## Weathers a surface by `a` (0 takes it all off again), as one undo step.
 static func apply(s: GnMaterials.Surface, a: float) -> void:
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: weathering", UndoRedo.MERGE_ENDS, GnScene.root())
 	var mat := s.mesh.get(s.property()) as BaseMaterial3D
 	if mat == null:

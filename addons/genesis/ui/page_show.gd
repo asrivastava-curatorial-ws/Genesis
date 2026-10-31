@@ -13,6 +13,7 @@ const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
 const GnFfmpeg := preload("res://addons/genesis/core/gn_ffmpeg.gd")
 const CueList := preload("res://addons/genesis/set/gn_cue_list.gd")
 const ShowWindow := preload("res://addons/genesis/ui/gn_show_window.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 # What the source menu offers, and the kind of source each one makes.
 const SOURCES := [
@@ -35,7 +36,7 @@ var _url: LineEdit
 var _file_row: HBoxContainer
 var _file_label: Label
 var _file: String = ""
-var _file_dialog: EditorFileDialog
+var _file_dialog: Node
 var _live_status: Label
 var _help: Label
 
@@ -143,7 +144,7 @@ func refresh() -> void:
 		var src: String = n.get("live_source")
 		var i := _screens.add_item("%s%s" % [n.name, ("   [%s]" % src) if src != "" else ""])
 		_screens.set_item_metadata(i, n.get_path())
-		if n.get_path() in picked or (picked.is_empty() and EditorInterface.get_selection().get_selected_nodes().has(n)):
+		if n.get_path() in picked or (picked.is_empty() and GnHost.selected_nodes().has(n)):
 			_screens.select(i, false)
 	# Cameras.
 	var chosen := _camera.get_item_text(_camera.selected) if _camera.selected >= 0 else ""
@@ -259,10 +260,7 @@ func _fill_pick() -> void:
 
 func _choose_file() -> void:
 	if _file_dialog == null:
-		_file_dialog = EditorFileDialog.new()
-		_file_dialog.access = EditorFileDialog.ACCESS_FILESYSTEM
-		_file_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-		_file_dialog.title = "Choose a video"
+		_file_dialog = GnHost.make_file_dialog("Choose a video")
 		_file_dialog.add_filter("*.mp4, *.mov, *.m4v, *.webm, *.mkv, *.avi, *.mxf", "Video")
 		_file_dialog.file_selected.connect(func(p): _file = p; _file_label.text = p.get_file())
 		add_child(_file_dialog)
@@ -295,7 +293,7 @@ func _apply_source() -> void:
 	if spec == "" and _kind() != "":
 		_status.text = "Choose what to show first."
 		return
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: live video", UndoRedo.MERGE_DISABLE, GnScene.root())
 	for n in screens:
 		ur.add_do_property(n, "live_source", spec)
@@ -381,7 +379,7 @@ func _target_changed(t: String) -> void:
 
 # Cue edits go through undo, as a whole new list.
 func _commit(cl: Node, cues: Array, action: String) -> void:
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action(action, UndoRedo.MERGE_DISABLE, GnScene.root())
 	ur.add_do_property(cl, "cues", cues)
 	ur.add_undo_property(cl, "cues", cl.cues.duplicate(true))
@@ -500,7 +498,7 @@ func _open_window() -> void:
 		return
 	_window = ShowWindow.new()
 	_window.cue_list = cl
-	EditorInterface.get_base_control().add_child(_window)
+	GnHost.dialog_parent().add_child(_window)
 	_window.popup_centered(Vector2i(1280, 720))
 
 

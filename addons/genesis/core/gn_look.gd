@@ -10,6 +10,7 @@ extends RefCounted
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const POST := preload("res://addons/genesis/core/gn_post.gdshader")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const META := &"gn_look"
 const LOOKS_DIR := "res://genesis_data/looks"
@@ -63,7 +64,7 @@ static func set_value(cam: Camera3D, key: String, value: Variant) -> void:
 static func apply_preset(cam: Camera3D, look: Dictionary) -> void:
 	var merged := DEFAULTS.duplicate()
 	merged.merge(look, true)
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: apply look", UndoRedo.MERGE_DISABLE, GnScene.root())
 	ur.add_do_property(cam, "metadata/" + META, merged)
 	ur.add_undo_property(cam, "metadata/" + META, cam.get_meta(META, {}))

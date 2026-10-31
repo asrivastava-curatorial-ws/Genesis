@@ -11,6 +11,7 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const Terrain := preload("res://addons/genesis/set/gn_terrain.gd")
 const WaterBody := preload("res://addons/genesis/set/gn_water_body.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const PAINTABLE := ["grass", "plants", "trees"]
 
@@ -149,7 +150,7 @@ func _add_terrain() -> void:
 		return
 	var t := Terrain.new()
 	t.name = "Terrain"
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	var ground := GnScene.find_role("ground") as Node3D
 	GnScene.add_node(t, root, "Genesis: add terrain", "terrain")
 	if ground and ground.visible:

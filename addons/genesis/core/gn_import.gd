@@ -7,6 +7,7 @@ extends RefCounted
 
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const GnLiveLink := preload("res://addons/genesis/core/gn_live_link.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const DEST := "res://assets"
 const EXTENSIONS := ["glb", "gltf", "blend", "fbx", "obj"]
@@ -15,11 +16,14 @@ const EXTENSIONS := ["glb", "gltf", "blend", "fbx", "obj"]
 # Returns an error message, or "" once the model is in the scene.
 static func import_building(source: String) -> String:
 	var ext := source.get_extension().to_lower()
+	# Models come in through the editor's importer; the standalone application
+	# gets its own runtime importer in a later stage.
+	if not GnHost.supports("editor_import"):
+		return "Bringing in a model needs the runtime importer, which is not built yet."
 	if ext not in EXTENSIONS:
 		return "Genesis can bring in %s files." % ", ".join(EXTENSIONS)
 	if ext == "blend":
-		var settings := EditorInterface.get_editor_settings()
-		if str(settings.get_setting("filesystem/import/blender/blender_path")) == "":
+		if str(GnHost.get_setting("blender_path")) == "":
 			return "To use .blend files directly, tell Godot where Blender is: Editor Settings → FileSystem → Import → Blender → Blender Path."
 	if ext == "gltf":
 		# A .gltf usually has a .bin and textures beside it; copying only the
@@ -28,7 +32,7 @@ static func import_building(source: String) -> String:
 	# The editor may still be importing (a project just opened, textures just
 	# added). Starting our own scan then makes Godot refuse a second, nested
 	# import, so wait for it to settle first.
-	var efs := EditorInterface.get_resource_filesystem()
+	var efs := GnHost.filesystem()
 	if not await _idle(efs):
 		return "The editor is still busy importing. Try again in a moment."
 	DirAccess.make_dir_recursive_absolute(DEST)
@@ -53,7 +57,7 @@ static func import_building(source: String) -> String:
 	return ""
 
 
-static func _idle(efs: EditorFileSystem) -> bool:
+static func _idle(efs: Object) -> bool:
 	var deadline := Time.get_ticks_msec() + 120000
 	while efs.is_scanning() or efs.is_importing():
 		if Time.get_ticks_msec() > deadline:

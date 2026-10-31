@@ -7,6 +7,7 @@ extends Window
 # a cue, F toggles full screen, Esc closes.
 
 const ShotPreview := preload("res://addons/genesis/ui/gn_shot_preview.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var cue_list: Node
 
@@ -56,7 +57,7 @@ func _process(_delta: float) -> void:
 
 
 func _first_camera() -> Camera3D:
-	var root := EditorInterface.get_edited_scene_root()
+	var root := GnHost.edited_scene_root()
 	if root == null:
 		return null
 	for c in root.find_children("*", "Camera3D", true, false):

@@ -10,6 +10,7 @@ extends RefCounted
 # plugin.gd calls poll() every couple of seconds; it only reads file times.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const SOURCE := &"gn_source"
 const SOURCE_TIME := &"gn_source_time"
@@ -39,7 +40,7 @@ static func linked() -> Array:
 static func poll() -> int:
 	if not enabled:
 		return 0
-	var efs := EditorInterface.get_resource_filesystem()
+	var efs := GnHost.filesystem()
 	if efs.is_scanning() or efs.is_importing():
 		return 0
 	var changed := PackedStringArray()

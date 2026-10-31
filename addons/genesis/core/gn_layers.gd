@@ -8,6 +8,7 @@ extends RefCounted
 # is the node's own visible flag, undoable.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const META := &"gn_layer"
 
@@ -35,7 +36,7 @@ static func layers() -> Dictionary:
 
 ## Puts nodes on a layer ("" takes them off), as one undo step.
 static func assign(nodes: Array, layer: String) -> void:
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: put on layer %s" % layer, UndoRedo.MERGE_DISABLE, GnScene.root())
 	for n in nodes:
 		if not n is Node3D:

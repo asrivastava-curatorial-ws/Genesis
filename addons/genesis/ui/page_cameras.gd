@@ -10,6 +10,7 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const ShotPreview := preload("res://addons/genesis/ui/gn_shot_preview.gd")
 const GnPhotomatch := preload("res://addons/genesis/core/gn_photomatch.gd")
 const GnSections := preload("res://addons/genesis/core/gn_sections.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var _list: ItemList
 var _focal: HSlider
@@ -21,7 +22,7 @@ var _photo_label: Label
 var _horizon: HSlider
 var _height: HSlider
 var _shadows: HSlider
-var _dialog: EditorFileDialog
+var _dialog: Node
 var _cams: Array[Camera3D] = []
 
 
@@ -134,10 +135,7 @@ func _pick_photo() -> void:
 	if _selected() == null:
 		return
 	if _dialog == null:
-		_dialog = EditorFileDialog.new()
-		_dialog.access = EditorFileDialog.ACCESS_FILESYSTEM
-		_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-		_dialog.title = "Photo of the site"
+		_dialog = GnHost.make_file_dialog("Photo of the site")
 		_dialog.add_filter("*.jpg, *.jpeg, *.png, *.webp", "Photos")
 		_dialog.file_selected.connect(func(p):
 			var err := GnPhotomatch.set_photo(_selected(), p)

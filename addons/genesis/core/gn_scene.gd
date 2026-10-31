@@ -4,12 +4,18 @@ extends RefCounted
 # Finds and adds the nodes Genesis manages in the edited scene. They are
 # ordinary nodes tagged with `genesis_role` metadata, so a scene still opens
 # and renders with the plugin disabled; the tag is only how we find them again.
+#
+# This is also the choke point for undo and selection: nearly every system
+# changes the scene through add_nodes or set_props, and both reach the undo
+# history through GnHost, so the same code runs in the editor and standalone.
+
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const ROLE := &"genesis_role"
 
 
 static func root() -> Node:
-	return EditorInterface.get_edited_scene_root()
+	return GnHost.edited_scene_root()
 
 
 static func find_role(role: String) -> Node:
@@ -35,7 +41,7 @@ static func add_node(node: Node, parent: Node, action: String, role := "") -> vo
 # Several nodes as a single undo step.
 static func add_nodes(nodes: Array, parent: Node, action: String) -> void:
 	var owner := root()
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action(action, UndoRedo.MERGE_DISABLE, owner)
 	for node in nodes:
 		ur.add_do_method(parent, "add_child", node, true)
@@ -59,7 +65,7 @@ static func _saved_nodes(node: Node) -> Array[Node]:
 # A property change that merges with the previous one of the same name, so
 # dragging a slider is one undo step rather than a hundred.
 static func set_props(action: String, changes: Array) -> void:
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action(action, UndoRedo.MERGE_ENDS, root())
 	for c in changes:
 		var obj: Object = c[0]
@@ -69,7 +75,4 @@ static func set_props(action: String, changes: Array) -> void:
 
 
 static func select(node: Node) -> void:
-	var sel := EditorInterface.get_selection()
-	sel.clear()
-	sel.add_node(node)
-	EditorInterface.edit_node(node)
+	GnHost.select(node)

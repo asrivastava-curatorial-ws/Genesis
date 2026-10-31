@@ -10,6 +10,7 @@ extends RefCounted
 const GnScatter := preload("res://addons/genesis/core/gn_scatter.gd")
 const GnSurface := preload("res://addons/genesis/core/gn_surface.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 signal changed
 signal stroke_finished
@@ -117,7 +118,7 @@ func _end() -> void:
 		var t := terrain()
 		if t:
 			# One undo step for the whole stroke: before and after.
-			var ur := EditorInterface.get_editor_undo_redo()
+			var ur := GnHost.undo_redo()
 			if mode == "paint":
 				ur.create_action("Genesis: paint the ground", UndoRedo.MERGE_DISABLE, GnScene.root())
 				ur.add_do_property(t, "splat", t.splat.duplicate())

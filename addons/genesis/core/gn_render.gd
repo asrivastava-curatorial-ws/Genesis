@@ -23,6 +23,7 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnPhotomatch := preload("res://addons/genesis/core/gn_photomatch.gd")
 const GnStaging := preload("res://addons/genesis/core/gn_staging.gd")
 const GnAccumulate := preload("res://addons/genesis/core/gn_accumulate.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 # Rendering at a multiple of the output size and filtering down is the
 # cleanest antialiasing there is: no shimmer on thin mullions, no jaggies on
@@ -43,7 +44,7 @@ static func supersample(size: Vector2i) -> float:
 # true lens blur, soft sun shadows and perfect edges, at that many renders.
 static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 		debug_draw := Viewport.DEBUG_DRAW_DISABLED, transparent := false, samples := 0) -> String:
-	var editor_vp := EditorInterface.get_editor_viewport_3d(0)
+	var editor_vp := GnHost.viewport_3d()
 	if camera == null or editor_vp == null:
 		return ""
 	var accumulate := samples > 1 and high and debug_draw == Viewport.DEBUG_DRAW_DISABLED and not transparent \
@@ -109,7 +110,7 @@ static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 	# Renders are output, not assets: keep Godot from importing every PNG.
 	if not FileAccess.file_exists(OUTPUT_DIR + "/.gdignore"):
 		FileAccess.open(OUTPUT_DIR + "/.gdignore", FileAccess.WRITE).close()
-	var scene := EditorInterface.get_edited_scene_root()
+	var scene := GnHost.edited_scene_root()
 	var stem := "%s_%s_%s" % [
 		scene.name if scene else "scene",
 		camera.name.replace(" ", ""),

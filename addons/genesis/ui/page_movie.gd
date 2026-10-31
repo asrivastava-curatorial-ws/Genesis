@@ -14,6 +14,7 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnRender := preload("res://addons/genesis/core/gn_render.gd")
 const ShotPreview := preload("res://addons/genesis/ui/gn_shot_preview.gd")
 const GnPhasing := preload("res://addons/genesis/core/gn_phasing.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const SIZES := {"1920 × 1080 (HD)": Vector2i(1920, 1080), "2560 × 1440": Vector2i(2560, 1440),
 	"3840 × 2160 (4K)": Vector2i(3840, 2160), "1280 × 720 (quick)": Vector2i(1280, 720)}
@@ -196,7 +197,7 @@ func _notification(what: int) -> void:
 
 
 func _selected3d() -> Array:
-	return EditorInterface.get_selection().get_selected_nodes().filter(func(n): return n is Node3D)
+	return GnHost.selected_nodes().filter(func(n): return n is Node3D)
 
 
 func _phase() -> void:
@@ -230,7 +231,7 @@ func _add_path() -> void:
 
 
 func _add_orbit() -> void:
-	var picked := EditorInterface.get_selection().get_selected_nodes()
+	var picked := GnHost.selected_nodes()
 	var box := AABB()
 	var found := false
 	for n in picked:
@@ -310,7 +311,7 @@ func _add_mover() -> void:
 # Moves the selected objects onto the most recently selected path, or the
 # only one there is.
 func _ride() -> void:
-	var picked := EditorInterface.get_selection().get_selected_nodes()
+	var picked := GnHost.selected_nodes()
 	var movers: Array = GnScene.root().get_tree().get_nodes_in_group(Mover.GROUP) if GnScene.root() else []
 	var path: Node = null
 	for n in picked:
@@ -321,7 +322,7 @@ func _ride() -> void:
 	if path == null:
 		_status.text = "Select the path too (or have just one)."
 		return
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: put on the path", UndoRedo.MERGE_DISABLE, GnScene.root())
 	for n in picked:
 		if n == path or not n is Node3D:

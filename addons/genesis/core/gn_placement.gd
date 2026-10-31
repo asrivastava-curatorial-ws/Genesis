@@ -8,6 +8,7 @@ extends RefCounted
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnSurface := preload("res://addons/genesis/core/gn_surface.gd")
 const GnScatter := preload("res://addons/genesis/core/gn_scatter.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 # Vegetation looks copy-pasted if every instance faces the same way.
 const RANDOM_TURN_CATEGORIES := ["trees", "plants", "grass"]
@@ -51,7 +52,7 @@ static func _pick(path: String, category: String) -> String:
 # sky, fall back to a point in front of the camera so a click always does
 # something visible.
 static func drop_point() -> Vector3:
-	var vp := EditorInterface.get_editor_viewport_3d(0)
+	var vp := GnHost.viewport_3d()
 	var cam := vp.get_camera_3d() if vp else null
 	if cam == null:
 		return Vector3.ZERO

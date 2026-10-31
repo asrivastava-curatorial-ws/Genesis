@@ -14,6 +14,7 @@ extends RefCounted
 
 const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 const DIR := "res://genesis_data/tiles"
 const META := &"gn_tiles"
@@ -62,7 +63,7 @@ static func apply(s: GnMaterials.Surface, settings: Dictionary) -> void:
 	mat.uv1_world_triplanar = true
 	mat.uv1_scale = Vector3(1.0 / p.width, 1.0 / p.height, 1.0 / p.height)
 	mat.set_meta(META, d)
-	var ur := EditorInterface.get_editor_undo_redo()
+	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: tiles", UndoRedo.MERGE_DISABLE, GnScene.root())
 	GnMaterials._allow_override(ur, s.mesh)
 	ur.add_do_property(s.mesh, s.property(), mat)

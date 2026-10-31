@@ -11,16 +11,16 @@ const GnSite := preload("res://addons/genesis/core/gn_site.gd")
 const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
 const GnLayers := preload("res://addons/genesis/core/gn_layers.gd")
 const GnLiveLink := preload("res://addons/genesis/core/gn_live_link.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
-const BLENDER_SETTING := "filesystem/import/blender/blender_path"
 
 var _new_name: LineEdit
 var _status: Label
 var _message: Label
 var _setup_button: Button
 var _blender: Label
-var _dialog: EditorFileDialog
-var _blender_dialog: EditorFileDialog
+var _dialog: Node
+var _blender_dialog: Node
 var _address: LineEdit
 var _radius: HSlider
 var _site_button: Button
@@ -110,13 +110,14 @@ func refresh() -> void:
 		"" if GnLiveLink.last_update == "" else " Last update: %s." % GnLiveLink.last_update]
 	var root := GnScene.root()
 	if root == null:
-		_status.text = "Name a scene above and press New scene, or open one from the FileSystem dock."
+		_status.text = "Name a scene above and press New scene, or open one from the FileSystem dock." if GnHost.supports("editor") \
+			else "Name a scene above and press New scene."
 	elif not root is Node3D:
 		_status.text = "This scene isn't 3D. Genesis works in 3D scenes."
 	else:
 		_status.text = "Sun, sky and ground are in." if GnEnvironment.is_set_up() else ""
 	_setup_button.disabled = root == null or not root is Node3D or GnEnvironment.is_set_up()
-	var blender := str(EditorInterface.get_editor_settings().get_setting(BLENDER_SETTING))
+	var blender := str(GnHost.get_setting("blender_path"))
 	_blender.text = "Blender: %s" % blender.get_file() if blender != "" \
 		else "Blender isn't set up, so .blend files can't be brought in directly. GLB, FBX and OBJ work without it."
 
@@ -127,23 +128,12 @@ func _new_scene() -> void:
 	var base := _new_name.text.strip_edges().validate_filename().replace(" ", "_").to_lower()
 	if base == "":
 		base = "scene"
-	DirAccess.make_dir_recursive_absolute("res://scenes")
-	var path := "res://scenes/%s.tscn" % base
-	var n := 2
-	while FileAccess.file_exists(path):
-		path = "res://scenes/%s_%d.tscn" % [base, n]
-		n += 1
-	var root := Node3D.new()
-	root.name = base.to_pascal_case()
-	var packed := PackedScene.new()
-	packed.pack(root)
-	root.free()
-	if ResourceSaver.save(packed, path) != OK:
-		_message.text = "Could not create %s." % path
+	var path: String = GnHost.new_scene(base)
+	if path == "":
+		_message.text = "Could not make a new scene."
 		return
-	EditorInterface.open_scene_from_path(path)
 	GnEnvironment.set_up()
-	EditorInterface.save_scene()
+	GnHost.save_scene()
 	_new_name.text = ""
 	_message.text = "Made %s. Now bring in a building." % path.get_file()
 	refresh()
@@ -154,10 +144,7 @@ func _pick_building() -> void:
 		_message.text = "Make or open a scene first."
 		return
 	if _dialog == null:
-		_dialog = EditorFileDialog.new()
-		_dialog.access = EditorFileDialog.ACCESS_FILESYSTEM
-		_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-		_dialog.title = "Bring in a building"
+		_dialog = GnHost.make_file_dialog("Bring in a building")
 		for ext in GnImport.EXTENSIONS:
 			_dialog.add_filter("*.%s" % ext)
 		_dialog.file_selected.connect(_import)
@@ -177,13 +164,10 @@ func _import(path: String) -> void:
 
 func _pick_blender() -> void:
 	if _blender_dialog == null:
-		_blender_dialog = EditorFileDialog.new()
-		_blender_dialog.access = EditorFileDialog.ACCESS_FILESYSTEM
-		_blender_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-		_blender_dialog.title = "Where is Blender?"
+		_blender_dialog = GnHost.make_file_dialog("Where is Blender?")
 		_blender_dialog.add_filter("blender.exe, blender", "Blender")
 		_blender_dialog.file_selected.connect(func(p):
-			EditorInterface.get_editor_settings().set_setting(BLENDER_SETTING, p)
+			GnHost.set_setting("blender_path", p)
 			refresh())
 		add_child(_blender_dialog)
 	_blender_dialog.popup_file_dialog()
@@ -232,7 +216,7 @@ func _toggle_measure() -> void:
 
 func _put_on_layer() -> void:
 	var layer := _layer_name.text.strip_edges()
-	var picked := EditorInterface.get_selection().get_selected_nodes()
+	var picked := GnHost.selected_nodes()
 	if layer == "" or picked.is_empty():
 		_message.text = "Select something and name a layer."
 		return

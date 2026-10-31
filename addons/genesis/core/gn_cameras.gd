@@ -9,6 +9,7 @@ extends RefCounted
 # preview, which is also exactly what gets rendered.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 # Full-frame 35 mm: 24 mm tall. The cameras keep height, so the focal length
 # maps to the vertical field of view.
@@ -32,7 +33,7 @@ static func cameras() -> Array[Camera3D]:
 # Copies what the editor view currently shows into a new saved camera.
 static func save_view() -> Camera3D:
 	var root := GnScene.root()
-	var vp := EditorInterface.get_editor_viewport_3d(0)
+	var vp := GnHost.viewport_3d()
 	if root == null or vp == null or vp.get_camera_3d() == null:
 		return null
 	var editor_cam := vp.get_camera_3d()

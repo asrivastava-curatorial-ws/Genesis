@@ -8,6 +8,7 @@ const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const GnLook := preload("res://addons/genesis/core/gn_look.gd")
 const ShotPreview := preload("res://addons/genesis/ui/gn_shot_preview.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var _camera: OptionButton
 var _hint: Label
@@ -20,7 +21,7 @@ var _clay: CheckBox
 var _title: LineEdit
 var _logo_label: Label
 var _logo_corner: OptionButton
-var _logo_dialog: EditorFileDialog
+var _logo_dialog: Node
 var _save_name: LineEdit
 var _all_looks := {}
 
@@ -152,10 +153,7 @@ func _set_look(key: String, value: Variant) -> void:
 # A logo is copied into the project, so the scene keeps it wherever it goes.
 func _choose_logo() -> void:
 	if _logo_dialog == null:
-		_logo_dialog = EditorFileDialog.new()
-		_logo_dialog.access = EditorFileDialog.ACCESS_FILESYSTEM
-		_logo_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-		_logo_dialog.title = "Choose a logo or image"
+		_logo_dialog = GnHost.make_file_dialog("Choose a logo or image")
 		_logo_dialog.add_filter("*.png, *.jpg, *.jpeg, *.webp, *.svg", "Images")
 		_logo_dialog.file_selected.connect(func(p: String):
 			DirAccess.make_dir_recursive_absolute("res://genesis_data/logos")
