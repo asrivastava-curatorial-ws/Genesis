@@ -63,7 +63,10 @@ func _ready() -> void:
 
 func _start_services() -> void:
 	App.main = self
-	App.settings = SettingsService.new()
+	# The smoke tour works on settings of its own and deletes them; the user's
+	# layout and recent projects are never touched by it.
+	var smoke := "--smoke" in OS.get_cmdline_user_args()
+	App.settings = SettingsService.new("user://smoke_settings.json" if smoke else "user://settings.json")
 	var settings_note: String = App.settings.load_from_disk()
 	App.logger = LogService.new()
 	App.logger.start()
@@ -189,7 +192,11 @@ func dependencies() -> void:
 ## The documentation beside the program, else the project's pages online.
 func _open_docs() -> void:
 	var here := OS.get_executable_path().get_base_dir()
-	for p in [here.path_join("docs/USER_MANUAL.md"), here.path_join("../../docs/USER_MANUAL.md")]:
+	# The release's manual (one page for any browser), then the plain pages.
+	var tried := []
+	for d in [here.path_join("docs"), here.path_join("../../docs")]:
+		tried.append_array([d.path_join("Genesis-Community-Manual.html"), d.path_join("USER_MANUAL.md")])
+	for p in tried:
 		if FileAccess.file_exists(p):
 			OS.shell_open(p.simplify_path())
 			return

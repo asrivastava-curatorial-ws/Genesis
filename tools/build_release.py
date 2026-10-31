@@ -7,13 +7,14 @@
 2. lays out Genesis-Community-<version>/ as below,
 3. writes checksums/SHA256SUMS and zips it to release/Genesis-Community-<version>.zip.
 
-    README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md
+    START_HERE.md README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md
     applications/linux-x86_64/    Genesis, Genesis.pck, Genesis.sh, genesis.png
     applications/windows-x86_64/  Genesis.exe, Genesis.pck, Genesis.bat, Genesis.ps1
     source/                       the source at this commit (git archive)
     demos/architecture/ demos/event-production/   (from --demos, made by
                                   Genesis -- --make-demos DIR)
-    docs/ reports/ tests/ tools/
+    docs/ reports/ tests/ tools/  (docs/ also gets Genesis-Community-Manual.html
+                                  and .pdf from tools/build_manual.py)
     checksums/SHA256SUMS
 
 Standard library only. Godot is found from $GODOT or tests/local.env.
@@ -65,7 +66,7 @@ def main():
         run(["bash", os.path.join(ROOT, "tools/build_standalone.sh"), "linux", "windows"], env=dict(os.environ, GODOT=godot()))
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
-    for f in ["README.md", "CHANGELOG.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "DEVELOPMENT_STATUS.md"]:
+    for f in ["START_HERE.md", "README.md", "CHANGELOG.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "DEVELOPMENT_STATUS.md"]:
         shutil.copy(os.path.join(ROOT, f), out)
     # Applications.
     lin = os.path.join(out, "applications/linux-x86_64")
@@ -92,6 +93,8 @@ def main():
     # Documents, reports, tests, tools at the top for convenience.
     for d in ["docs", "reports", "tests", "tools"]:
         shutil.copytree(os.path.join(ROOT, d), os.path.join(out, d), ignore=shutil.ignore_patterns("local.env", "__pycache__"))
+    # The manual in one file (HTML always; PDF when Playwright is installed).
+    run([sys.executable, os.path.join(ROOT, "tools/build_manual.py"), os.path.join(out, "docs")])
     # Demonstration projects.
     if demos:
         for src_name, dst_name in [("Architecture demo", "architecture"), ("Event production demo", "event-production")]:

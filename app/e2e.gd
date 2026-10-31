@@ -1,10 +1,12 @@
 extends RefCounted
 
 # The end-to-end test of the brief (section 16), run in the real program with
-# a real renderer, in two separate launches:
+# a real renderer, in three separate launches (each phase in a fresh program,
+# which also keeps one launch's memory use down):
 #
 #   Genesis -- --e2e build  <folder>   make a project, fill it, save, quit
 #   Genesis -- --e2e verify <folder>   open it again, check it, render, quit
+#   Genesis -- --e2e media  <folder>   AI upscale, film (MP4), concert render
 #
 # A step that cannot run on this computer (no Blender, no internet for the
 # site) is written down as "not tested" with the reason; it is never passed.

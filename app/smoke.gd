@@ -151,10 +151,11 @@ static func run(main: Node) -> int:
 	_check(main.screen is Workspace and GnScene.find_role("smoke_cam") != null, "the project reopens with its contents")
 	App.projects.close()
 	await tree.process_frame
-	# Leave the user's list of recent projects as it was.
+	# Leave nothing behind: the project, and the tour's own settings file.
+	_check(App.settings.path.get_file() == "smoke_settings.json", "the tour used its own settings, not the user's")
 	App.settings.remove_recent(parent.path_join("Smoke"))
-	App.settings.save()
 	_remove_tree(parent)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(App.settings.path))
 	return _failures
 
 

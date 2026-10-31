@@ -1,5 +1,7 @@
 # Quick start
 
+To look around before making anything, open one of the two demo projects in the release's `demos/` folder with *Open Project…*.
+
 1. **Start Genesis** (`Genesis.sh` or `Genesis.bat`). The project manager opens.
 2. **New Project…** Give it a name and a folder. It opens with a sun, sky and ground already in.
 3. **Bring in a building**: File > Bring In a Model… (Ctrl+I), or drop a `.glb`, `.gltf`, `.fbx`, `.obj` or `.blend` file on the window. Say what unit it was made in and which way is up.

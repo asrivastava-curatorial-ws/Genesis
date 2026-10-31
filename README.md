@@ -10,6 +10,8 @@ It is the [Genesis](https://github.com/Utopian-Academy/Genesis) editor plugin by
 
 ## Get started
 
+**Read [START_HERE.md](START_HERE.md) first**: running it, the first ten minutes, a self-test for your computer, and where everything is kept. The whole manual is also one page: `docs/Genesis-Community-Manual.html` (and `.pdf`) in the release.
+
 - Linux: `applications/linux-x86_64/Genesis.sh` ([installation](docs/INSTALLATION_LINUX.md))
 - Windows: `applications\windows-x86_64\Genesis.bat` ([installation](docs/INSTALLATION_WINDOWS.md))
 - Then the [quick start](docs/QUICK_START.md), and the [user manual](docs/USER_MANUAL.md).
