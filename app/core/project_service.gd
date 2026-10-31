@@ -90,7 +90,7 @@ func create(parent_dir: String, project: String) -> String:
 	if not DirAccess.dir_exists_absolute(parent_dir):
 		return "The folder %s does not exist." % parent_dir
 	var dir := parent_dir.path_join(project.strip_edges())
-	if DirAccess.dir_exists_absolute(dir) and (not DirAccess.get_files_at(dir).is_empty() or not DirAccess.get_directories_at(dir).is_empty()):
+	if DirAccess.dir_exists_absolute(dir) and not GnPaths.is_empty_dir(dir):
 		return "%s already exists and is not empty." % dir
 	err = _make_folders(dir)
 	if err != "":
@@ -420,7 +420,7 @@ func import_plugin_project(source: String, parent_dir: String, project: String) 
 	if err != "":
 		return {"error": err}
 	var dir := parent_dir.path_join(project.strip_edges())
-	if DirAccess.dir_exists_absolute(dir) and not (DirAccess.get_files_at(dir).is_empty() and DirAccess.get_directories_at(dir).is_empty()):
+	if DirAccess.dir_exists_absolute(dir) and not GnPaths.is_empty_dir(dir):
 		return {"error": "%s already exists and is not empty." % dir}
 	err = _make_folders(dir)
 	if err != "":

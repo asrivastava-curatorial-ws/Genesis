@@ -32,6 +32,34 @@ static func tool_dir(tool_name: String) -> String:
 	return GnHost.tool_dir(tool_name)
 
 
+## True when `dir` has nothing in it, hidden files included (a folder holding
+## only `.git` is not empty).
+static func is_empty_dir(dir: String) -> bool:
+	var d := DirAccess.open(dir)
+	if d == null:
+		return true
+	d.include_hidden = true
+	return d.get_files().is_empty() and d.get_directories().is_empty()
+
+
+## Deletes a folder and everything in it, hidden files included. A link to a
+## folder is removed as a link; what it points to is left alone.
+static func remove_tree(dir: String) -> void:
+	var d := DirAccess.open(dir)
+	if d == null:
+		return
+	d.include_hidden = true
+	for f in d.get_files():
+		DirAccess.remove_absolute(dir.path_join(f))
+	for sub in d.get_directories():
+		var p := dir.path_join(sub)
+		if d.is_link(p):
+			DirAccess.remove_absolute(p)
+		else:
+			remove_tree(p)
+	DirAccess.remove_absolute(dir)
+
+
 ## A folder for things that can always be made again (measurements, previews).
 static func cache_dir(what: String) -> String:
 	var dir := ProjectSettings.globalize_path("user://cache").path_join(what)

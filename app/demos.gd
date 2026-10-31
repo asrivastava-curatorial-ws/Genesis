@@ -243,12 +243,16 @@ static func render_samples(main: Node, folder: String) -> int:
 		if not scene.ends_with("main.tscn"):
 			cams = cams.slice(0, 1)
 		for cam in cams:
+			var dest := out.path_join("%s_%s.png" % [scene.get_file().get_basename(), str(cam.name).to_snake_case()])
+			# A run that was stopped carries on where it left off.
+			if FileAccess.file_exists(dest):
+				_say("ok   %s (already there)" % dest.get_file())
+				continue
 			var path: String = await GnRender.render(cam, RENDER_SIZE, main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0)
 			if path == "":
 				failures += 1
 				_say("FAIL %s %s render" % [scene.get_file(), cam.name])
 				continue
-			var dest := out.path_join("%s_%s.png" % [scene.get_file().get_basename(), str(cam.name).to_snake_case()])
 			DirAccess.rename_absolute(path, dest)
 			_say("ok   %s" % dest.get_file())
 	App.projects.close()

@@ -375,8 +375,4 @@ func _gd_files(dir: String) -> Array:
 
 
 func _remove_tree(dir: String) -> void:
-	for f in DirAccess.get_files_at(dir):
-		DirAccess.remove_absolute(dir.path_join(f))
-	for d in DirAccess.get_directories_at(dir):
-		_remove_tree(dir.path_join(d))
-	DirAccess.remove_absolute(dir)
+	preload("res://addons/genesis/core/gn_paths.gd").remove_tree(dir)

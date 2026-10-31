@@ -76,6 +76,22 @@ func _run() -> void:
 	await _models()
 	await _live_link()
 	await _old_projects()
+	_folders()
+
+
+# ---------------------------------------------------------- folders
+func _folders() -> void:
+	# A folder holding only hidden files is not empty, and is deleted whole.
+	var d := tmp.path_join("hidden_only")
+	DirAccess.make_dir_recursive_absolute(d.path_join(".git/objects"))
+	_write(d.path_join(".git/HEAD"), "ref: refs/heads/main\n")
+	check(not GnPaths.is_empty_dir(d), "folders: one holding only hidden files is not empty")
+	check(projects.create(tmp, "hidden_only") != "", "folders: a new project is refused in a folder that has hidden files")
+	GnPaths.remove_tree(d)
+	check(not DirAccess.dir_exists_absolute(d), "folders: deleting a folder removes its hidden files too")
+	DirAccess.make_dir_recursive_absolute(d)
+	check(GnPaths.is_empty_dir(d), "folders: an empty folder is empty")
+	GnPaths.remove_tree(d)
 
 
 # ---------------------------------------------------------- paths and format
@@ -338,8 +354,4 @@ func _old_projects() -> void:
 
 
 func _remove_tree(dir: String) -> void:
-	for f in DirAccess.get_files_at(dir):
-		DirAccess.remove_absolute(dir.path_join(f))
-	for d in DirAccess.get_directories_at(dir):
-		_remove_tree(dir.path_join(d))
-	DirAccess.remove_absolute(dir)
+	preload("res://addons/genesis/core/gn_paths.gd").remove_tree(dir)

@@ -6,7 +6,8 @@ const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 # Xintao Wang et al.), the open image upscaler, run as its own small
 # program on the GPU. It is not bundled: the first upscale downloads the
 # build for this computer from the project's GitHub release (about 45 MB),
-# checks it against the fingerprint below, and keeps it in the project.
+# checks it against the fingerprint below, and keeps it in the user's tools
+# folder (GnPaths.tool_dir), shared by every project.
 #
 # It sharpens edges and fine texture well; like every AI upscaler it can
 # invent detail in very fine repeating patterns and smooth away hairlines.

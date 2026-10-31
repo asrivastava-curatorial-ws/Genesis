@@ -227,8 +227,4 @@ static func _unique(dir: String, stem: String, ext: String) -> String:
 
 
 static func _remove_tree(path: String) -> void:
-	for f in DirAccess.get_files_at(path):
-		DirAccess.remove_absolute(path.path_join(f))
-	for d in DirAccess.get_directories_at(path):
-		_remove_tree(path.path_join(d))
-	DirAccess.remove_absolute(path)
+	preload("res://addons/genesis/core/gn_paths.gd").remove_tree(path)
