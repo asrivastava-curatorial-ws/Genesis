@@ -9,6 +9,7 @@ extends RefCounted
 
 const GnPanorama := preload("res://addons/genesis/core/gn_panorama.gd")
 const GnRender := preload("res://addons/genesis/core/gn_render.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const VIEWER := "res://addons/genesis/core/gn_tour_viewer.html"
 ## Views further apart than this get no ring between them (they are still
@@ -46,7 +47,7 @@ static func export_tour(cams: Array, title: String, stereo: bool, width: int, ho
 			progress.call(i + 1, cams.size())
 	var tour := {"title": title, "stereo": stereo, "stops": stops}
 	var html := FileAccess.get_file_as_string(VIEWER).replace("/*TOUR_JSON*/null", JSON.stringify(tour))
-	var file := "%s/%s_tour.html" % [GnRender.OUTPUT_DIR, title.validate_filename().replace(" ", "_")]
+	var file := "%s/%s_tour.html" % [GnPaths.at(GnRender.OUTPUT_DIR), title.validate_filename().replace(" ", "_")]
 	var f := FileAccess.open(file, FileAccess.WRITE)
 	if f == null:
 		return ""

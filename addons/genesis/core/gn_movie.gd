@@ -20,6 +20,7 @@ const Mover := preload("res://addons/genesis/set/gn_mover.gd")
 const FlyingScreen := preload("res://addons/genesis/set/gn_flying_screen.gd")
 const GnPhasing := preload("res://addons/genesis/core/gn_phasing.gd")
 const GnFfmpeg := preload("res://addons/genesis/core/gn_ffmpeg.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const META := &"gn_shots"
 # {"from": hour, "to": hour} when the sun moves through the film, else absent.
@@ -221,10 +222,10 @@ static func render(list: Array, size: Vector2i, host: Node, movie_name: String,
 	var total := int(ceil(duration(list) * fps))
 	if total <= 0:
 		return ""
-	var dir := "%s/%s" % [GnRender.OUTPUT_DIR, movie_name]
+	var dir := "%s/%s" % [GnPaths.at(GnRender.OUTPUT_DIR), movie_name]
 	DirAccess.make_dir_recursive_absolute(dir)
-	if not FileAccess.file_exists(GnRender.OUTPUT_DIR + "/.gdignore"):
-		FileAccess.open(GnRender.OUTPUT_DIR + "/.gdignore", FileAccess.WRITE).close()
+	if not FileAccess.file_exists(GnPaths.at(GnRender.OUTPUT_DIR) + "/.gdignore"):
+		FileAccess.open(GnPaths.at(GnRender.OUTPUT_DIR) + "/.gdignore", FileAccess.WRITE).close()
 	# A throwaway camera carries each frame's pose and look into the renderer.
 	var cam := Camera3D.new()
 	cam.name = "MovieFrame"
@@ -252,7 +253,7 @@ static func render(list: Array, size: Vector2i, host: Node, movie_name: String,
 	show_time(0.0, list)
 	GnPhasing.finish(GnScene.root())
 	GnEnvironment.apply("time_of_day", hour_before, false)
-	var out := ProjectSettings.globalize_path("%s/%s.mp4" % [GnRender.OUTPUT_DIR, movie_name])
+	var out := ProjectSettings.globalize_path("%s/%s.mp4" % [GnPaths.at(GnRender.OUTPUT_DIR), movie_name])
 	var args := ["-y", "-framerate", str(fps), "-i", ProjectSettings.globalize_path(dir) + "/frame_%05d.png",
 		"-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow", out]
 	var ffmpeg := GnFfmpeg.find()

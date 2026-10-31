@@ -1,5 +1,6 @@
 @tool
 extends RefCounted
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 # AI upscaling of a finished render with Real-ESRGAN (BSD-3-Clause, by
 # Xintao Wang et al.), the open image upscaler, run as its own small
@@ -134,7 +135,7 @@ static func _download(url: String, to: String, host: Node, progress: Callable, e
 
 
 static func _dir() -> String:
-	return ProjectSettings.globalize_path(DIR)
+	return ProjectSettings.globalize_path(GnPaths.tool_dir("realesrgan"))
 
 
 static func _os() -> String:

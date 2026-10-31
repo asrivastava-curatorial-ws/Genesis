@@ -22,6 +22,11 @@ edit=$?
 grep -E "EDIT_TEST|SCRIPT ERROR|Parse Error" "$TMP/edit.txt"
 echo "editor tests exit $edit"
 [ $edit -ne 0 ] && tail -25 "$TMP/edit.txt"
+timeout 240 "$GODOT" --headless --path "$TMP" -s res://tests/app/project_tests.gd > "$TMP/proj.txt" 2>&1
+proj=$?
+grep -E "PROJECT_TEST|SCRIPT ERROR|Parse Error" "$TMP/proj.txt"
+echo "project tests exit $proj"
+[ $proj -ne 0 ] && tail -25 "$TMP/proj.txt"
 timeout 200 "$GODOT" --headless --path "$TMP" -- --smoke > "$TMP/smoke.txt" 2>&1
 smoke=$?
 grep -E "GENESIS_SMOKE|SCRIPT ERROR|Parse Error" "$TMP/smoke.txt"
@@ -29,4 +34,4 @@ echo "smoke exit $smoke"
 [ $smoke -ne 0 ] && tail -25 "$TMP/smoke.txt"
 [ $code -ne 0 ] && tail -25 "$TMP/log.txt"
 rm -rf "$TMP"
-[ $code -eq 0 ] && [ $edit -eq 0 ] && [ $smoke -eq 0 ]
+[ $code -eq 0 ] && [ $edit -eq 0 ] && [ $proj -eq 0 ] && [ $smoke -eq 0 ]

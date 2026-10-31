@@ -9,6 +9,7 @@ const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const GnLook := preload("res://addons/genesis/core/gn_look.gd")
 const ShotPreview := preload("res://addons/genesis/ui/gn_shot_preview.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 var _camera: OptionButton
 var _hint: Label
@@ -156,8 +157,8 @@ func _choose_logo() -> void:
 		_logo_dialog = GnHost.make_file_dialog("Choose a logo or image")
 		_logo_dialog.add_filter("*.png, *.jpg, *.jpeg, *.webp, *.svg", "Images")
 		_logo_dialog.file_selected.connect(func(p: String):
-			DirAccess.make_dir_recursive_absolute("res://genesis_data/logos")
-			var dest := "res://genesis_data/logos/%s" % p.get_file().validate_filename()
+			DirAccess.make_dir_recursive_absolute(GnPaths.at("res://genesis_data/logos"))
+			var dest := GnPaths.at("res://genesis_data/logos").path_join(p.get_file().validate_filename())
 			if p.get_extension().to_lower() == "svg":
 				# Drawn at a size that stays sharp in a 4K render.
 				var img := Image.new()

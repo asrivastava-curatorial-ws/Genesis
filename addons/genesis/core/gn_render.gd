@@ -24,6 +24,7 @@ const GnPhotomatch := preload("res://addons/genesis/core/gn_photomatch.gd")
 const GnStaging := preload("res://addons/genesis/core/gn_staging.gd")
 const GnAccumulate := preload("res://addons/genesis/core/gn_accumulate.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 # Rendering at a multiple of the output size and filtering down is the
 # cleanest antialiasing there is: no shimmer on thin mullions, no jaggies on
@@ -106,17 +107,17 @@ static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 	sub.queue_free()
 	if image == null or image.is_empty():
 		return ""
-	DirAccess.make_dir_recursive_absolute(OUTPUT_DIR)
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(OUTPUT_DIR))
 	# Renders are output, not assets: keep Godot from importing every PNG.
-	if not FileAccess.file_exists(OUTPUT_DIR + "/.gdignore"):
-		FileAccess.open(OUTPUT_DIR + "/.gdignore", FileAccess.WRITE).close()
+	if not FileAccess.file_exists(GnPaths.at(OUTPUT_DIR) + "/.gdignore"):
+		FileAccess.open(GnPaths.at(OUTPUT_DIR) + "/.gdignore", FileAccess.WRITE).close()
 	var scene := GnHost.edited_scene_root()
 	var stem := "%s_%s_%s" % [
 		scene.name if scene else "scene",
 		camera.name.replace(" ", ""),
 		Time.get_datetime_string_from_system().replace(":", "").replace("-", "").replace("T", "_"),
 	]
-	var path := "%s/%s.png" % [OUTPUT_DIR, stem]
+	var path := "%s/%s.png" % [GnPaths.at(OUTPUT_DIR), stem]
 	if image.save_png(path) != OK:
 		return ""
 	return path

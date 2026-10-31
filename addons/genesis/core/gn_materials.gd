@@ -8,6 +8,7 @@ extends RefCounted
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const PRESET_DIR := "res://genesis_data/materials"
 
@@ -149,17 +150,25 @@ static func partner_maps(colour_path: String) -> Dictionary:
 ## images are copied into the project and imported first. Returns an error
 ## message, or "".
 static func apply_image(s: Surface, colour_path: String, tile_m: float) -> String:
-	if not GnHost.supports("editor_import"):
-		return "Using an image as a material needs the runtime importer, which is not built yet."
 	var maps := partner_maps(colour_path)
+	if not GnHost.supports("editor_import"):
+		# No editor importer: each map becomes a texture file in the project.
+		var dir := GnPaths.at(OWN_DIR)
+		var colour_tex := GnPaths.texture_from_file(colour_path, dir)
+		if colour_tex == null:
+			return "%s could not be read as an image." % colour_path.get_file()
+		var normal_tex: Texture2D = GnPaths.texture_from_file(maps.normal, dir, true) if maps.normal != "" else null
+		var rough_tex: Texture2D = GnPaths.texture_from_file(maps.roughness, dir, true) if maps.roughness != "" else null
+		_apply_maps(s, colour_path, colour_tex, normal_tex, rough_tex, tile_m)
+		return ""
 	var sources := {"albedo": colour_path, "normal": maps.normal, "roughness": maps.roughness}
-	DirAccess.make_dir_recursive_absolute(OWN_DIR)
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(OWN_DIR))
 	var efs := GnHost.filesystem()
 	var dests := {}
 	for k in sources:
 		if sources[k] == "":
 			continue
-		var dest := "%s/%s" % [OWN_DIR, (sources[k] as String).get_file()]
+		var dest := "%s/%s" % [GnPaths.at(OWN_DIR), (sources[k] as String).get_file()]
 		if DirAccess.copy_absolute(sources[k], ProjectSettings.globalize_path(dest)) != OK:
 			return "Could not copy %s into the project." % (sources[k] as String).get_file()
 		dests[k] = dest
@@ -172,14 +181,20 @@ static func apply_image(s: Surface, colour_path: String, tile_m: float) -> Strin
 	var colour := load(dests.albedo) as Texture2D
 	if colour == null:
 		return "Godot could not read %s as an image." % colour_path.get_file()
+	_apply_maps(s, colour_path, colour, load(dests.normal) if dests.has("normal") else null,
+		load(dests.roughness) if dests.has("roughness") else null, tile_m)
+	return ""
+
+
+static func _apply_maps(s: Surface, colour_path: String, colour: Texture2D, normal: Texture2D, roughness: Texture2D, tile_m: float) -> void:
 	var mat := StandardMaterial3D.new()
 	mat.resource_name = colour_path.get_file().get_basename()
 	mat.albedo_texture = colour
-	if dests.has("normal"):
+	if normal:
 		mat.normal_enabled = true
-		mat.normal_texture = load(dests.normal)
-	if dests.has("roughness"):
-		mat.roughness_texture = load(dests.roughness)
+		mat.normal_texture = normal
+	if roughness:
+		mat.roughness_texture = roughness
 		mat.roughness_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
 	# Laid on in world space, so it tiles at its real size on any model
 	# whatever its UVs (most architectural exports have poor ones).
@@ -193,4 +208,3 @@ static func apply_image(s: Surface, colour_path: String, tile_m: float) -> Strin
 	ur.add_do_property(s.mesh, s.property(), mat)
 	ur.add_undo_property(s.mesh, s.property(), s.mesh.get(s.property()))
 	ur.commit_action()
-	return ""

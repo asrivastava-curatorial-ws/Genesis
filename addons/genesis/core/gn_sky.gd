@@ -1,5 +1,7 @@
 @tool
 extends RefCounted
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 # Photographic skies: HDRI panoramas (CC0, fetched by tools/fetch_assets.py)
 # used as the sky and as the light source for the whole scene.
@@ -37,7 +39,10 @@ static func from_label(text: String) -> String:
 
 # {direction, visibility 0-1, colour, energy} for a sky, measured once.
 static func sun(sky_name: String) -> Dictionary:
+	# Kept beside the sky when that is writable (the editor), else in the cache.
 	var cache := "%s/%s.sun.json" % [SKY_DIR, sky_name]
+	if not GnHost.supports("editor") and not FileAccess.file_exists(cache):
+		cache = GnPaths.cache_dir("skies").path_join("%s.sun.json" % sky_name)
 	if FileAccess.file_exists(cache):
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string(cache))
 		if parsed is Dictionary:

@@ -19,7 +19,7 @@ const TransformGizmo := preload("res://app/runtime/transform_gizmo.gd")
 
 ## Menu titles and the commands in them; "-" is a divider.
 const MENUS := [
-	["File", ["project.new", "project.open", "-", "project.save", "project.close", "-", "app.quit"]],
+	["File", ["project.new", "project.open", "-", "project.save", "-", "file.import_model", "project.import_plugin", "project.relink", "-", "project.close", "app.quit"]],
 	["Edit", ["edit.undo", "edit.redo", "-", "edit.duplicate", "edit.delete", "edit.rename", "-",
 		"edit.select_all", "edit.select_none", "-", "edit.group", "edit.ungroup", "-",
 		"edit.hide", "edit.show_all", "edit.lock", "-", "app.preferences"]],

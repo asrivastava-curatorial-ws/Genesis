@@ -1,5 +1,6 @@
 @tool
 extends RefCounted
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 # Sample content for screens and LED walls, generated here so it is ours to
 # use in any render: a show visual, bands of colour with a bright horizon.
@@ -8,7 +9,7 @@ const DIR := "res://genesis_data/content"
 
 
 static func concert_visual(w := 1728, h := 768) -> String:
-	var path := "%s/concert_visual_%dx%d.png" % [DIR, w, h]
+	var path := "%s/concert_visual_%dx%d.png" % [GnPaths.at(DIR), w, h]
 	if FileAccess.file_exists(path):
 		return path
 	var img := Image.create(w, h, false, Image.FORMAT_RGB8)
@@ -23,6 +24,6 @@ static func concert_visual(w := 1728, h := 768) -> String:
 			var glow := exp(-pow((t - 0.62) * 9.0, 2.0)) * 0.9
 			var out := col * (0.45 + 0.4 * band) + Color(glow, glow * 0.85, glow * 0.7)
 			img.set_pixel(x, y, Color(minf(out.r, 1.0), minf(out.g, 1.0), minf(out.b, 1.0)))
-	DirAccess.make_dir_recursive_absolute(DIR)
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(DIR))
 	img.save_png(path)
 	return path

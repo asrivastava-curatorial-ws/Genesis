@@ -90,5 +90,13 @@ static func queue_resource_preview(path: String, receiver: Object, method: Strin
 	_be().queue_resource_preview(path, receiver, method, userdata)
 
 
+static func map_path(res_path: String) -> String:
+	return _be().map_path(res_path)
+
+
+static func tool_dir(tool_name: String) -> String:
+	return _be().tool_dir(tool_name)
+
+
 static func supports(feature: String) -> bool:
 	return _be().supports(feature)

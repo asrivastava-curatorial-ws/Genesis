@@ -15,6 +15,7 @@ extends RefCounted
 const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const DIR := "res://genesis_data/tiles"
 const META := &"gn_tiles"
@@ -119,9 +120,9 @@ static func textures(d: Dictionary) -> Dictionary:
 		snappedf(d.gloss, 0.01), snappedf(d.variation, 0.01)]))
 	var paths := {}
 	for k in ["albedo", "normal", "roughness"]:
-		paths[k] = "%s/%s_%s.res" % [DIR, key, k]
+		paths[k] = "%s/%s_%s.res" % [GnPaths.at(DIR), key, k]
 	if not paths.values().all(func(pp): return ResourceLoader.exists(pp)):
-		DirAccess.make_dir_recursive_absolute(DIR)
+		DirAccess.make_dir_recursive_absolute(GnPaths.at(DIR))
 		var imgs := draw(d)
 		for k in imgs:
 			var img: Image = imgs[k]

@@ -12,6 +12,7 @@ const GnPasses := preload("res://addons/genesis/core/gn_passes.gd")
 const GnTour := preload("res://addons/genesis/core/gn_tour.gd")
 const GnUpscale := preload("res://addons/genesis/core/gn_upscale.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 var _camera: OptionButton
 var _size: OptionButton
@@ -58,7 +59,7 @@ func _init() -> void:
 	_result = GnUi.note(self, "")
 	GnUi.button(self, "Show renders folder", func():
 		OS.shell_show_in_file_manager(ProjectSettings.globalize_path(
-			_last_path if _last_path != "" else GnRender.OUTPUT_DIR)))
+			_last_path if _last_path != "" else GnPaths.at(GnRender.OUTPUT_DIR))))
 
 
 func refresh() -> void:
@@ -159,7 +160,7 @@ func _passes() -> void:
 	_result.text = "Rendering passes…"
 	var out: Dictionary = await GnPasses.render(cam, size, self)
 	_passes_button.disabled = false
-	_result.text = "Saved %s passes in %s: %s." % [out.size(), GnRender.OUTPUT_DIR, ", ".join(out.keys())]
+	_result.text = "Saved %s passes in %s: %s." % [out.size(), GnPaths.at(GnRender.OUTPUT_DIR), ", ".join(out.keys())]
 
 
 # The same view at three times of day: the shadow study planning
@@ -177,12 +178,12 @@ func _sun_study() -> void:
 		GnEnvironment.apply("time_of_day", hour, false)
 		var path: String = await GnRender.render(cam, size, self, true, Viewport.DEBUG_DRAW_DISABLED, false, _samples())
 		if path != "":
-			var named := "%s/%s_sun_study_%02d00.png" % [GnRender.OUTPUT_DIR, str(cam.name).replace(" ", ""), int(hour)]
+			var named := "%s/%s_sun_study_%02d00.png" % [GnPaths.at(GnRender.OUTPUT_DIR), str(cam.name).replace(" ", ""), int(hour)]
 			DirAccess.rename_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(named))
 			_last_path = named
 	GnEnvironment.apply("time_of_day", keep, false)
 	_study_button.disabled = false
-	_result.text = "Sun study saved: 9:00, 12:00 and 15:00 in %s." % GnRender.OUTPUT_DIR
+	_result.text = "Sun study saved: 9:00, 12:00 and 15:00 in %s." % GnPaths.at(GnRender.OUTPUT_DIR)
 
 
 # Every saved view in order: the presentation set, in one click.
@@ -200,7 +201,7 @@ func _render_all() -> void:
 			done += 1
 	_button.disabled = false
 	_all_button.disabled = false
-	_result.text = "Rendered %d of %d cameras into %s." % [done, cams.size(), GnRender.OUTPUT_DIR]
+	_result.text = "Rendered %d of %d cameras into %s." % [done, cams.size(), GnPaths.at(GnRender.OUTPUT_DIR)]
 
 
 func _render() -> void:

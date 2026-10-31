@@ -1,5 +1,6 @@
 @tool
 extends RefCounted
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 # The real ground under a site: its elevation, and a photograph of it from
 # above, from open data anyone may use.
@@ -98,8 +99,8 @@ static func imagery(lat: float, lon: float, size: float, name: String, host: Nod
 	img.generate_mipmaps()
 	var tex := PortableCompressedTexture2D.new()
 	tex.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSY, false, 0.85)
-	DirAccess.make_dir_recursive_absolute(IMAGERY_DIR)
-	var path := "%s/%s_imagery.res" % [IMAGERY_DIR, name.validate_filename().to_lower().replace(" ", "_").left(60)]
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(IMAGERY_DIR))
+	var path := "%s/%s_imagery.res" % [GnPaths.at(IMAGERY_DIR), name.validate_filename().to_lower().replace(" ", "_").left(60)]
 	ResourceSaver.save(tex, path)
 	return {"texture": load(path), "path": path, "attribution": attribution,
 		"metres_per_pixel": size / float(img.get_width())}

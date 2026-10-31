@@ -19,6 +19,7 @@ const Effect := preload("res://addons/genesis/set/gn_effect.gd")
 const FlyingScreen := preload("res://addons/genesis/set/gn_flying_screen.gd")
 const AreaLight := preload("res://addons/genesis/set/gn_area_light.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 var _report: Label
 var _export: Button
@@ -235,9 +236,9 @@ func _save_map() -> void:
 	var wall := _wall()
 	if wall == null:
 		return
-	DirAccess.make_dir_recursive_absolute("res://renders")
+	DirAccess.make_dir_recursive_absolute(GnPaths.at("res://renders"))
 	var r: Dictionary = wall.report()
-	var path := "res://renders/%s_pixel_map_%dx%d.png" % [str(wall.name).to_snake_case(), r.resolution.x, r.resolution.y]
+	var path := GnPaths.at("res://renders").path_join("%s_pixel_map_%dx%d.png") % [str(wall.name).to_snake_case(), r.resolution.x, r.resolution.y]
 	var img: Image = wall.pixel_map()
 	# The processor wants the true native resolution.
 	if img.get_size() != Vector2i(r.resolution):

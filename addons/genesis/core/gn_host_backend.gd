@@ -102,6 +102,17 @@ func queue_resource_preview(path: String, receiver: Object, method: StringName, 
 		receiver.call_deferred(method, path, null, null, userdata)
 
 
+## Where Genesis's own res:// paths are written. Unchanged by default (the
+## editor, and tests): see gn_paths.gd for what the standalone host does.
+func map_path(res_path: String) -> String:
+	return res_path
+
+
+## Where a downloaded tool is kept. By default where Genesis always kept it.
+func tool_dir(tool_name: String) -> String:
+	return "res://genesis_data/external/%s" % tool_name
+
+
 ## Things only some hosts can do. "editor_import": models and images are
 ## brought in by the editor's importer, which only the editor has.
 func supports(feature: String) -> bool:

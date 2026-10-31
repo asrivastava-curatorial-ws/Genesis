@@ -8,6 +8,9 @@ extends RefCounted
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const GnLiveLink := preload("res://addons/genesis/core/gn_live_link.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
+const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
+const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 
 const DEST := "res://assets"
 const EXTENSIONS := ["glb", "gltf", "blend", "fbx", "obj"]
@@ -16,10 +19,8 @@ const EXTENSIONS := ["glb", "gltf", "blend", "fbx", "obj"]
 # Returns an error message, or "" once the model is in the scene.
 static func import_building(source: String) -> String:
 	var ext := source.get_extension().to_lower()
-	# Models come in through the editor's importer; the standalone application
-	# gets its own runtime importer in a later stage.
 	if not GnHost.supports("editor_import"):
-		return "Bringing in a model needs the runtime importer, which is not built yet."
+		return import_runtime(source)
 	if ext not in EXTENSIONS:
 		return "Genesis can bring in %s files." % ", ".join(EXTENSIONS)
 	if ext == "blend":
@@ -35,8 +36,8 @@ static func import_building(source: String) -> String:
 	var efs := GnHost.filesystem()
 	if not await _idle(efs):
 		return "The editor is still busy importing. Try again in a moment."
-	DirAccess.make_dir_recursive_absolute(DEST)
-	var dest := "%s/%s" % [DEST, source.get_file()]
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(DEST))
+	var dest := "%s/%s" % [GnPaths.at(DEST), source.get_file()]
 	if DirAccess.copy_absolute(source, ProjectSettings.globalize_path(dest)) != OK:
 		return "Could not copy %s into the project." % source
 	# Wait for the imported model to exist, not for the scan to stop: on a
@@ -64,3 +65,32 @@ static func _idle(efs: Object) -> bool:
 			return false
 		await Engine.get_main_loop().process_frame
 	return true
+
+
+## Without the editor: the model is converted into a scene in the project's
+## assets folder (gn_model_import.gd) and that scene is placed. `options` are
+## the import settings (scale, up axis); they are kept so a re-export comes in
+## the same way.
+static func import_runtime(source: String, options := {}) -> String:
+	var r := GnModelImport.convert_file(source, GnPaths.at(DEST), options)
+	if r.error != "":
+		return r.error
+	var packed := ResourceLoader.load(r.path, "PackedScene", ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
+	if packed == null:
+		return "%s was converted but could not be opened." % source.get_file()
+	var node := packed.instantiate() as Node3D
+	if node == null:
+		return "%s has nothing in it to show." % source.get_file()
+	node.scene_file_path = r.path
+	node.position = Vector3.ZERO
+	node.set_meta(&"gn_category", "architecture")
+	var root := GnScene.root()
+	if root == null:
+		node.free()
+		return "Make or open a scene first."
+	GnScene.add_node(node, root, "Genesis: bring in %s" % node.name)
+	GnScene.select(node)
+	GnLiveLink.link(node, source)
+	if not options.is_empty():
+		node.set_meta(GnModelImport.OPTIONS_META, options)
+	return ""

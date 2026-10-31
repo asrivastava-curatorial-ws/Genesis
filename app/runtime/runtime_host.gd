@@ -6,6 +6,7 @@ extends "res://addons/genesis/core/gn_host_backend.gd"
 # the file system stand-in) is inherited from the default backend.
 
 const App := preload("res://app/core/app.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 ## Emitted when something asks to show a node in the property editor.
 signal inspect_requested(node: Node)
@@ -34,6 +35,21 @@ func set_setting(key: String, value: Variant) -> void:
 		App.settings.save()
 	else:
 		super(key, value)
+
+
+## Project paths go into the open project's folder; with no project open, into a
+## scratch folder in the user data folder (nothing is lost, nothing is shared).
+func map_path(res_path: String) -> String:
+	var rel := GnPaths.project_relative(res_path)
+	if rel == "":
+		return res_path
+	var base: String = App.projects.folder if App.projects and App.projects.is_open() \
+		else ProjectSettings.globalize_path("user://scratch")
+	return base.path_join(rel)
+
+
+func tool_dir(tool_name: String) -> String:
+	return ProjectSettings.globalize_path("user://tools").path_join(tool_name)
 
 
 func dialog_parent() -> Node:

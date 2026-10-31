@@ -11,6 +11,7 @@ extends RefCounted
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const POST := preload("res://addons/genesis/core/gn_post.gdshader")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const META := &"gn_look"
 const LOOKS_DIR := "res://genesis_data/looks"
@@ -73,18 +74,18 @@ static func apply_preset(cam: Camera3D, look: Dictionary) -> void:
 
 static func saved_looks() -> Dictionary:
 	var out := {}
-	if DirAccess.dir_exists_absolute(LOOKS_DIR):
-		for f in DirAccess.get_files_at(LOOKS_DIR):
+	if DirAccess.dir_exists_absolute(GnPaths.at(LOOKS_DIR)):
+		for f in DirAccess.get_files_at(GnPaths.at(LOOKS_DIR)):
 			if f.get_extension() == "json":
-				var d = JSON.parse_string(FileAccess.get_file_as_string("%s/%s" % [LOOKS_DIR, f]))
+				var d = JSON.parse_string(FileAccess.get_file_as_string("%s/%s" % [GnPaths.at(LOOKS_DIR), f]))
 				if d is Dictionary:
 					out[f.get_basename().replace("_", " ")] = d
 	return out
 
 
 static func save_look(name: String, look: Dictionary) -> String:
-	DirAccess.make_dir_recursive_absolute(LOOKS_DIR)
-	var path := "%s/%s.json" % [LOOKS_DIR, name.strip_edges().validate_filename().replace(" ", "_")]
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(LOOKS_DIR))
+	var path := "%s/%s.json" % [GnPaths.at(LOOKS_DIR), name.strip_edges().validate_filename().replace(" ", "_")]
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(look, "  "))
 	f.close()

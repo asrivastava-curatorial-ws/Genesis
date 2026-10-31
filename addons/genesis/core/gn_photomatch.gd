@@ -17,6 +17,7 @@ extends RefCounted
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const COMPOSE := preload("res://addons/genesis/core/gn_photo_compose.gdshader")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 # Scene roles that are the world, not the design, and stay put between passes.
 const WORLD_ROLES := ["environment", "sun", "ground", "cameras", "movie"]
@@ -35,11 +36,11 @@ static func shadow_strength(cam: Camera3D) -> float:
 
 # Copies the photo into the project and attaches it to the camera (undoable).
 static func set_photo(cam: Camera3D, source: String) -> String:
-	DirAccess.make_dir_recursive_absolute(DIR)
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(DIR))
 	# Photos are backgrounds, not textures: keep them out of the importer.
-	if not FileAccess.file_exists(DIR + "/.gdignore"):
-		FileAccess.open(DIR + "/.gdignore", FileAccess.WRITE).close()
-	var dest := "%s/%s" % [DIR, source.get_file()]
+	if not FileAccess.file_exists(GnPaths.at(DIR) + "/.gdignore"):
+		FileAccess.open(GnPaths.at(DIR) + "/.gdignore", FileAccess.WRITE).close()
+	var dest := "%s/%s" % [GnPaths.at(DIR), source.get_file()]
 	if ProjectSettings.globalize_path(dest) != source.replace("\\", "/"):
 		if DirAccess.copy_absolute(source, ProjectSettings.globalize_path(dest)) != OK:
 			return "Could not copy %s into the project." % source.get_file()

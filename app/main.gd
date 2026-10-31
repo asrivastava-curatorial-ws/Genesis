@@ -20,10 +20,14 @@ const NewProjectDialog := preload("res://app/ui/new_project_dialog.gd")
 const SettingsDialog := preload("res://app/ui/settings_dialog.gd")
 const AboutDialog := preload("res://app/ui/about_dialog.gd")
 const Smoke := preload("res://app/smoke.gd")
+const ImportDialog := preload("res://app/ui/import_dialog.gd")
+const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
+const GnImport := preload("res://addons/genesis/core/gn_import.gd")
 
 var screen: Control
 
 var _toasts: Control
+var _autosave_minutes := 0
 var _settings_dialog: AcceptDialog
 
 
@@ -33,7 +37,7 @@ func _ready() -> void:
 	_register_actions()
 	_toasts = ToastHost.new()
 	add_child(_toasts)
-	App.projects.opened.connect(_show_workspace)
+	App.projects.opened.connect(_on_project_opened)
 	App.projects.closed.connect(_show_project_manager)
 	App.scenes.opened.connect(App.modules.on_scene_opened)
 	App.scenes.opened.connect(_on_scene_opened)
@@ -41,6 +45,13 @@ func _ready() -> void:
 	App.scenes.dirty_changed.connect(_on_dirty)
 	_show_project_manager()
 	_update_title()
+	get_window().files_dropped.connect(_on_files_dropped)
+	var autosave := Timer.new()
+	autosave.name = "Autosave"
+	autosave.wait_time = 60.0
+	autosave.autostart = true
+	autosave.timeout.connect(_autosave_tick)
+	add_child(autosave)
 	print("%s %s ready" % [App.NAME, App.VERSION])
 	_command_line()
 
@@ -108,6 +119,9 @@ func _register_actions() -> void:
 	A.add("project.open", "Open Project…", open_project, [K.key(KEY_O, true)])
 	A.add("project.save", "Save", save_scene, [K.key(KEY_S, true)], _has_scene)
 	A.add("project.close", "Close Project", close_project, [], _has_project)
+	A.add("file.import_model", "Bring In a Model…", import_model, [K.key(KEY_I, true)], _has_scene)
+	A.add("project.import_plugin", "Import an Old Genesis Project…", import_plugin_project)
+	A.add("project.relink", "Find Missing Files…", relink, [], _has_missing)
 	A.add("app.quit", "Exit", request_quit, [K.key(KEY_Q, true)])
 	A.add("edit.undo", "Undo", _undo, [K.key(KEY_Z, true)], _can_undo, _undo_label)
 	A.add("edit.redo", "Redo", _redo, [K.key(KEY_Z, true, true), K.key(KEY_Y, true)], _can_redo, _redo_label)
@@ -118,6 +132,10 @@ func _register_actions() -> void:
 
 func _has_scene() -> bool:
 	return App.scenes.has_scene()
+
+
+func _has_missing() -> bool:
+	return App.projects.is_open() and not App.projects.missing.is_empty()
 
 
 func _has_project() -> bool:
@@ -185,6 +203,115 @@ func open_project_at(folder: String) -> void:
 	var err: String = App.projects.open(folder)
 	if err != "":
 		App.notify.error("The project could not be opened.", err)
+
+
+func _on_project_opened() -> void:
+	_show_workspace()
+	if App.projects.recovery_available():
+		_offer_recovery()
+	if not App.projects.missing.is_empty():
+		App.notify.warning("%d files this scene uses are missing." % App.projects.missing.size(),
+			"File > Find Missing Files… looks for them in a folder you choose. First: %s" % App.projects.missing[0])
+
+
+func _offer_recovery() -> void:
+	var d := ConfirmationDialog.new()
+	d.title = "Unsaved work found"
+	d.dialog_text = "Genesis kept unsaved changes to %s from last time.\nOpen them? (The saved version is kept until you save.)" % App.scenes.path.get_file()
+	d.ok_button_text = "Open unsaved work"
+	d.cancel_button_text = "Keep the saved version"
+	d.confirmed.connect(func():
+		var err: String = App.projects.recover()
+		if err != "":
+			App.notify.error("The unsaved work could not be opened.", err))
+	d.canceled.connect(App.projects.discard_recovery)
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.popup_centered()
+
+
+func _autosave_tick() -> void:
+	if not App.projects.is_open():
+		return
+	_autosave_minutes += 1
+	var every := int(App.projects.manifest.get("settings", {}).get("autosave_minutes", 3))
+	if _autosave_minutes >= maxi(every, 1):
+		_autosave_minutes = 0
+		if App.projects.autosave():
+			print("Genesis: unsaved work kept.")
+
+
+func import_model() -> void:
+	var d := ImportDialog.new()
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.ask()
+
+
+func _on_files_dropped(files: PackedStringArray) -> void:
+	for f in files:
+		if DirAccess.dir_exists_absolute(f) and not ProjectService.manifest_of(f).is_empty():
+			confirm_unsaved(open_project_at.bind(f))
+			return
+	if not App.scenes.has_scene():
+		App.notify.info("Open a project first, then drop models into it.")
+		return
+	for f in files:
+		if f.get_extension().to_lower() in GnModelImport.EXTENSIONS:
+			App.notify.info("Bringing in %s…" % f.get_file())
+			var err: String = GnImport.import_runtime(f)
+			if err == "":
+				App.notify.success("%s is in the scene." % f.get_file())
+			else:
+				App.notify.error("%s could not be brought in." % f.get_file(), err)
+
+
+func import_plugin_project() -> void:
+	confirm_unsaved(_import_plugin_now)
+
+
+func _import_plugin_now() -> void:
+	var d := FileDialog.new()
+	d.access = FileDialog.ACCESS_FILESYSTEM
+	d.file_mode = FileDialog.FILE_MODE_OPEN_DIR
+	d.use_native_dialog = true
+	d.title = "The old Genesis project (the folder with project.godot)"
+	d.dir_selected.connect(import_plugin_project_at)
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.popup_centered_ratio(0.6)
+
+
+## Makes a new project beside the usual ones from an old plugin project, and opens it.
+func import_plugin_project_at(source: String) -> void:
+	var parent: String = App.settings.get_value("projects_dir", "")
+	if parent == "":
+		parent = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS).path_join("Genesis Projects")
+	DirAccess.make_dir_recursive_absolute(parent)
+	var new_name := source.get_file() + " (Genesis Community)"
+	var r: Dictionary = App.projects.import_plugin_project(source, parent, new_name)
+	if r.error != "":
+		App.notify.error("The old project could not be brought in.", r.error)
+		return
+	var err: String = App.projects.open(r.folder)
+	if err != "":
+		App.notify.error("The new project could not be opened.", err)
+	else:
+		App.notify.success("Brought in as %s. See IMPORT_REPORT.md in it for what was done." % new_name)
+
+
+func relink() -> void:
+	var d := FileDialog.new()
+	d.access = FileDialog.ACCESS_FILESYSTEM
+	d.file_mode = FileDialog.FILE_MODE_OPEN_DIR
+	d.use_native_dialog = true
+	d.title = "Where might the missing files be?"
+	d.dir_selected.connect(func(dir):
+		var n: int = App.projects.relink(dir)
+		App.notify.info("Found %d of the missing files." % n if n > 0 else "None of the missing files were in that folder."))
+	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
+	add_child(d)
+	d.popup_centered_ratio(0.6)
 
 
 func save_scene() -> void:
@@ -307,6 +434,11 @@ func _command_line() -> void:
 	var i := args.find("--project")
 	if i >= 0 and i + 1 < args.size():
 		open_project_at(args[i + 1])
+	# A project folder given on its own (a desktop shortcut, "Open with").
+	for a in OS.get_cmdline_args():
+		if DirAccess.dir_exists_absolute(a) and not ProjectService.manifest_of(a).is_empty():
+			open_project_at(a)
+			break
 	if "--smoke" in args:
 		var failures: int = await Smoke.run(self)
 		print("GENESIS_SMOKE RESULT %s" % ("PASS" if failures == 0 else "FAIL"))

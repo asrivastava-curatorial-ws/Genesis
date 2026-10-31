@@ -17,6 +17,7 @@ const Underlay := preload("res://addons/genesis/cad/gn_underlay.gd")
 const Drawing := preload("res://addons/genesis/cad/gn_drawing.gd")
 const GnDxf := preload("res://addons/genesis/cad/gn_dxf.gd")
 const GnPdf := preload("res://addons/genesis/cad/gn_pdf.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const PLAN_DIR := "res://genesis_data/plans"
 const CAD_DIR := "res://genesis_data/cad"
@@ -43,9 +44,9 @@ static func add_plan(path: String, width_m := 30.0, ratio := 100.0, page := 1) -
 	var ext := path.get_extension().to_lower()
 	if ext not in PLAN_EXTENSIONS:
 		return {"error": "Plans can be PNG, JPG, WebP or PDF."}
-	DirAccess.make_dir_recursive_absolute(PLAN_DIR)
-	var stem := _unique(PLAN_DIR, path.get_file().get_basename().validate_filename(), "png" if ext == "pdf" else ext)
-	var target := "%s/%s" % [PLAN_DIR, stem]
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(PLAN_DIR))
+	var stem := _unique(GnPaths.at(PLAN_DIR), path.get_file().get_basename().validate_filename(), "png" if ext == "pdf" else ext)
+	var target := "%s/%s" % [GnPaths.at(PLAN_DIR), stem]
 	var mpp := 0.0
 	if ext == "pdf":
 		var err := pdf_page(path, ProjectSettings.globalize_path(target), page, PDF_DPI)
@@ -82,9 +83,9 @@ static func add_drawing(path: String, page := 1, ratio := 100.0) -> Dictionary:
 	var ext := path.get_extension().to_lower()
 	if ext not in CAD_EXTENSIONS:
 		return {"error": "Drawings can be DXF, DWG or PDF."}
-	DirAccess.make_dir_recursive_absolute(CAD_DIR)
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(CAD_DIR))
 	if ext == "pdf":
-		var copy := "%s/%s" % [CAD_DIR, _unique(CAD_DIR, path.get_file().get_basename().validate_filename(), "pdf")]
+		var copy := "%s/%s" % [GnPaths.at(CAD_DIR), _unique(GnPaths.at(CAD_DIR), path.get_file().get_basename().validate_filename(), "pdf")]
 		var read := GnPdf.read(path, page, ratio)
 		if read.error != "":
 			return {"error": read.error}
@@ -106,7 +107,7 @@ static func add_drawing(path: String, page := 1, ratio := 100.0) -> Dictionary:
 		GnScene.add_node(pd, GnScene.root(), "Genesis: add drawing", "drawing")
 		GnScene.select(pd)
 		return {"node": pd}
-	var target := "%s/%s" % [CAD_DIR, _unique(CAD_DIR, path.get_file().get_basename().validate_filename(), "dxf")]
+	var target := "%s/%s" % [GnPaths.at(CAD_DIR), _unique(GnPaths.at(CAD_DIR), path.get_file().get_basename().validate_filename(), "dxf")]
 	if ext == "dwg":
 		var err := dwg_to_dxf(path, ProjectSettings.globalize_path(target))
 		if err != "":

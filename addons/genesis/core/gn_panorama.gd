@@ -20,6 +20,7 @@ const FACES := {
 
 
 const EQUIRECT_STEREO := preload("res://addons/genesis/core/gn_equirect_stereo.gdshader")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 # Stereo: strips round the circle per eye, each this wide and this tall.
 const STRIPS := 24
 const STRIP_HFOV := 18.0
@@ -98,7 +99,7 @@ static func render_stereo(camera: Camera3D, width: int, host: Node) -> String:
 		var e: Image = eyes[i]
 		e.convert(Image.FORMAT_RGB8)
 		out.blit_rect(e, Rect2i(0, 0, width, width / 2), Vector2i(0, i * (width / 2)))
-	var file := "%s/%s_360_stereo.png" % [GnRender.OUTPUT_DIR, str(camera.name).replace(" ", "")]
+	var file := "%s/%s_360_stereo.png" % [GnPaths.at(GnRender.OUTPUT_DIR), str(camera.name).replace(" ", "")]
 	return file if out.save_png(file) == OK else ""
 
 
@@ -173,5 +174,5 @@ static func render(camera: Camera3D, width: int, host: Node) -> String:
 	var out := sub.get_texture().get_image()
 	host.remove_child(sub)
 	sub.queue_free()
-	var file := "%s/%s_360.png" % [GnRender.OUTPUT_DIR, str(camera.name).replace(" ", "")]
+	var file := "%s/%s_360.png" % [GnPaths.at(GnRender.OUTPUT_DIR), str(camera.name).replace(" ", "")]
 	return file if out.save_png(file) == OK else ""

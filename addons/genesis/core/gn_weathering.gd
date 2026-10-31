@@ -13,6 +13,7 @@ extends RefCounted
 const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const DIR := "res://genesis_data/weathering"
 const LEVELS := 5
@@ -62,10 +63,10 @@ static func apply(s: GnMaterials.Surface, a: float) -> void:
 
 ## The grime for one level, drawn and saved the first time it is asked for.
 static func texture(level: int) -> Texture2D:
-	var path := "%s/grime_%d.res" % [DIR, level]
+	var path := "%s/grime_%d.res" % [GnPaths.at(DIR), level]
 	if ResourceLoader.exists(path):
 		return load(path)
-	DirAccess.make_dir_recursive_absolute(DIR)
+	DirAccess.make_dir_recursive_absolute(GnPaths.at(DIR))
 	var img := _draw(float(level) / LEVELS, level)
 	img.generate_mipmaps()
 	var tex := PortableCompressedTexture2D.new()

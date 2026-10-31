@@ -13,6 +13,7 @@ extends RefCounted
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnRender := preload("res://addons/genesis/core/gn_render.gd")
 const GnStaging := preload("res://addons/genesis/core/gn_staging.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const PASSES := ["depth", "normal", "id", "mask", "clay"]
 
@@ -20,7 +21,7 @@ const PASSES := ["depth", "normal", "id", "mask", "clay"]
 # Renders the passes named in `which` for a camera. Returns {pass: path}.
 static func render(camera: Camera3D, size: Vector2i, host: Node, which: Array = PASSES) -> Dictionary:
 	var out := {}
-	var stem := "%s/%s" % [GnRender.OUTPUT_DIR, str(camera.name).replace(" ", "")]
+	var stem := "%s/%s" % [GnPaths.at(GnRender.OUTPUT_DIR), str(camera.name).replace(" ", "")]
 	for pass_name in which:
 		var undo := GnStaging.stage(pass_name)
 		var path: String = await GnRender.render(camera, size, host, false,

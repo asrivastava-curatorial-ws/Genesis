@@ -11,6 +11,7 @@ extends RefCounted
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 
 const SOURCE := &"gn_source"
 const SOURCE_TIME := &"gn_source_time"
@@ -40,6 +41,8 @@ static func linked() -> Array:
 static func poll() -> int:
 	if not enabled:
 		return 0
+	if not GnHost.supports("editor_import"):
+		return _poll_runtime()
 	var efs := GnHost.filesystem()
 	if efs.is_scanning() or efs.is_importing():
 		return 0
@@ -65,3 +68,81 @@ static func poll() -> int:
 		# could take the editor down.)
 		efs.scan()
 	return changed.size()
+
+
+# Without the editor: the changed source is converted again into the same scene
+# file, and every copy of it in the open scene is swapped for the new version
+# where it stands. What the user did to it is carried over: its place, name and
+# notes, the materials set on each of its surfaces, and anything put under it.
+static func _poll_runtime() -> int:
+	var updated := 0
+	var done := {}
+	for node in linked():
+		var source := str(node.get_meta(SOURCE))
+		var dest: String = node.scene_file_path
+		if dest == "" or not FileAccess.file_exists(source):
+			continue
+		var t := FileAccess.get_modified_time(source)
+		if t <= int(node.get_meta(SOURCE_TIME, 0)):
+			continue
+		if not done.has(dest):
+			var opts: Dictionary = node.get_meta(GnModelImport.OPTIONS_META, {})
+			opts = opts.duplicate()
+			opts.name = dest.get_file().get_basename()
+			var r := GnModelImport.convert_file(source, dest.get_base_dir(), opts)
+			done[dest] = r.error == ""
+			if r.error != "":
+				push_warning("Genesis: %s changed but could not be brought in again: %s" % [source.get_file(), r.error])
+		if done[dest]:
+			replace_instance(node, dest)
+			updated += 1
+			last_update = "%s at %s" % [source.get_file(), Time.get_time_string_from_system().left(5)]
+	if updated > 0:
+		# Earlier steps point at the copies just replaced; they cannot be undone now.
+		GnHost.undo_redo().clear_history()
+		print("Genesis: %s came in again; the undo history was cleared." % last_update)
+	return updated
+
+
+## Swaps `old` for a fresh copy of the scene file `path`, keeping what the user
+## changed. Not an undo step: the source changed, not the user's work.
+static func replace_instance(old: Node3D, path: String) -> Node3D:
+	var packed := ResourceLoader.load(path, "PackedScene", ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
+	if packed == null:
+		return old
+	var fresh := packed.instantiate() as Node3D
+	fresh.scene_file_path = path
+	fresh.name = old.name
+	fresh.transform = old.transform
+	fresh.visible = old.visible
+	for k in old.get_meta_list():
+		fresh.set_meta(k, old.get_meta(k))
+	fresh.set_meta(SOURCE_TIME, FileAccess.get_modified_time(str(old.get_meta(SOURCE))))
+	# Materials the user put on surfaces, by where the mesh is in the model.
+	for mi in old.find_children("*", "MeshInstance3D", true, false):
+		var twin := fresh.get_node_or_null(old.get_path_to(mi)) as MeshInstance3D
+		if twin == null:
+			continue
+		if mi.material_override:
+			twin.material_override = mi.material_override
+		for i in mini(mi.get_surface_override_material_count(), twin.get_surface_override_material_count()):
+			var m: Material = mi.get_surface_override_material(i)
+			if m:
+				twin.set_surface_override_material(i, m)
+	var root := GnScene.root()
+	var parent := old.get_parent()
+	var at := old.get_index()
+	var keep: Array = old.get_children().filter(func(c): return c.owner == root)
+	# The old copy leaves first, so the new one takes its name.
+	parent.remove_child(old)
+	parent.add_child(fresh, true)
+	parent.move_child(fresh, at)
+	fresh.name = old.name
+	fresh.owner = root
+	for c in keep:
+		c.reparent(fresh, false)
+		for n in [c] + c.find_children("*", "", true, false):
+			if n.owner == null or n.owner == old:
+				n.owner = root
+	old.queue_free()
+	return fresh
