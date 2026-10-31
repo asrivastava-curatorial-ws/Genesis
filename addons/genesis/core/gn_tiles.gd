@@ -125,13 +125,7 @@ static func textures(d: Dictionary) -> Dictionary:
 		DirAccess.make_dir_recursive_absolute(GnPaths.at(DIR))
 		var imgs := draw(d)
 		for k in imgs:
-			var img: Image = imgs[k]
-			img.generate_mipmaps()
-			var tex := PortableCompressedTexture2D.new()
-			var mode := PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS if k == "normal" \
-				else PortableCompressedTexture2D.COMPRESSION_MODE_LOSSY
-			tex.create_from_image(img, mode, k == "normal", 0.92)
-			ResourceSaver.save(tex, paths[k])
+			GnPaths.save_drawn_texture(imgs[k], paths[k], k == "normal", k == "normal", 0.92)
 	var out := {}
 	for k in paths:
 		out[k] = load(paths[k])

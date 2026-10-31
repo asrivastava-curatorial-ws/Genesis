@@ -5,6 +5,8 @@ extends RefCounted
 # this class, so there are no autoloads to configure.
 
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnCaches := preload("res://addons/genesis/core/gn_caches.gd")
+const Picker := preload("res://app/runtime/picker.gd")
 
 const NAME := "Genesis Community"
 const VERSION := "0.2.0-dev"
@@ -27,6 +29,10 @@ static var main: Node
 ## its memory on the way out. So main.gd calls this while the window still
 ## exists, and tests call it when they finish.
 static func shutdown() -> void:
+	GnCaches.release()
+	Picker.forget_cache()
+	if scenes:
+		scenes.dispose()
 	if host:
 		host.undo_redo().clear_history()
 		host.selection().clear()

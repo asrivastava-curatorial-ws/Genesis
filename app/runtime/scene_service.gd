@@ -88,6 +88,19 @@ func close() -> void:
 	_set_dirty(false)
 
 
+## Frees the open scene now, for the end of the program: the 3D view hands it
+## back when the window closes, and nothing else would free it before the
+## renderer stops.
+func dispose() -> void:
+	_host.undo_redo().clear_history()
+	if has_scene():
+		if root.get_parent():
+			root.get_parent().remove_child(root)
+		root.free()
+	root = null
+	path = ""
+
+
 ## Treats the scene as saved and forgets the undo history. A new project's first
 ## scene starts here, so Undo cannot take its sun and ground away.
 func reset_history() -> void:

@@ -20,8 +20,9 @@ OUT="$HERE/build"
 TREE="$OUT/tree"
 TARGETS=("$@"); [ ${#TARGETS[@]} -eq 0 ] && TARGETS=(linux)
 
-rm -rf "$TREE"
+# Keep Godot's import cache (.godot) between builds: the library is imported once.
 mkdir -p "$TREE"
+find "$TREE" -mindepth 1 -maxdepth 1 ! -name .godot -exec rm -rf {} +
 cp "$HERE/project.godot" "$HERE/export_presets.cfg" "$HERE/LICENSE" "$TREE/"
 cp -r "$HERE/app" "$HERE/addons" "$TREE/"
 if [ "${NO_ASSETS:-0}" != 1 ]; then

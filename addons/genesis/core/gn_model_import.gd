@@ -112,8 +112,8 @@ static func _apply_options(root: Node3D, opts: Dictionary) -> void:
 	root.set_meta(OPTIONS_META, opts)
 
 
-# Every texture in the model, stored compressed inside the scene so it opens
-# anywhere. Very large images are brought down to 8K, the most a GPU takes.
+# Every texture in the model, kept inside the scene so it opens anywhere.
+# Very large images are brought down to 4K.
 static func _pack_textures(root: Node) -> void:
 	var done := {}
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
@@ -125,28 +125,25 @@ static func _pack_textures(root: Node) -> void:
 			if mat is BaseMaterial3D:
 				for p in ["albedo_texture", "normal_texture", "roughness_texture", "metallic_texture", "emission_texture", "ao_texture"]:
 					var tex: Variant = mat.get(p)
-					if tex is ImageTexture or (tex is Texture2D and not tex is PortableCompressedTexture2D and tex.resource_path == ""):
+					if tex is Texture2D and tex.resource_path == "":
 						var key: int = tex.get_instance_id()
 						if not done.has(key):
-							done[key] = _portable(tex, p != "albedo_texture" and p != "emission_texture", p == "normal_texture")
+							done[key] = _inline(tex)
 						mat.set(p, done[key])
 
 
-static func _portable(tex: Texture2D, exact: bool, normal_map: bool) -> Texture2D:
+static func _inline(tex: Texture2D) -> Texture2D:
 	var img := tex.get_image()
 	if img == null or img.is_empty():
 		return tex
 	if img.is_compressed():
 		img.decompress()
-	if img.get_width() > 8192 or img.get_height() > 8192:
-		var s := 8192.0 / maxf(img.get_width(), img.get_height())
+	if img.get_width() > 4096 or img.get_height() > 4096:
+		var s := 4096.0 / maxf(img.get_width(), img.get_height())
 		img.resize(roundi(img.get_width() * s), roundi(img.get_height() * s), Image.INTERPOLATE_LANCZOS)
 	if not img.has_mipmaps():
 		img.generate_mipmaps()
-	var out := PortableCompressedTexture2D.new()
-	out.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS if exact
-		else PortableCompressedTexture2D.COMPRESSION_MODE_LOSSY, normal_map, 0.9)
-	return out
+	return ImageTexture.create_from_image(img)
 
 
 # ------------------------------------------------------------------- Blender

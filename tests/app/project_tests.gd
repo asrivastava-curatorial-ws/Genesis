@@ -238,7 +238,7 @@ func _models() -> void:
 	var g_mesh := inst.find_children("*", "MeshInstance3D", true, false)
 	check(not g_mesh.is_empty(), "gltf: its mesh is there")
 	var g_mat: Material = (g_mesh[0] as MeshInstance3D).mesh.surface_get_material(0) if not g_mesh.is_empty() else null
-	check(g_mat is BaseMaterial3D and (g_mat as BaseMaterial3D).albedo_texture is PortableCompressedTexture2D, "gltf: its texture is packed into the scene, to open anywhere")
+	check(g_mat is BaseMaterial3D and (g_mat as BaseMaterial3D).albedo_texture is ImageTexture and (g_mat as BaseMaterial3D).albedo_texture.resource_path.contains("::"), "gltf: its texture is packed into the scene, to open anywhere")
 	inst.free()
 	# Options: centimetres and Z up.
 	r = GnModelImport.convert_file(src + "/box.obj", dir + "/assets", {"scale": 0.01, "up": "z", "name": "box_cm"})
@@ -334,8 +334,7 @@ func _old_projects() -> void:
 	check(projects.import_plugin_project(tmp + "/src", tmp, "Nope").error.contains("not a Genesis project"), "old project: a folder that is not one is refused")
 	# An image used as a texture, without the editor's importer.
 	var tex := GnPaths.texture_from_file(old + "/genesis_data/plans/plan.png", tmp + "/textures")
-	# (Without a GPU the engine keeps no pixels for a loaded texture, so the size is only checked with one.)
-	check(tex is PortableCompressedTexture2D and FileAccess.file_exists(tmp + "/textures/plan.tex.res") and (DisplayServer.get_name() == "headless" or tex.get_width() == 4), "textures: an image file becomes a texture that saves with the project")
+	check(tex is ImageTexture and FileAccess.file_exists(tmp + "/textures/plan.tex.res") and tex.get_width() == 4 and tex.resource_path.ends_with("plan.tex.res"), "textures: an image file becomes a texture file in the project, loaded from there")
 
 
 func _remove_tree(dir: String) -> void:

@@ -6,6 +6,7 @@ extends EditorPlugin
 
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const EditorHost := preload("res://addons/genesis/editor_host.gd")
+const GnCaches := preload("res://addons/genesis/core/gn_caches.gd")
 const GenesisDock := preload("res://addons/genesis/ui/gn_dock.gd")
 const GnBrush := preload("res://addons/genesis/core/gn_brush.gd")
 const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
@@ -54,6 +55,7 @@ func _exit_tree() -> void:
 	_brush = null
 	_measure = null
 	GnHost.backend = null
+	GnCaches.release()
 
 
 # The editor only forwards viewport input to a plugin that handles the

@@ -20,6 +20,7 @@ const NewProjectDialog := preload("res://app/ui/new_project_dialog.gd")
 const SettingsDialog := preload("res://app/ui/settings_dialog.gd")
 const AboutDialog := preload("res://app/ui/about_dialog.gd")
 const Smoke := preload("res://app/smoke.gd")
+const E2E := preload("res://app/e2e.gd")
 const ImportDialog := preload("res://app/ui/import_dialog.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 const GnImport := preload("res://addons/genesis/core/gn_import.gd")
@@ -486,6 +487,12 @@ func _command_line() -> void:
 		if DirAccess.dir_exists_absolute(a) and not ProjectService.manifest_of(a).is_empty():
 			open_project_at(a)
 			break
+	var e := args.find("--e2e")
+	if e >= 0 and e + 2 < args.size():
+		var failures: int = await E2E.run(self, args[e + 1], args[e + 2])
+		print("GENESIS_E2E RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
+		get_tree().quit(failures)
+		return
 	if "--smoke" in args:
 		var failures: int = await Smoke.run(self)
 		print("GENESIS_SMOKE RESULT %s" % ("PASS" if failures == 0 else "FAIL"))

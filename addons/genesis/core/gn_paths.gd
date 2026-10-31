@@ -52,22 +52,44 @@ static func project_relative(res_path: String) -> String:
 	return ""
 
 
-## An image file on disk as a texture that can be saved with a scene and loaded
-## anywhere, kept in `dir` (a project folder). Colour images are stored compressed
-## the way photographs are; `exact` (normal and roughness maps) keeps every value.
-static func texture_from_file(source: String, dir: String, exact := false) -> Texture2D:
+## An image file on disk as a texture that is saved in `dir` (a project folder)
+## and loads anywhere, with or without the Godot editor. Stored losslessly and
+## compressed; very large images are brought down to 4K, which is plenty for a
+## material and keeps projects a sensible size.
+static func texture_from_file(source: String, dir: String, _exact := false) -> Texture2D:
 	var img := Image.load_from_file(source)
 	if img == null or img.is_empty():
 		return null
-	if img.get_width() > 8192 or img.get_height() > 8192:
-		var s := 8192.0 / maxf(img.get_width(), img.get_height())
+	return save_texture(img, dir.path_join(source.get_file().get_basename().validate_filename() + ".tex.res"))
+
+
+## Saves `img` as a texture file at `dest` and returns it, loaded from there
+## (so a scene that uses it refers to the file rather than carrying a copy).
+static func save_texture(img: Image, dest: String, max_side := 4096) -> Texture2D:
+	if img.is_compressed():
+		img.decompress()
+	if img.get_width() > max_side or img.get_height() > max_side:
+		var s := float(max_side) / maxf(img.get_width(), img.get_height())
 		img.resize(roundi(img.get_width() * s), roundi(img.get_height() * s), Image.INTERPOLATE_LANCZOS)
-	img.generate_mipmaps()
-	var tex := PortableCompressedTexture2D.new()
-	tex.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS if exact
-		else PortableCompressedTexture2D.COMPRESSION_MODE_LOSSY, false, 0.9)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var dest := dir.path_join(source.get_file().get_basename().validate_filename() + ".tex.res")
-	if ResourceSaver.save(tex, dest) != OK:
+	if not img.has_mipmaps():
+		img.generate_mipmaps()
+	var tex := ImageTexture.create_from_image(img)
+	DirAccess.make_dir_recursive_absolute(dest.get_base_dir())
+	if ResourceSaver.save(tex, dest, ResourceSaver.FLAG_COMPRESS) != OK:
 		return tex
 	return ResourceLoader.load(dest, "", ResourceLoader.CACHE_MODE_REPLACE) as Texture2D
+
+
+## Saves a drawn texture (tiles, weathering, site imagery) at `path`. Inside the
+## editor as it always was (compressed the way photographs are); in a built
+## program as a plain compressed texture, which loads safely with or without
+## the editor's import data.
+static func save_drawn_texture(img: Image, path: String, lossless := false, normal_map := false, quality := 0.9) -> void:
+	if GnHost.supports("editor"):
+		img.generate_mipmaps()
+		var tex := PortableCompressedTexture2D.new()
+		tex.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS if lossless
+			else PortableCompressedTexture2D.COMPRESSION_MODE_LOSSY, normal_map, quality)
+		ResourceSaver.save(tex, path)
+	else:
+		save_texture(img, path)

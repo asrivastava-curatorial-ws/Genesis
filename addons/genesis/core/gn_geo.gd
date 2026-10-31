@@ -96,12 +96,9 @@ static func imagery(lat: float, lon: float, size: float, name: String, host: Nod
 	img = img.get_region(rect)
 	if img.get_width() > 4096 or img.get_height() > 4096:
 		img.resize(mini(img.get_width(), 4096), mini(img.get_height(), 4096), Image.INTERPOLATE_LANCZOS)
-	img.generate_mipmaps()
-	var tex := PortableCompressedTexture2D.new()
-	tex.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSY, false, 0.85)
 	DirAccess.make_dir_recursive_absolute(GnPaths.at(IMAGERY_DIR))
 	var path := "%s/%s_imagery.res" % [GnPaths.at(IMAGERY_DIR), name.validate_filename().to_lower().replace(" ", "_").left(60)]
-	ResourceSaver.save(tex, path)
+	GnPaths.save_drawn_texture(img, path, false, false, 0.85)
 	return {"texture": load(path), "path": path, "attribution": attribution,
 		"metres_per_pixel": size / float(img.get_width())}
 

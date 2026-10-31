@@ -68,10 +68,7 @@ static func texture(level: int) -> Texture2D:
 		return load(path)
 	DirAccess.make_dir_recursive_absolute(GnPaths.at(DIR))
 	var img := _draw(float(level) / LEVELS, level)
-	img.generate_mipmaps()
-	var tex := PortableCompressedTexture2D.new()
-	tex.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSY, false, 0.9)
-	ResourceSaver.save(tex, path)
+	GnPaths.save_drawn_texture(img, path)
 	return load(path)
 
 
