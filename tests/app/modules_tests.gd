@@ -168,6 +168,10 @@ func _run() -> void:
 	check(deps.filter(func(d): return d.name == "FFmpeg")[0].found == (OS.execute("which", ["ffmpeg"]) == 0) or OS.get_name() == "Windows", "dependencies: FFmpeg is found when it is installed")
 	check(Dependencies.report().contains("Real-ESRGAN"), "dependencies: the report lists the AI upscaler")
 	check(PageRender.QUALITY.has("Preview (fast)") and PageRender.QUALITY.has("High quality (16 samples)") and PageRender.QUALITY.has("Maximum quality (64 samples)"), "render: Preview, High and Maximum quality are offered")
+	var grid: MeshInstance3D = load("res://app/ui/viewport_panel.gd")._make_grid()
+	var on_view_layer := grid.layers == 1 << (GnHost.VIEW_ONLY_LAYER - 1)
+	grid.free()
+	check(on_view_layer and FileAccess.get_file_as_string("res://addons/genesis/core/gn_render.gd").contains("set_cull_mask_value(GnHost.VIEW_ONLY_LAYER, false)"), "render: the view's grid is on the view-only layer, which render cameras leave out")
 	check(GnLook.PRESETS.size() == 14, "look: all fourteen built-in looks are kept (%d)" % GnLook.PRESETS.size())
 	# The sun's highest point on midsummer's day, against published values.
 	for case in [["London", 51.507, -0.128, 172, 1.0, 61.9], ["Sydney", -33.87, 151.21, 355, 11.0, 79.6], ["Quito", -0.18, -78.47, 80, -5.0, 89.7]]:

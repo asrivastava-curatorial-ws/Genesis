@@ -131,7 +131,7 @@ static func _architecture(main: Node, out_dir: String) -> int:
 		cams.append(c)
 	GnEnvironment.apply("time_of_day", 11.0)
 	App.scenes.save()
-	var failures := await _renders(main, "Architecture demo", "daylight")
+	var failures := 0
 	# Golden hour and night, as scenes of their own.
 	for variant in [["golden_hour", 17.6, false, "Golden glow"], ["night", 21.0, true, "Moody"]]:
 		var root_now := GnHost.edited_scene_root()
@@ -140,8 +140,8 @@ static func _architecture(main: Node, out_dir: String) -> int:
 			d.dimmer = 1.0 if variant[2] else 0.0
 		GnLook.apply_preset(GnCameras.cameras()[0], GnLook.PRESETS[variant[3]])
 		App.scenes.save_as(App.projects.folder.path_join("scenes/%s.tscn" % variant[0]))
-		failures += await _renders(main, "Architecture demo", variant[0])
 	App.scenes.open(App.projects.folder.path_join("scenes/main.tscn"))
+	_say("ok   built %s" % App.projects.folder)
 	return failures
 
 
@@ -217,24 +217,41 @@ static func _event(main: Node, out_dir: String) -> int:
 		cl.record(root, cue[0], 1.5, "Front of house", {})
 	cl.go_to(1, 0.0)
 	App.scenes.save()
-	return await _renders(main, "Event production demo", "opener")
+	_say("ok   built %s" % App.projects.folder)
+	return 0
 
 
 # ---------------------------------------------------------------- renders
-static func _renders(main: Node, project: String, label: String) -> int:
+## Renders a demo project's sample pictures (a launch of its own):
+##   Genesis -- --render-samples <project folder>
+## Every camera of the main scene; the first camera of each other scene.
+static func render_samples(main: Node, folder: String) -> int:
+	var err: String = App.projects.open(folder)
+	if err != "":
+		_say("FAIL %s" % err)
+		return 1
 	var failures := 0
 	var out: String = App.projects.folder.path_join("renders/samples")
 	DirAccess.make_dir_recursive_absolute(out)
-	await _frames(main, 4)
-	for cam in GnCameras.cameras():
-		var path: String = await GnRender.render(cam, RENDER_SIZE, main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0)
-		if path == "":
-			failures += 1
-			_say("FAIL %s %s %s render" % [project, label, cam.name])
-			continue
-		var dest := out.path_join("%s_%s.png" % [label, str(cam.name).to_snake_case()])
-		DirAccess.rename_absolute(path, dest)
-		_say("ok   %s: %s" % [project, dest.get_file()])
+	var scenes: Array = App.projects.scene_files()
+	scenes.sort_custom(func(a, b): return a.ends_with("main.tscn") or (not b.ends_with("main.tscn") and a < b))
+	for scene in scenes:
+		if App.scenes.path != scene:
+			App.scenes.open(scene)
+		await _frames(main, 4)
+		var cams := GnCameras.cameras()
+		if not scene.ends_with("main.tscn"):
+			cams = cams.slice(0, 1)
+		for cam in cams:
+			var path: String = await GnRender.render(cam, RENDER_SIZE, main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0)
+			if path == "":
+				failures += 1
+				_say("FAIL %s %s render" % [scene.get_file(), cam.name])
+				continue
+			var dest := out.path_join("%s_%s.png" % [scene.get_file().get_basename(), str(cam.name).to_snake_case()])
+			DirAccess.rename_absolute(path, dest)
+			_say("ok   %s" % dest.get_file())
+	App.projects.close()
 	return failures
 
 

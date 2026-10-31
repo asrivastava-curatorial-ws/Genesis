@@ -551,4 +551,6 @@ static func _make_grid() -> MeshInstance3D:
 	mi.mesh = st.commit()
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# On the view-only layer, so renders leave it out.
+	mi.layers = 1 << (GnHost.VIEW_ONLY_LAYER - 1)
 	return mi

@@ -11,6 +11,10 @@ extends RefCounted
 
 const Backend := preload("res://addons/genesis/core/gn_host_backend.gd")
 
+## A render layer for helpers that belong to the view, not the picture (the
+## standalone 3D view's grid). Render cameras leave it out.
+const VIEW_ONLY_LAYER := 20
+
 static var backend: Backend = null
 
 

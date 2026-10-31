@@ -80,10 +80,13 @@ static func run(main: Node, phase: String, out_dir: String) -> int:
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	_step("1", DisplayServer.get_name() != "headless" and (OS.has_feature("template") or not Engine.has_singleton("EditorInterface")) if OS.has_feature("template") else "run from source, not a built program",
 		"Launch Genesis directly, without the Godot editor (renderer: %s, %s)" % [RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name()])
-	if phase == "build":
-		await _build(main, out_dir)
-	else:
-		await _verify(main, out_dir)
+	match phase:
+		"build":
+			await _build(main, out_dir)
+		"verify":
+			await _verify(main, out_dir)
+		_:
+			await _media(main, out_dir)
 	var report := FileAccess.open(out_dir.path_join("E2E_RESULTS_%s.md" % phase), FileAccess.WRITE)
 	report.store_string("# End-to-end test, phase: %s\n\n%s %s on %s, %s\n\n| Step | What | Result |\n|---|---|---|\n%s\n" % [
 		phase, App.NAME, App.VERSION, OS.get_name(), Time.get_datetime_string_from_system(), "\n".join(_lines)])
@@ -326,6 +329,20 @@ static func _verify(main: Node, out_dir: String) -> void:
 	_step("21", _image_ok(k4, Vector2i(3840, 2160)), "Produce a 4K render, Preview quality to keep the software-GPU test short (%s)" % k4.get_file())
 	var pano: String = await GnPanorama.render(cam, 2048, main) if cam else ""
 	_step("22", _image_ok(pano, Vector2i(2048, 1024)), "Produce a 360° panorama (%s)" % pano.get_file())
+	DirAccess.make_dir_recursive_absolute(out_dir.path_join("screenshots"))
+	for f in [still, k4, pano]:
+		if f != "" and FileAccess.file_exists(f):
+			DirAccess.copy_absolute(f, out_dir.path_join("screenshots").path_join("render_" + f.get_file()))
+
+
+# A third launch, with fresh memory: AI upscaling, the film, the concert.
+static func _media(main: Node, out_dir: String) -> void:
+	var expect: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(out_dir.path_join("expect.json")))
+	var err: String = App.projects.open(expect.project)
+	await _frames(main, 3)
+	_step("17b", err == "", "Launch Genesis a third time and reopen the project %s" % err)
+	var cams := GnCameras.cameras()
+	var cam: Camera3D = cams[0] if not cams.is_empty() else null
 	# 23. AI upscaling with Real-ESRGAN, installed the way the Render page does it.
 	var small: String = await GnRender.render(cam, Vector2i(480, 270), main, false, Viewport.DEBUG_DRAW_DISABLED, false, 0) if cam else ""
 	var up_err := ""
@@ -355,7 +372,7 @@ static func _verify(main: Node, out_dir: String) -> void:
 	_step("E3", _image_ok(show_still, Vector2i(1920, 1080)), "SET/SHOW: the concert renders from its front-of-house camera (%s)" % show_still.get_file())
 	main.screen.viewport_panel.frame_all()
 	await _shot(main, "04_reopened_concert")
-	for f in [still, k4, pano, show_still]:
+	for f in [show_still, film]:
 		if f != "" and FileAccess.file_exists(f):
 			DirAccess.copy_absolute(f, out_dir.path_join("screenshots").path_join("render_" + f.get_file()))
 

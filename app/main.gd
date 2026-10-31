@@ -494,6 +494,12 @@ func _command_line() -> void:
 		print("GENESIS_DEMO RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return
+	var r := args.find("--render-samples")
+	if r >= 0 and r + 1 < args.size():
+		var failures: int = await Demos.render_samples(self, args[r + 1])
+		print("GENESIS_DEMO RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
+		get_tree().quit(failures)
+		return
 	var e := args.find("--e2e")
 	if e >= 0 and e + 2 < args.size():
 		var failures: int = await E2E.run(self, args[e + 1], args[e + 2])

@@ -62,6 +62,8 @@ static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 	sub.transparent_bg = transparent
 	var look := GnLook.get_look(camera)
 	var cam := Camera3D.new()
+	# Helpers drawn only for the view (a grid) stay out of the picture.
+	cam.set_cull_mask_value(GnHost.VIEW_ONLY_LAYER, false)
 	cam.near = camera.near
 	cam.far = camera.far
 	cam.keep_aspect = camera.keep_aspect
