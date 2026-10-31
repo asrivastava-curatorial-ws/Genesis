@@ -4,6 +4,7 @@ extends VBoxContainer
 # One beautiful still.
 
 const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const GnRender := preload("res://addons/genesis/core/gn_render.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
@@ -98,7 +99,7 @@ func _panorama() -> void:
 	_pano_button.disabled = false
 	if path != "":
 		_last_path = path
-	_result.text = "Saved %s" % path if path != "" else "The panorama failed. See the Output panel."
+	_result.text = "Saved %s" % path if path != "" else "The panorama failed. See the %s panel." % GnHost.log_panel()
 
 
 # A 360 from every camera, walkable from one to the next, in a single web
@@ -116,7 +117,7 @@ func _tour() -> void:
 		func(done, total): _result.text = "Rendering the tour: %d of %d views…" % [done, total])
 	_tour_button.disabled = false
 	if path == "":
-		_result.text = "The tour failed. See the Output panel."
+		_result.text = "The tour failed. See the %s panel." % GnHost.log_panel()
 		return
 	_last_path = path
 	_result.text = "Saved %s. It opens in any browser; send the file itself to share it. For VR, put it on any https web host and open it in the headset's browser." % path.get_file()
@@ -216,7 +217,7 @@ func _render() -> void:
 	var path: String = await GnRender.render(cam, size, self, _samples() >= 0, Viewport.DEBUG_DRAW_DISABLED, false, maxi(_samples(), 0))
 	_button.disabled = false
 	if path == "":
-		_result.text = "The render failed. See the Output panel."
+		_result.text = "The render failed. See the %s panel." % GnHost.log_panel()
 		return
 	_last_path = path
 	_result.text = "Saved %s" % path

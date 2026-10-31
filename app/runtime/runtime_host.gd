@@ -67,6 +67,10 @@ func tool_dir(tool_name: String) -> String:
 	return ProjectSettings.globalize_path("user://tools").path_join(tool_name)
 
 
+func log_panel() -> String:
+	return "Console"
+
+
 func dialog_parent() -> Node:
 	return App.main if is_instance_valid(App.main) else super()
 

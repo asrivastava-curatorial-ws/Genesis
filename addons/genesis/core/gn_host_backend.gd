@@ -113,6 +113,11 @@ func tool_dir(tool_name: String) -> String:
 	return "res://genesis_data/external/%s" % tool_name
 
 
+## The name of the panel where Genesis's messages appear, for "see the ... panel".
+func log_panel() -> String:
+	return "Output"
+
+
 ## Things only some hosts can do. "editor_import": models and images are
 ## brought in by the editor's importer, which only the editor has.
 func supports(feature: String) -> bool:

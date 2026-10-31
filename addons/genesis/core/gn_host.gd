@@ -102,5 +102,9 @@ static func tool_dir(tool_name: String) -> String:
 	return _be().tool_dir(tool_name)
 
 
+static func log_panel() -> String:
+	return _be().log_panel()
+
+
 static func supports(feature: String) -> bool:
 	return _be().supports(feature)
