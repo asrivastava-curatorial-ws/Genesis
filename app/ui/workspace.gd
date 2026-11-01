@@ -328,6 +328,10 @@ func _show_shortcuts() -> void:
 func _shortcut_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
+	# A path being drawn takes Enter, Esc and Backspace before any shortcut.
+	if App.modules and App.modules.paths.key(event):
+		get_viewport().set_input_as_handled()
+		return
 	for id in App.actions.ids():
 		var a: Variant = App.actions.get_action(id)
 		if a.shortcut and a.shortcut.matches_event(event):

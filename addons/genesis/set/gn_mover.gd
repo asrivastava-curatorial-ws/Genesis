@@ -4,9 +4,11 @@ extends Path3D
 # Moving objects: whatever is put under this path travels along it in the
 # movie, at a steady speed, facing the way it goes, spaced evenly and going
 # round again at the end: traffic on a road, people crossing a plaza, a boat
-# on a river. Draw the route with Godot's own path editor (select this node,
-# then click in the 3D view to add points). People from the library that
-# walk (the walkers) step as they go.
+# on a river. People from the library that walk (the walkers) step as they go.
+#
+# The route: in the Godot editor, Godot's own path tool (select this node, then
+# click in the 3D view). In Genesis Community, the path tool of its 3D view
+# (gn_path_tool.gd): click points on any surface, drag them, round the corners.
 
 ## Metres per second (walking 1.4, city traffic 8-13).
 @export_range(0.0, 60.0, 0.1) var speed: float = 1.4:
@@ -14,6 +16,15 @@ extends Path3D
 ## Start at the end and travel back towards the beginning.
 @export var reverse: bool = false:
 	set(v): reverse = v; at_time(_shown)
+## Round the corners: the route curves smoothly through its points. Off, it
+## runs straight from point to point.
+@export var smooth: bool = true:
+	set(v):
+		smooth = v
+		# Not while the scene loads: a route shaped by hand in the Godot editor
+		# keeps its own handles until its points are changed here.
+		if is_node_ready() and curve != null:
+			curve = shaped(points(), v)
 
 const GROUP := &"gn_movers"
 var _shown := 0.0
@@ -26,7 +37,38 @@ func _ready() -> void:
 		curve = Curve3D.new()
 		curve.add_point(Vector3(-10, 0, 0))
 		curve.add_point(Vector3(10, 0, 0))
+	# A reshaped route (and its undo) moves what travels on it at once.
+	if not curve_changed.is_connected(refresh):
+		curve_changed.connect(refresh)
 	at_time(0.0)
+
+
+## The route's points, in the path's own space.
+func points() -> PackedVector3Array:
+	var out := PackedVector3Array()
+	if curve:
+		for i in curve.point_count:
+			out.append(curve.get_point_position(i))
+	return out
+
+
+## A route through `pts`. Rounded, each corner curves through its point
+## (Catmull-Rom: the handles follow the line from the point before to the one
+## after); otherwise the route is straight from point to point.
+static func shaped(pts: PackedVector3Array, round: bool) -> Curve3D:
+	var c := Curve3D.new()
+	c.bake_interval = 0.2
+	for i in pts.size():
+		var handle := Vector3.ZERO
+		if round and pts.size() > 2:
+			handle = (pts[mini(i + 1, pts.size() - 1)] - pts[maxi(i - 1, 0)]) / 6.0
+		c.add_point(pts[i], -handle, handle)
+	return c
+
+
+## Puts everything back where it belongs at the moment shown.
+func refresh() -> void:
+	at_time(_shown)
 
 
 ## Puts everything on the path where it is `t` seconds into the movie.

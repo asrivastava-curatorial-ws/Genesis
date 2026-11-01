@@ -15,6 +15,7 @@ const GnRender := preload("res://addons/genesis/core/gn_render.gd")
 const ShotPreview := preload("res://addons/genesis/ui/gn_shot_preview.gd")
 const GnPhasing := preload("res://addons/genesis/core/gn_phasing.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
 
 const SIZES := {"1920 × 1080 (HD)": Vector2i(1920, 1080), "2560 × 1440": Vector2i(2560, 1440),
 	"3840 × 2160 (4K)": Vector2i(3840, 2160), "1280 × 720 (quick)": Vector2i(1280, 720)}
@@ -100,14 +101,18 @@ func _init() -> void:
 	GnUi.show_value(_lapse_to, 19.0)
 
 	GnUi.heading(self, "Moving objects")
+	var mrow := HBoxContainer.new()
 	if GnHost.supports("editor"):
 		GnUi.note(self, "Traffic, people, boats. Add a path, shape it with Godot's path tool, put things on it; set the speed in the Inspector.")
+		GnUi.button(mrow, "Add a path", _add_mover)
 	else:
-		GnUi.note(self, "Traffic, people, boats. Add a path (a straight 20 m line: move, turn and stretch it with the handles), put things on it; set the speed in the Properties panel.")
-	var mrow := HBoxContainer.new()
-	GnUi.button(mrow, "Add a path", _add_mover)
-	GnUi.button(mrow, "Put selection on it", _ride)
+		GnUi.note(self, "Traffic, people, boats. Draw a path: click points on the ground, a deck or a roof, then press Enter. Drag a point to move it, Ctrl + click the path to add one, right-click a point to remove it. Then select what should travel and put it on the path; speed, direction and round corners are in the Properties panel. The walkers (Assets, people) walk as they go.")
+		GnUi.button(mrow, "Draw a path", func(): GnHost.start_tool("draw_path"))
+		GnUi.button(mrow, "Add points to it", _extend)
 	add_child(mrow)
+	var rrow := HBoxContainer.new()
+	GnUi.button(rrow, "Put selection on it", _ride)
+	add_child(rrow)
 
 	GnUi.heading(self, "Phasing: build it up")
 	GnUi.note(self, "Select objects (a floor, a stage, the trees) and say when they arrive in the film and how.")
@@ -311,8 +316,14 @@ func _add_mover() -> void:
 	GnScene.select(m)
 
 
-# Moves the selected objects onto the most recently selected path, or the
-# only one there is.
+# Adds points to the end of the selected path (the standalone program's tool).
+func _extend() -> void:
+	if not GnHost.start_tool("extend_path"):
+		_status.text = "Select a path first: click its line in the 3D view."
+
+
+# Moves the selected objects onto the selected path, or the only one there is,
+# or the one last drawn.
 func _ride() -> void:
 	var picked := GnHost.selected_nodes()
 	var movers: Array = GnScene.root().get_tree().get_nodes_in_group(Mover.GROUP) if GnScene.root() else []
@@ -322,6 +333,8 @@ func _ride() -> void:
 			path = n
 	if path == null and movers.size() == 1:
 		path = movers[0]
+	if path == null and is_instance_valid(GnPathTool.last) and GnPathTool.last in movers:
+		path = GnPathTool.last
 	if path == null:
 		_status.text = "Select the path too (or have just one)."
 		return

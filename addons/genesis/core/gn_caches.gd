@@ -16,6 +16,7 @@ const GnEffect := preload("res://addons/genesis/set/gn_effect.gd")
 const GnCrowd := preload("res://addons/genesis/set/gn_crowd.gd")
 const GnSurface := preload("res://addons/genesis/core/gn_surface.gd")
 const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
+const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
 
 
 static func release() -> void:
@@ -27,3 +28,4 @@ static func release() -> void:
 	GnCrowd._meshes.clear()
 	GnSurface._tri_cache.clear()
 	GnLiveVideo._slate = null
+	GnPathTool.last = null

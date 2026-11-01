@@ -8,7 +8,8 @@ extends SubViewportContainer
 # a camera.
 #
 # Mouse, in order of who gets it first:
-#   the landscape brush or the tape measure, while one is switched on;
+#   the landscape brush or the tape measure, while one is switched on, and the
+#       path tool while a moving-objects path is drawn or selected;
 #   the move / turn / resize handles of what is selected;
 #   the camera: middle drag orbits, Shift + middle drag pans, wheel zooms;
 #       on a laptop Alt + left drag orbits and Alt + Shift + left drag pans;
@@ -111,7 +112,7 @@ func _ready() -> void:
 	App.scenes.closed.connect(detach)
 	GnHost.selection().selection_changed.connect(_on_selection)
 	GnHost.undo_redo().changed.connect(_redraw)
-	for tool in [App.modules.brush, App.modules.measure]:
+	for tool in [App.modules.brush, App.modules.measure, App.modules.paths]:
 		tool.changed.connect(_redraw)
 	if App.scenes.has_scene():
 		attach(App.scenes.root)
@@ -132,7 +133,7 @@ func _exit_tree() -> void:
 		if App.host.viewport == viewport:
 			App.host.viewport = null
 	if App.modules:
-		for tool in [App.modules.brush, App.modules.measure]:
+		for tool in [App.modules.brush, App.modules.measure, App.modules.paths]:
 			if tool.changed.is_connected(_redraw):
 				tool.changed.disconnect(_redraw)
 	# The scene belongs to the scene service, not to this panel.
@@ -166,6 +167,7 @@ func _on_selection() -> void:
 		if n is Node3D and root and root.is_ancestor_of(n) and not Picker.is_locked(n, root):
 			picked.append(n)
 	gizmo.set_nodes(picked)
+	App.modules.paths.follow_selection(GnHost.selected_nodes())
 	_redraw()
 
 
@@ -300,8 +302,8 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouse:
 		_mouse = event.position
-	# 1. The brush and the tape measure, while switched on.
-	for tool in [App.modules.measure, App.modules.brush]:
+	# 1. The brush, the tape measure and the path tool, while switched on.
+	for tool in [App.modules.measure, App.modules.brush, App.modules.paths]:
 		if tool.active and _drag == "" and tool.handle(camera, event):
 			accept_event()
 			_redraw()
@@ -411,13 +413,17 @@ func _on_key(e: InputEventKey) -> void:
 
 func _click(at: Vector2, add: bool) -> void:
 	var root := GnHost.edited_scene_root()
-	var hit := Picker.pick(camera, at, root)
 	var sel := GnHost.selection()
-	if hit.is_empty():
-		if not add:
-			sel.clear()
-		return
-	var node: Node = hit.node
+	# A moving-objects path is a line with nothing to click: it is picked by
+	# its line, which is drawn over everything else.
+	var node: Node = App.modules.paths.route_at(camera, at, root)
+	if node == null:
+		var hit := Picker.pick(camera, at, root)
+		if hit.is_empty():
+			if not add:
+				sel.clear()
+			return
+		node = hit.node
 	if add:
 		if sel.contains(node):
 			sel.remove_node(node)
@@ -457,6 +463,7 @@ func _draw_overlay() -> void:
 		if n is Node3D and root.is_ancestor_of(n):
 			_draw_box(bounds_of([n]), SELECTION_COLOUR)
 	_draw_markers(root)
+	App.modules.paths.draw(_overlay, camera, root)
 	gizmo.draw(_overlay, camera)
 	if _drag == "box":
 		var r := Rect2(_press_at, _mouse - _press_at).abs()
@@ -475,6 +482,12 @@ func _draw_overlay() -> void:
 		if ring.size() > 1:
 			_overlay.draw_polyline(ring, Color(1, 1, 1, 0.85), 2.0, true)
 	_draw_axes()
+	var tool_note: String = App.modules.paths.status()
+	if tool_note != "":
+		var font := _overlay.get_theme_default_font()
+		var width := font.get_string_size(tool_note, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+		_overlay.draw_rect(Rect2(Vector2(8, 8), Vector2(width + 16, 26)), Color(0, 0, 0, 0.55))
+		_overlay.draw_string(font, Vector2(16, 26), tool_note, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
 	var s := gizmo.status()
 	if s != "":
 		_overlay.draw_string(_overlay.get_theme_default_font(), _mouse + Vector2(16, -12), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)

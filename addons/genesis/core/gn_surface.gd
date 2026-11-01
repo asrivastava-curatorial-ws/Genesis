@@ -15,11 +15,15 @@ static var _tri_cache := {}  # Mesh instance id -> TriangleMesh
 var _targets: Array = []  # [MeshInstance3D, TriangleMesh, inverse transform, world AABB]
 
 
-func _init(root: Node) -> void:
+## `leave_out`: nodes whose meshes are not surfaces (what travels on a path,
+## while the path is being drawn under it).
+func _init(root: Node, leave_out: Array = []) -> void:
 	if root == null:
 		return
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
 		if mi.mesh == null or not mi.is_visible_in_tree() or _in_scatter(mi):
+			continue
+		if leave_out.any(func(n): return is_instance_valid(n) and (n == mi or n.is_ancestor_of(mi))):
 			continue
 		var tri := _triangles(mi.mesh)
 		if tri == null:

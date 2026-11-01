@@ -18,9 +18,11 @@ const TransformGizmo := preload("res://app/runtime/transform_gizmo.gd")
 const SceneTreePanel := preload("res://app/ui/scene_tree_panel.gd")
 const InspectorPanel := preload("res://app/ui/inspector_panel.gd")
 const LedWall := preload("res://addons/genesis/set/gn_led_wall.gd")
+const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
+const Mover := preload("res://addons/genesis/set/gn_mover.gd")
 
 ## Fewer than this means a script error cut the run short.
-const MIN_CHECKS := 70
+const MIN_CHECKS := 95
 ## Errors the tests raise on purpose.
 const EXPECTED_ERRORS := ["canary: this error is deliberate", "test warning"]
 
@@ -335,4 +337,138 @@ func _run() -> void:
 	await process_frame
 	check("light_energy" in insp._editors and "omni_range" in insp._editors, "inspector: a light shows its light settings")
 	insp.queue_free()
+	await process_frame
+	await _paths()
+
+
+# ------------------------------------------------------------ paths
+func _press(tool: GnPathTool, world: Vector3, button := MOUSE_BUTTON_LEFT, ctrl := false) -> bool:
+	var e := InputEventMouseButton.new()
+	e.button_index = button
+	e.pressed = true
+	e.ctrl_pressed = ctrl
+	e.position = cam.unproject_position(world)
+	return tool.handle(cam, e)
+
+
+func _release(tool: GnPathTool, world: Vector3) -> bool:
+	var e := InputEventMouseButton.new()
+	e.button_index = MOUSE_BUTTON_LEFT
+	e.pressed = false
+	e.position = cam.unproject_position(world)
+	return tool.handle(cam, e)
+
+
+func _move(tool: GnPathTool, world: Vector3) -> bool:
+	var e := InputEventMouseMotion.new()
+	e.position = cam.unproject_position(world)
+	return tool.handle(cam, e)
+
+
+func _key(tool: GnPathTool, code: Key) -> bool:
+	var e := InputEventKey.new()
+	e.keycode = code
+	e.pressed = true
+	return tool.key(e)
+
+
+func _world_points(m: Node3D) -> Array:
+	return Array(m.points()).map(func(p): return m.to_global(p))
+
+
+func _near(a: Vector3, b: Vector3, tol := 0.05) -> bool:
+	return a.distance_to(b) <= tol
+
+
+func _paths() -> void:
+	var ur := GnHost.undo_redo()
+	# Looking straight down on an empty stretch of ground, away from the boxes.
+	var keep := cam.global_transform
+	cam.global_transform = Transform3D(Basis.from_euler(Vector3(-PI / 2, 0, 0)), Vector3(40, 30, 0))
+	await process_frame
+	var tool := GnPathTool.new()
+	var A := Vector3(32, 0, -6)
+	var B := Vector3(44, 0, -6)
+	var C := Vector3(44, 0, 6)
+	tool.start_new()
+	check(tool.active and tool.drawing and tool.status().begins_with("Drawing a path"), "paths: drawing starts, and says how it works")
+	_press(tool, A)
+	var m: Node3D = tool.path
+	check(m != null and m.get_script() == Mover and m.get_parent() == scene, "paths: the first click makes a moving-objects path")
+	_move(tool, B)
+	_press(tool, B)
+	_press(tool, C)
+	var pts := _world_points(m)
+	check(pts.size() == 3 and _near(pts[0], A) and _near(pts[1], B) and _near(pts[2], C), "paths: each click adds a point where it was clicked")
+	check(m.curve.get_point_out(1).length() > 0.5 and m.smooth, "paths: corners are rounded by default")
+	check(_key(tool, KEY_BACKSPACE) and m.curve.point_count == 2, "paths: Backspace takes the last point back")
+	_press(tool, C)
+	check(_key(tool, KEY_ENTER) and not tool.drawing and tool.path == m and m.curve.point_count == 3, "paths: Enter finishes; the path stays selected for shaping")
+	ur.undo()
+	check(m.curve.point_count == 2, "paths: undo takes back the last point")
+	ur.redo()
+	check(m.curve.point_count == 3, "paths: redo puts it back")
+	# Shaping: drag the corner point.
+	var D := Vector3(47, 0, -9)
+	check(tool.point_at(cam, cam.unproject_position(B)) == 1, "paths: the mouse finds a point")
+	check(_press(tool, B), "paths: pressing on a point grabs it")
+	_move(tool, (B + D) * 0.5)
+	_move(tool, D)
+	check(_near(_world_points(m)[1], D), "paths: the point follows the mouse while dragged")
+	_release(tool, D)
+	check(_near(_world_points(m)[1], D) and _near(_world_points(m)[0], A), "paths: the point stays where it was dropped, the others where they were")
+	ur.undo()
+	check(_near(_world_points(m)[1], B), "paths: a whole drag is one undo step")
+	ur.redo()
+	# Ctrl + click on the path between A and D adds a point there.
+	var mid: Vector3 = m.to_global(m.curve.sample_baked(m.curve.get_closest_offset(m.to_local((A + D) * 0.5))))
+	check(tool.segment_at(cam, cam.unproject_position(mid)) == 1, "paths: a click on the path finds the span it is on")
+	check(_press(tool, mid, MOUSE_BUTTON_LEFT, true) and m.curve.point_count == 4 and _near(_world_points(m)[1], mid, 0.3), "paths: Ctrl + click on the path adds a point in that span")
+	check(not _press(tool, Vector3(36, 0, 12)), "paths: a plain click away from the path is left for selecting")
+	check(_press(tool, mid, MOUSE_BUTTON_RIGHT) and m.curve.point_count == 3, "paths: a right click on a point removes it")
+	# Round or straight corners, undoable, from the Properties panel's setting.
+	GnScene.set_props("Straight corners", [[m, "smooth", false]])
+	check(m.curve.get_point_out(1) == Vector3.ZERO, "paths: corners can be made straight")
+	ur.undo()
+	check(m.curve.get_point_out(1).length() > 0.5, "paths: and round again with undo")
+	# Something travelling on it moves when the path is reshaped.
+	var rider := Node3D.new()
+	rider.name = "Rider"
+	m.add_child(rider)
+	rider.owner = scene
+	m.at_time(0.0)
+	check(_near(rider.global_position, A), "paths: what travels on it starts at its first point")
+	tool.move_point(0, Vector3(30, 0, -6))
+	check(_near(rider.global_position, Vector3(30, 0, -6)), "paths: and follows when the path is reshaped")
+	ur.undo()
+	check(_near(rider.global_position, A), "paths: and when the reshaping is undone")
+	# Picking a path by its line, which has nothing to click.
+	check(tool.route_at(cam, cam.unproject_position(mid), scene) == m, "paths: clicking the line of a path picks the path")
+	check(tool.route_at(cam, cam.unproject_position(Vector3(34, 0, 10)), scene) == null, "paths: clicking beside it does not")
+	tool.follow_selection([rider])
+	check(tool.path == null and not tool.active, "paths: selecting something else stops shaping")
+	tool.follow_selection([m])
+	check(tool.path == m and GnPathTool.last == m, "paths: selecting a path shapes it")
+	# Points land on what is under the mouse: a deck 1 m high.
+	var deck := _box("Deck", Vector3(36, 0, 4), 2.0)
+	tool.start_new()
+	_press(tool, Vector3(36, 1.0, 4))
+	var on_deck: Node3D = tool.path
+	check(on_deck != null and absf(on_deck.global_position.y - 1.0) < 0.05, "paths: a point clicked on a deck is on the deck (%.2f m up)" % (on_deck.global_position.y if on_deck else -1.0))
+	check(_key(tool, KEY_ESCAPE) and not tool.drawing, "paths: Esc finishes drawing")
+	# Draw on the overlay without errors.
+	var canvas := Control.new()
+	canvas.size = Vector2(vp.size)
+	vp.add_child(canvas)
+	var drawn := []
+	canvas.draw.connect(func():
+		tool.draw(canvas, cam, scene)
+		drawn.append(true))
+	canvas.queue_redraw()
+	await process_frame
+	await process_frame
+	check(drawn.size() >= 1, "paths: paths and their points are drawn on the view")
+	canvas.queue_free()
+	deck.queue_free()
+	cam.global_transform = keep
 	await process_frame

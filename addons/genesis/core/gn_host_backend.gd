@@ -123,6 +123,13 @@ func properties_panel() -> String:
 	return "Inspector"
 
 
+## Switches on one of the host's own 3D-view tools ("draw_path": draw a new
+## moving-objects path, "extend_path": add points to the selected one).
+## False when the host has no such tool (the editor has Godot's own).
+func start_tool(_tool: String) -> bool:
+	return false
+
+
 ## Things only some hosts can do. "editor_import": models and images are
 ## brought in by the editor's importer, which only the editor has.
 func supports(feature: String) -> bool:

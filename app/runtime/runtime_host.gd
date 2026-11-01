@@ -75,6 +75,22 @@ func properties_panel() -> String:
 	return "Properties panel"
 
 
+func start_tool(tool: String) -> bool:
+	var paths = App.modules.paths if App.modules else null
+	if paths == null:
+		return false
+	match tool:
+		"draw_path":
+			paths.start_new()
+			return true
+		"extend_path":
+			if paths.path == null:
+				return false
+			paths.extend(paths.path)
+			return true
+	return false
+
+
 func dialog_parent() -> Node:
 	return App.main if is_instance_valid(App.main) else super()
 

@@ -116,6 +116,31 @@ static func run(main: Node) -> int:
 	App.actions.run("edit.undo")
 	App.actions.run("view.top")
 	_check(ws.viewport_panel.camera.global_basis.z.y > 0.99, "View > From Above looks straight down")
+	# A moving-objects path drawn with the mouse in the real 3D view, finished
+	# with Enter (which the shortcuts must leave to the path tool).
+	var vpp: Control = ws.viewport_panel
+	await tree.process_frame
+	_check(GnHost.start_tool("draw_path") and App.modules.paths.drawing, "Draw a path switches the path tool on")
+	var c: Vector3 = vpp.pivot
+	for w in [c + Vector3(-3, 0, -2), c + Vector3(3, 0, -2), c + Vector3(3, 0, 3)]:
+		var at: Vector2 = vpp.get_global_rect().position + vpp.camera.unproject_position(w) * (vpp.size / Vector2(vpp.viewport.size))
+		for down in [true, false]:
+			var e := InputEventMouseButton.new()
+			e.button_index = MOUSE_BUTTON_LEFT
+			e.pressed = down
+			e.position = at
+			e.global_position = at
+			main.get_viewport().push_input(e)
+			await tree.process_frame
+	var drawn: Node = App.modules.paths.path
+	_check(drawn != null and drawn.curve.point_count == 3, "three clicks in the 3D view draw a path of three points (%s)" % (drawn.curve.point_count if drawn else "none"))
+	main.get_viewport().push_input(_key(KEY_ENTER))
+	await tree.process_frame
+	_check(not App.modules.paths.drawing and App.modules.paths.path == drawn, "Enter finishes the path and leaves it ready to shape")
+	GnHost.select(drawn)
+	await tree.process_frame
+	_check(App.modules.paths.path == drawn and ws.inspector.target == drawn and "smooth" in ws.inspector._editors, "a selected path shows its settings, round corners among them")
+	GnHost.selection().clear()
 	App.actions.run("view.ortho")
 	_check(ws.viewport_panel.camera.projection == Camera3D.PROJECTION_ORTHOGONAL, "the view can be orthographic")
 	App.actions.run("view.ortho")
