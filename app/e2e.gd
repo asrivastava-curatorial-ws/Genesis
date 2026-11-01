@@ -510,6 +510,7 @@ static func _media(main: Node, out_dir: String) -> void:
 	var keep_sky := str(GnEnvironment.value("sky"))
 	var keep_time := float(GnEnvironment.value("time_of_day"))
 	GnEnvironment.apply("sky", "Clear", false)
+	main.screen.genesis_panel.show_section("Render")
 	var render_page: Control = main.screen.genesis_panel._stack.get_node("Render").get_child(0)
 	render_page.refresh()
 	render_page._camera.select(0)
