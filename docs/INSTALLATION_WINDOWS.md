@@ -1,10 +1,10 @@
 # Installing on Windows 10 and 11
 
-> **Status:** the Windows build is produced by cross-exporting from Linux with the official Godot 4.7.2 Windows templates. It has **not** been run on a real Windows machine for this release candidate. Please report what you find (Help > About > Copy diagnostics).
+> **Status:** the Windows build is produced by cross-exporting from Linux with the official Godot 4.7.2 Windows templates. It has **not** been run on a real Windows machine for this release candidate, and the 1.0.0-rc2 delivery is Linux only: build the Windows program from `source/` with `bash tools/build_standalone.sh windows` (see BUILDING_FROM_SOURCE.md). Please report what you find (Help > About > Copy diagnostics).
 
 ## 1. Unpack
 
-Unzip `Genesis-Community-1.0.0-rc1-windows-x86_64.zip` (or `Genesis-Community-1.0.0-rc1.zip`, which has both programs) anywhere you can write (Documents, a USB drive). Open `applications\windows-x86_64` and double-click **Genesis.bat** (or `Genesis.exe`).
+Unzip `Genesis-Community-<version>-windows-x86_64.zip` anywhere you can write (Documents, a USB drive). Open `applications\windows-x86_64` and double-click **Genesis.bat** (or `Genesis.exe`).
 
 Nothing is installed and no administrator rights are needed. Settings, logs and downloaded tools go in `%APPDATA%\Genesis\`.
 

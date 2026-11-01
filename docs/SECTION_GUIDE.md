@@ -56,6 +56,18 @@ For a PDF, choose the scale the sheet states, such as 1:100, under *PDF: the she
 
 Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENSING.md](ASSET_LICENSING.md)).
 
+**Your own models.** Add models of your own to a library that every project can use: furniture, people, plants, vehicles, anything.
+
+1. Press *Add a model…* and choose a GLB, glTF, FBX or OBJ file (a `.blend` file works when Blender is installed).
+2. Give it a *Name* and a *Category*, and say what unit it was *Made in* (metres, centimetres, millimetres, inches or feet).
+3. Say which way is up (*Y* for glTF and Blender exports, *Z* for CAD, SketchUp and 3ds Max), and under *May be used under* choose *My own work*, *CC0 1.0*, *CC BY 4.0*, *CC BY-SA 4.0* or *Other* (then describe it under *Licence*). Add the *Author*, *Where it came from* and a *Credit line* if the licence asks for one. A model without a licence is not added.
+4. Press *Add*. It appears in its category marked *(yours)*, and under the *Your own* filter.
+
+- Models in the *Plants* and *Trees* categories can also be painted on the Landscape page.
+- The library is a folder of your own (*Open your library folder*): `~/.local/share/Genesis/library/` on Linux, `%APPDATA%\Genesis\library\` on Windows. Each model is a `.scn` file with its `.license.json` beside it.
+- A project that uses one of your models gets its own copy in `assets/library/`, so it still opens on another computer or after you remove the model.
+- *Remove it* takes the selected model out of your library. The bundled models cannot be removed.
+
 **Place along a line** makes rows of chairs, bollards, street trees or a queue of people:
 
 1. Pick a model.
@@ -72,7 +84,9 @@ Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENS
 
 **Sky.**
 
-- Choose a procedural sky. Photographed HDRI skies appear in the list once they have been installed with `tools/setup.py`.
+- Choose a procedural sky (*Clear*, *Hazy*, *Overcast*), or a photographed one.
+- *Add a sky image…* adds a sky of your own: a 360° panorama, twice as wide as it is high (equirectangular). HDR (`.hdr`) is best; JPG, PNG and WebP work too. It joins the list for every project and becomes this scene's sky; the sun is put where the photo's sun is. Free HDRI skies are at polyhaven.com (CC0).
+- The photographed skies of the downloaded library appear in the list once installed with `tools/setup.py` (see Known limitations).
 - *Distance haze* softens the far distance.
 - *Stage haze (shows beams)* makes light beams visible in the air.
 - *Clouds* sets the cloud cover.
@@ -94,6 +108,8 @@ Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENS
    - *Wipe the ground*
 2. Choose a *Plant*, or a *Ground* to paint.
 3. Press *Start painting*, then drag in the 3D view. Hold **Shift** to erase. Each stroke is one undo step.
+
+The plants are the bundled stand-in trees, shrub and grass, plus any plants and trees you have added to your own library on the Assets page.
 
 Adjust the brush as you go:
 
@@ -143,7 +159,7 @@ Select a piece to change it in the Properties panel. For an LED wall, that means
 1. Select an object.
 2. Pick one of its *Surface*s (a model usually has several).
 3. Give it a material in one of three ways:
-   - **Presets**: the scanned material library. It is not included in this release; build it with `tools/setup.py`.
+   - **Presets**: asphalt, brick, concrete, glass, grass, metal, stone and wood, drawn by Genesis itself (CC0). Each is mapped at its real size in world space, so it fits any model whatever its texture coordinates. With the downloaded library installed (`tools/setup.py`), photographed versions replace them and more are added.
    - **Your own image**: *Use an image…* takes a photo or a texture map. *One tile is* sets its real size in metres. Normal and roughness maps saved next to the image under the usual names come in too.
    - **Tiles and grout**: choose the *Layout*, tile width and height, grout joint and colour, *Tile finish* and *Shade variation*, then press *Tile this surface*. The tiles are real size and laid in world space.
 
@@ -166,7 +182,7 @@ Choosing a saved camera moves the main view to it. *View > Look Through Selected
 3. Move the camera until the design sits right.
 4. *Shadows on photo* lets the design cast its shadows onto the photo.
 
-Photo match was not exercised by this release's tests.
+Photo match is checked by the end-to-end test: a site photo behind the design, at the photo's horizon and camera height, rendered and composited.
 
 ## LOOK
 
@@ -217,17 +233,25 @@ The page also offers:
 
 A film is a list of **shots**. *Play* previews it; *Move up* and *Remove* arrange the shots.
 
-**Add a path through cameras.** Pick two or more saved cameras, set the *Length* in seconds, and press *Add path*. The camera glides through them in list order.
+**Add a path through cameras.** Pick two or more saved cameras, set the *Length* in seconds, and press *Add path*. The camera glides through them in list order. Pick one camera for a still shot: the film holds that view for the length you set.
 
 **Add an orbit.** Select the building, set *Turn* (degrees), *Height* and *Length*, and press *Add orbit*.
 
 **Time-lapse.** Tick *The sun moves through the film* and set *From* and *To*.
 
-**Moving objects** adds traffic, people or boats:
+**Moving objects** adds traffic, people walking, boats: things that travel along a path you draw.
 
-1. *Add a path* makes a straight 20 m line. Move, turn and stretch it with the handles.
-2. Select the objects and press *Put selection on it*.
-3. Set the speed in the Properties panel.
+1. Press *Draw a path*. Click points in the 3D view: on the ground, a deck, a roof or a bridge. The path runs through them in curves.
+2. Press **Enter** (or Esc, or right-click) to finish. **Backspace** takes back the last point.
+3. To change it, click its line to select it, then:
+   - drag a point to move it;
+   - **Ctrl + click** the line to add a point there;
+   - right-click a point to remove it;
+   - *Add points to it* carries on drawing from its end.
+4. Select what should travel along it (a car, a boat, a walker from *Assets > People*), select the path too (or have just one), and press *Put selection on it*. Several things on one path are spaced evenly along it. They keep going: at the end of the path each starts again from the beginning, so make a path long enough for the film.
+5. In the Properties panel, with the path selected: *Speed* (metres per second; 1.4 is a walking pace), *Reverse*, and *Smooth* (curves; untick it for straight lines and sharp corners).
+
+The walkers walk as they go: their stride follows the distance they cover, so feet do not slide at any speed. Play the film, or scrub it, to watch them; the rendered film shows them the same way.
 
 **Phasing** builds the design up during the film:
 

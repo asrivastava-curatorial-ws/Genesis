@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Assembles the Genesis Community release:
 
-    python3 tools/build_release.py [--demos DIR] [--skip-build]
+    python3 tools/build_release.py [--demos DIR] [--skip-build] [--platforms linux,windows]
 
-1. builds Linux and Windows with tools/build_standalone.sh (Linux is smoke-tested),
+1. builds Linux and Windows with tools/build_standalone.sh (Linux is smoke-tested;
+   --platforms linux makes a Linux-only release: no Windows program, one zip),
 2. lays out Genesis-Community-<version>/ as below,
 3. writes checksums/SHA256SUMS and zips it to release/Genesis-Community-<version>.zip,
    and to -linux-x86_64.zip and -windows-x86_64.zip (each without the other
@@ -60,12 +61,13 @@ def icon_png(dest):
 def main():
     args = sys.argv[1:]
     demos = args[args.index("--demos") + 1] if "--demos" in args else ""
+    platforms = args[args.index("--platforms") + 1].split(",") if "--platforms" in args else ["linux", "windows"]
     ver = version()
     name = "Genesis-Community-%s" % ver
     out_root = os.path.join(ROOT, "release")
     out = os.path.join(out_root, name)
     if "--skip-build" not in args:
-        run(["bash", os.path.join(ROOT, "tools/build_standalone.sh"), "linux", "windows"], env=dict(os.environ, GODOT=godot()))
+        run(["bash", os.path.join(ROOT, "tools/build_standalone.sh")] + platforms, env=dict(os.environ, GODOT=godot()))
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
     for f in ["START_HERE.md", "README.md", "CHANGELOG.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "DEVELOPMENT_STATUS.md"]:
@@ -73,20 +75,22 @@ def main():
     # Applications.
     lin = os.path.join(out, "applications/linux-x86_64")
     win = os.path.join(out, "applications/windows-x86_64")
-    os.makedirs(lin)
-    os.makedirs(win)
-    shutil.copy(os.path.join(ROOT, "build/linux/Genesis.x86_64"), os.path.join(lin, "Genesis.x86_64"))
-    shutil.copy(os.path.join(ROOT, "build/linux/Genesis.pck"), lin)
-    shutil.copy(os.path.join(ROOT, "tools/launchers/Genesis.sh"), lin)
-    os.chmod(os.path.join(lin, "Genesis.x86_64"), 0o755)
-    os.chmod(os.path.join(lin, "Genesis.sh"), 0o755)
-    icon_png(os.path.join(lin, "genesis.png"))
-    shutil.copy(os.path.join(ROOT, "build/windows/Genesis.exe"), win)
-    shutil.copy(os.path.join(ROOT, "build/windows/Genesis.pck"), win)
-    for f in ["Genesis.bat", "Genesis.ps1"]:
-        shutil.copy(os.path.join(ROOT, "tools/launchers", f), win)
-    for d in (lin, win):
-        shutil.copy(os.path.join(ROOT, "LICENSE"), d)
+    if "linux" in platforms:
+        os.makedirs(lin)
+        shutil.copy(os.path.join(ROOT, "build/linux/Genesis.x86_64"), os.path.join(lin, "Genesis.x86_64"))
+        shutil.copy(os.path.join(ROOT, "build/linux/Genesis.pck"), lin)
+        shutil.copy(os.path.join(ROOT, "tools/launchers/Genesis.sh"), lin)
+        os.chmod(os.path.join(lin, "Genesis.x86_64"), 0o755)
+        os.chmod(os.path.join(lin, "Genesis.sh"), 0o755)
+        icon_png(os.path.join(lin, "genesis.png"))
+        shutil.copy(os.path.join(ROOT, "LICENSE"), lin)
+    if "windows" in platforms:
+        os.makedirs(win)
+        shutil.copy(os.path.join(ROOT, "build/windows/Genesis.exe"), win)
+        shutil.copy(os.path.join(ROOT, "build/windows/Genesis.pck"), win)
+        for f in ["Genesis.bat", "Genesis.ps1"]:
+            shutil.copy(os.path.join(ROOT, "tools/launchers", f), win)
+        shutil.copy(os.path.join(ROOT, "LICENSE"), win)
     # Source, exactly as committed.
     src = os.path.join(out, "source")
     os.makedirs(src)
@@ -120,6 +124,13 @@ def main():
     # The whole release, and one zip per platform: the same folder without the
     # other platform's program (each under the 500 MB many upload limits allow).
     # Both unpack into the same folder, so together they make the whole release.
+    for old in [name + ".zip", name + "-linux-x86_64.zip", name + "-windows-x86_64.zip"]:
+        if os.path.exists(os.path.join(out_root, old)):
+            os.remove(os.path.join(out_root, old))
+    if len(platforms) == 1:
+        # One platform: one zip, named for it.
+        write_zip(out, name, os.path.join(out_root, "%s-%s-x86_64.zip" % (name, platforms[0])), sums, None)
+        return
     write_zip(out, name, os.path.join(out_root, name + ".zip"), sums, None)
     write_zip(out, name, os.path.join(out_root, name + "-linux-x86_64.zip"), sums, "applications/windows-x86_64/")
     write_zip(out, name, os.path.join(out_root, name + "-windows-x86_64.zip"), sums, "applications/linux-x86_64/")

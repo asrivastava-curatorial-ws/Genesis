@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.0.0-rc2 (Genesis Community)
+
+### New
+- **Paths for moving objects, drawn in the 3D view.** *Movie > Draw a path*: click points on the ground, a deck or a roof, Enter to finish. Drag a point to move it, Ctrl+click the line to add one, right-click to remove one, Backspace while drawing takes back the last; *Add points to it* carries on from the end. Curved or straight (*Smooth*), speed and direction in the Properties panel; every change is one undo step. Paths are drawn over the view and picked by clicking their line. This replaces the straight 20 m line of rc1.
+- **Walkthroughs with people walking.** Walkers from *Assets > People* put on a path walk along it, their stride matched to the ground they cover, in the preview and in the rendered film. The end-to-end test has a fourth launch, *walk*, that draws a path with the tool, puts two walkers on it from the Movie page, renders an MP4 and checks in the frames that they move and step.
+- **Still shots**: a shot from one saved camera holds that view.
+- **Your own library of models**: *Assets > Add a model…* (GLB, glTF, FBX, OBJ; .blend with Blender) with its name, category, unit, up axis and licence (your own work, CC0, CC BY, CC BY-SA or another), kept in your user data folder for every project. Your plants, trees and grass can be painted on the Landscape page. A project that uses one gets its own copy. *Remove it* and *Open your library folder*.
+- **Your own skies**: *Environment > Add a sky image…* takes a 360° panorama (HDR, JPG, PNG, WebP), finds the sun in it and lights the scene from there.
+- **Material presets in the build**: asphalt, brick, concrete, glass, grass, metal, stone and wood, drawn by `tools/make_materials.gd` (CC0, no internet needed). The build draws them when they are missing.
+- **Scenes that use files not on this computer open anyway.** A missing model is an empty marker in its place; missing plants, a photographed sky and scanned textures from the downloaded library show stand-ins (bundled trees and shrubs, Genesis's own sky, the drawn preset textures). Saving and autosave keep every reference, and stand-ins are never saved, so the files come back when they are installed. Importing an old plugin project reports what its scenes use that is not here.
+- The demo pavilion has a plaza path with three walkers, a plaza camera and a sample film (`renders/samples/main_film.mp4`).
+
+### Tested for the first time
+- `.blend` import through Blender (Ubuntu's 4.0.2) and FBX (written by Blender): a 2 m bench comes in 2 m, in the suites and the end-to-end test.
+- PDF plans: CAD PDFs read as lines at scale, and drawings as pictures through Poppler at scale.
+- Outgoing show commands (OSC, text, TCP) to real listeners; live video on screens from a video file, an MPEG-TS stream over UDP and an SRT stream.
+- Photo match: a site photo behind the design at the photo's horizon and camera height, rendered and composited (end-to-end).
+- Bringing in the original Genesis repository as an old plugin project: its three scenes open, render and save without losing a reference.
+
+### Fixed
+- A scene referring to any file that was not on the computer could not be opened ("not a scene Genesis can read").
+- Blender's glTF exporter failing for want of numpy (Ubuntu's Blender package) gave an unhelpful error; it now says what to install.
+- A photographed sky whose file was missing turned the scene's sky empty when the time of day changed; the sky is now left as it is.
+
 ## 1.0.0-rc1 (Genesis Community)
 
 The Genesis editor plugin as a standalone desktop application.

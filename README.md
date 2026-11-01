@@ -6,7 +6,7 @@ Genesis Community is free, open architectural and event visualisation, built on 
 
 It is the [Genesis](https://github.com/Utopian-Academy/Genesis) editor plugin by Utopian Academy, turned into a standalone desktop application: **no Godot editor is needed**. Every Genesis feature is kept; the plugin itself still works for those who prefer it.
 
-> **Release candidate 1.0.0-rc1.** Built and tested on Linux with software rendering; the Windows build has not yet been run on Windows. See [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) before relying on it.
+> **Release candidate 1.0.0-rc2.** Built and tested on Linux with software rendering. This delivery is the Linux build; the Windows build is made from the same source but has not yet been run on Windows. See [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) before relying on it.
 
 ## Get started
 

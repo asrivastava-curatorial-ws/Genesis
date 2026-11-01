@@ -97,6 +97,9 @@ class Source:
 		_reader = null
 		_errors = null
 
+	# Only the main thread asks whether FFmpeg is still running (tick): stopping
+	# it reaps the process, and asking about a reaped process from here at that
+	# moment is an error. Its pipe closing ends this loop, as does stop().
 	func _read() -> void:
 		var need := SIZE.x * SIZE.y * 3
 		var buf := PackedByteArray()
@@ -106,7 +109,7 @@ class Source:
 			# once makes every small read allocate the whole frame.)
 			var piece := _stdio.get_buffer(mini(need - buf.size(), 65536))
 			if piece.is_empty():
-				if _stdio.eof_reached() or not OS.is_process_running(pid):
+				if _stdio.eof_reached():
 					break
 				OS.delay_msec(2)
 				continue

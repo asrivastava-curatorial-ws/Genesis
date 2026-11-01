@@ -32,3 +32,9 @@ Paths inside a project are kept relative to it, and paths stored as text inside 
 ## Projects from the Genesis editor plugin
 
 **File > Import an Old Genesis Project…** takes the folder with `project.godot`. A new project is made beside your others; the original is only read. Models are converted from their source files, the files the scenes use are copied in, paths are rewritten, and an `IMPORT_REPORT.md` in the new project lists everything done and anything that could not be found.
+
+Scenes made with the plugin often use its downloaded library (photographed skies, scanned materials, the 54 plant species). When that is not installed, the scenes still open: stand-ins show in place of the plants, the sky and the scanned textures, and saving keeps the original references (see KNOWN_LIMITATIONS.md). This was tested with the three scenes of the original Genesis repository.
+
+## Scenes that use files not on this computer
+
+Any scene that refers to a file that is not here opens without it, and Genesis says how many and which (the Console lists them all). A missing model is an empty marker with the same name and place; a missing plant, sky or scanned texture from the downloaded library shows a stand-in. You can work on and save the scene as usual: the saved file still refers to everything that was missing, and the stand-ins are never saved. When the files are back, the scene is whole again.

@@ -5,8 +5,8 @@ Tested on Ubuntu 24.04 (x86_64). Other current distributions with glibc 2.31 or 
 ## 1. Unpack
 
 ```bash
-unzip Genesis-Community-1.0.0-rc1-linux-x86_64.zip     # or Genesis-Community-1.0.0-rc1.zip, which has both programs
-cd Genesis-Community-1.0.0-rc1/applications/linux-x86_64
+unzip Genesis-Community-1.0.0-rc2-linux-x86_64.zip
+cd Genesis-Community-1.0.0-rc2/applications/linux-x86_64
 ./Genesis.sh
 ```
 

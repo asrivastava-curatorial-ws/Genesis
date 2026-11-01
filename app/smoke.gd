@@ -12,6 +12,7 @@ const ProjectManager := preload("res://app/ui/project_manager.gd")
 const ToastHost := preload("res://app/ui/toast_host.gd")
 const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
+const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
 const LedWall := preload("res://addons/genesis/set/gn_led_wall.gd")
 const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
@@ -105,6 +106,19 @@ static func run(main: Node) -> int:
 		_check(placed != null and not placed.find_children("*", "MeshInstance3D", true, false).is_empty(), "a vehicle from the library is placed, with its geometry")
 		if placed:
 			App.actions.run("edit.undo")
+		# The material presets Genesis draws, as a built program reads them.
+		var presets := GnMaterials.presets()
+		var block := MeshInstance3D.new()
+		block.mesh = BoxMesh.new()
+		GnScene.add_node(block, root, "Add block")
+		var brick := presets.filter(func(p): return str(p).get_file().begins_with("brick"))
+		if not brick.is_empty():
+			GnMaterials.apply_preset(GnMaterials.surfaces(block)[0], brick[0])
+		var on := block.get_surface_override_material(0) as StandardMaterial3D
+		_check(presets.size() >= 8 and on != null and on.albedo_texture != null and on.albedo_texture.get_width() > 0,
+			"the %d material presets are there, and brick puts its texture on a box" % presets.size())
+		App.actions.run("edit.undo")
+		App.actions.run("edit.undo")
 	var wall: Node3D = LedWall.new()
 	GnScene.add_node(wall, root, "Add wall")
 	await tree.process_frame

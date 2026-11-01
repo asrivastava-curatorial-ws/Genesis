@@ -5,7 +5,7 @@ A project is a folder. `genesis.project.json`:
 ```json
 {
   "format": 1,
-  "genesis": "1.0.0-rc1",
+  "genesis": "1.0.0-rc2",
   "name": "Museum Hall",
   "created": "2026-10-31T19:30:00",
   "modified": "2026-10-31T20:10:00",

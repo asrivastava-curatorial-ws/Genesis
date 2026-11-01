@@ -9,6 +9,9 @@ Genesis Community is MIT-licensed (see `LICENSE`). It is built on the Godot Engi
 | Genesis Community (this program, its scripts, shaders and tools) | MIT | everything under `app/`, `addons/genesis/`, `tools/` |
 | Godot Engine 4.7.2 and the components compiled into it | MIT, and the licences listed below | the executables |
 | The model library (295 models) | CC0-1.0 | `genesis_assets/`, each with its `.license.json`; see `docs/ASSET_LICENSING.md` |
+| The eight material presets and their textures | CC0-1.0 | drawn by `tools/make_materials.gd` when the program is built; `genesis_data/materials/materials.license.json` |
+
+Models and skies a user adds to their own library carry the licence the user gives them, in a `.license.json` beside each; they are the user's, not part of the release.
 
 ## Used if present, not shipped
 
