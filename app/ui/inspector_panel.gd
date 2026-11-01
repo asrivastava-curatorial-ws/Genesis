@@ -175,9 +175,15 @@ func _property(prop: String) -> void:
 
 func _script_properties() -> void:
 	var shown := false
-	# A group's heading is shown only when a setting under it is: the engine's
-	# own groups (Process, Thread Group, Transform...) hold none of the
-	# script's settings and would be empty headings.
+	# Headings come only from the script's own groups (@export_group), and
+	# only above a setting. The engine's groups (Process, Thread Group,
+	# Transform, Visibility...) hold none of the script's settings; a built
+	# program does not list the script's category, so its groups cannot be
+	# told apart by position.
+	var own_groups := {}
+	for p in target.get_script().get_script_property_list():
+		if p.usage & (PROPERTY_USAGE_GROUP | PROPERTY_USAGE_SUBGROUP):
+			own_groups[p.name] = true
 	var pending := ""
 	for p in target.get_property_list():
 		var usage: int = p.usage
@@ -185,7 +191,7 @@ func _script_properties() -> void:
 			pending = ""
 			continue
 		if usage & PROPERTY_USAGE_GROUP or usage & PROPERTY_USAGE_SUBGROUP:
-			pending = str(p.name).capitalize()
+			pending = str(p.name).capitalize() if own_groups.has(p.name) else ""
 			continue
 		if not (usage & PROPERTY_USAGE_SCRIPT_VARIABLE) or not (usage & PROPERTY_USAGE_EDITOR) or p.name in HIDDEN:
 			continue

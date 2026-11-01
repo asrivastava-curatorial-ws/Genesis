@@ -82,6 +82,12 @@ static func run(main: Node) -> int:
 	GnScene.add_node(wall, root, "Add wall")
 	await tree.process_frame
 	_check(wall.report().cabinets > 0 and wall.report_text().contains("Planning estimate"), "an LED wall works, with its planning report")
+	GnHost.select(wall)
+	await tree.process_frame
+	await tree.process_frame
+	var headings: Array = ws.inspector._box.get_children().filter(func(c): return c is Label).map(func(l): return l.text)
+	_check(ws.inspector.target == wall and headings.has("Custom Panel") and not headings.any(func(h): return h in ["Process", "Thread Group", "Transform", "Visibility"]),
+		"the LED wall's properties have only their own headings (%s)" % ", ".join(headings))
 	App.actions.run("edit.undo")
 	# The editor: scene tree, properties, tools, and keys that act once.
 	_check(ws.scene_tree.is_inside_tree() and ws.inspector.is_inside_tree(), "the scene tree and the properties are in the window")

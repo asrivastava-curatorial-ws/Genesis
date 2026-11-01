@@ -310,7 +310,7 @@ func _run() -> void:
 	check(exported.size() > 4 and exported.all(func(p): return p in props), "inspector: every LED wall setting has an editor (%d)" % exported.size())
 	check("position" in props and "rotation_degrees" in props and "scale" in props, "inspector: transform is editable")
 	var headings: Array = insp._box.get_children().filter(func(c): return c is Label).map(func(l): return l.text)
-	check(not headings.any(func(h): return h in ["Process", "Thread Group", "Physics Interpolation", "Auto Translate", "Editor Description"]) and "Custom Panel" in headings,
+	check(not headings.any(func(h): return h in ["Process", "Thread Group", "Physics Interpolation", "Auto Translate", "Editor Description", "Transform", "Visibility"]) and "Custom Panel" in headings,
 		"inspector: only headings with settings under them (%s)" % ", ".join(headings))
 	var numeric := ""
 	for p in wall.get_property_list():
