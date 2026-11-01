@@ -45,6 +45,7 @@ const Workspace := preload("res://app/ui/workspace.gd")
 const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const HdrFile := preload("res://app/hdr_file.gd")
 const PdfFile := preload("res://app/pdf_file.gd")
+const GnPhotomatch := preload("res://addons/genesis/core/gn_photomatch.gd")
 const EditOps := preload("res://app/runtime/edit_ops.gd")
 
 const PROJECT := "E2E Museum Pavilion"
@@ -402,8 +403,34 @@ static func _verify(main: Node, out_dir: String) -> void:
 	_step("21", _image_ok(k4, Vector2i(3840, 2160)), "Produce a 4K render, Preview quality to keep the software-GPU test short (%s)" % k4.get_file())
 	var pano: String = await GnPanorama.render(cam, 2048, main) if cam else ""
 	_step("22", _image_ok(pano, Vector2i(2048, 1024)), "Produce a 360° panorama (%s)" % pano.get_file())
+	# 22b. Photo match: the design rendered into a photograph of the site. The
+	# "photo" is drawn here: sky above a horizon 55 % down the frame, ground
+	# below. Matched by camera height and horizon, as on the Cameras page.
+	var photo := Image.create(640, 360, false, Image.FORMAT_RGB8)
+	for y in 360:
+		for x in 640:
+			var c := Color(0.62, 0.75, 0.9).lerp(Color(0.8, 0.86, 0.94), y / 198.0) if y < 198 \
+				else Color(0.36, 0.34, 0.27).lerp(Color(0.42, 0.4, 0.32), float((x * 7 + y * 13) % 17) / 17.0)
+			photo.set_pixel(x, y, c)
+	var photo_file := out_dir.path_join("sources").path_join("site_photo.png")
+	photo.save_png(photo_file)
+	var site_cam := Camera3D.new()
+	site_cam.name = "Site photo"
+	site_cam.fov = 50.0
+	GnCameras.add(site_cam)
+	site_cam.look_at_from_position(Vector3(13, 1.6, 15), Vector3(0, 1.6, 0))
+	var pm_err := GnPhotomatch.set_photo(site_cam, photo_file)
+	GnPhotomatch.set_height(site_cam, 1.6)
+	GnPhotomatch.match_horizon(site_cam, 0.55)
+	var want_pitch := GnPhotomatch.pitch_for_horizon(0.55, site_cam.fov)
+	var matched: String = await GnRender.render(site_cam, Vector2i(640, 360), main, false, Viewport.DEBUG_DRAW_DISABLED, false, 0)
+	var comp := Image.load_from_file(matched) if matched != "" else null
+	var corner_same := comp != null and comp.get_pixel(4, 4).is_equal_approx(photo.get_pixel(4, 4)) or (comp != null and _colour_gap(comp.get_pixel(4, 4), photo.get_pixel(4, 4)) < 0.06)
+	var drawn_in := _changed_share(comp, photo) if comp else -1.0
+	_step("22b", pm_err == "" and absf(rad_to_deg(site_cam.rotation.x) - want_pitch) < 0.1 and corner_same and drawn_in > 0.02 and drawn_in < 0.6,
+		"Photo match: the design is rendered into a site photo (camera 1.6 m up, horizon matched at %.1f°; the photo shows through at the edges, the design covers %.0f%% of it) %s" % [want_pitch, drawn_in * 100.0, pm_err])
 	DirAccess.make_dir_recursive_absolute(out_dir.path_join("screenshots"))
-	for f in [still, k4, pano]:
+	for f in [still, k4, pano, matched]:
 		if f != "" and FileAccess.file_exists(f):
 			DirAccess.copy_absolute(f, out_dir.path_join("screenshots").path_join("render_" + f.get_file()))
 
@@ -551,6 +578,10 @@ static func _walk(main: Node, out_dir: String) -> void:
 	GnHost.select(route)
 	await _frames(main, 3)
 	await _shot(main, "05_walking_path")
+
+
+static func _colour_gap(a: Color, b: Color) -> float:
+	return maxf(absf(a.r - b.r), maxf(absf(a.g - b.g), absf(a.b - b.b)))
 
 
 # Share of pixels that differ clearly between two pictures of the same size.

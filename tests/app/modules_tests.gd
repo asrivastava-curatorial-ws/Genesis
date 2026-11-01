@@ -24,6 +24,8 @@ const LedWall := preload("res://addons/genesis/set/gn_led_wall.gd")
 const Truss := preload("res://addons/genesis/set/gn_truss.gd")
 const Crowd := preload("res://addons/genesis/set/gn_crowd.gd")
 const PageRender := preload("res://addons/genesis/ui/page_render.gd")
+const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
+const GnFfmpeg := preload("res://addons/genesis/core/gn_ffmpeg.gd")
 
 const MIN_CHECKS := 30
 const EXPECTED_ERRORS: Array = []
@@ -130,6 +132,77 @@ func _outgoing(root: Node) -> void:
 	tcp.stop()
 
 
+# Live video on the screens: a video file on an LED wall, then streams sent
+# by a second FFmpeg the way OBS, vMix, Deckboy or a hardware encoder send
+# them: MPEG-TS over UDP, and SRT (Genesis listens, the sender calls).
+func _live_video(root: Node) -> void:
+	var ffmpeg := GnFfmpeg.find()
+	if ffmpeg == "":
+		print("MODULE_TEST note: FFmpeg is not installed, so live video is not checked")
+		return
+	var dir := ProjectSettings.globalize_path("user://live_video_test")
+	DirAccess.make_dir_recursive_absolute(dir)
+	var clip := dir.path_join("clip.mp4")
+	OS.execute(ffmpeg, ["-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=30",
+		"-t", "3", "-pix_fmt", "yuv420p", clip])
+	var wall: Node3D = LedWall.new()
+	wall.name = "Video wall"
+	GnScene.add_node(wall, root, "Add video wall")
+	wall.live_source = "file:" + clip
+	var file_ok: bool = await _until_live("file:" + clip, 15.0)
+	var shown: Texture2D = GnLiveVideo.acquire("file:" + clip)
+	GnLiveVideo.release("file:" + clip)
+	check(file_ok and _varied(shown), "video: a video file plays on an LED wall (%s)" % [GnLiveVideo.info("file:" + clip)])
+	wall.live_source = ""
+	# UDP: the sender pushes; Genesis listens on the port.
+	var udp_spec := "udp:39150"
+	GnLiveVideo.acquire(udp_spec)
+	var sender := OS.create_process(ffmpeg, ["-hide_banner", "-loglevel", "error", "-re", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=30",
+		"-t", "30", "-f", "mpegts", "udp://127.0.0.1:39150?pkt_size=1316"])
+	var udp_ok: bool = await _until_live(udp_spec, 20.0)
+	check(udp_ok, "video: an MPEG-TS stream over UDP is shown as it arrives (%s)" % [GnLiveVideo.info(udp_spec)])
+	OS.kill(sender)
+	GnLiveVideo.release(udp_spec)
+	# SRT: Genesis is the listener, as the Show page tells senders.
+	var srt_spec := "srt:39160"
+	GnLiveVideo.acquire(srt_spec)
+	for i in 30:
+		await process_frame
+	sender = OS.create_process(ffmpeg, ["-hide_banner", "-loglevel", "error", "-re", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=30",
+		"-t", "30", "-f", "mpegts", "srt://127.0.0.1:39160?mode=caller&latency=120000"])
+	var srt_ok: bool = await _until_live(srt_spec, 25.0)
+	check(srt_ok, "video: an SRT stream (as OBS, vMix or Deckboy send it) is shown (%s)" % [GnLiveVideo.info(srt_spec)])
+	OS.kill(sender)
+	GnLiveVideo.release(srt_spec)
+	GnLiveVideo.stop_all()
+	check(GnLiveVideo.sources().is_empty(), "video: everything stops when Genesis lets go")
+
+
+func _until_live(spec: String, seconds: float) -> bool:
+	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < until:
+		await process_frame
+		var i := GnLiveVideo.info(spec)
+		if i.get("status", "") == "live" and int(i.get("frames", 0)) >= 3:
+			return true
+		OS.delay_msec(10)
+	return false
+
+
+# Not the colour-bar slate and not blank: the test picture's own variety.
+func _varied(tex: Texture2D) -> bool:
+	if tex == null:
+		return false
+	var img := tex.get_image()
+	if img == null:
+		return false
+	var seen := {}
+	for y in range(0, img.get_height(), img.get_height() / 8):
+		for x in range(0, img.get_width(), img.get_width() / 8):
+			seen[img.get_pixel(x, y).to_html(false)] = true
+	return seen.size() > 8
+
+
 func _receive(udp: UDPServer) -> PackedByteArray:
 	for i in 120:
 		await process_frame
@@ -228,6 +301,7 @@ func _run() -> void:
 	check(osc.listen(39125) == "" and osc.port == 39125, "osc: can listen again, on another port")
 	osc.stop()
 	await _outgoing(root)
+	await _live_video(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 5 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: five tools, each with how to get it")
