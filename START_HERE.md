@@ -113,6 +113,13 @@ Because this build has not yet been run on Windows, run the self-test first (sec
 8. **Run a show.** Open `demos/event-production`, go to *Show*, and press **GO** to step through the four cues.
 9. **Save.** Press **Ctrl+S**. Genesis also keeps unsaved work every few minutes, and keeps the last five saved versions in `backups/`.
 
+What the demos' cameras give at *Standard* quality:
+
+| | |
+|---|---|
+| ![Daylight](docs/screenshots/demo_architecture_day.jpg) | ![Night: blue hour, lights on](docs/screenshots/demo_architecture_night.jpg) |
+| ![Interior](docs/screenshots/demo_architecture_interior.jpg) | ![Concert, photo pit](docs/screenshots/demo_event_photo_pit.jpg) |
+
 Then start your own project:
 
 1. Choose *New Project…*. The new project already has a sun, a sky and ground.

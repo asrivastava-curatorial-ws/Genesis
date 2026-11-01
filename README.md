@@ -17,6 +17,15 @@ It is the [Genesis](https://github.com/Utopian-Academy/Genesis) editor plugin by
 - Then the [quick start](docs/QUICK_START.md), and the [user manual](docs/USER_MANUAL.md).
 - Two demo projects are in `demos/`: open them with *Open Project…*.
 
+## What the demos look like
+
+Rendered by the program itself, from the two demo projects in `demos/` (Standard quality, software rendering):
+
+| | |
+|---|---|
+| ![Architecture demo, daylight](docs/screenshots/demo_architecture_day.jpg) | ![Architecture demo, night](docs/screenshots/demo_architecture_night.jpg) |
+| ![Architecture demo, golden hour](docs/screenshots/demo_architecture_golden_hour.jpg) | ![Event production demo, photo pit](docs/screenshots/demo_event_photo_pit.jpg) |
+
 ## What it does
 
 | Section | What it does |
