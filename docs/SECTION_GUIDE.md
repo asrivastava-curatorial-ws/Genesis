@@ -108,6 +108,8 @@ Adjust the brush as you go:
 
 ## SET: staging at real sizes
 
+![The event demo with its LED wall selected: the wall's settings are in the Properties panel on the left](screenshots/03_workspace_event.png)
+
 **Add:**
 
 - *LED wall*

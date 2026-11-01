@@ -8,12 +8,13 @@ Test evidence (all in this repository):
 - `tools/build_standalone.sh`: the exported Linux program's own smoke tour, with the bundled library.
 - `reports/E2E_RESULTS_build.md`, `E2E_RESULTS_verify.md`, `E2E_RESULTS_media.md`: the end-to-end test of section 16, run on the **exported Linux program** in three separate launches with Godot's Forward+ renderer on Mesa's software Vulkan (no GPU on the build machine).
 - The original plugin's `selftest` suite, still passing with the plugin running through the new host layer.
+- The release zip itself, unpacked into an empty folder and tested there on an empty user profile (see 34).
 
 | # | Requirement | Status | Evidence / what is missing |
 |---|---|---|---|
 | 1 | Launches as an independent application | Met | exported program, E2E step 1 |
 | 2 | Godot Editor not required | Met | built program has no editor classes or plugin files (smoke check); an automated check fails if any runtime script names an Editor class |
-| 3 | Own project manager | Met | smoke tour; screenshot `docs/screenshots/01_project_manager.png` |
+| 3 | Own project manager | Met | smoke tour; screenshot `docs/screenshots/01_project_manager.png` (from the unpacked release, clean profile) |
 | 4 | Own 3D viewport | Met | orbit, pan, zoom, fly, views, orthographic, look-through (editor and smoke tests) |
 | 5 | Selection and manipulation | Met | picking, box select, move/turn/resize handles with constraints and snapping (editor tests: 72 checks) |
 | 6 | Scene hierarchy | Met | tree with rename, reorder, reparent, group, hide, lock, search (editor tests) |
@@ -44,6 +45,6 @@ Test evidence (all in this repository):
 | 31 | Demo projects work | Met | `demos/architecture` (three scenes) and `demos/event-production`, built by the exported program (`--make-demos`) and rendered by it in separate launches (`--render-samples`); sample renders in `docs/screenshots/` |
 | 32 | Documentation complete | Met | the pages of `docs/` the brief lists, plus a section-by-section guide (`docs/SECTION_GUIDE.md`) and `START_HERE.md`; the release also has all of them as one manual (`docs/Genesis-Community-Manual.html` and `.pdf`). They describe what exists and say what was not tested |
 | 33 | Automated tests executed | Met | as above |
-| 34 | Packaged release works independently | Partly | the release zip's Linux program is the one tested; not tested after unzipping on a second machine |
+| 34 | Packaged release works independently | Partly | **Linux, met:** the zip was unpacked into an empty folder; all 2,044 checksums verified; executable bits kept; `Genesis.sh --check` ran; the smoke tour passed on an empty user profile and left only its log behind; both demos opened from the unpacked program on a clean profile (the screenshots in `docs/screenshots/` were taken that way), and the end-to-end build and verify phases passed on it (`reports/E2E_RESULTS_*.md`). **Windows:** not run (see 29). Not tried on a second machine |
 
 **Verdict:** this is a release candidate, not 1.0.0. The blockers marked *Partly* or *Not met* need a machine with a GPU, Windows, Blender, the ODA converter and internet access to close; see `docs/KNOWN_LIMITATIONS.md`.
