@@ -209,7 +209,7 @@ Select-String -Path "$env:APPDATA\Genesis\logs\godot.log" -Pattern 'GENESIS_SMOK
 
 1. *build* makes a project, brings in models (glTF, OBJ, FBX and `.blend` when Blender is there, and one into your own library), a DXF drawing and PDF plans, paints trees, sets the sun and your own sky, adds set pieces and cues, then saves and quits.
 2. *verify* reopens the project, checks every object and setting, then renders 1080p, 4K, a 360° panorama and a photo match.
-3. *media* covers upscaling, which needs the internet the first time, and the film, which needs FFmpeg.
+3. *media* covers upscaling (which needs the internet the first time), the film (which needs FFmpeg), a sun study made from the Render page, render passes, a virtual tour and a stereo 360 for headsets.
 4. *walk* draws a path with the path tool, puts two walkers on it from the Movie page, renders a short film and checks in its frames that they move and step.
 
 ```bash
@@ -280,7 +280,7 @@ python3 tools/build_release.py --skip-build --demos ~/genesis-demos --platforms 
 
 - 377 headless checks in four suites, and a smoke tour of the whole program.
 - The built program's own smoke tour, with the bundled library and the material presets.
-- The end-to-end test in four launches with real renders: 1080p, 4K, 360°, photo match, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
+- The end-to-end test in four launches with real renders: 1080p, 4K, 360° (mono, stereo and a virtual tour), photo match, a sun study, render passes, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
 - Importing glTF, OBJ, FBX and `.blend` (with Ubuntu's Blender 4.0.2), DXF, and PDF plans (as lines and as pictures).
 - Your own models and HDR skies, added, used, and carried into a project.
 - Saving and reopening across launches, and opening scenes whose files are not on the computer.

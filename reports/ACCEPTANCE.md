@@ -31,8 +31,8 @@ Test evidence (all in this repository):
 | 17 | Photo matching | Met | a site photo behind the design, camera at 1.6 m, horizon matched, rendered and composited by the exported program (E2E 22b) |
 | 18 | Cameras | Met | saved views, look-through, looks (E2E steps 13–14, smoke) |
 | 19 | LOOK | Met | all 14 built-in looks present (module test), applied in E2E |
-| 20 | Rendering | Met | 1080p and 4K stills rendered by the exported program after relaunch (E2E steps 20–21, `reports/E2E_RESULTS_verify.md`); 4K at Preview quality to fit the build machine's memory |
-| 21 | Panorama | Met | 360° equirectangular image, 2:1, from the exported program (E2E step 22) |
+| 20 | Rendering | Met | 1080p and 4K stills rendered by the exported program after relaunch (E2E steps 20–21, `reports/E2E_RESULTS_verify.md`); 4K at Preview quality to fit the build machine's memory. A sun study made from the Render page (9:00, 12:00, 15:00, the shadows move) and the five compositing passes (E2E 26b, 26c) |
+| 21 | Panorama | Met | 360° equirectangular image, 2:1, from the exported program (E2E step 22); a stereo 360 for headsets (top-bottom, E2E 26e) and a virtual tour of two cameras in one web page (E2E 26d) |
 | 22 | MOVIE | Met | walkthrough between saved cameras, MP4 via FFmpeg, checked with ffprobe (E2E 24–26); **paths drawn with the path tool** and **people walking** on them: two walkers put on a path from the Movie page step in time with the distance, a 3 s film is rendered to MP4 and its frames show them moving (E2E walk phase, 27–29); the editor suite drives the path tool through real input |
 | 23 | SET | Met | stage, LED wall with checked report arithmetic, truss, line array, moving heads, crowd, effects (E2E E1, module tests) |
 | 24 | SHOW | Met | cues and GO (E2E E2); OSC/UDP cue input (module suite, real UDP); outgoing OSC, text and TCP commands to real listeners (module suite); live video on screens from a video file, an MPEG-TS stream over UDP and an SRT stream (module suite). OBS, vMix and capture hardware were not available to test |
