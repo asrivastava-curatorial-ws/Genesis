@@ -44,6 +44,7 @@ const CueList := preload("res://addons/genesis/set/gn_cue_list.gd")
 const Workspace := preload("res://app/ui/workspace.gd")
 const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const HdrFile := preload("res://app/hdr_file.gd")
+const PdfFile := preload("res://app/pdf_file.gd")
 const EditOps := preload("res://app/runtime/edit_ops.gd")
 
 const PROJECT := "E2E Museum Pavilion"
@@ -162,6 +163,24 @@ static func _build(main: Node, out_dir: String) -> void:
 	_write(src.path_join("plan.dxf"), _dxf())
 	var drawing: Dictionary = GnCadImport.add_drawing(src.path_join("plan.dxf"))
 	_step("4", not drawing.has("error"), "Import an architectural drawing (DXF) %s" % drawing.get("error", ""))
+	# 4b, 4c. A plan plotted to PDF at 1:100: read as lines, and as a picture
+	# (through Poppler or MuPDF). Hidden afterwards, so the renders stay clear.
+	var plot := src.path_join("plan_1to100.pdf")
+	PdfFile.test_plan(plot)
+	var pd: Dictionary = GnCadImport.add_drawing(plot, 1, 100.0)
+	_step("4b", not pd.has("error"), "Import a CAD drawing plotted to PDF (1:100), as lines %s" % pd.get("error", ""))
+	if pd.has("node"):
+		pd.node.visible = false
+	if GnCadImport.find_tool(["pdftoppm", "mutool"]) == "":
+		_step("4c", "neither Poppler nor MuPDF is installed on this computer", "Import a PDF floor plan")
+	else:
+		var pp: Dictionary = GnCadImport.add_plan(plot, 30.0, 100.0, 1)
+		var sheet := -1.0
+		if pp.has("node"):
+			var picture := Image.load_from_file(ProjectSettings.globalize_path(pp.node.image))
+			sheet = float(pp.node.metres_per_pixel) * picture.get_width() if picture else -1.0
+			pp.node.visible = false
+		_step("4c", not pp.has("error") and absf(sheet - 21.0) < 0.1, "Import a PDF floor plan as a picture at 1:100 (the A4 sheet is %.2f m wide) %s" % [sheet, pp.get("error", "")])
 
 	# 5. The site.
 	_step("5", "OpenStreetMap is not reachable from this computer; the default ground and sky stand in", "Create a site from OpenStreetMap")

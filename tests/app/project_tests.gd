@@ -26,6 +26,9 @@ const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const HdrFile := preload("res://app/hdr_file.gd")
+const PdfFile := preload("res://app/pdf_file.gd")
+const GnCadImport := preload("res://addons/genesis/cad/gn_cad_import.gd")
+const GnPdf := preload("res://addons/genesis/cad/gn_pdf.gd")
 
 const MIN_CHECKS := 100
 const EXPECTED_ERRORS: Array = []
@@ -83,6 +86,31 @@ func _run() -> void:
 	await _old_projects()
 	_folders()
 	await _own_library()
+	_pdf_plans()
+
+
+# ---------------------------------------------------------- PDF plans
+func _pdf_plans() -> void:
+	check(projects.create(tmp, "Plans") == "", "pdf: a project for drawings")
+	var pdf := tmp + "/plan_1to100.pdf"
+	check(PdfFile.test_plan(pdf) == OK and GnPdf.page_count(pdf) == 1, "pdf: a plan plotted at 1:100 on A4, one page")
+	# As a CAD drawing: the page's own lines, at the drawing's scale.
+	var read := GnPdf.read(pdf, 1, 100.0)
+	var size := Vector2(read.hi_x - read.lo_x, read.hi_y - read.lo_y)
+	check(read.error == "" and absf(size.x - 10.5) < 0.05 and absf(size.y - 7.0) < 0.05, "pdf: read as lines at 1:100, the room and its grid marks span 10.5 × 7 m (%.2f × %.2f) %s" % [size.x, size.y, read.error])
+	check(read.layers.size() >= 2 and read.segment_count() >= 60, "pdf: the heavy and light pens become layers (%d layers, %d lines)" % [read.layers.size(), read.segment_count()])
+	var d := GnCadImport.add_drawing(pdf, 1, 100.0)
+	check(not d.has("error") and d.node != null and FileAccess.file_exists(tmp + "/Plans/data/cad/plan_1to100.pdf"), "pdf: a CAD PDF comes into the scene, its file into the project %s" % d.get("error", ""))
+	# As a floor plan picture, drawn by Poppler (or MuPDF) at the sheet's scale.
+	if GnCadImport.find_tool(["pdftoppm", "mutool"]) == "":
+		print("PROJECT_TEST note: neither Poppler nor MuPDF is installed, so PDF floor plans are not checked")
+	else:
+		var r := GnCadImport.add_plan(pdf, 30.0, 100.0, 1)
+		var u = r.get("node")
+		var img := Image.load_from_file(ProjectSettings.globalize_path(u.image)) if u else null
+		var ground := float(u.metres_per_pixel) * img.get_width() if img else -1.0
+		check(not r.has("error") and absf(ground - 21.0) < 0.1, "pdf: as a floor plan picture, the A4 sheet is 21 m wide on the ground at 1:100 (%.2f m) %s" % [ground, r.get("error", "")])
+	projects.close()
 
 
 # ---------------------------------------------------------- your own library
