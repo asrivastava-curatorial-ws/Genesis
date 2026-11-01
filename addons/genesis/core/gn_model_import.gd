@@ -184,8 +184,12 @@ static func blend_to_glb(source: String) -> Dictionary:
 	var output := []
 	var code := OS.execute(blender, ["-b", source, "--python-expr", script], output, true)
 	if code != 0 or not FileAccess.file_exists(out):
-		var tail := "\n".join(output).right(400)
-		return _fail("Blender could not export %s (exit %d). %s" % [source.get_file(), code, tail])
+		var said := "\n".join(output)
+		# Ubuntu's own Blender package leaves out numpy, which Blender's glTF
+		# exporter needs; say so rather than show a Python traceback.
+		if said.contains("No module named 'numpy'"):
+			return _fail("Blender could not export %s: it is missing numpy, as Ubuntu's own Blender package is. Install it (sudo apt install python3-numpy) or use Blender from blender.org." % source.get_file())
+		return _fail("Blender could not export %s (exit %d). %s" % [source.get_file(), code, said.right(400)])
 	return {"path": out, "error": ""}
 
 

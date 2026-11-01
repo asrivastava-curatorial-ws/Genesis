@@ -128,8 +128,35 @@ static func _build(main: Node, out_dir: String) -> void:
 	err = GnImport.import_runtime(src.path_join("pavilion.glb"))
 	var pav := root.get_node_or_null("Pavilion")
 	_step("3", err == "" and pav != null, "Import an architectural model (GLB from an outside exporter) %s" % err)
-	if GnModelImport.find_blender() == "":
+	# 3b, 3c. A .blend through Blender, and an FBX. Blender itself makes both
+	# from the same 2 m bench, so their sizes can be checked.
+	var blender := GnModelImport.find_blender()
+	if blender == "":
 		_step("3b", "Blender is not installed on this computer", "Import a .blend through Blender")
+		_step("3c", "Blender (which writes the FBX test file) is not installed on this computer", "Import an FBX model")
+	else:
+		var py := "\n".join(["import bpy", "bpy.ops.wm.read_factory_settings(use_empty=True)",
+			"bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0.25))",
+			"o = bpy.context.object", "o.name = 'Bench'", "o.scale = (2.0, 0.5, 0.5)",
+			"m = bpy.data.materials.new('Oak')", "m.diffuse_color = (0.6, 0.4, 0.2, 1)", "o.data.materials.append(m)",
+			"bpy.ops.wm.save_as_mainfile(filepath=r'%s')" % src.path_join("bench.blend"),
+			"bpy.ops.export_scene.fbx(filepath=r'%s')" % src.path_join("kiosk.fbx")])
+		var made := []
+		OS.execute(blender, ["-b", "--factory-startup", "--python-expr", py], made, true)
+		var blend_err: String = GnImport.import_runtime(src.path_join("bench.blend"))
+		var bench: Node3D = root.get_node_or_null("Bench")
+		if bench:
+			bench.position = Vector3(-7, 0, 6)
+		var bench_w := _width(bench)
+		_step("3b", blend_err == "" and bench != null and absf(bench_w - 2.0) < 0.05,
+			"Import a .blend through Blender (%s; the 2 m bench is %.2f m wide) %s" % [blender.get_file(), bench_w, blend_err])
+		var fbx_err: String = GnImport.import_runtime(src.path_join("kiosk.fbx"))
+		var kiosk: Node3D = root.get_node_or_null("Kiosk")
+		if kiosk:
+			kiosk.position = Vector3(-7, 0, 9)
+		var kiosk_w := _width(kiosk)
+		_step("3c", fbx_err == "" and kiosk != null and absf(kiosk_w - 2.0) < 0.05,
+			"Import an FBX model (written by Blender; the 2 m bench is %.2f m wide) %s" % [kiosk_w, fbx_err])
 
 	# 4. An architectural drawing: a DXF plan.
 	_write(src.path_join("plan.dxf"), _dxf())
@@ -521,6 +548,19 @@ static func _changed_share(a: Image, b: Image) -> float:
 			if maxf(absf(ca.r - cb.r), maxf(absf(ca.g - cb.g), absf(ca.b - cb.b))) > 0.08:
 				n += 1
 	return float(n) / maxf(total, 1)
+
+
+# How wide (x) a model is in the world, or -1.
+static func _width(n: Node3D) -> float:
+	if n == null:
+		return -1.0
+	var box := AABB()
+	var first := true
+	for mi in n.find_children("*", "MeshInstance3D", true, false):
+		var b: AABB = mi.global_transform * mi.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return box.size.x if not first else -1.0
 
 
 static func _image_ok(path: String, size: Vector2i) -> bool:

@@ -331,6 +331,24 @@ func _models() -> void:
 	check(bad.error != "", "obj: a missing file gives a reason")
 	_write(src + "/empty.obj", "# nothing\n")
 	check(GnModelImport.convert_file(src + "/empty.obj", dir + "/assets").error.contains("no faces"), "obj: an empty file gives a reason")
+	# .blend (through Blender) and FBX (written by Blender), when Blender is here.
+	var blender := GnModelImport.find_blender()
+	if blender == "":
+		print("PROJECT_TEST note: Blender is not installed, so .blend and FBX are not checked")
+	else:
+		var py := "\n".join(["import bpy", "bpy.ops.wm.read_factory_settings(use_empty=True)",
+			"bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0.25))", "o = bpy.context.object", "o.scale = (2.0, 0.5, 0.5)",
+			"bpy.ops.wm.save_as_mainfile(filepath=r'%s')" % (src + "/bench.blend"),
+			"bpy.ops.export_scene.fbx(filepath=r'%s')" % (src + "/kiosk.fbx")])
+		OS.execute(blender, ["-b", "--factory-startup", "--python-expr", py], [], true)
+		for pair in [["bench.blend", "blend"], ["kiosk.fbx", "fbx"]]:
+			var rr := GnModelImport.convert_file(src + "/" + pair[0], dir + "/assets")
+			var w := -1.0
+			if rr.error == "":
+				var n := (load(rr.path) as PackedScene).instantiate() as Node3D
+				w = _box_of(n).size.x
+				n.free()
+			check(rr.error == "" and absf(w - 2.0) < 0.05, "%s: a 2 m bench made in Blender comes in 2 m wide (%.2f) %s" % [pair[1], w, rr.error])
 	# glTF with a texture, made here with the engine's own glTF writer.
 	var scene := Node3D.new()
 	var cube := MeshInstance3D.new()

@@ -75,6 +75,71 @@ func _initialize() -> void:
 	quit(0 if _fails == 0 else 1)
 
 
+# Cues telling other show equipment to go: OSC and plain text over UDP, and a
+# Deckboy-style command over TCP that answers, each caught by a listener here.
+func _outgoing(root: Node) -> void:
+	var cl: Node = CueList.new()
+	cl.name = "Outgoing cues"
+	GnScene.add_node(cl, root, "Add outgoing cues", "cues")
+	var udp := UDPServer.new()
+	check(udp.listen(39131, "127.0.0.1") == OK, "osc out: a listener for the cue's messages")
+	var tcp := TCPServer.new()
+	check(tcp.listen(39132, "127.0.0.1") == OK, "tcp out: a listener that answers like Deckboy")
+	cl.record(root, "Lights", 0.0, "", {"on": true, "target": "OSC (UDP)", "host": "127.0.0.1", "port": 39131, "message": "/lights/go 4 0.5 blue"})
+	cl.record(root, "Video", 0.0, "", {"on": true, "target": "Text (UDP)", "host": "127.0.0.1", "port": 39131, "message": "PLAY clip2"})
+	cl.record(root, "Deck", 0.0, "", {"on": true, "target": "Deckboy (TCP)", "host": "127.0.0.1", "port": 39132, "message": "GO"})
+	var said: Array = []
+	cl.sent.connect(func(s): said.append(s))
+	# OSC: the exact bytes of /lights/go with an int, a float and a string.
+	cl.go_to(0, 0.0)
+	var got := await _receive(udp)
+	check(got == CueList.osc_packet("/lights/go 4 0.5 blue") and got.slice(0, 12).get_string_from_ascii() == "/lights/go", "osc out: the cue sends its OSC message (%d bytes)" % got.size())
+	var tags := got.slice(12, 20).get_string_from_ascii()
+	check(tags.begins_with(",ifs"), "osc out: an int, a float and a string, typed as OSC wants (%s)" % tags)
+	# Plain text.
+	cl.go_to(1, 0.0)
+	got = await _receive(udp)
+	check(got.get_string_from_utf8() == "PLAY clip2\n", "text out: the cue sends its line of text")
+	# TCP: the command goes, and the answer comes back to the Show page.
+	cl.go_to(2, 0.0)
+	var conn: StreamPeerTCP = null
+	for i in 120:
+		await process_frame
+		if tcp.is_connection_available():
+			conn = tcp.take_connection()
+			break
+	var line := ""
+	for i in 120:
+		if conn == null:
+			break
+		conn.poll()
+		if conn.get_available_bytes() > 0:
+			line += conn.get_utf8_string(conn.get_available_bytes())
+			if line.contains("\n"):
+				conn.put_data("OK GO\n".to_utf8_buffer())
+				break
+		await process_frame
+	for i in 120:
+		if said.size() >= 3:
+			break
+		await process_frame
+	check(line == "GO\n", "tcp out: the cue sends its command line (%s)" % line.strip_edges())
+	check(said.size() == 3 and str(said[2]).contains("OK GO"), "tcp out: and the answer is reported (%s)" % [said])
+	check(str(said[0]).contains("sent") and str(said[1]).contains("sent"), "osc and text out: the Show page is told they went")
+	udp.stop()
+	tcp.stop()
+
+
+func _receive(udp: UDPServer) -> PackedByteArray:
+	for i in 120:
+		await process_frame
+		udp.poll()
+		if udp.is_connection_available():
+			var peer := udp.take_connection()
+			return peer.get_packet()
+	return PackedByteArray()
+
+
 func _run() -> void:
 	var root: Node = scenes.root
 	# ------------------------------------------------------------- library
@@ -162,6 +227,7 @@ func _run() -> void:
 	# not reported here; the Show page says which port is listened on.)
 	check(osc.listen(39125) == "" and osc.port == 39125, "osc: can listen again, on another port")
 	osc.stop()
+	await _outgoing(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 5 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: five tools, each with how to get it")
