@@ -152,6 +152,11 @@ func _own_library() -> void:
 	check((sun.direction as Vector3).dot(want) > 0.995 and float(sun.visibility) > 0.4, "skies: its sun is found where the photo's sun is (%.3f)" % (sun.direction as Vector3).dot(want))
 	var mat := GnSky.material("my_sky")
 	check(mat is PanoramaSkyMaterial and mat.panorama != null and FileAccess.file_exists(proj + "/data/skies/my_sky.hdr"), "skies: used in a project, the project gets its own copy")
+	GnEnvironment.apply("sky", GnSky.label("my_sky"))
+	scenes.save()
+	var with_sky := FileAccess.get_file_as_string(scenes.path)
+	check(GnEnvironment.is_photo_sky() and with_sky.contains("../data/skies/my_sky.tex.res") and with_sky.length() < 200000,
+		"skies: the scene refers to the sky's texture file instead of carrying the panorama (%d bytes)" % with_sky.length())
 	projects.close()
 
 

@@ -42,6 +42,8 @@ const Crowd := preload("res://addons/genesis/set/gn_crowd.gd")
 const Effect := preload("res://addons/genesis/set/gn_effect.gd")
 const CueList := preload("res://addons/genesis/set/gn_cue_list.gd")
 const Workspace := preload("res://app/ui/workspace.gd")
+const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
+const HdrFile := preload("res://app/hdr_file.gd")
 const EditOps := preload("res://app/runtime/edit_ops.gd")
 
 const PROJECT := "E2E Museum Pavilion"
@@ -81,6 +83,8 @@ static func run(main: Node, phase: String, out_dir: String) -> int:
 	_lines.clear()
 	_failed = 0
 	DirAccess.make_dir_recursive_absolute(out_dir)
+	# What the test adds to "your own library" stays in the test's folder.
+	App.host.library_dir = out_dir.path_join("library")
 	_step("1", DisplayServer.get_name() != "headless" and (OS.has_feature("template") or not Engine.has_singleton("EditorInterface")) if OS.has_feature("template") else "run from source, not a built program",
 		"Launch Genesis directly, without the Godot editor (renderer: %s, %s)" % [RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name()])
 	match phase:
@@ -157,6 +161,15 @@ static func _build(main: Node, out_dir: String) -> void:
 	var p1 := GnPlacement.place(person, "people", Vector3(3.5, 0, 4.0))
 	var p2 := GnPlacement.place(_first("people", 3), "people", Vector3(-3.0, 0, 5.0))
 	_step("8", p1 != null and p2 != null, "Add human figures")
+	# 8b. A model of one's own: added to your library from the Assets page,
+	# with its licence, then placed like any library model.
+	var crate_file := src.path_join("crate.obj")
+	_write(crate_file, "o Crate\nv 0 0 0\nv 60 0 0\nv 60 60 0\nv 0 60 0\nv 0 0 60\nv 60 0 60\nv 60 60 60\nv 0 60 60\nf 1 4 3 2\nf 5 6 7 8\nf 1 2 6 5\nf 4 8 7 3\nf 1 5 8 4\nf 2 3 7 6\n")
+	var assets_page: Control = ws.genesis_panel._stack.get_node("Assets").get_child(0)
+	var own: Dictionary = assets_page.add_own(crate_file, "props", "Packing crate", {"license": "Own work", "author": "E2E test"}, {"scale": 0.01})
+	var crate := GnPlacement.place(str(own.path), "props", Vector3(-4.5, 0, 2.5)) if own.error == "" else null
+	_step("8b", crate != null and crate.scene_file_path.begins_with(App.projects.folder) and FileAccess.file_exists(crate.scene_file_path.get_basename() + ".license.json"),
+		"Add a model of your own to your library (an OBJ made in centimetres, with its licence) and place it; the project gets its own copy %s" % own.error)
 
 	# 9. Painting vegetation with the brush, as a user would.
 	var brush = App.modules.brush
@@ -191,8 +204,17 @@ static func _build(main: Node, out_dir: String) -> void:
 	GnEnvironment.apply("longitude", 77.59)
 	GnEnvironment.apply("utc_offset", 5.5)
 	_step("10", absf(float(GnEnvironment.value("time_of_day")) - 16.5) < 0.01 and GnEnvironment.value("real_sun") == true, "Configure sunlight (real sun, Bangalore, 16:30)")
-	var photo_skies: Array = GnEnvironment.sky_choices().filter(func(s): return str(s).begins_with("Photo"))
-	_step("11", "the photographed HDRI skies are fetched from Poly Haven, which is not reachable here; the procedural sky is used" if photo_skies.is_empty() else true, "Configure an HDRI sky")
+	# 11. An HDRI sky of one's own (Poly Haven's are not reachable here): a
+	# panorama with its sun drawn at a known place, added the way the
+	# Environment page adds it. The sun must follow the photo's sun.
+	var sky_file := src.path_join("e2e_sky.hdr")
+	HdrFile.write(sky_file, HdrFile.test_sky(512, 0.3, 0.32))
+	var env_page: Control = ws.genesis_panel._stack.get_node("Environment").get_child(0)
+	var sky_err: String = env_page.use_sky_file(sky_file)
+	var sky_sun: Dictionary = GnSky.sun("e2e_sky") if sky_err == "" else {}
+	var sun_dot: float = (sky_sun.direction as Vector3).dot(GnSky.direction_from_uv((int(0.3 * 512) + 0.5) / 512.0, (int(0.32 * 256) + 0.5) / 256.0)) if sky_err == "" else 0.0
+	_step("11", sky_err == "" and GnEnvironment.is_photo_sky() and sun_dot > 0.99 and FileAccess.file_exists(App.projects.folder.path_join("data/skies/e2e_sky.hdr")),
+		"Configure an HDRI sky: your own HDR panorama, added to your skies; the sun goes where the photo's sun is (%.3f) %s" % [sun_dot, sky_err])
 
 	# 12. Artificial light.
 	var lamp := EditOps.create("Spot light")

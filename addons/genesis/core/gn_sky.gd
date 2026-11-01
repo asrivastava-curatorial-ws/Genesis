@@ -190,10 +190,16 @@ static func material(sky_name: String) -> PanoramaSkyMaterial:
 	if path.begins_with("res://"):
 		tex = load(path) as Texture2D
 	else:
-		# Not imported: read from the file as it is.
-		var img := Image.load_from_file(path)
-		if img and not img.is_empty():
-			tex = ImageTexture.create_from_image(img)
+		# Not imported: read from the file, and kept as a texture file beside
+		# the project's copy, so the scene refers to it instead of carrying a
+		# copy of the whole panorama.
+		var tex_path := GnPaths.at(PROJECT_SKIES).path_join(sky_name + ".tex.res")
+		if FileAccess.file_exists(tex_path) and FileAccess.get_modified_time(tex_path) >= FileAccess.get_modified_time(path):
+			tex = ResourceLoader.load(tex_path, "", ResourceLoader.CACHE_MODE_REUSE) as Texture2D
+		if tex == null:
+			var img := Image.load_from_file(path)
+			if img and not img.is_empty():
+				tex = GnPaths.save_texture(img, tex_path, 4096)
 	if tex == null:
 		return null
 	var mat := PanoramaSkyMaterial.new()
