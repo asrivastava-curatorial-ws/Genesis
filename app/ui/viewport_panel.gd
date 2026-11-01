@@ -89,6 +89,9 @@ func _init() -> void:
 	_overlay.name = "Overlay"
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Markers of lights and cameras just out of view would otherwise be drawn
+	# over the panels around the 3D view.
+	_overlay.clip_contents = true
 	_overlay.draw.connect(_draw_overlay)
 	add_child(_overlay)
 	_hint = Label.new()

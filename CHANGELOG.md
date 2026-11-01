@@ -38,3 +38,4 @@ The Genesis editor plugin as a standalone desktop application.
 - Live link brought every linked model in again after a project was copied or unzipped (new file times, same files); it now compares the contents.
 - The recent-projects list was written only when the program closed normally; it is now written at once.
 - The Properties panel showed the engine's own empty headings (Process, Thread Group...) above a set piece's settings.
+- Markers of lights and cameras just outside the 3D view were drawn over the panels around it.

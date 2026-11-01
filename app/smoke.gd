@@ -55,6 +55,7 @@ static func run(main: Node) -> int:
 	_check(ws.genesis_panel != null and ws.genesis_panel.is_inside_tree(), "the Genesis panel is in the window")
 	_check(App.actions.run("view.frame"), "frame-the-scene runs")
 	_check(ws.viewport_panel.camera.position.is_finite() and ws.viewport_panel.camera.position != Vector3.ZERO, "the camera is placed")
+	_check(ws.viewport_panel.get_node("Overlay").clip_contents, "markers and handles are drawn only inside the 3D view")
 	# Undo and redo, as the Edit menu shows them.
 	var cam := Camera3D.new()
 	GnScene.add_node(cam, root, "Add camera", "smoke_cam")
