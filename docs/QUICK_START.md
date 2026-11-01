@@ -10,6 +10,7 @@ To look around before making anything, open one of the two demo projects in the 
 6. **Dress it**: the Genesis panel on the right has the sections in working order: Plans, Assets, Environment, Landscape, Set, Materials.
 7. **Frame shots**: Cameras > save the view; Look gives it a finish.
 8. **Render**: Render > choose a camera, a size and a quality. Pictures go to the project's `renders/` folder.
+   **Film with people walking**: Movie > *Draw a path*, click points across the site, Enter; place walkers from Assets > People, select them and the path, *Put selection on it*; add a shot and *Render movie* (needs FFmpeg).
 9. **Save**: Ctrl+S. Genesis also keeps unsaved work every few minutes and the last five saved versions in `backups/`.
 
 Help > Keyboard and Mouse (F1) lists every shortcut.

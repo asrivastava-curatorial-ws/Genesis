@@ -61,11 +61,11 @@ Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENS
 **Your own models.** Add models of your own to a library that every project can use: furniture, people, plants, vehicles, anything.
 
 1. Press *Add a model…* and choose a GLB, glTF, FBX or OBJ file (a `.blend` file works when Blender is installed).
-2. Give it a *Name* and a *Category*, and say what unit it was *Made in* (metres, centimetres, millimetres, inches or feet).
+2. Give it a *Name* and a *Category*, and say what unit it was *Made in* (metres, centimetres, millimetres, inches or feet). GLB, glTF and FBX files carry their own size, so leave those at *Metres*; an OBJ file does not, so choose the unit it was modelled in.
 3. Say which way is up (*Y* for glTF and Blender exports, *Z* for CAD, SketchUp and 3ds Max), and under *May be used under* choose *My own work*, *CC0 1.0*, *CC BY 4.0*, *CC BY-SA 4.0* or *Other* (then describe it under *Licence*). Add the *Author*, *Where it came from* and a *Credit line* if the licence asks for one. A model without a licence is not added.
 4. Press *Add*. It appears in its category marked *(yours)*, and under the *Your own* filter.
 
-- Models in the *Plants* and *Trees* categories can also be painted on the Landscape page.
+- Models in the *Trees*, *Plants* and *Grass* categories can also be painted on the Landscape page.
 - The library is a folder of your own (*Open your library folder*): `~/.local/share/Genesis/library/` on Linux, `%APPDATA%\Genesis\library\` on Windows. Each model is a `.scn` file with its `.license.json` beside it.
 - A project that uses one of your models gets its own copy in `assets/library/`, so it still opens on another computer or after you remove the model.
 - *Remove it* takes the selected model out of your library. The bundled models cannot be removed.
@@ -253,7 +253,7 @@ A film is a list of **shots**. *Play* previews it; *Move up* and *Remove* arrang
 4. Select what should travel along it (a car, a boat, a walker from *Assets > People*), select the path too (or have just one), and press *Put selection on it*. Several things on one path are spaced evenly along it. They keep going: at the end of the path each starts again from the beginning, so make a path long enough for the film.
 5. In the Properties panel, with the path selected: *Speed* (metres per second; 1.4 is a walking pace), *Reverse*, and *Smooth* (curves; untick it for straight lines and sharp corners).
 
-The walkers walk as they go: their stride follows the distance they cover, so feet do not slide at any speed. Play the film, or scrub it, to watch them; the rendered film shows them the same way. People of your own walk too, if their model has a walk animation: one called *walk*, one with *walk* in its name, or the only animation it has (as a character downloaded from Mixamo with one walk comes). Bring them in as GLB or FBX with the animation included.
+The walkers walk as they go: their stride follows the distance they cover, so feet do not slide at any speed. Play the film, or scrub it, to watch them; the rendered film shows them the same way. People of your own walk too, if their model has a walk animation: one called *walk*, one with *walk* in its name, or the only animation it has (as a character downloaded from Mixamo with one walk comes; choose *In Place* there, so the figure walks on the spot and the path moves it). Bring them in as GLB or FBX with the animation included.
 
 **Phasing** builds the design up during the film:
 

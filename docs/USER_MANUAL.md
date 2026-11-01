@@ -21,17 +21,17 @@ The layout is remembered; Preferences > Reset the window layout puts it back.
 | [The scene editor](SCENE_EDITOR.md) | the 3D view, selecting, moving, the scene tree, properties, undo |
 | [Importing models](IMPORTING_MODELS.md) | GLB, glTF, FBX, OBJ, Blender; live link |
 | [Plans and CAD](CAD_AND_PLANS.md) | floor plans, PDF, DXF, DWG, scale, snapping |
-| [Asset library](ASSET_LIBRARY.md) | the bundled models and placing them |
+| [Asset library](ASSET_LIBRARY.md) | the bundled models, placing them, and your own library of models |
 | [Materials](MATERIALS.md) | presets, images as materials, tiles, weathering |
-| [Environment](ENVIRONMENT.md) | sun, real sun, sky, haze, weather |
+| [Environment](ENVIRONMENT.md) | sun, real sun, sky (and your own HDRI skies), haze, weather |
 | [Landscape](LANDSCAPE.md) | painting plants, terrain |
-| [Geographic context](GEOGRAPHIC_CONTEXT.md) | real neighbourhoods from OpenStreetMap |
+| [Geographic context](GEOGRAPHIC_CONTEXT.md) | real neighbourhoods from OpenStreetMap, by address or from a saved map file |
 | [Cameras](CAMERAS.md) | saved views, plans, sections, elevations, looks |
 | [Photo matching](PHOTO_MATCHING.md) | the design in a photograph of the site |
 | [Rendering](RENDERING.md) | stills, quality levels, passes |
 | [Panoramas](PANORAMA.md) | 360° images and virtual tours |
 | [AI upscaling](AI_UPSCALING.md) | Real-ESRGAN |
-| [Movies](MOVIE_AND_ANIMATION.md) | fly-throughs, time-lapse, moving objects, MP4 |
+| [Movies](MOVIE_AND_ANIMATION.md) | fly-throughs, stills, time-lapse, paths for traffic and people walking, MP4 |
 | [SET](SET_EVENT_PRODUCTION.md) | stages, LED walls, truss, sound, lights, crowds, effects |
 | [SHOW](SHOW_EVENT_OPERATION.md) | live video, cues, GO, OSC |
 
