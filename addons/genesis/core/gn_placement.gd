@@ -9,6 +9,7 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnSurface := preload("res://addons/genesis/core/gn_surface.gd")
 const GnScatter := preload("res://addons/genesis/core/gn_scatter.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 
 # Vegetation looks copy-pasted if every instance faces the same way.
 const RANDOM_TURN_CATEGORIES := ["trees", "plants", "grass"]
@@ -19,6 +20,8 @@ static func place(path: String, category := "", at = null) -> Node3D:
 	if root == null:
 		push_warning("Genesis: open or create a 3D scene first.")
 		return null
+	# One of the user's own models: the project's copy of it.
+	path = GnAssets.for_project(path)
 	# A tree with grown variants comes in as any one of them.
 	var packed := load(_pick(path, category)) as PackedScene
 	if packed == null:
@@ -73,7 +76,10 @@ static func drop_point() -> Vector3:
 static func along_line(path: String, category: String, a: Vector3, b: Vector3, spacing: float,
 		facing := "along") -> Array:
 	var root := GnScene.root()
-	if root == null or not load(path) is PackedScene or spacing <= 0.0:
+	if root == null:
+		return []
+	path = GnAssets.for_project(path)
+	if not load(path) is PackedScene or spacing <= 0.0:
 		return []
 	var flat := Vector3(b.x - a.x, 0.0, b.z - a.z)
 	var run := a.distance_to(b)

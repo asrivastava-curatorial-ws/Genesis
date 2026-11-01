@@ -123,6 +123,13 @@ func properties_panel() -> String:
 	return "Inspector"
 
 
+## The folder of the user's own asset library (models, plants, skies they
+## added, shared by every project), or "" where the host has none: in the
+## Godot editor models go into the project's genesis_assets instead.
+func user_library_dir() -> String:
+	return ""
+
+
 ## Switches on one of the host's own 3D-view tools ("draw_path": draw a new
 ## moving-objects path, "extend_path": add points to the selected one).
 ## False when the host has no such tool (the editor has Godot's own).

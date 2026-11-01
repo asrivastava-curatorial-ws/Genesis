@@ -9,6 +9,11 @@ const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
+
+## Units a model may have been made in, as the import scale to metres.
+const UNITS := {"Metres": 1.0, "Centimetres": 0.01, "Millimetres": 0.001, "Inches": 0.0254, "Feet": 0.3048}
+const YOURS := "Your own"
 
 var _search: LineEdit
 var _category: OptionButton
@@ -20,6 +25,20 @@ var _line: Button
 var _spacing: HSlider
 var _facing: OptionButton
 var measure: GnMeasure
+# Adding your own models.
+var _own_dialog: Node
+var _details: ConfirmationDialog
+var _d_file := ""
+var _d_name: LineEdit
+var _d_category: OptionButton
+var _d_unit: OptionButton
+var _d_up: OptionButton
+var _d_licence: OptionButton
+var _d_other: LineEdit
+var _d_author: LineEdit
+var _d_source: LineEdit
+var _d_credit: LineEdit
+var _d_error: Label
 
 
 func _init() -> void:
@@ -29,8 +48,10 @@ func _init() -> void:
 	_search.clear_button_enabled = true
 	_search.text_changed.connect(func(_t): _fill())
 	add_child(_search)
-	_category = GnUi.option(self, "Category", ["All"] + GnAssets.CATEGORIES.map(func(c): return c.capitalize()),
-		func(_t): _fill())
+	var filters: Array = ["All"] + GnAssets.CATEGORIES.map(func(c): return c.capitalize())
+	if GnAssets.user_library_dir() != "":
+		filters.append(YOURS)
+	_category = GnUi.option(self, "Category", filters, func(_t): _fill())
 	_list = ItemList.new()
 	_list.custom_minimum_size.y = 260
 	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -44,6 +65,17 @@ func _init() -> void:
 	GnUi.button(self, "Place in scene", _place)
 	_info = GnUi.note(self, "")
 	GnUi.button(self, "Rescan library", refresh)
+
+	if GnAssets.user_library_dir() != "":
+		GnUi.heading(self, "Your own models")
+		GnUi.note(self, "Add models of your own (GLB, glTF, FBX, OBJ; .blend with Blender) to a library every project can use: furniture, people, plants (they can be painted in Landscape), vehicles. Say what each may be used under; the licence travels with it. A project gets its own copy of what it uses.")
+		var own := HBoxContainer.new()
+		GnUi.button(own, "Add a model…", _add_own)
+		GnUi.button(own, "Remove it", _remove_own)
+		add_child(own)
+		GnUi.button(self, "Open your library folder", func():
+			DirAccess.make_dir_recursive_absolute(GnAssets.user_library_dir())
+			OS.shell_open(GnAssets.user_library_dir()))
 
 	GnUi.heading(self, "Place along a line")
 	GnUi.note(self, "Pick something above, then click the start and the end of the line in the 3D view.")
@@ -86,12 +118,15 @@ func _fill() -> void:
 	var want := _category.get_item_text(_category.selected).to_lower()
 	var q := _search.text.strip_edges().to_lower()
 	for a in _assets:
-		if want != "all" and a.category != want:
+		if want == YOURS.to_lower():
+			if not a.user:
+				continue
+		elif want != "all" and a.category != want:
 			continue
 		if q != "" and not (q in a.name.to_lower() or q in a.category or q in a.label().to_lower()):
 			continue
-		var i := _list.add_item(a.label())
-		_list.set_item_tooltip(i, "%s · %s" % [a.category, a.license.get("license", "")])
+		var i := _list.add_item(a.label() + ("  (yours)" if a.user else ""))
+		_list.set_item_tooltip(i, "%s%s · %s" % ["Your library · " if a.user else "", a.category, a.license.get("license", "")])
 		_shown.append(a)
 		if _thumbs.has(a.path) and _thumbs[a.path]:
 			_list.set_item_icon(i, _thumbs[a.path])
@@ -154,8 +189,8 @@ static func _thumbnail(path: String) -> Texture2D:
 
 func _describe(index: int) -> void:
 	var a = _shown[index]
-	_info.text = "%s\n%s · by %s\n%s" % [a.label(), a.license.get("license", "?"),
-		a.license.get("author", "?"), a.license.get("attribution", "")]
+	_info.text = "%s%s\n%s · by %s\n%s" % [a.label(), "  (your own)" if a.user else "", a.license.get("license", "?"),
+		a.license.get("author", "?") if str(a.license.get("author", "")) != "" else "?", a.license.get("attribution", "")]
 
 
 func _place() -> void:
@@ -187,3 +222,121 @@ func _toggle_line() -> void:
 	# Re-select so the editor asks the plugin for viewport input again.
 	if GnScene.root():
 		GnScene.select(GnScene.root())
+
+
+# ------------------------------------------------------------ your own models
+func _add_own() -> void:
+	if _own_dialog == null:
+		_own_dialog = GnHost.make_file_dialog("Add a model to your library")
+		for ext in GnModelImport.EXTENSIONS:
+			_own_dialog.add_filter("*.%s" % ext)
+		_own_dialog.file_selected.connect(_ask_details)
+		add_child(_own_dialog)
+	_own_dialog.popup_file_dialog()
+
+
+## Asks what the model is and where it comes from, then adds it.
+func _ask_details(file: String) -> void:
+	_d_file = file
+	if _details == null:
+		_build_details()
+	_d_name.text = file.get_file().get_basename().replace("_", " ").replace("-", " ").capitalize()
+	var shown := _category.get_item_text(_category.selected).to_lower()
+	if shown in GnAssets.CATEGORIES:
+		_d_category.select(GnAssets.CATEGORIES.find(shown))
+	_d_error.text = ""
+	_details.popup_centered(Vector2i(520, 0))
+
+
+func _build_details() -> void:
+	_details = ConfirmationDialog.new()
+	_details.title = "Add to your library"
+	_details.ok_button_text = "Add"
+	_details.dialog_hide_on_ok = false
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(480, 0)
+	_details.add_child(box)
+	_d_name = _field(box, "Name")
+	_d_category = GnUi.option(box, "Category", GnAssets.CATEGORIES.map(func(c): return c.capitalize()), func(_t): pass)
+	_d_unit = GnUi.option(box, "Made in", UNITS.keys(), func(_t): pass)
+	_d_up = GnUi.option(box, "Up is", ["Y (glTF, Blender, most exports)", "Z (CAD, SketchUp, 3ds Max)"], func(_t): pass)
+	_d_licence = GnUi.option(box, "May be used under", GnAssets.LICENCES.keys(), func(t):
+		_d_other.get_parent().visible = GnAssets.LICENCES[t] == "")
+	_d_other = _field(box, "Licence")
+	_d_other.get_parent().visible = false
+	_d_author = _field(box, "Author")
+	_d_source = _field(box, "Where it came from")
+	_d_credit = _field(box, "Credit line, if needed")
+	_d_error = Label.new()
+	_d_error.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_d_error.add_theme_color_override("font_color", Color(1.0, 0.6, 0.45))
+	box.add_child(_d_error)
+	_details.confirmed.connect(_add_details)
+	GnHost.dialog_parent().add_child(_details)
+
+
+func _field(parent: Control, text: String) -> LineEdit:
+	var row := HBoxContainer.new()
+	var l := Label.new()
+	l.text = text
+	l.custom_minimum_size.x = 150
+	row.add_child(l)
+	var e := LineEdit.new()
+	e.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(e)
+	parent.add_child(row)
+	return e
+
+
+func _add_details() -> void:
+	var licence: String = GnAssets.LICENCES[_d_licence.get_item_text(_d_licence.selected)]
+	if licence == "":
+		licence = _d_other.text.strip_edges()
+	var record := {"license": licence, "author": _d_author.text.strip_edges(),
+		"source": _d_source.text.strip_edges(), "attribution": _d_credit.text.strip_edges()}
+	if licence.begins_with("CC-BY") and record.attribution == "":
+		record.attribution = "%s by %s (%s)" % [_d_name.text.strip_edges(), record.author if record.author != "" else "its author", licence]
+	var options := {"scale": UNITS[_d_unit.get_item_text(_d_unit.selected)], "up": "z" if _d_up.selected == 1 else "y"}
+	var category: String = GnAssets.CATEGORIES[_d_category.selected]
+	var r := add_own(_d_file, category, _d_name.text, record, options)
+	if r.error != "":
+		_d_error.text = r.error
+		return
+	_details.hide()
+
+
+## Adds a model to the user's library and shows it, selected. {error, path}.
+func add_own(file: String, category: String, label: String, record: Dictionary, options := {}) -> Dictionary:
+	var r := GnAssets.add_to_user_library(file, category, label, record, options)
+	if r.error != "":
+		return r
+	_thumbs.erase(r.path)
+	_assets = GnAssets.scan().assets
+	_category.select(_category.item_count - 1 if GnAssets.user_library_dir() != "" else 0)
+	_fill()
+	for i in _shown.size():
+		if _shown[i].path == r.path:
+			_list.select(i)
+			_describe(i)
+	_info.text = "Added %s to your library. Place it like any other model%s." % [label.strip_edges(),
+		"; it can also be painted in Landscape" if category in ["trees", "plants", "grass"] else ""]
+	return r
+
+
+func _remove_own() -> void:
+	var picked := _list.get_selected_items()
+	if picked.is_empty() or not _shown[picked[0]].user:
+		_info.text = "Pick one of your own models (marked “yours”) first."
+		return
+	var a = _shown[picked[0]]
+	var ask := ConfirmationDialog.new()
+	ask.title = "Remove from your library"
+	ask.dialog_text = "Remove %s from your library? Projects that use it keep their own copies." % a.label()
+	ask.ok_button_text = "Remove"
+	ask.confirmed.connect(func():
+		var err := GnAssets.remove_from_user_library(a.path)
+		_info.text = err if err != "" else "Removed %s from your library." % a.label()
+		refresh())
+	ask.visibility_changed.connect(func(): if not ask.visible: ask.queue_free())
+	GnHost.dialog_parent().add_child(ask)
+	ask.popup_centered()

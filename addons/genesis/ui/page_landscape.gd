@@ -90,7 +90,7 @@ func refresh() -> void:
 	_assets = GnAssets.scan().assets.filter(func(a): return a.category in PAINTABLE)
 	_asset.clear()
 	for a in _assets:
-		_asset.add_item("%s (%s)" % [a.label(), a.category])
+		_asset.add_item("%s (%s%s)" % [a.label(), a.category, ", yours" if a.user else ""])
 	GnUi.select_text(_asset, keep)
 	if _asset.selected < 0 and _asset.item_count > 0:
 		_asset.select(0)
@@ -183,7 +183,8 @@ func _choose() -> void:
 	if _asset.selected < 0 or _asset.selected >= _assets.size():
 		return
 	var a = _assets[_asset.selected]
-	brush.asset_path = a.path
+	# One of the user's own plants: painted from the project's copy of it.
+	brush.asset_path = GnAssets.for_project(a.path)
 	brush.density = GnBrush.default_density(a.category)
 	_sync_from_brush()
 

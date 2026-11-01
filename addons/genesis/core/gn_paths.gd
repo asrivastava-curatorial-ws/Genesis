@@ -19,7 +19,7 @@ extends RefCounted
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 ## genesis_data folders that hold a project's own files.
-const PROJECT_DATA := ["plans", "cad", "backplates", "content", "textures", "tiles", "looks", "weathering", "logos", "sites"]
+const PROJECT_DATA := ["plans", "cad", "backplates", "content", "textures", "tiles", "looks", "weathering", "logos", "sites", "skies"]
 
 
 ## Where `res_path` (one of the paths Genesis has always used) is written now.

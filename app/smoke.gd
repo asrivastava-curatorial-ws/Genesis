@@ -13,6 +13,9 @@ const ToastHost := preload("res://app/ui/toast_host.gd")
 const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const LedWall := preload("res://addons/genesis/set/gn_led_wall.gd")
+const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
+const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
+const HdrFile := preload("res://app/hdr_file.gd")
 
 static var _failures := 0
 
@@ -56,6 +59,29 @@ static func run(main: Node) -> int:
 	_check(App.actions.run("view.frame"), "frame-the-scene runs")
 	_check(ws.viewport_panel.camera.position.is_finite() and ws.viewport_panel.camera.position != Vector3.ZERO, "the camera is placed")
 	_check(ws.viewport_panel.get_node("Overlay").clip_contents, "markers and handles are drawn only inside the 3D view")
+	# The user's own library, in a folder of the tour's own: a model added
+	# and placed, and an HDR sky (read here by the built program itself).
+	App.host.library_dir = parent.path_join("library")
+	var own_src := parent.path_join("own")
+	DirAccess.make_dir_recursive_absolute(own_src)
+	var obj := FileAccess.open(own_src.path_join("crate.obj"), FileAccess.WRITE)
+	obj.store_string("o Crate\nv 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nv 0 0 1\nv 1 0 1\nv 1 1 1\nv 0 1 1\nf 1 4 3 2\nf 5 6 7 8\nf 1 2 6 5\nf 4 8 7 3\nf 1 5 8 4\nf 2 3 7 6\n")
+	obj.close()
+	var added := GnAssets.add_to_user_library(own_src.path_join("crate.obj"), "props", "Crate", {"license": "Own work"})
+	var crate := GnPlacement.place(str(added.path), "props", Vector3(4, 0, 4)) if added.error == "" else null
+	_check(crate != null and not crate.find_children("*", "MeshInstance3D", true, false).is_empty() and crate.scene_file_path.begins_with(App.projects.folder),
+		"a model added to your own library is placed from the project's copy %s" % added.error)
+	HdrFile.write(own_src.path_join("dusk.hdr"), HdrFile.test_sky(256, 0.25, 0.3))
+	var sky := GnSky.add_user_sky(own_src.path_join("dusk.hdr"))
+	var sky_mat := GnSky.material(str(sky.name)) if sky.error == "" else null
+	_check(sky_mat != null and sky_mat.panorama != null and sky_mat.panorama.get_width() == 256, "an HDR sky of your own is read and becomes a sky %s" % sky.error)
+	if sky.error == "":
+		GnEnvironment.apply("sky", GnSky.label(sky.name))
+		_check(GnEnvironment.is_photo_sky(), "and the scene's sky is that photograph")
+		GnEnvironment.apply("sky", "Clear")
+	App.host.library_dir = ""
+	# The undo checks below start from a clean history.
+	GnHost.undo_redo().clear_history()
 	# Undo and redo, as the Edit menu shows them.
 	var cam := Camera3D.new()
 	GnScene.add_node(cam, root, "Add camera", "smoke_cam")

@@ -8,6 +8,8 @@ const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const GnSun := preload("res://addons/genesis/core/gn_sun.gd")
 const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
+const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var _controls := {}
 var _real: CheckBox
@@ -52,6 +54,10 @@ func _init() -> void:
 	GnUi.heading(_body, "Sky")
 	_controls.sky = GnUi.option(_body, "Sky", GnEnvironment.sky_choices(),
 		func(t): GnEnvironment.apply("sky", t))
+	if GnHost.user_library_dir() != "":
+		GnUi.note(_body, "Your own sky: a 360° panorama, twice as wide as high (HDR is best; JPG or PNG work too). The sun goes where the photo's sun is.")
+		GnUi.button(_body, "Add a sky image…", _add_sky)
+		_sky_note = GnUi.note(_body, "")
 	_controls.fog = GnUi.slider(_body, "Distance haze", 0.0, 1.0, 0.01,
 		func(v): GnEnvironment.apply("fog", v), func(v): return "%d%%" % int(v * 100))
 	_controls.haze = GnUi.slider(_body, "Stage haze (shows beams)", 0.0, 2.0, 0.01,
@@ -113,3 +119,38 @@ func _pick_place(place: String) -> void:
 
 static func _clock(hours: float) -> String:
 	return "%d:%02d" % [int(hours), int(round(fmod(hours, 1.0) * 60.0))]
+
+
+# ------------------------------------------------------------ your own skies
+var _sky_dialog: Node
+var _sky_note: Label
+
+
+func _add_sky() -> void:
+	if _sky_dialog == null:
+		_sky_dialog = GnHost.make_file_dialog("Add a sky image")
+		for ext in GnSky.EXTENSIONS:
+			_sky_dialog.add_filter("*.%s" % ext)
+		_sky_dialog.file_selected.connect(use_sky_file)
+		add_child(_sky_dialog)
+	_sky_dialog.popup_file_dialog()
+
+
+## Adds a panorama to the user's skies and puts it in this scene's sky.
+## Returns "" or what went wrong.
+func use_sky_file(file: String) -> String:
+	var r := GnSky.add_user_sky(file)
+	if r.error != "":
+		if _sky_note:
+			_sky_note.text = r.error
+		return r.error
+	var label := GnSky.label(r.name)
+	var sky: OptionButton = _controls.sky
+	sky.clear()
+	for c in GnEnvironment.sky_choices():
+		sky.add_item(c)
+	GnEnvironment.apply("sky", label)
+	refresh()
+	if _sky_note:
+		_sky_note.text = "Added %s to your skies; it is this scene's sky now." % r.name
+	return ""

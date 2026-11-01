@@ -110,6 +110,10 @@ static func properties_panel() -> String:
 	return _be().properties_panel()
 
 
+static func user_library_dir() -> String:
+	return _be().user_library_dir()
+
+
 static func start_tool(tool: String) -> bool:
 	return _be().start_tool(tool)
 

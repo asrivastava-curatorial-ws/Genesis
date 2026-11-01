@@ -75,6 +75,14 @@ func properties_panel() -> String:
 	return "Properties panel"
 
 
+## Where the user's own library is; tests point it at a folder of their own.
+var library_dir := ""
+
+
+func user_library_dir() -> String:
+	return library_dir if library_dir != "" else ProjectSettings.globalize_path("user://library")
+
+
 func start_tool(tool: String) -> bool:
 	var paths = App.modules.paths if App.modules else null
 	if paths == null:

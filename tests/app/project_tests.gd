@@ -21,8 +21,13 @@ const GnImport := preload("res://addons/genesis/core/gn_import.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 const GnLiveLink := preload("res://addons/genesis/core/gn_live_link.gd")
 const GnUpscale := preload("res://addons/genesis/core/gn_upscale.gd")
+const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
+const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
+const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
+const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
+const HdrFile := preload("res://app/hdr_file.gd")
 
-const MIN_CHECKS := 60
+const MIN_CHECKS := 100
 const EXPECTED_ERRORS: Array = []
 
 var _checks := 0
@@ -77,6 +82,95 @@ func _run() -> void:
 	await _live_link()
 	await _old_projects()
 	_folders()
+	await _own_library()
+
+
+# ---------------------------------------------------------- your own library
+func _own_library() -> void:
+	host.library_dir = tmp + "/my_library"
+	check(GnAssets.user_library_dir() == tmp + "/my_library", "library: the user's own library has a folder")
+	check(projects.create(tmp, "Furnished") == "", "library: a project to furnish")
+	var proj: String = tmp + "/Furnished"
+	var src := tmp + "/my_models"
+	DirAccess.make_dir_recursive_absolute(src)
+	# A stool made in centimetres, 45 cm high.
+	_obj(src + "/stool.obj", 45.0)
+	var cc0 := {"license": "CC0-1.0", "author": "Me", "source": "drawn for this test"}
+	var r := GnAssets.add_to_user_library(src + "/stool.obj", "furniture", "Bar stool", cc0, {"scale": 0.01})
+	var lib_path: String = r.path
+	check(r.error == "" and lib_path == tmp + "/my_library/furniture/bar_stool.scn" and FileAccess.file_exists(lib_path), "library: a model is added, converted, under its category (%s)" % r.error)
+	var record := GnAssets.info(lib_path)
+	check(record.get("license") == "CC0-1.0" and record.get("label") == "Bar stool" and record.get("from_file") == "stool.obj" and record.has("added"), "library: its licence record keeps what the user said, the name and the file it came from")
+	var mine: Array = GnAssets.scan().assets.filter(func(a): return a.user)
+	check(mine.size() == 1 and mine[0].path == lib_path and mine[0].category == "furniture" and mine[0].label() == "Bar stool", "library: it is listed with the bundled models, marked as the user's")
+	check(GnAssets.add_to_user_library(src + "/stool.obj", "furniture", "Bar stool", cc0).error.contains("already"), "library: the same name twice is refused")
+	check(GnAssets.add_to_user_library(src + "/stool.obj", "furniture", "Stool two", {"license": ""}).error.contains("licence"), "library: a model without a licence is refused")
+	check(GnAssets.add_to_user_library(src + "/stool.obj", "spaceships", "Stool three", cc0).error != "", "library: an unknown category is refused")
+	_write(src + "/notes.txt", "not a model")
+	check(GnAssets.add_to_user_library(src + "/notes.txt", "furniture", "Notes", cc0).error != "", "library: a file that is not a model is refused")
+	check(GnAssets.file_name_for("Bar stool (oak) #2") == "bar_stool_oak_2" and GnAssets.file_name_for("कुर्सी") != "", "library: names become file names, in any script")
+	# Placed in a project: the project gets its own copy, referred to relatively.
+	var node := GnPlacement.place(lib_path, "furniture", Vector3(2, 0, 0))
+	var copy := proj + "/assets/library/furniture/bar_stool.scn"
+	check(node != null and node.scene_file_path == copy and FileAccess.file_exists(copy) and FileAccess.file_exists(copy.get_basename() + ".license.json"), "library: placing it copies it, with its licence, into the project")
+	var box := _box_of(node)
+	check(absf(box.size.y - 0.45) < 0.01, "library: made in centimetres, it is 45 cm high (%.3f m)" % box.size.y)
+	scenes.save()
+	var saved := FileAccess.get_file_as_string(scenes.path)
+	check(saved.contains("../assets/library/furniture/bar_stool.scn") and not saved.contains(tmp + "/my_library"), "library: the scene refers to the project's copy, not to this computer's library")
+	# A plant of one's own can be painted.
+	_obj(src + "/fern.obj", 0.6, "0.2 0.6 0.2")
+	var fern := GnAssets.add_to_user_library(src + "/fern.obj", "plants", "Fern", {"license": "Own work"})
+	var paintable: Array = GnAssets.scan().assets.filter(func(a): return a.category in ["grass", "plants", "trees"] and a.user)
+	check(fern.error == "" and paintable.size() == 1 and GnAssets.for_project(fern.path) == proj + "/assets/library/plants/fern.scn", "library: a plant of one's own is offered for painting, from the project's copy")
+	# Taken out of the library: the project keeps working with its copy.
+	check(GnAssets.remove_from_user_library(lib_path) == "" and not FileAccess.file_exists(lib_path) and not FileAccess.file_exists(lib_path.get_basename() + ".license.json"), "library: a model can be removed from the library")
+	check(GnAssets.scan().assets.filter(func(a): return a.path == lib_path).is_empty(), "library: and is no longer listed")
+	check(GnAssets.remove_from_user_library("res://genesis_assets/furniture/chair_banquet.gltf") != "", "library: the bundled models cannot be removed")
+	projects.close()
+	check(projects.open(proj) == "" and scenes.root.get_node_or_null(NodePath(node.name)) != null and projects.missing.is_empty(), "library: the project reopens with the model, nothing missing")
+	# Skies of one's own: a panorama with a sun drawn at a known place.
+	var pano := Image.create(256, 128, false, Image.FORMAT_RGBF)
+	pano.fill(Color(0.3, 0.45, 0.8))
+	for y in range(64, 128):
+		for x in 256:
+			pano.set_pixel(x, y, Color(0.2, 0.25, 0.15))
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			pano.set_pixel(64 + dx, 38 + dy, Color(60.0, 55.0, 50.0))
+	HdrFile.write(src + "/my_sky.hdr", pano)
+	var png := pano.duplicate()
+	png.convert(Image.FORMAT_RGB8)
+	png.save_png(src + "/evening.png")
+	var sky := GnSky.add_user_sky(src + "/my_sky.hdr")
+	check(sky.error == "" and sky.name == "my_sky" and FileAccess.file_exists(tmp + "/my_library/skies/my_sky.hdr"), "skies: an HDR panorama is added to the user's skies (%s)" % sky.error)
+	check(GnSky.add_user_sky(src + "/evening.png").error == "", "skies: so is a JPG or PNG one")
+	check(GnSky.add_user_sky(src + "/notes.txt").error != "", "skies: other files are refused")
+	check(GnSky.label("my_sky") in GnEnvironment.sky_choices(), "skies: it is offered among the skies")
+	var sun := GnSky.sun("my_sky")
+	var want := GnSky.direction_from_uv((64 + 0.5) / 256.0, (38 + 0.5) / 128.0)
+	check((sun.direction as Vector3).dot(want) > 0.995 and float(sun.visibility) > 0.4, "skies: its sun is found where the photo's sun is (%.3f)" % (sun.direction as Vector3).dot(want))
+	var mat := GnSky.material("my_sky")
+	check(mat is PanoramaSkyMaterial and mat.panorama != null and FileAccess.file_exists(proj + "/data/skies/my_sky.hdr"), "skies: used in a project, the project gets its own copy")
+	projects.close()
+
+
+# The box around a placed model, in its parent's space (the scene here is not
+# in a tree, so there are no global transforms to ask for).
+func _box_of(n: Node3D) -> AABB:
+	var box := AABB()
+	var first := true
+	for mi in n.find_children("*", "MeshInstance3D", true, false):
+		var xf := Transform3D()
+		var at: Node = mi
+		while at != null and at != n.get_parent():
+			if at is Node3D:
+				xf = (at as Node3D).transform * xf
+			at = at.get_parent()
+		var b: AABB = xf * (mi as MeshInstance3D).get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return box
 
 
 # ---------------------------------------------------------- folders
