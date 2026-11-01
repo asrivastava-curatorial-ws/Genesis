@@ -6,7 +6,7 @@ Test evidence (all in this repository):
 
 - `tests/run_app_tests.sh`: five headless suites (app core, editor, projects and import, modules, smoke tour of the whole program): 283 checks plus the tour.
 - `tools/build_standalone.sh`: the exported Linux program's own smoke tour, with the bundled library.
-- `reports/E2E_RESULTS_build.md`, `E2E_RESULTS_verify.md`, `E2E_RESULTS_media.md`: the end-to-end test of section 16, run on the **exported Linux program** in three separate launches with Godot's Forward+ renderer on Mesa's software Vulkan (no GPU on the build machine).
+- `reports/E2E_RESULTS_build.md`, `E2E_RESULTS_verify.md`, `E2E_RESULTS_media.md`: the end-to-end test of section 16, run on the **exported Linux program** in three separate launches with Godot's Forward+ renderer on Mesa's software Vulkan (no GPU on the build machine). The build and verify phases were run again on 1 November on the final release program, unpacked from the zip, with an empty user profile; the media phase (Real-ESRGAN upscaling, MP4 film, concert render) is from the 31 October build; the upscaling and film code has not changed since, apart from the wording of messages. Screenshots and renders: `reports/e2e_screenshots/`.
 - The original plugin's `selftest` suite, still passing with the plugin running through the new host layer.
 - The release zip itself, unpacked into an empty folder and tested there on an empty user profile (see 34).
 

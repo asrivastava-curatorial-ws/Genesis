@@ -1,6 +1,6 @@
 # End-to-end test, phase: build
 
-Genesis Community 1.0.0-rc1 on Linux, 2026-10-31T20:54:38
+Genesis Community 1.0.0-rc1 on Linux, 2026-11-01T07:01:55
 
 | Step | What | Result |
 |---|---|---|
@@ -14,7 +14,7 @@ Genesis Community 1.0.0-rc1 on Linux, 2026-10-31T20:54:38
 | 6b | Scanned material presets | not tested: the scanned material presets are built by tools/setup.py from ambientCG, which is not reachable here |
 | 7 | Add furniture from the library | passed |
 | 8 | Add human figures | passed |
-| 9 | Paint vegetation with the brush (44 trees) | passed |
+| 9 | Paint vegetation with the brush (41 trees) | passed |
 | 10 | Configure sunlight (real sun, Bangalore, 16:30) | passed |
 | 11 | Configure an HDRI sky | not tested: the photographed HDRI skies are fetched from Poly Haven, which is not reachable here; the procedural sky is used |
 | 12 | Add artificial lighting | passed |
