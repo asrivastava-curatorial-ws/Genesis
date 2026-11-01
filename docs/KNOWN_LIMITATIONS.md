@@ -36,6 +36,7 @@ Honest list of what does not work, is not included, or was not tested.
 - No code signing; Windows SmartScreen warns.
 - Thumbnails need a GPU; without one, lists show names.
 - UDP ports are opened shared, so a port taken by another program is not detected.
+- If Genesis is closed (or stopped) while an AI upscale is running, the upscaler carries on in the background until that picture is done.
 - `.blend` files need Blender. Ubuntu's own Blender package (4.0) also needs `python3-numpy` for its glTF exporter; Genesis says so when it is missing.
 
 ## Engine limits
