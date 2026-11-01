@@ -46,6 +46,8 @@ const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const HdrFile := preload("res://app/hdr_file.gd")
 const PdfFile := preload("res://app/pdf_file.gd")
 const GnPhotomatch := preload("res://addons/genesis/core/gn_photomatch.gd")
+const GnPasses := preload("res://addons/genesis/core/gn_passes.gd")
+const GnTour := preload("res://addons/genesis/core/gn_tour.gd")
 const EditOps := preload("res://app/runtime/edit_ops.gd")
 
 const PROJECT := "E2E Museum Pavilion"
@@ -502,6 +504,42 @@ static func _media(main: Node, out_dir: String) -> void:
 	if mp4_ok:
 		OS.execute(GnFfmpeg.find("ffprobe"), ["-v", "error", "-show_entries", "stream=width,height,nb_frames", "-of", "csv=p=0", film], probe, true)
 	_step("26", mp4_ok and "\n".join(probe).contains("640,360"), "Verify the output files (film is 640×360: %s)" % "\n".join(probe).strip_edges())
+	# 26b. A sun study from the Render page, as a user makes one: 9:00, 12:00
+	# and 15:00 at HD, Preview quality. Under the procedural sky: a
+	# photographed sky keeps its photo's sun whatever the time.
+	var keep_sky := str(GnEnvironment.value("sky"))
+	var keep_time := float(GnEnvironment.value("time_of_day"))
+	GnEnvironment.apply("sky", "Clear", false)
+	var render_page: Control = main.screen.genesis_panel._stack.get_node("Render").get_child(0)
+	render_page.refresh()
+	render_page._camera.select(0)
+	render_page._size.select(0)
+	render_page._quality.select(0)
+	await render_page._sun_study()
+	var study: Array = ["0900", "1200", "1500"].map(func(h): return GnPaths.at(GnRender.OUTPUT_DIR).path_join("%s_sun_study_%s.png" % [str(cam.name).replace(" ", ""), h]) if cam else "")
+	var morning := Image.load_from_file(study[0]) if FileAccess.file_exists(study[0]) else null
+	var afternoon := Image.load_from_file(study[2]) if FileAccess.file_exists(study[2]) else null
+	var moved := _changed_share(morning, afternoon)
+	_step("26b", study.all(func(f): return _image_ok(f, Vector2i(1920, 1080))) and moved > 0.01 and absf(float(GnEnvironment.value("time_of_day")) - keep_time) < 0.01,
+		"Sun study from the Render page: 9:00, 12:00 and 15:00 at 1920×1080 (%.0f%% of the picture changes from morning to afternoon); the time of day is put back" % (moved * 100.0))
+	# 26c. Render passes for compositing.
+	var passes: Dictionary = await GnPasses.render(cam, Vector2i(640, 360), main) if cam else {}
+	_step("26c", passes.size() == 5 and passes.values().all(func(f): return _image_ok(str(f), Vector2i(640, 360))),
+		"Render passes for compositing (%s) at 640×360" % ", ".join(passes.keys()))
+	# 26d. A virtual tour: a 360° view from each of two cameras, one web page.
+	var tour: String = await GnTour.export_tour(cams.slice(0, 2), "E2E tour", false, 1024, main) if cams.size() >= 2 else ""
+	var tour_html := FileAccess.get_file_as_string(tour) if tour != "" else ""
+	_step("26d", tour_html.count("data:image/jpeg;base64,") == 2 and tour_html.contains("E2E tour"),
+		"Virtual tour of two cameras in one web page (%s, %d KB)" % [tour.get_file(), tour_html.length() / 1024])
+	# 26e. Stereo 360° for headsets: left eye above right.
+	var stereo: String = await GnPanorama.render_stereo(cam, 1024, main) if cam else ""
+	_step("26e", _image_ok(stereo, Vector2i(1024, 1024)), "Stereo 360° panorama for VR headsets (top-bottom, 1024×1024: %s)" % stereo.get_file())
+	GnEnvironment.apply("sky", keep_sky, false)
+	for f in [study[2], passes.get("depth", ""), stereo]:
+		if str(f) != "" and FileAccess.file_exists(f):
+			DirAccess.copy_absolute(f, out_dir.path_join("screenshots").path_join("render_" + str(f).get_file()))
+	if tour != "":
+		DirAccess.copy_absolute(tour, out_dir.path_join("screenshots").path_join(tour.get_file()))
 	# The event scene renders too.
 	App.scenes.open(App.projects.folder.path_join("scenes/concert.tscn"))
 	await _frames(main, 3)
