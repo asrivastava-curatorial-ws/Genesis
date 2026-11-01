@@ -194,13 +194,57 @@ static func bring_in(address: String, radius: float, host: Node, status: Callabl
 	var xml := await fetch(at.lat, at.lon, radius, host)
 	if xml == "":
 		return {"error": "OpenStreetMap didn't answer. Check the internet connection and try again."}
+	return await _bring(at, xml, radius, host, status, ground, photo, true)
+
+
+## The same from an OpenStreetMap file saved earlier (openstreetmap.org >
+## Export, or any .osm extract), for a computer that cannot reach the map
+## services. The site is the area the file covers, centred on its middle.
+## The ground and the aerial photograph still come from the internet.
+static func bring_in_file(path: String, host: Node, status: Callable, ground := false, photo := false) -> Dictionary:
+	var xml := FileAccess.get_file_as_string(path)
+	var b := bounds_of(xml)
+	if xml == "" or b.is_empty():
+		return {"error": "%s is not an OpenStreetMap map file (.osm, with its bounds)." % path.get_file()}
+	var lat := (float(b.minlat) + float(b.maxlat)) / 2.0
+	var lon := (float(b.minlon) + float(b.maxlon)) / 2.0
+	var half_ns := (float(b.maxlat) - float(b.minlat)) / 2.0 * METRES_PER_DEG_LAT
+	var half_ew := (float(b.maxlon) - float(b.minlon)) / 2.0 * METRES_PER_DEG_LON * cos(deg_to_rad(lat))
+	if half_ns <= 0.0 or half_ew <= 0.0:
+		return {"error": "%s covers no area." % path.get_file()}
+	status.call("Reading %s…" % path.get_file())
+	var at := {"lat": lat, "lon": lon, "name": path.get_file().get_basename()}
+	return await _bring(at, xml, maxf(half_ns, half_ew), host, status, ground, photo, false)
+
+
+## The <bounds> of an OpenStreetMap file: {minlat, minlon, maxlat, maxlon}, or {}.
+static func bounds_of(xml: String) -> Dictionary:
+	var p := XMLParser.new()
+	if xml == "" or p.open_buffer(xml.to_utf8_buffer()) != OK:
+		return {}
+	while p.read() == OK:
+		if p.get_node_type() == XMLParser.NODE_ELEMENT:
+			if p.get_node_name() == "bounds":
+				var out := {}
+				for k in ["minlat", "minlon", "maxlat", "maxlon"]:
+					out[k] = p.get_named_attribute_value_safe(k)
+					if not str(out[k]).is_valid_float():
+						return {}
+				return out
+			if p.get_node_name() in ["node", "way"]:
+				return {}
+	return {}
+
+
+static func _bring(at: Dictionary, xml: String, radius: float, host: Node, status: Callable, ground: bool, photo: bool, online: bool) -> Dictionary:
 	var features := parse(xml, at.lat, at.lon)
 	# A river or lake is one huge multipolygon; the box only holds fragments
 	# of its outline. Fetch its whole outline and clip it to the site.
 	var partial := {}
-	for f in features:
-		if f.id.begins_with("r") and _is_water(f.tags):
-			partial[f.id] = true
+	if online:
+		for f in features:
+			if f.id.begins_with("r") and _is_water(f.tags):
+				partial[f.id] = true
 	var clipped: Array = []
 	var box := PackedVector2Array([Vector2(-radius, -radius), Vector2(radius, -radius), Vector2(radius, radius), Vector2(-radius, radius)])
 	for rid in partial.keys().slice(0, 3):
@@ -265,7 +309,7 @@ static func bring_in(address: String, radius: float, host: Node, status: Callabl
 			terrain = t
 		counts_extra = {"relief_m": relief, "hilly": hilly, "photo": mat != null}
 	status.call("Building the neighbourhood…")
-	var counts := build(features, {"lat": at.lat, "lon": at.lon, "address": address, "terrain": terrain,
+	var counts := build(features, {"lat": at.lat, "lon": at.lon, "address": str(at.name), "terrain": terrain,
 		"attribution": "; ".join(attribution), "photo": info_photo})
 	counts.merge(counts_extra)
 	counts["notes"] = notes

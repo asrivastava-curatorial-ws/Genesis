@@ -10,4 +10,4 @@ Plans and drawings are copied into the project's `data/plans` and `data/cad`, so
 
 Needs: Poppler (or MuPDF) for PDF pages, ODA File Converter for DWG. See [DEPENDENCIES.md](DEPENDENCIES.md).
 
-Tested in this release: DXF import (end-to-end test). PDF and DWG were not tested here (no Poppler sample or ODA converter).
+Tested in this release: DXF import, a CAD-plotted PDF read as lines at scale, and a PDF floor plan as a picture through Poppler at scale (automated and in the end-to-end test). DWG was not tested: the ODA File Converter is not open source and could not be installed on the build machine.

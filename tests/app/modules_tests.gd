@@ -26,6 +26,9 @@ const Crowd := preload("res://addons/genesis/set/gn_crowd.gd")
 const PageRender := preload("res://addons/genesis/ui/page_render.gd")
 const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
 const GnFfmpeg := preload("res://addons/genesis/core/gn_ffmpeg.gd")
+const GnSite := preload("res://addons/genesis/core/gn_site.gd")
+const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
+const E2E := preload("res://app/e2e.gd")
 
 const MIN_CHECKS := 30
 const EXPECTED_ERRORS: Array = []
@@ -178,6 +181,37 @@ func _live_video(root: Node) -> void:
 	check(GnLiveVideo.sources().is_empty(), "video: everything stops when Genesis lets go")
 
 
+# Site context from an OpenStreetMap file (the made-up neighbourhood the
+# end-to-end test uses): read, joined, built, and the sun moved there.
+func _site_file(root: Node) -> void:
+	var file := ProjectSettings.globalize_path("user://site_test.osm")
+	var f := FileAccess.open(file, FileAccess.WRITE)
+	f.store_string(E2E._osm())
+	f.close()
+	var b := GnSite.bounds_of(FileAccess.get_file_as_string(file))
+	check(b.size() == 4 and absf((float(b.minlat) + float(b.maxlat)) / 2.0 - 51.492) < 1e-6, "site file: its bounds are read")
+	var features := GnSite.parse(FileAccess.get_file_as_string(file), 51.492, -0.23)
+	var river := features.filter(func(x): return x.id == "r501")
+	check(river.size() == 1 and river[0].points[0].distance_to(river[0].points[-1]) < 0.01 and river[0].points.size() == 5,
+		"site file: the river's two halves are joined into one closed outline")
+	var office := features.filter(func(x): return x.tags.get("height", "") == "12")
+	check(office.size() == 1 and absf(office[0].points[0].x - -25.0) < 0.01 and absf(office[0].points[0].y - -85.0) < 0.01,
+		"site file: points land in metres east and south of the middle")
+	GnEnvironment.set_up()
+	var counts: Dictionary = await GnSite.bring_in_file(file, root, func(_m): pass)
+	var site := root.get_node_or_null("Site context")
+	check(site != null and counts.get("buildings", 0) == 8 and counts.get("roads", 0) == 4 and counts.get("green", 0) == 1 and counts.get("water", 0) == 1,
+		"site file: 8 buildings, 4 roads, a park and the river are built (%s)" % counts)
+	var plot: Node = site.get_node_or_null("Buildings/Plot") if site else null
+	check(plot != null and plot.get_meta(&"gn_plot", false) and str(site.get_meta(&"gn_site", {}).get("attribution", "")).contains("OpenStreetMap"),
+		"site file: the plot is marked, and the map is credited")
+	check(GnEnvironment.value("real_sun") == true and absf(float(GnEnvironment.value("latitude")) - 51.492) < 0.001, "site file: the real sun follows the place")
+	var refused: Dictionary = await GnSite.bring_in_file(ProjectSettings.globalize_path("user://no_such.osm"), root, func(_m): pass)
+	check(str(refused.get("error", "")).contains("not an OpenStreetMap map file"), "site file: a file that is not a map is refused with a reason")
+	DirAccess.remove_absolute(file)
+	GnHost.undo_redo().undo()
+
+
 func _until_live(spec: String, seconds: float) -> bool:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
@@ -302,6 +336,7 @@ func _run() -> void:
 	osc.stop()
 	await _outgoing(root)
 	await _live_video(root)
+	await _site_file(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 5 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: five tools, each with how to get it")

@@ -25,7 +25,9 @@ Button and option names below are as they appear in the program.
 3. Tick *The real ground (hills and slopes)* and *Aerial photograph* if you want them.
 4. Press *Bring in the neighbourhood*.
 
-This needs the internet. Renders that show the data carry "© OpenStreetMap contributors". It was not tested in this release.
+This needs the internet. Renders that show the data carry "© OpenStreetMap contributors".
+
+*Bring in an OpenStreetMap file…* does the same from a map saved on openstreetmap.org (*Export* there saves `map.osm`), for a computer that cannot reach the map services. Untick the ground and the photograph when offline: they come from the internet. The live services were not tested in this release (the build machine could not reach them); bringing in a map file was.
 
 **World.** *Add sun, sky and ground* sets up the lighting. A new project already has them.
 
@@ -269,7 +271,7 @@ The walkers walk as they go: their stride follows the distance they cover, so fe
 2. Choose a *Source*: a video file, an SRT stream, OBS or vMix output, or a capture device.
 3. Press *Show it on the chosen screens*.
 
-This needs FFmpeg. Live sources were not tested in this release.
+This needs FFmpeg. Tested in this release: a video file, an MPEG-TS stream over UDP and an SRT stream (sent by FFmpeg). OBS, vMix and capture devices were not available to test.
 
 **Cues.**
 

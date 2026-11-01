@@ -183,8 +183,26 @@ static func _build(main: Node, out_dir: String) -> void:
 			pp.node.visible = false
 		_step("4c", not pp.has("error") and absf(sheet - 21.0) < 0.1, "Import a PDF floor plan as a picture at 1:100 (the A4 sheet is %.2f m wide) %s" % [sheet, pp.get("error", "")])
 
-	# 5. The site.
-	_step("5", "OpenStreetMap is not reachable from this computer; the default ground and sky stand in", "Create a site from OpenStreetMap")
+	# 5. The site: a map in OpenStreetMap's own file format (a small made-up
+	# neighbourhood, written here), brought in from the Scene page as a user
+	# with no access to the map services would. The live services themselves
+	# (address search, map download, ground and photo) are not reachable here.
+	var osm_file := src.path_join("neighbourhood.osm")
+	_write(osm_file, _osm())
+	var scene_page: Control = ws.genesis_panel._stack.get_node("Scene").get_child(0)
+	scene_page._ground.button_pressed = false
+	scene_page._photo.button_pressed = false
+	var site_counts: Dictionary = await scene_page.bring_site_file(osm_file)
+	var site := root.get_node_or_null("Site context")
+	var tallest := 0.0
+	if site:
+		for b in site.get_node("Buildings").get_children():
+			tallest = maxf(tallest, (b as MeshInstance3D).get_aabb().size.y)
+	_step("5", site != null and int(site_counts.get("buildings", 0)) == 8 and int(site_counts.get("roads", 0)) == 4 and int(site_counts.get("green", 0)) == 1
+		and int(site_counts.get("water", 0)) == 1 and absf(tallest - 25.8) < 0.01 and absf(float(GnEnvironment.value("latitude")) - 51.492) < 0.001,
+		"Create a site from an OpenStreetMap file: %d buildings (tallest %.1f m, 8 storeys), %d roads, %d park, %d river, the real sun moved there %s" % [
+			int(site_counts.get("buildings", 0)), tallest, int(site_counts.get("roads", 0)), int(site_counts.get("green", 0)), int(site_counts.get("water", 0)), site_counts.get("error", "")])
+	_step("5b", "the OpenStreetMap services (address search, map download, elevation, aerial photographs) are not reachable from this computer", "Create a site from an address, live")
 
 	# 6. Materials: an image as a material on the building (scanned presets need tools/setup.py).
 	var tex := Image.create(256, 256, false, Image.FORMAT_RGB8)
@@ -196,8 +214,21 @@ static func _build(main: Node, out_dir: String) -> void:
 	var surfaces := GnMaterials.surfaces(pav) if pav else []
 	var mat_err: String = await GnMaterials.apply_image(surfaces[0], src.path_join("brick_colour.png"), 1.0) if not surfaces.is_empty() else "no surfaces"
 	_step("6", mat_err == "", "Add materials (an image as a material, tiled at 1 m) %s" % mat_err)
-	if GnMaterials.presets().is_empty():
-		_step("6b", "the scanned material presets are built by tools/setup.py from ambientCG, which is not reachable here", "Scanned material presets")
+	# 6b. A material preset (drawn by Genesis; the scanned ones when the
+	# downloaded library is installed) on the back wall.
+	var concrete := GnMaterials.presets().filter(func(pr): return str(pr).get_file().begins_with("concrete"))
+	if concrete.is_empty():
+		_step("6b", "this program was built without material presets", "Material presets")
+	else:
+		var wall_surface = null
+		for s in surfaces:
+			if str(s.mesh.name).begins_with("Back") or (wall_surface == null and s != surfaces[0]):
+				wall_surface = s
+		if wall_surface:
+			GnMaterials.apply_preset(wall_surface, concrete[0])
+		var on: StandardMaterial3D = wall_surface.mesh.get(wall_surface.property()) as StandardMaterial3D if wall_surface else null
+		_step("6b", on != null and on.albedo_texture != null and on.albedo_texture.get_width() > 0 and on.uv1_world_triplanar,
+			"Material presets: concrete on the %s, its texture mapped at real size in world space" % (str(wall_surface.mesh.name).to_lower() if wall_surface else "pavilion"))
 
 	# 7, 8. Furniture and people from the bundled library.
 	var furniture := _first("furniture")
@@ -395,6 +426,13 @@ static func _verify(main: Node, out_dir: String) -> void:
 		and group != null and GnScatter.points(group).size() == int(expect.planted) and pav != null and mats_ok \
 		and absf(float(GnEnvironment.value("time_of_day")) - float(expect.time_of_day)) < 0.01 and App.projects.missing.is_empty()
 	_step("19", ok, "Verify resources and settings (objects %d/%d, cameras, %d trees, material, sun, nothing missing)" % [root.get_child_count(), int(expect.children), GnScatter.points(group).size() if group else -1])
+	var preset_kept := false
+	if pav:
+		for mi in pav.find_children("*", "MeshInstance3D", true, false):
+			var m := mi.get_surface_override_material(0) as StandardMaterial3D
+			if m and m.resource_name == "Concrete" and m.albedo_texture and m.albedo_texture.get_width() > 0:
+				preset_kept = true
+	_step("19b", preset_kept if not GnMaterials.presets().is_empty() else "this program was built without material presets", "The material preset on the back wall is kept, with its texture")
 	var cams := GnCameras.cameras()
 	var cam: Camera3D = cams[0] if not cams.is_empty() else null
 	var still: String = await GnRender.render(cam, Vector2i(1920, 1080), main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0) if cam else ""
@@ -676,6 +714,66 @@ static func _make_building() -> Node3D:
 		root.add_child(mi)
 		mi.owner = root
 	return root
+
+
+# A small neighbourhood in OpenStreetMap's XML format, made up for the test
+# (not real map data): an open square in the middle, eight buildings round it
+# with heights and storeys, four streets, a park, and a river drawn as a
+# multipolygon of two halves that have to be joined. Coordinates are metres
+# east (x) and south (z) of 51.492 N, 0.23 W.
+static func _osm() -> String:
+	var lat0 := 51.492
+	var lon0 := -0.23
+	var kx := 111320.0 * cos(deg_to_rad(lat0))
+	var nodes := PackedStringArray()
+	var ways := PackedStringArray()
+	var next := [1000]
+	var node := func(x: float, z: float) -> int:
+		next[0] += 1
+		nodes.append('  <node id="%d" lat="%.7f" lon="%.7f" version="1"/>' % [next[0], lat0 - z / 110540.0, lon0 + x / kx])
+		return next[0]
+	var way := func(id: int, pts: Array, tags: Dictionary, closed: bool) -> void:
+		var refs: Array = pts.map(func(q): return node.call(q.x, q.y))
+		if closed:
+			refs.append(refs[0])
+		var lines := PackedStringArray(['  <way id="%d" version="1">' % id])
+		for r in refs:
+			lines.append('    <nd ref="%d"/>' % r)
+		for k in tags:
+			lines.append('    <tag k="%s" v="%s"/>' % [k, tags[k]])
+		lines.append("  </way>")
+		ways.append("\n".join(lines))
+	var box := func(x0: float, z0: float, x1: float, z1: float) -> Array:
+		return [Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]
+	var buildings := [[-60, -80, -35, -55, {"building": "yes", "building:levels": "3"}],
+		[-25, -85, 5, -55, {"building": "office", "height": "12"}],
+		[60, -30, 90, 0, {"building": "apartments", "building:levels": "5"}],
+		[60, 20, 95, 50, {"building": "yes"}],
+		[-90, 40, -60, 70, {"building": "house", "building:levels": "2"}],
+		[-40, 45, -10, 75, {"building": "yes", "building:levels": "4", "addr:housenumber": "49a"}],
+		[10, 50, 35, 80, {"building": "retail", "height": "9"}],
+		[100, -100, 130, -70, {"building": "apartments", "building:levels": "8"}]]
+	var id := 100
+	for b in buildings:
+		id += 1
+		way.call(id, box.call(b[0], b[1], b[2], b[3]), b[4], true)
+	way.call(201, [Vector2(-150, -40), Vector2(0, -40), Vector2(150, -40)], {"highway": "residential", "name": "Mall Road"}, false)
+	way.call(202, [Vector2(45, -150), Vector2(45, 0), Vector2(45, 150)], {"highway": "primary", "name": "King Street"}, false)
+	way.call(203, [Vector2(-100, 35), Vector2(-30, 38), Vector2(40, 35)], {"highway": "footway"}, false)
+	way.call(204, [Vector2(-150, 90), Vector2(150, 90)], {"highway": "service"}, false)
+	way.call(301, box.call(-140, -20, -100, 30), {"leisure": "park", "name": "Ravenscourt Gardens"}, true)
+	# The river: two halves, joined by the reader into one outline.
+	way.call(401, [Vector2(-150, 110), Vector2(150, 110), Vector2(150, 140)], {}, false)
+	way.call(402, [Vector2(150, 140), Vector2(-150, 140), Vector2(-150, 110)], {}, false)
+	# The ends of the halves must be the same points for them to join.
+	var rel := '  <relation id="501" version="1">\n    <member type="way" ref="401" role="outer"/>\n    <member type="way" ref="402" role="outer"/>\n' \
+		+ '    <tag k="type" v="multipolygon"/>\n    <tag k="natural" v="water"/>\n    <tag k="water" v="river"/>\n  </relation>'
+	var half_lat := 150.0 / 110540.0
+	var half_lon := 150.0 / kx
+	return "\n".join(['<?xml version="1.0" encoding="UTF-8"?>',
+		'<osm version="0.6" generator="Genesis end-to-end test (made-up data)">',
+		'  <bounds minlat="%.7f" minlon="%.7f" maxlat="%.7f" maxlon="%.7f"/>' % [lat0 - half_lat, lon0 - half_lon, lat0 + half_lat, lon0 + half_lon],
+		"\n".join(nodes), "\n".join(ways), rel, "</osm>", ""])
 
 
 # A ground-floor plan: an outline, a partition, and a door arc, in metres.

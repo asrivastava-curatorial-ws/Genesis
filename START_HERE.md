@@ -1,11 +1,11 @@
-# Start here: Genesis Community 1.0.0-rc1
+# Start here: Genesis Community 1.0.0-rc2
 
 Genesis Community is free architectural and event visualisation that runs as its own program, with no Godot editor. This page covers getting it running, finding your way around, and checking that it works on your computer.
 
 > **This is a release candidate, not 1.0.0.**
 >
-> - **Linux:** the build was tested on Ubuntu 24.04 with software rendering. That covers every automated suite, a smoke tour of the built program, and the end-to-end test (build, save, relaunch, verify, render, 360°, upscale, film).
-> - **Windows:** the build has **not** been run on Windows yet.
+> - **Linux:** the build was tested on Ubuntu 24.04 with software rendering. That covers every automated suite, a smoke tour of the built program, and the end-to-end test in four launches (build, save, relaunch, verify, render, 360°, photo match, upscale, film, and a walkthrough with people walking along a drawn path).
+> - **Windows:** this delivery is the Linux build only. The Windows program is built from the same source, but has **not** been run on Windows yet.
 >
 > What is still open is listed in [reports/ACCEPTANCE.md](reports/ACCEPTANCE.md) and [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
 
@@ -16,10 +16,9 @@ Genesis-Community-1.0.0-rc1/
 ├── START_HERE.md                 this page
 ├── README.md  CHANGELOG.md  LICENSE  THIRD_PARTY_NOTICES.md  DEVELOPMENT_STATUS.md
 ├── applications/
-│   ├── linux-x86_64/             Genesis.x86_64, Genesis.pck, Genesis.sh, genesis.png
-│   └── windows-x86_64/           Genesis.exe, Genesis.pck, Genesis.bat, Genesis.ps1
+│   └── linux-x86_64/             Genesis.x86_64, Genesis.pck, Genesis.sh, genesis.png
 ├── demos/
-│   ├── architecture/             a museum pavilion: daylight, golden hour and night scenes
+│   ├── architecture/             a museum pavilion: daylight, golden hour and night scenes, people walking across the plaza
 │   └── event-production/         a concert stage: LED wall, truss, line arrays, moving heads, crowd, cues
 ├── docs/                         Genesis-Community-Manual.html (and .pdf): every page below in one file
 ├── reports/                      acceptance against the brief, end-to-end results, audits
@@ -28,23 +27,23 @@ Genesis-Community-1.0.0-rc1/
 └── checksums/SHA256SUMS
 ```
 
-Each program needs the `.pck` file next to it. Keep the two files together.
+The program needs the `.pck` file next to it. Keep the two files together.
 
-The release comes as one zip with both programs (`Genesis-Community-1.0.0-rc1.zip`), or as one zip per platform (`…-linux-x86_64.zip`, `…-windows-x86_64.zip`). A per-platform zip holds everything except the other platform's program. All of them unpack to this same folder, so unpacking both per-platform zips gives the whole release.
+This release is one zip, `Genesis-Community-1.0.0-rc2-linux-x86_64.zip`. A Windows program can be built from `source/` (section 8).
 
 ## 1. Check the download (optional)
 
 Linux:
 
 ```bash
-cd Genesis-Community-1.0.0-rc1
+cd Genesis-Community-1.0.0-rc2
 sha256sum --quiet -c checksums/SHA256SUMS && echo "All files OK"
 ```
 
 Windows (PowerShell). This prints only the files that do not match:
 
 ```powershell
-cd Genesis-Community-1.0.0-rc1
+cd Genesis-Community-1.0.0-rc2
 Get-Content checksums\SHA256SUMS | ForEach-Object {
   $h, $f = $_ -split '  ', 2
   if ((Get-FileHash -Algorithm SHA256 $f).Hash.ToLower() -ne $h) { "MISMATCH $f" } }
@@ -53,8 +52,8 @@ Get-Content checksums\SHA256SUMS | ForEach-Object {
 ## 2. Run it on Linux (Ubuntu or Kubuntu 24.04)
 
 ```bash
-unzip Genesis-Community-1.0.0-rc1-linux-x86_64.zip -d ~/Applications     # or the zip with both programs
-cd ~/Applications/Genesis-Community-1.0.0-rc1/applications/linux-x86_64
+unzip Genesis-Community-1.0.0-rc2-linux-x86_64.zip -d ~/Applications
+cd ~/Applications/Genesis-Community-1.0.0-rc2/applications/linux-x86_64
 ./Genesis.sh --check              # graphics device and optional tools found
 ./Genesis.sh                      # start Genesis
 ./Genesis.sh --install-shortcut   # optional: add it to the applications menu
@@ -76,9 +75,10 @@ vulkaninfo --summary | grep -E "deviceName|driverName"
 
 ## 3. Run it on Windows 10 or 11
 
-1. Right-click `Genesis-Community-1.0.0-rc1-windows-x86_64.zip` (or the zip with both programs) and choose *Extract All*. Pick a folder you can write to, such as `Documents`.
-2. Open `applications\windows-x86_64` and double-click **Genesis.bat**.
-3. SmartScreen may warn that the program is not recognised, because it is not code-signed. Choose *More info*, then *Run anyway*.
+This delivery has no Windows program. Build one from `source/` (section 8: `bash tools/build_standalone.sh windows`, on Linux), then put `Genesis.exe` and `Genesis.pck` with the launchers from `tools/launchers/` in a folder `applications\windows-x86_64`. From there:
+
+1. Open `applications\windows-x86_64` and double-click **Genesis.bat**.
+2. SmartScreen may warn that the program is not recognised, because it is not code-signed. Choose *More info*, then *Run anyway*.
 
 From PowerShell in that folder:
 
@@ -111,9 +111,20 @@ Because this build has not yet been run on Windows, run the self-test first (sec
    - *Preview* is quick. *Standard* is for most stills. *High* and *Maximum* take 16 and 64 samples.
    - Pictures go to the project's `renders/` folder.
    - After a still, *Upscale ×2/×4* sharpens it with Real-ESRGAN. The first time, it downloads the upscaler (about 47 MB).
-7. **Make a film.** *Movie* moves between saved cameras and writes an MP4. This needs FFmpeg (section 5).
+7. **Make a film.** *Movie* moves between saved cameras and writes an MP4. This needs FFmpeg (section 5). The pavilion demo already has a film with three people walking across the plaza: press *Play* on the Movie page, or open `renders/samples/main_film.mp4`.
 8. **Run a show.** Open `demos/event-production`, go to *Show*, and press **GO** to step through the four cues.
 9. **Save.** Press **Ctrl+S**. Genesis also keeps unsaved work every few minutes, and keeps the last five saved versions in `backups/`.
+
+**A walkthrough with people walking** (like Lumion): bring in your model, paint plants on *Landscape*, set the sun on *Environment*, then on *Movie*:
+
+1. Press *Draw a path*, click points across the site in the 3D view, and press **Enter**. Drag a point to reshape it; Ctrl+click the line to add a point; right-click a point to remove it.
+2. On *Assets*, choose *People* and place a few walkers (the *Walker* figures) and, if you like, a car on a road path.
+3. Select them and the path, and on *Movie* press *Put selection on it*. Set the *Speed* in the Properties panel (1.4 m/s is a walking pace).
+4. Save a camera or two on *Cameras*, add a shot on *Movie*, press *Play*, then *Render movie*.
+
+The people walk, stepping in time with the ground they cover. At the end of the path they start again from the beginning. [docs/SECTION_GUIDE.md](docs/SECTION_GUIDE.md) has every detail.
+
+**Your own models and skies.** On *Assets*, *Add a model…* puts a model of yours (GLB, glTF, FBX, OBJ, or `.blend` with Blender) into a library that every project can use: people, trees, plants, furniture, vehicles. You say what licence it may be used under, and that stays with it. On *Environment*, *Add a sky image…* adds a 360° HDR, JPG or PNG panorama as a sky. On *Materials*, *Use an image…* turns any photo or texture (with its normal and roughness maps beside it) into a material at its real size. Free CC0 skies, models and textures: polyhaven.com and ambientcg.com.
 
 What the demos' cameras give at *Standard* quality:
 
@@ -140,7 +151,7 @@ Ubuntu 24.04:
 ```bash
 sudo apt install ffmpeg            # MP4 films; live video on LED walls and screens
 sudo apt install poppler-utils     # PDF pages as plans
-sudo apt install blender           # .blend files (or a newer Blender from blender.org; set its path in Tools > Dependencies)
+sudo apt install blender python3-numpy   # .blend files (Ubuntu's Blender needs numpy for its glTF exporter); or Blender from blender.org, set in Tools > Dependencies
 ```
 
 Windows:
@@ -194,26 +205,19 @@ Start-Process -Wait .\Genesis.exe -ArgumentList '--headless','--','--smoke','--e
 Select-String -Path "$env:APPDATA\Genesis\logs\godot.log" -Pattern 'GENESIS_SMOKE (RESULT|FAIL)'
 ```
 
-**End-to-end test.** This is the full test from the brief, in three launches, with real rendering. On a computer with a GPU it takes a few minutes; in software it takes about 40.
+**End-to-end test.** This is the full test from the brief, in four launches, with real rendering. On a computer with a GPU it takes a few minutes; in software it takes about an hour.
 
-1. *build* makes a project, brings in models and a drawing, paints trees, sets the sun, adds set pieces and cues, then saves and quits.
-2. *verify* reopens the project, checks every object and setting, then renders 1080p, 4K and a 360° panorama.
+1. *build* makes a project, brings in models (glTF, OBJ, FBX and `.blend` when Blender is there, and one into your own library), a DXF drawing and PDF plans, paints trees, sets the sun and your own sky, adds set pieces and cues, then saves and quits.
+2. *verify* reopens the project, checks every object and setting, then renders 1080p, 4K, a 360° panorama and a photo match.
 3. *media* covers upscaling, which needs the internet the first time, and the film, which needs FFmpeg.
+4. *walk* draws a path with the path tool, puts two walkers on it from the Movie page, renders a short film and checks in its frames that they move and step.
 
 ```bash
-./Genesis.x86_64 -- --e2e build  ~/genesis-e2e
-./Genesis.x86_64 -- --e2e verify ~/genesis-e2e
-./Genesis.x86_64 -- --e2e media  ~/genesis-e2e
+for phase in build verify media walk; do ./Genesis.x86_64 -- --e2e $phase ~/genesis-e2e; done
 cat ~/genesis-e2e/E2E_RESULTS_*.md
 ```
 
-On Windows, run the three phases one after another. Each `Start-Process -Wait` waits for its phase to finish:
-
-```powershell
-foreach ($phase in 'build','verify','media') {
-  Start-Process -Wait .\Genesis.exe -ArgumentList '--','--e2e',$phase,'C:\genesis-e2e' }
-Get-Content C:\genesis-e2e\E2E_RESULTS_*.md
-```
+Steps that need a tool that is not installed (Blender, FFmpeg, Poppler) say so and are skipped, not failed. The results of the run made for this release are in `reports/E2E_RESULTS_*.md`, with screenshots in `reports/e2e_screenshots/`.
 
 ## 7. Where Genesis keeps things
 
@@ -222,6 +226,7 @@ Get-Content C:\genesis-e2e\E2E_RESULTS_*.md
 | Settings and the recent-projects list | `~/.local/share/Genesis/settings.json` | `%APPDATA%\Genesis\settings.json` |
 | Logs (*Help > Show the Log Folder*) | `~/.local/share/Genesis/logs/` | `%APPDATA%\Genesis\logs\` |
 | Downloaded tools (Real-ESRGAN) | `~/.local/share/Genesis/tools/` | `%APPDATA%\Genesis\tools\` |
+| Your own models and skies | `~/.local/share/Genesis/library/` | `%APPDATA%\Genesis\library\` |
 | Caches (safe to delete) | `~/.local/share/Genesis/cache/` | `%APPDATA%\Genesis\cache\` |
 | Your projects | wherever you make them | wherever you make them |
 
@@ -229,7 +234,7 @@ Get-Content C:\genesis-e2e\E2E_RESULTS_*.md
 
 - You can copy or move it to another computer, including between Linux and Windows.
 - If files it uses are elsewhere, *File > Find Missing Files…* finds them.
-- Projects made with the original Genesis plugin come in through *File > Import an Old Genesis Project…*. The original is left untouched.
+- Projects made with the original Genesis plugin come in through *File > Import an Old Genesis Project…*. The original is left untouched. Scenes that use the plugin's downloaded library (photo skies, scanned materials, the plant species) open with stand-ins for what is not installed, and saving keeps the references (see [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)).
 
 See [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) for the full format.
 
@@ -257,13 +262,14 @@ mkdir -p ~/.local/share/godot/export_templates/4.7.2.stable
 unzip -j templates.tpz 'templates/*' -d ~/.local/share/godot/export_templates/4.7.2.stable
 echo "GODOT=$HOME/tools/godot/Godot_v4.7.2-stable_linux.x86_64" | tee tests/local.env
 
-bash tests/run_app_tests.sh                       # headless suites and the smoke tour, about 1.5 minutes
-bash tools/build_standalone.sh linux windows      # build/linux and build/windows; the Linux build is smoke-tested
+bash tests/run_app_tests.sh                       # headless suites and the smoke tour, about 2 minutes
+bash tools/build_standalone.sh linux              # build/linux, smoke-tested; add "windows" for build/windows
 build/linux/Genesis.x86_64 -- --make-demos ~/genesis-demos                       # the two demo projects
 build/linux/Genesis.x86_64 -- --render-samples ~/genesis-demos/"Architecture demo" --quality preview   # or standard, high, max
-python3 tools/build_release.py --skip-build --demos ~/genesis-demos              # release/Genesis-Community-<version>.zip, plus one zip per platform
+python3 tools/build_release.py --skip-build --demos ~/genesis-demos --platforms linux   # release/Genesis-Community-<version>-linux-x86_64.zip
 ```
 
+- The build draws the eight material presets itself when they are missing (no internet needed). For the downloaded library (photographed skies, scanned materials, 54 plant species), run `python3 tools/setup.py` on a computer with internet access before building.
 - The original editor plugin still works. Open the folder in the Godot 4.7.2 editor and Genesis appears as a dock.
 - The plugin's own suites run with `bash tests/run_all.sh`. They need a GPU.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains how the program is put together.
@@ -272,21 +278,25 @@ python3 tools/build_release.py --skip-build --demos ~/genesis-demos             
 
 **Tested** on Ubuntu 24.04 with software Vulkan (lavapipe):
 
-- 283 headless checks.
-- The built program's smoke tour.
-- The end-to-end test with real renders: 1080p, 4K, 360°, Real-ESRGAN, MP4 and a concert render.
-- Saving and reopening across launches.
+- 377 headless checks in four suites, and a smoke tour of the whole program.
+- The built program's own smoke tour, with the bundled library and the material presets.
+- The end-to-end test in four launches with real renders: 1080p, 4K, 360°, photo match, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
+- Importing glTF, OBJ, FBX and `.blend` (with Ubuntu's Blender 4.0.2), DXF, and PDF plans (as lines and as pictures).
+- Your own models and HDR skies, added, used, and carried into a project.
+- Saving and reopening across launches, and opening scenes whose files are not on the computer.
+- Bringing in the original Genesis repository as an old plugin project: its three scenes open, render and save.
+- Outgoing show commands (OSC, text, TCP), and live video on screens from a file, UDP and SRT.
+- Site context from a saved OpenStreetMap file: buildings at their mapped heights, streets, a park and a river.
 - Both demo projects, built and rendered by the program itself.
 
 **Not tested here:**
 
-- Windows, which also failed to start under Wine.
+- Windows (not part of this delivery).
 - A real GPU.
-- `.blend` import (no Blender) and FBX (no sample file).
-- PDF and DWG plans.
-- OpenStreetMap site context (no internet access to it).
-- Photographed HDRI skies and scanned material presets. They are not bundled; build them with `python3 tools/setup.py` on a computer with internet access.
-- Live video sources and outgoing OSC.
+- DWG plans (the ODA converter is not open source and could not be installed).
+- OpenStreetMap site context from an address (no internet access to the services). Bringing in a saved `.osm` map file is tested.
+- The downloaded library (photographed HDRI skies, scanned materials, 54 plant species). It is not bundled; build it with `python3 tools/setup.py` on a computer with internet access. Your own skies and models work without it.
+- Live video from OBS, vMix or capture hardware.
 
 If you try any of these, the result is what turns this release candidate into 1.0.0. The full list is in [reports/ACCEPTANCE.md](reports/ACCEPTANCE.md).
 
@@ -299,6 +309,6 @@ If you try any of these, the result is what turns this release candidate into 1.
 ## Licence
 
 - Genesis Community's code is under the MIT licence, the same as the original Genesis by Utopian Academy.
-- The 295 bundled models are CC0, and each keeps its licence file.
+- The 295 bundled models are CC0, and each keeps its licence file. The eight material presets are drawn by Genesis and are CC0 too.
 - Godot is MIT.
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) lists every component and its licence.

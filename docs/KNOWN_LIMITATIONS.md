@@ -22,7 +22,7 @@ Honest list of what does not work, is not included, or was not tested.
 - **Windows** (see above). In the previous release candidate a headless start under Wine 9 crashed inside Wine before any Genesis code ran.
 - **Real GPUs**: all graphical tests ran on Mesa's software Vulkan (lavapipe) on two CPU cores.
 - **DWG** plans: they need the ODA File Converter, which is free to download but not open source and could not be installed here. DXF is tested.
-- **OpenStreetMap site context**: the build machine has no access to it.
+- **OpenStreetMap site context, live**: the build machine has no access to the map services (address search, map download, elevation, aerial photographs). Bringing in a saved OpenStreetMap file (`.osm`) is tested.
 - **Live video from OBS, vMix or capture hardware**: live video was tested from a video file, an MPEG-TS stream over UDP and an SRT stream sent by FFmpeg, not from those programs or devices.
 - **Most of the original editor-plugin test suites**: they need a GPU and long render times; see reports/BASELINE_AUDIT.md for which ran.
 - The Genesis panel pages are built and refreshed in automated tests, and the main workflows are driven end to end, but not every individual button was pressed in the standalone program.

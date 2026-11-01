@@ -77,6 +77,7 @@ func _init() -> void:
 	_photo.button_pressed = true
 	add_child(_photo)
 	_site_button = GnUi.button(self, "Bring in the neighbourhood", _bring_site)
+	GnUi.button(self, "Bring in an OpenStreetMap file…", _pick_site_file)
 	_site_status = GnUi.note(self, "")
 
 	GnUi.heading(self, "World")
@@ -182,6 +183,36 @@ func _bring_site() -> void:
 	var counts: Dictionary = await GnSite.bring_in(address, _radius.value, self,
 		func(msg): _site_status.text = msg, _ground.button_pressed, _photo.button_pressed)
 	_site_button.disabled = false
+	_show_site(counts)
+
+
+var _site_dialog: Node
+
+
+func _pick_site_file() -> void:
+	if _site_dialog == null:
+		_site_dialog = GnHost.make_file_dialog("Bring in an OpenStreetMap file")
+		_site_dialog.add_filter("*.osm", "OpenStreetMap map file")
+		_site_dialog.file_selected.connect(func(p): bring_site_file(p))
+		add_child(_site_dialog)
+	_site_dialog.popup_file_dialog()
+
+
+## A map saved from openstreetmap.org (Export) or any .osm extract: the same
+## neighbourhood without reaching the map services. Returns the counts.
+func bring_site_file(path: String) -> Dictionary:
+	if GnScene.root() == null:
+		_site_status.text = "Have a scene open first."
+		return {"error": "no scene"}
+	_site_button.disabled = true
+	var counts: Dictionary = await GnSite.bring_in_file(path, self,
+		func(msg): _site_status.text = msg, _ground.button_pressed, _photo.button_pressed)
+	_site_button.disabled = false
+	_show_site(counts)
+	return counts
+
+
+func _show_site(counts: Dictionary) -> void:
 	if counts.has("error"):
 		_site_status.text = counts.error
 		return
