@@ -71,7 +71,7 @@ func _init() -> void:
 	add_child(edit)
 
 	GnUi.heading(self, "Add a path through cameras")
-	GnUi.note(self, "Pick two or more saved cameras; the camera glides through them in list order.")
+	GnUi.note(self, "Pick saved cameras: with two or more the camera glides through them in list order; with one it holds still (to watch people walk by, say).")
 	_cams = ItemList.new()
 	_cams.select_mode = ItemList.SELECT_MULTI
 	_cams.custom_minimum_size.y = 80
@@ -172,6 +172,8 @@ func refresh() -> void:
 func _describe(s: Dictionary) -> String:
 	if s.type == "orbit":
 		return "Orbit %d° (%.1f s)" % [int(s.degrees), float(s.seconds)]
+	if s.cameras.size() == 1:
+		return "Still from %s (%.1f s)" % [s.cameras[0], float(s.seconds)]
 	return "Path %s (%.1f s)" % [" → ".join(s.cameras), float(s.seconds)]
 
 
@@ -228,8 +230,8 @@ func _add_path() -> void:
 	var names: Array = []
 	for i in _cams.get_selected_items():
 		names.append(_cams.get_item_text(i))
-	if names.size() < 2:
-		_status.text = "Pick at least two cameras for a path."
+	if names.is_empty():
+		_status.text = "Pick a saved camera (two or more for a moving shot)."
 		return
 	var list := GnMovie.shots()
 	list.append(GnMovie.path_shot(names, _path_secs.value))

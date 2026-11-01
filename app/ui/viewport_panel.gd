@@ -484,10 +484,12 @@ func _draw_overlay() -> void:
 	_draw_axes()
 	var tool_note: String = App.modules.paths.status()
 	if tool_note != "":
+		# Wrapped to the view, on a dark band so it reads over any scene.
 		var font := _overlay.get_theme_default_font()
-		var width := font.get_string_size(tool_note, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-		_overlay.draw_rect(Rect2(Vector2(8, 8), Vector2(width + 16, 26)), Color(0, 0, 0, 0.55))
-		_overlay.draw_string(font, Vector2(16, 26), tool_note, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
+		var room := maxf(_overlay.size.x - 32.0, 120.0)
+		var box := font.get_multiline_string_size(tool_note, HORIZONTAL_ALIGNMENT_LEFT, room, 15)
+		_overlay.draw_rect(Rect2(Vector2(8, 8), box + Vector2(16, 10)), Color(0, 0, 0, 0.55))
+		_overlay.draw_multiline_string(font, Vector2(16, 8 + font.get_ascent(15) + 5), tool_note, HORIZONTAL_ALIGNMENT_LEFT, room, 15, -1, Color.WHITE)
 	var s := gizmo.status()
 	if s != "":
 		_overlay.draw_string(_overlay.get_theme_default_font(), _mouse + Vector2(16, -12), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)

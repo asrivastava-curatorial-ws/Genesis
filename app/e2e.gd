@@ -1,12 +1,13 @@
 extends RefCounted
 
 # The end-to-end test of the brief (section 16), run in the real program with
-# a real renderer, in three separate launches (each phase in a fresh program,
+# a real renderer, in separate launches (each phase in a fresh program,
 # which also keeps one launch's memory use down):
 #
 #   Genesis -- --e2e build  <folder>   make a project, fill it, save, quit
 #   Genesis -- --e2e verify <folder>   open it again, check it, render, quit
 #   Genesis -- --e2e media  <folder>   AI upscale, film (MP4), concert render
+#   Genesis -- --e2e walk   <folder>   people walking a curved path, in a film
 #
 # A step that cannot run on this computer (no Blender, no internet for the
 # site) is written down as "not tested" with the reason; it is never passed.
@@ -87,6 +88,8 @@ static func run(main: Node, phase: String, out_dir: String) -> int:
 			await _build(main, out_dir)
 		"verify":
 			await _verify(main, out_dir)
+		"walk":
+			await _walk(main, out_dir)
 		_:
 			await _media(main, out_dir)
 	var report := FileAccess.open(out_dir.path_join("E2E_RESULTS_%s.md" % phase), FileAccess.WRITE)
@@ -377,6 +380,125 @@ static func _media(main: Node, out_dir: String) -> void:
 	for f in [show_still, film]:
 		if f != "" and FileAccess.file_exists(f):
 			DirAccess.copy_absolute(f, out_dir.path_join("screenshots").path_join("render_" + f.get_file()))
+
+
+# ------------------------------------------------------------------ walk
+# Lumion-style moving people: a curved path drawn with the path tool on the
+# plaza, two walking figures from the library put on it with the Movie page's
+# button, a still camera watching, and the film rendered to MP4.
+static func _walk(main: Node, out_dir: String) -> void:
+	var expect: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(out_dir.path_join("expect.json")))
+	var err: String = App.projects.open(expect.project)
+	await _frames(main, 3)
+	_step("17c", err == "", "Launch Genesis again and reopen the project %s" % err)
+	var ws: Control = main.screen
+	var vpp: Control = ws.viewport_panel
+	vpp.set_view("top")
+	vpp.pivot = Vector3(0, 0, 8)
+	vpp.distance = 40.0
+	vpp._apply_camera()
+	await _frames(main, 2)
+	var vcam: Camera3D = vpp.camera
+	var paths = App.modules.paths
+	# 27. The path, clicked point by point in the 3D view, then Enter.
+	var route_pts := [Vector3(-9, 0, 6), Vector3(-3, 0, 10), Vector3(4, 0, 9), Vector3(9, 0, 4)]
+	paths.start_new()
+	for w in route_pts:
+		var at: Vector2 = vcam.unproject_position(w)
+		paths.handle(vcam, _mouse_button(at, true))
+		paths.handle(vcam, _mouse_button(at, false))
+	var enter := InputEventKey.new()
+	enter.keycode = KEY_ENTER
+	enter.pressed = true
+	paths.key(enter)
+	var route = paths.path
+	var shape_ok: bool = route != null and route.curve.point_count == route_pts.size() and route.smooth
+	var on_points := shape_ok
+	if shape_ok:
+		for i in route_pts.size():
+			var p: Vector3 = route.to_global(route.curve.get_point_position(i))
+			on_points = on_points and Vector2(p.x, p.z).distance_to(Vector2(route_pts[i].x, route_pts[i].z)) < 0.1
+	_step("27", shape_ok and on_points, "Draw a curved walking path with the path tool (%d points, rounded corners, %.1f m long)" % [
+		route.curve.point_count if route else 0, route.curve.get_baked_length() if route else 0.0])
+	# 28. Two walkers from the library, put on it with the Movie page's button.
+	var walkers: Array = GnAssets.scan().assets.filter(func(a): return a.category == "people" and str(a.path).get_file().begins_with("walker"))
+	var placed: Array = []
+	for i in mini(2, walkers.size()):
+		var n: Node = GnPlacement.place(walkers[i].path, "people", route_pts[0] + Vector3(i * 1.5, 0, 0))
+		if n:
+			placed.append(n)
+	GnHost.selection().set_nodes(placed + ([route] if route else []))
+	await _frames(main, 1)
+	var movie_page: Control = ws.genesis_panel._stack.get_node("Movie").get_child(0)
+	movie_page._ride()
+	var riding: bool = route != null and placed.size() == 2 and placed.all(func(n): return is_instance_valid(n) and n.get_parent() == route)
+	# A still camera that watches the plaza; a 3-second shot from it.
+	var watch := Camera3D.new()
+	watch.name = "Watch the walk"
+	watch.fov = 55.0
+	GnCameras.add(watch)
+	watch.look_at_from_position(Vector3(0, 3.5, 24), Vector3(0, 0.8, 7))
+	GnMovie.set_shots([GnMovie.path_shot([str(watch.name)], 3.0)], "Walk")
+	var shots := GnMovie.shots()
+	# Where the walkers are, and how far through a step, at 0 s and 0.5 s: the
+	# walk cycle follows the distance covered (a 1.4 m stride), so half a
+	# second in at 1.4 m/s is half a cycle on.
+	GnMovie.show_time(0.0, shots)
+	var p0: Vector3 = placed[0].global_position if riding else Vector3.ZERO
+	var ap: AnimationPlayer = placed[0].find_child("AnimationPlayer", true, false) if riding else null
+	var step0: float = ap.current_animation_position if ap else -1.0
+	GnMovie.show_time(0.5, shots)
+	var p1: Vector3 = placed[0].global_position if riding else Vector3.ZERO
+	var step1: float = ap.current_animation_position if ap else -1.0
+	var cycle: float = ap.get_animation("walk").length if ap and ap.has_animation("walk") else 0.0
+	var walked := p0.distance_to(p1)
+	var speed: float = float(route.speed) if route else 0.0
+	_step("28", riding and absf(walked - speed * 0.5) < 0.1 and cycle > 0.0 and absf(fposmod(step1 - step0, cycle) - cycle * 0.5) < cycle * 0.05,
+		"Put two walking figures on it; in the film they cover %.2f m in 0.5 s at %.1f m/s, and their legs step with it (walk cycle %.2f s long: at %.2f s, then %.2f s)" % [walked, speed, cycle, step0, step1])
+	# 29. The film: 3 s at 8 frames a second, 640×360, to MP4.
+	var film: String = await GnMovie.render(shots, Vector2i(640, 360), main, "walking", Callable(), 8)
+	var mp4_ok := film.ends_with(".mp4") and FileAccess.file_exists(film)
+	var probe := []
+	if mp4_ok:
+		OS.execute(GnFfmpeg.find("ffprobe"), ["-v", "error", "-count_frames", "-show_entries", "stream=width,height,nb_read_frames", "-of", "csv=p=0", film], probe, true)
+	var frames := GnPaths.at(GnRender.OUTPUT_DIR).path_join("walking")
+	var first := Image.load_from_file(frames.path_join("frame_00000.png"))
+	var last := Image.load_from_file(frames.path_join("frame_00023.png"))
+	var changed := _changed_share(first, last)
+	_step("29", mp4_ok and "\n".join(probe).contains("640,360,24") and changed > 0.0005 and changed < 0.2,
+		"Render the film to MP4 (%s: %s): between the first and last frames %.2f%% of the picture changes, where the figures walk" % [
+			film.get_file(), "\n".join(probe).strip_edges(), changed * 100.0])
+	App.scenes.save()
+	var shots_dir := out_dir.path_join("screenshots")
+	DirAccess.make_dir_recursive_absolute(shots_dir)
+	for pair in [[film, "walking.mp4"], [frames.path_join("frame_00000.png"), "walking_first_frame.png"], [frames.path_join("frame_00023.png"), "walking_last_frame.png"]]:
+		if FileAccess.file_exists(pair[0]):
+			DirAccess.copy_absolute(pair[0], shots_dir.path_join(pair[1]))
+	# The path from above, selected: its line and points on the view.
+	GnMovie.show_time(1.5, shots)
+	vpp.set_view("top")
+	vpp.pivot = Vector3(0, 0, 7)
+	vpp.distance = 22.0
+	vpp._apply_camera()
+	GnHost.select(route)
+	await _frames(main, 3)
+	await _shot(main, "05_walking_path")
+
+
+# Share of pixels that differ clearly between two pictures of the same size.
+static func _changed_share(a: Image, b: Image) -> float:
+	if a == null or b == null or a.get_size() != b.get_size():
+		return -1.0
+	var n := 0
+	var total := 0
+	for y in range(0, a.get_height(), 2):
+		for x in range(0, a.get_width(), 2):
+			total += 1
+			var ca := a.get_pixel(x, y)
+			var cb := b.get_pixel(x, y)
+			if maxf(absf(ca.r - cb.r), maxf(absf(ca.g - cb.g), absf(ca.b - cb.b))) > 0.08:
+				n += 1
+	return float(n) / maxf(total, 1)
 
 
 static func _image_ok(path: String, size: Vector2i) -> bool:

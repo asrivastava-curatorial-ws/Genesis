@@ -6,9 +6,10 @@ extends RefCounted
 #   Genesis -- --make-demos <folder>
 #
 #   Architecture demo        a small museum pavilion: concrete, wood, glass and
-#                            paving; trees, furniture, people, cars; exterior,
-#                            interior and aerial cameras; daylight, golden hour
-#                            and night (blue hour, lights on) scenes
+#                            paving; trees, furniture, people, cars; people
+#                            walking a curved path; exterior, interior, aerial
+#                            and plaza cameras; a short film; daylight, golden
+#                            hour and night (blue hour, lights on) scenes
 #   Event production demo    a concert stage: deck, LED wall, truss, line
 #                            arrays, moving heads, audience, effects, haze, and
 #                            four show cues
@@ -35,10 +36,16 @@ const Fixture := preload("res://addons/genesis/set/gn_light_fixture.gd")
 const Crowd := preload("res://addons/genesis/set/gn_crowd.gd")
 const Effect := preload("res://addons/genesis/set/gn_effect.gd")
 const CueList := preload("res://addons/genesis/set/gn_cue_list.gd")
+const Mover := preload("res://addons/genesis/set/gn_mover.gd")
+const GnMovie := preload("res://addons/genesis/core/gn_movie.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 const RENDER_SIZE := Vector2i(1920, 1080)
 ## --render-samples --quality <name>: samples per pixel, as on the Render page.
 const QUALITY := {"preview": -1, "standard": 0, "high": 16, "max": 64}
+## The sample film of a scene that has one (the architecture demo's walk).
+const FILM_SIZE := Vector2i(960, 540)
+const FILM_FPS := 12
 
 
 static func run(main: Node, out_dir: String) -> int:
@@ -100,7 +107,7 @@ static func _architecture(main: Node, out_dir: String) -> int:
 		GnScatter.fill_circle(c[3], c[0], c[1], c[2])
 	var shrub := GnAssets.find("plants", "shrub_round")
 	if shrub != "":
-		GnScatter.fill_circle(shrub, Vector3(0, 0, 9.5), 4.0, 18)
+		GnScatter.fill_circle(shrub, Vector3(0, 0, 9.0), 3.0, 14)
 	var lib: Array = GnAssets.scan().assets
 	var spots := {"furniture": [Vector3(-3, 0.3, -1.5), Vector3(2.5, 0.3, -1.5), Vector3(0, 0.3, 1.5)],
 		"people": [Vector3(3, 0.3, 2.5), Vector3(-4.5, 0.3, 1), Vector3(6, 0, 8), Vector3(-2, 0, 10), Vector3(8.5, 0, 11)],
@@ -112,6 +119,21 @@ static func _architecture(main: Node, out_dir: String) -> int:
 				var node := GnPlacement.place(pool[(i * 7) % pool.size()].path, cat, spots[cat][i])
 				if node and cat == "vehicles":
 					node.rotation.y = PI * 0.5
+	# People walking across the front of the plaza, on a gently curving path
+	# (Movie > Moving objects): three walkers from the library, spaced along it.
+	var walk := Mover.new()
+	walk.name = "Plaza walk"
+	walk.curve = Mover.shaped(PackedVector3Array([Vector3(-11, 0.12, 12.4), Vector3(-4, 0.12, 13.2),
+		Vector3(3, 0.12, 12.4), Vector3(11, 0.12, 12.9)]), true)
+	walk.speed = 1.3
+	GnScene.add_node(walk, root, "Add a walking path", "mover")
+	var walker_assets: Array = lib.filter(func(a): return a.category == "people" and str(a.path).get_file().begins_with("walker"))
+	for i in mini(3, walker_assets.size()):
+		var w: Node3D = GnPlacement.place(walker_assets[(i * 3) % walker_assets.size()].path, "people", Vector3(0, 0, 12))
+		if w:
+			w.reparent(walk)
+			w.owner = root
+	walk.at_time(0.0)
 	# Interior downlights, aimed and spread as the Set page makes them.
 	for x in [-3.0, 0.0, 3.0]:
 		var d: Node3D = Fixture.new()
@@ -137,7 +159,8 @@ static func _architecture(main: Node, out_dir: String) -> int:
 		GnScene.add_node(u, root, "Add uplight")
 	# Cameras.
 	var cams := []
-	for spec in [["Exterior", Vector3(14, 2.2, 16), Vector3(0, 1.6, 0), "Crisp daylight"], ["Interior", Vector3(-4.6, 1.6, 3.4), Vector3(2, 1.4, -2), "Natural"], ["Aerial", Vector3(26, 22, 28), Vector3(0, 0, 2), "Natural"]]:
+	for spec in [["Exterior", Vector3(14, 2.2, 16), Vector3(0, 1.6, 0), "Crisp daylight"], ["Interior", Vector3(-4.6, 1.6, 3.4), Vector3(2, 1.4, -2), "Natural"],
+			["Aerial", Vector3(26, 22, 28), Vector3(0, 0, 2), "Natural"], ["Plaza", Vector3(6, 1.7, 22), Vector3(-1, 1.2, 11), "Crisp daylight"]]:
 		var c := Camera3D.new()
 		c.name = spec[0]
 		c.fov = 55.0
@@ -146,6 +169,9 @@ static func _architecture(main: Node, out_dir: String) -> int:
 		GnLook.apply_preset(c, GnLook.PRESETS[spec[3]])
 		cams.append(c)
 	GnEnvironment.apply("time_of_day", 11.0)
+	# A short film: the camera drifts from the exterior view towards the plaza
+	# while the people walk (Movie > Render movie).
+	GnMovie.set_shots([GnMovie.path_shot(["Exterior", "Plaza"], 6.0)], "Demo film")
 	App.scenes.save()
 	var failures := 0
 	# Golden hour and night (the blue hour after sunset, when the sky still
@@ -251,7 +277,8 @@ static func _event(main: Node, out_dir: String) -> int:
 # ---------------------------------------------------------------- renders
 ## Renders a demo project's sample pictures (a launch of its own):
 ##   Genesis -- --render-samples <project folder> [--quality preview|standard|high|max]
-## Every camera of the main scene; the first camera of each other scene.
+## Every camera of the main scene, and its film if it has one; the first camera
+## of each other scene.
 static func render_samples(main: Node, folder: String, quality := 0) -> int:
 	var err: String = App.projects.open(folder)
 	if err != "":
@@ -282,6 +309,20 @@ static func render_samples(main: Node, folder: String, quality := 0) -> int:
 				continue
 			DirAccess.rename_absolute(path, dest)
 			_say("ok   %s" % dest.get_file())
+		# The main scene's film, when it has one.
+		if scene.ends_with("main.tscn") and GnMovie.duration(GnMovie.shots()) > 0.0:
+			var film_dest := out.path_join("main_film.mp4")
+			if FileAccess.file_exists(film_dest):
+				_say("ok   %s (already there)" % film_dest.get_file())
+			else:
+				var film: String = await GnMovie.render(GnMovie.shots(), FILM_SIZE, main, "sample_film", Callable(), FILM_FPS)
+				if film.ends_with(".mp4") and FileAccess.file_exists(film):
+					DirAccess.rename_absolute(film, film_dest)
+					GnPaths.remove_tree(GnPaths.at(GnRender.OUTPUT_DIR).path_join("sample_film"))
+					_say("ok   %s" % film_dest.get_file())
+				else:
+					failures += 1
+					_say("FAIL %s film (%s)" % [scene.get_file(), film])
 	App.projects.close()
 	return failures
 
