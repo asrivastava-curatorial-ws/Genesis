@@ -35,6 +35,8 @@ Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limit
 - Saved scenes referred to project files by absolute path (Godot's relative-path option covers only `res://`).
 - Folder clean-up skipped hidden entries (`.genesis/`), so test and smoke-tour folders were left behind, and a folder holding only hidden files counted as empty for a new project.
 - The smoke tour reset the user's panel layout; it now runs on throwaway settings.
+- Live link re-imported linked models whenever their file times changed, so a copied or unzipped project re-imported everything on opening; it now keeps an MD5 fingerprint of each source.
+- The recent-projects list was lost if the program was killed; it is written as soon as it changes.
 - The architecture demo's downlights were made with the fixture defaults (an 8° beam tilted 60°) instead of the Set page's downlight settings, so the night scene rendered nearly black.
 
 ## Findings about the original

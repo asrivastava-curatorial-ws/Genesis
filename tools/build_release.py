@@ -119,7 +119,10 @@ def main():
     if os.path.exists(zpath):
         os.remove(zpath)
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
-        for base, _, files in os.walk(out):
+        for base, dirs, files in os.walk(out):
+            if not files and not dirs:
+                # Empty folders (a demo's assets/, backups/) are kept as folders.
+                z.write(base, os.path.join(name, os.path.relpath(base, out)))
             for f in sorted(files):
                 p = os.path.join(base, f)
                 # write() keeps the file's permissions (the executables stay executable).

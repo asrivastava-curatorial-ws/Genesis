@@ -132,9 +132,12 @@ func push_recent(folder: String) -> void:
 	list.erase(folder)
 	list.push_front(folder)
 	set_value("recent_projects", list.slice(0, MAX_RECENT))
+	# Written at once, so the list survives a crash or a killed program.
+	save()
 
 
 func remove_recent(folder: String) -> void:
 	var list := recent_projects()
 	list.erase(folder.simplify_path())
 	set_value("recent_projects", list)
+	save()

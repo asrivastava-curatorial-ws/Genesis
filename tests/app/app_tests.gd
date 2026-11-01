@@ -92,6 +92,9 @@ func _settings() -> void:
 	check(many.recent_projects().size() == SettingsService.MAX_RECENT and many.recent_projects()[0] == "/p/19", "settings: recent list is capped")
 	many.remove_recent("/p/19")
 	check(not "/p/19" in many.recent_projects(), "settings: a project can be removed from the list")
+	var reread := SettingsService.new(_tmp + "/many.json")
+	reread.load_from_disk()
+	check(reread.recent_projects() == many.recent_projects(), "settings: the recent list is on disk at once (it survives a crash)")
 	var changed := []
 	again.changed.connect(func(k): changed.append(k))
 	again.set_value("ui_scale", 1.5)

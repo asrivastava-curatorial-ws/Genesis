@@ -15,6 +15,10 @@ const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 
 const SOURCE := &"gn_source"
 const SOURCE_TIME := &"gn_source_time"
+## The source's MD5 when it was brought in. A copied, moved or unzipped project
+## has new file times but the same files; the fingerprint tells them apart from
+## a real re-export, so they are not brought in again.
+const SOURCE_HASH := &"gn_source_hash"
 
 static var enabled := true
 static var last_update := ""  # "house.glb at 14:05", for the Scene page
@@ -24,6 +28,21 @@ static var last_update := ""  # "house.glb at 14:05", for the Scene page
 static func link(node: Node, source: String) -> void:
 	node.set_meta(SOURCE, source)
 	node.set_meta(SOURCE_TIME, FileAccess.get_modified_time(source))
+	node.set_meta(SOURCE_HASH, FileAccess.get_md5(source))
+
+
+## The source's new time when it really changed since it was brought in, or -1.
+## A newer time with the same contents (the project was copied or unzipped) is
+## noted and otherwise ignored.
+static func changed_time(node: Node, source: String) -> int:
+	var t := FileAccess.get_modified_time(source)
+	if t <= int(node.get_meta(SOURCE_TIME, 0)):
+		return -1
+	var known := str(node.get_meta(SOURCE_HASH, ""))
+	if known != "" and FileAccess.get_md5(source) == known:
+		node.set_meta(SOURCE_TIME, t)
+		return -1
+	return t
 
 
 ## Every linked building in the edited scene.
@@ -51,13 +70,14 @@ static func poll() -> int:
 		var source := str(node.get_meta(SOURCE))
 		if not FileAccess.file_exists(source):
 			continue
-		var t := FileAccess.get_modified_time(source)
-		if t <= int(node.get_meta(SOURCE_TIME, 0)):
+		var t := changed_time(node, source)
+		if t < 0:
 			continue
 		var dest: String = node.scene_file_path
 		if dest == "" or DirAccess.copy_absolute(source, ProjectSettings.globalize_path(dest)) != OK:
 			continue
 		node.set_meta(SOURCE_TIME, t)
+		node.set_meta(SOURCE_HASH, FileAccess.get_md5(source))
 		if not dest in changed:
 			changed.append(dest)
 		last_update = "%s at %s" % [source.get_file(), Time.get_time_string_from_system().left(5)]
@@ -82,8 +102,7 @@ static func _poll_runtime() -> int:
 		var dest: String = node.scene_file_path
 		if dest == "" or not FileAccess.file_exists(source):
 			continue
-		var t := FileAccess.get_modified_time(source)
-		if t <= int(node.get_meta(SOURCE_TIME, 0)):
+		if changed_time(node, source) < 0:
 			continue
 		if not done.has(dest):
 			var opts: Dictionary = node.get_meta(GnModelImport.OPTIONS_META, {})
@@ -118,6 +137,7 @@ static func replace_instance(old: Node3D, path: String) -> Node3D:
 	for k in old.get_meta_list():
 		fresh.set_meta(k, old.get_meta(k))
 	fresh.set_meta(SOURCE_TIME, FileAccess.get_modified_time(str(old.get_meta(SOURCE))))
+	fresh.set_meta(SOURCE_HASH, FileAccess.get_md5(str(old.get_meta(SOURCE))))
 	# Materials the user put on surfaces, by where the mesh is in the model.
 	for mi in old.find_children("*", "MeshInstance3D", true, false):
 		var twin := fresh.get_node_or_null(old.get_path_to(mi)) as MeshInstance3D

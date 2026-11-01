@@ -306,6 +306,11 @@ func _live_link() -> void:
 	check(fresh_mesh.get_surface_override_material(0) == own, "live link: with the material the user gave it")
 	check(fresh.get_node_or_null("PlantedOnIt") != null and fresh.get_node("PlantedOnIt").owner == scenes.root, "live link: with what the user put on it")
 	check(GnLiveLink.poll() == 0, "live link: nothing more until the next re-export")
+	check(str(fresh.get_meta(GnLiveLink.SOURCE_HASH, "")) == FileAccess.get_md5(src + "/box.obj"), "live link: the new version's fingerprint is kept")
+	# The project copied or unzipped elsewhere: newer file times, same files.
+	fresh.set_meta(GnLiveLink.SOURCE_TIME, 0)
+	check(GnLiveLink.poll() == 0 and scenes.root.get_node("Box") == fresh, "live link: a copied project's unchanged sources are not brought in again")
+	check(int(fresh.get_meta(GnLiveLink.SOURCE_TIME)) > 0, "live link: their new times are noted")
 	scenes.save()
 	projects.close()
 
