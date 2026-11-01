@@ -5,7 +5,9 @@
 
 1. builds Linux and Windows with tools/build_standalone.sh (Linux is smoke-tested),
 2. lays out Genesis-Community-<version>/ as below,
-3. writes checksums/SHA256SUMS and zips it to release/Genesis-Community-<version>.zip.
+3. writes checksums/SHA256SUMS and zips it to release/Genesis-Community-<version>.zip,
+   and to -linux-x86_64.zip and -windows-x86_64.zip (each without the other
+   platform's program; both unpack into the same folder).
 
     START_HERE.md README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md
     applications/linux-x86_64/    Genesis, Genesis.pck, Genesis.sh, genesis.png
@@ -111,22 +113,41 @@ def main():
                 for block in iter(lambda: fh.read(1 << 20), b""):
                     h.update(block)
             sums.append("%s  %s" % (h.hexdigest(), os.path.relpath(p, out)))
+    sums.sort(key=lambda s: s[66:])
     os.makedirs(os.path.join(out, "checksums"))
     with open(os.path.join(out, "checksums/SHA256SUMS"), "w") as f:
-        f.write("\n".join(sorted(sums, key=lambda s: s[66:])) + "\n")
-    # The zip, keeping the executable bits.
-    zpath = os.path.join(out_root, name + ".zip")
+        f.write("\n".join(sums) + "\n")
+    # The whole release, and one zip per platform: the same folder without the
+    # other platform's program (each under the 500 MB many upload limits allow).
+    # Both unpack into the same folder, so together they make the whole release.
+    write_zip(out, name, os.path.join(out_root, name + ".zip"), sums, None)
+    write_zip(out, name, os.path.join(out_root, name + "-linux-x86_64.zip"), sums, "applications/windows-x86_64/")
+    write_zip(out, name, os.path.join(out_root, name + "-windows-x86_64.zip"), sums, "applications/linux-x86_64/")
+
+
+def write_zip(out, name, zpath, sums, leave_out):
+    """Zips the release folder `out` as `name/...`, keeping the executable bits;
+    files under `leave_out` are left out, and so are their checksums."""
     if os.path.exists(zpath):
         os.remove(zpath)
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
         for base, dirs, files in os.walk(out):
+            rel_base = os.path.relpath(base, out)
+            if leave_out and (rel_base + "/").startswith(leave_out):
+                continue
             if not files and not dirs:
                 # Empty folders (a demo's assets/, backups/) are kept as folders.
-                z.write(base, os.path.join(name, os.path.relpath(base, out)))
+                z.write(base, os.path.join(name, rel_base))
             for f in sorted(files):
                 p = os.path.join(base, f)
+                rel = os.path.relpath(p, out)
+                if leave_out and rel == "checksums/SHA256SUMS":
+                    kept = [s for s in sums if not s[66:].startswith(leave_out)]
+                    info = zipfile.ZipInfo.from_file(p, os.path.join(name, rel))
+                    z.writestr(info, "\n".join(kept) + "\n", zipfile.ZIP_DEFLATED)
+                    continue
                 # write() keeps the file's permissions (the executables stay executable).
-                z.write(p, os.path.join(name, os.path.relpath(p, out)))
+                z.write(p, os.path.join(name, rel))
     print("Wrote %s (%.0f MB)" % (zpath, os.path.getsize(zpath) / 1e6))
 
 

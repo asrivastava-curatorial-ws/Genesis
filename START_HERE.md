@@ -30,6 +30,8 @@ Genesis-Community-1.0.0-rc1/
 
 Each program needs the `.pck` file next to it. Keep the two files together.
 
+The release comes as one zip with both programs (`Genesis-Community-1.0.0-rc1.zip`), or as one zip per platform (`…-linux-x86_64.zip`, `…-windows-x86_64.zip`). A per-platform zip holds everything except the other platform's program. All of them unpack to this same folder, so unpacking both per-platform zips gives the whole release.
+
 ## 1. Check the download (optional)
 
 Linux:
@@ -51,7 +53,7 @@ Get-Content checksums\SHA256SUMS | ForEach-Object {
 ## 2. Run it on Linux (Ubuntu or Kubuntu 24.04)
 
 ```bash
-unzip Genesis-Community-1.0.0-rc1.zip -d ~/Applications
+unzip Genesis-Community-1.0.0-rc1-linux-x86_64.zip -d ~/Applications     # or the zip with both programs
 cd ~/Applications/Genesis-Community-1.0.0-rc1/applications/linux-x86_64
 ./Genesis.sh --check              # graphics device and optional tools found
 ./Genesis.sh                      # start Genesis
@@ -74,7 +76,7 @@ vulkaninfo --summary | grep -E "deviceName|driverName"
 
 ## 3. Run it on Windows 10 or 11
 
-1. Right-click the zip and choose *Extract All*. Pick a folder you can write to, such as `Documents`.
+1. Right-click `Genesis-Community-1.0.0-rc1-windows-x86_64.zip` (or the zip with both programs) and choose *Extract All*. Pick a folder you can write to, such as `Documents`.
 2. Open `applications\windows-x86_64` and double-click **Genesis.bat**.
 3. SmartScreen may warn that the program is not recognised, because it is not code-signed. Choose *More info*, then *Run anyway*.
 
@@ -259,7 +261,7 @@ bash tests/run_app_tests.sh                       # headless suites and the smok
 bash tools/build_standalone.sh linux windows      # build/linux and build/windows; the Linux build is smoke-tested
 build/linux/Genesis.x86_64 -- --make-demos ~/genesis-demos                       # the two demo projects
 build/linux/Genesis.x86_64 -- --render-samples ~/genesis-demos/"Architecture demo" --quality preview   # or standard, high, max
-python3 tools/build_release.py --skip-build --demos ~/genesis-demos              # release/Genesis-Community-<version>.zip
+python3 tools/build_release.py --skip-build --demos ~/genesis-demos              # release/Genesis-Community-<version>.zip, plus one zip per platform
 ```
 
 - The original editor plugin still works. Open the folder in the Godot 4.7.2 editor and Genesis appears as a dock.

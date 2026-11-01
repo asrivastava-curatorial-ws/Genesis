@@ -4,7 +4,7 @@
 
 ## 1. Unpack
 
-Unzip `Genesis-Community-1.0.0-rc1.zip` anywhere you can write (Documents, a USB drive). Open `applications\windows-x86_64` and double-click **Genesis.bat** (or `Genesis.exe`).
+Unzip `Genesis-Community-1.0.0-rc1-windows-x86_64.zip` (or `Genesis-Community-1.0.0-rc1.zip`, which has both programs) anywhere you can write (Documents, a USB drive). Open `applications\windows-x86_64` and double-click **Genesis.bat** (or `Genesis.exe`).
 
 Nothing is installed and no administrator rights are needed. Settings, logs and downloaded tools go in `%APPDATA%\Genesis\`.
 
