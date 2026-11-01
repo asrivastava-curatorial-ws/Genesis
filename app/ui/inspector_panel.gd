@@ -175,18 +175,26 @@ func _property(prop: String) -> void:
 
 func _script_properties() -> void:
 	var shown := false
+	# A group's heading is shown only when a setting under it is: the engine's
+	# own groups (Process, Thread Group, Transform...) hold none of the
+	# script's settings and would be empty headings.
+	var pending := ""
 	for p in target.get_property_list():
 		var usage: int = p.usage
 		if usage & PROPERTY_USAGE_CATEGORY:
+			pending = ""
 			continue
 		if usage & PROPERTY_USAGE_GROUP or usage & PROPERTY_USAGE_SUBGROUP:
-			_section(str(p.name).capitalize())
+			pending = str(p.name).capitalize()
 			continue
 		if not (usage & PROPERTY_USAGE_SCRIPT_VARIABLE) or not (usage & PROPERTY_USAGE_EDITOR) or p.name in HIDDEN:
 			continue
 		if not shown:
 			_section(_kind(target))
 			shown = true
+		if pending != "":
+			_section(pending)
+			pending = ""
 		_editor_for(p, str(p.name).capitalize())
 
 

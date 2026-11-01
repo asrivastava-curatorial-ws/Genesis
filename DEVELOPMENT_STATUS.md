@@ -37,6 +37,7 @@ Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limit
 - The smoke tour reset the user's panel layout; it now runs on throwaway settings.
 - Live link re-imported linked models whenever their file times changed, so a copied or unzipped project re-imported everything on opening; it now keeps an MD5 fingerprint of each source.
 - The recent-projects list was lost if the program was killed; it is written as soon as it changes.
+- The Properties panel showed every engine property group as an empty heading for Genesis set pieces; headings now appear only above settings.
 - The architecture demo's downlights were made with the fixture defaults (an 8° beam tilted 60°) instead of the Set page's downlight settings, so the night scene rendered nearly black.
 
 ## Findings about the original

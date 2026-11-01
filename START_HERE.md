@@ -270,7 +270,7 @@ python3 tools/build_release.py --skip-build --demos ~/genesis-demos             
 
 **Tested** on Ubuntu 24.04 with software Vulkan (lavapipe):
 
-- 282 headless checks.
+- 283 headless checks.
 - The built program's smoke tour.
 - The end-to-end test with real renders: 1080p, 4K, 360°, Real-ESRGAN, MP4 and a concert render.
 - Saving and reopening across launches.

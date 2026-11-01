@@ -4,7 +4,7 @@ Each of the 34 release blockers in section 21 of the brief, with the evidence. *
 
 Test evidence (all in this repository):
 
-- `tests/run_app_tests.sh`: five headless suites (app core, editor, projects and import, modules, smoke tour of the whole program): 282 checks plus the tour.
+- `tests/run_app_tests.sh`: five headless suites (app core, editor, projects and import, modules, smoke tour of the whole program): 283 checks plus the tour.
 - `tools/build_standalone.sh`: the exported Linux program's own smoke tour, with the bundled library.
 - `reports/E2E_RESULTS_build.md`, `E2E_RESULTS_verify.md`, `E2E_RESULTS_media.md`: the end-to-end test of section 16, run on the **exported Linux program** in three separate launches with Godot's Forward+ renderer on Mesa's software Vulkan (no GPU on the build machine).
 - The original plugin's `selftest` suite, still passing with the plugin running through the new host layer.
