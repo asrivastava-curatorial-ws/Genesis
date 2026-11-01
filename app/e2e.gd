@@ -721,11 +721,14 @@ static func _image_ok(path: String, size: Vector2i) -> bool:
 	var img := Image.load_from_file(path)
 	if img == null or img.get_size() != size:
 		return false
-	# Not a blank picture: the colours vary.
-	var a := img.get_pixel(size.x / 4, size.y / 2)
-	var b := img.get_pixel(size.x / 2, size.y * 3 / 4)
-	var c := img.get_pixel(size.x * 3 / 4, size.y / 3)
-	return not (a.is_equal_approx(b) and b.is_equal_approx(c))
+	# Not a blank picture: across a grid of points the colours vary. (A mask
+	# can be black at any three chosen points: the design is small in it.)
+	var corner := img.get_pixel(0, 0)
+	for gy in 7:
+		for gx in 7:
+			if not img.get_pixel(size.x * (gx + 1) / 8, size.y * (gy + 1) / 8).is_equal_approx(corner):
+				return true
+	return false
 
 
 # ------------------------------------------------------------------ helpers
