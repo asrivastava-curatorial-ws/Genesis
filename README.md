@@ -25,6 +25,7 @@ Rendered by the program itself, from the two demo projects in `demos/` (Standard
 |---|---|
 | ![Architecture demo, daylight](docs/screenshots/demo_architecture_day.jpg) | ![Architecture demo, night](docs/screenshots/demo_architecture_night.jpg) |
 | ![Architecture demo, golden hour](docs/screenshots/demo_architecture_golden_hour.jpg) | ![Event production demo, photo pit](docs/screenshots/demo_event_photo_pit.jpg) |
+| ![A frame of the demo film: people walking across the plaza on a drawn path](docs/screenshots/demo_architecture_walk.jpg) | ![Architecture demo, the plaza camera](docs/screenshots/demo_architecture_plaza.jpg) |
 
 ## What it does
 

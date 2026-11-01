@@ -132,6 +132,7 @@ What the demos' cameras give at *Standard* quality:
 |---|---|
 | ![Daylight](docs/screenshots/demo_architecture_day.jpg) | ![Night: blue hour, lights on](docs/screenshots/demo_architecture_night.jpg) |
 | ![Interior](docs/screenshots/demo_architecture_interior.jpg) | ![Concert, photo pit](docs/screenshots/demo_event_photo_pit.jpg) |
+| ![A frame of the demo film: people walking across the plaza](docs/screenshots/demo_architecture_walk.jpg) | ![The plaza camera](docs/screenshots/demo_architecture_plaza.jpg) |
 
 Then start your own project:
 
