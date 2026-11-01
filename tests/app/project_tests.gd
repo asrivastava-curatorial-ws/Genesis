@@ -27,6 +27,8 @@ const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const HdrFile := preload("res://app/hdr_file.gd")
 const PdfFile := preload("res://app/pdf_file.gd")
+const Picker := preload("res://app/runtime/picker.gd")
+const EditOps := preload("res://app/runtime/edit_ops.gd")
 const GnCadImport := preload("res://addons/genesis/cad/gn_cad_import.gd")
 const GnPdf := preload("res://addons/genesis/cad/gn_pdf.gd")
 
@@ -87,6 +89,170 @@ func _run() -> void:
 	_folders()
 	await _own_library()
 	_pdf_plans()
+	_left_out()
+	_real_plugin_project()
+
+
+# ---------------------------------------------------------- files that are not here
+# A scene that refers to a model and a picture that are not on this computer
+# still opens: the model as an empty marker in its place, the picture blank.
+func _left_out() -> void:
+	check(projects.create(tmp, "Moved") == "", "absent: a project")
+	var scene_file: String = tmp + "/Moved/scenes/elsewhere.tscn"
+	_write(scene_file, "\n".join(["[gd_scene load_steps=4 format=3]", "",
+		"[ext_resource type=\"PackedScene\" path=\"../assets/gone_model.scn\" id=\"1\"]",
+		"[ext_resource type=\"Texture2D\" path=\"res://genesis_data/external/materials/brick/brick_Color.jpg\" id=\"2\"]",
+		"[ext_resource type=\"PackedScene\" path=\"res://genesis_assets/trees/beech.tscn\" id=\"5\"]",
+		"[ext_resource type=\"Texture2D\" path=\"res://genesis_data/external/skies/partly_cloudy.hdr\" id=\"6\"]", "",
+		"[sub_resource type=\"StandardMaterial3D\" id=\"3\"]", "albedo_texture = ExtResource(\"2\")", "",
+		"[sub_resource type=\"BoxMesh\" id=\"4\"]", "material = SubResource(\"3\")", "",
+		"[sub_resource type=\"PanoramaSkyMaterial\" id=\"7\"]", "panorama = ExtResource(\"6\")", "",
+		"[sub_resource type=\"Sky\" id=\"8\"]", "sky_material = SubResource(\"7\")", "",
+		"[sub_resource type=\"Environment\" id=\"9\"]", "background_mode = 2", "sky = SubResource(\"8\")", "",
+		"[node name=\"Elsewhere\" type=\"Node3D\"]", "",
+		"[node name=\"World\" type=\"WorldEnvironment\" parent=\".\"]", "environment = SubResource(\"9\")", "",
+		"[node name=\"Kiosk\" parent=\".\" instance=ExtResource(\"1\")]", "transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 2)", "",
+		"[node name=\"Beech\" parent=\".\" instance=ExtResource(\"5\")]", "transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 3)", "",
+		"[node name=\"Wall\" type=\"MeshInstance3D\" parent=\".\"]", "mesh = SubResource(\"4\")", ""]))
+	var err: String = scenes.open(scene_file)
+	var kiosk: Node = scenes.root.get_node_or_null("Kiosk") if err == "" else null
+	var wall: MeshInstance3D = scenes.root.get_node_or_null("Wall") if err == "" else null
+	var beech: Node = scenes.root.get_node_or_null("Beech") if err == "" else null
+	var world: WorldEnvironment = scenes.root.get_node_or_null("World") if err == "" else null
+	check(err == "" and scenes.missing_resources.size() == 4, "absent: a scene whose model, picture, plant and sky are not here still opens (%s)" % err)
+	check(kiosk is Node3D and (kiosk as Node3D).position == Vector3(4, 0, 2) and str(kiosk.get_meta(&"gn_missing_model", "")) == tmp + "/Moved/assets/gone_model.scn" and kiosk.get_child_count() == 0,
+		"absent: the missing model is an empty marker in its place, with its file noted")
+	check(wall != null and wall.mesh != null and wall.mesh.surface_get_material(0) is StandardMaterial3D, "absent: the rest is as it was")
+	check(not FileAccess.file_exists(tmp + "/Moved/scenes/.~opening_elsewhere.tscn") and FileAccess.get_file_as_string(scene_file).contains("gone_model.scn"),
+		"absent: the scene file itself is untouched until it is saved")
+	if kiosk == null or wall == null or beech == null or world == null:
+		projects.close()
+		return
+	# A plant from the downloaded library shows as the bundled stand-in, and a
+	# photographed sky as Genesis's own; neither is part of the scene.
+	var shown: Node = beech.get_node_or_null("StandIn")
+	check(shown != null and shown.scene_file_path == "res://genesis_assets/trees/tree_round.glb" and shown.owner == null,
+		"absent: the missing beech shows as the bundled stand-in tree, not part of the scene")
+	var leaf: Node = shown.find_children("*", "GeometryInstance3D", true, false)[0] if shown else null
+	check(leaf != null and Picker.selectable_of(leaf, scenes.root) == beech and not Picker.is_user_level(shown, scenes.root),
+		"absent: clicking the stand-in picks the tree's marker; the stand-in is not listed")
+	check(world.environment.sky.sky_material is ShaderMaterial, "absent: the missing photographed sky shows as Genesis's own sky")
+	var brick := wall.mesh.surface_get_material(0) as StandardMaterial3D
+	if ResourceLoader.exists("res://genesis_data/materials/textures/brick_albedo.png"):
+		check(brick.albedo_texture != null and brick.albedo_texture.resource_path.ends_with("brick_albedo.png"), "absent: the missing brick scan shows as the drawn brick preset's texture")
+	else:
+		check(brick.albedo_texture == null, "absent: the missing brick scan is blank (no drawn presets here)")
+	check(SceneService.stand_in_for("res://genesis_assets/trees/poplar.tscn").ends_with("tree_tall.glb") and SceneService.stand_in_for("res://genesis_assets/plants/hedge_shrub.tscn").ends_with("shrub_round.glb")
+		and SceneService.stand_in_for(tmp + "/Moved/assets/gone_model.scn") == "", "absent: tall trees, shrubs and grass have their own stand-ins; other models none")
+	# Saved, the scene still refers to all four; they come back once they are here.
+	var lamp := Node3D.new()
+	lamp.name = "Lamp"
+	kiosk.add_child(lamp)
+	lamp.owner = scenes.root
+	(kiosk as Node3D).position = Vector3(5, 0, 2)
+	var copies := EditOps.duplicate_nodes([beech])
+	check(scenes.save() == "", "absent: the scene saves")
+	var saved := FileAccess.get_file_as_string(scene_file)
+	check(saved.contains('path="../assets/gone_model.scn"') and saved.contains("instance=ExtResource(") and not saved.contains("gn_missing_model"),
+		"absent: saved, the marker is the missing model again (by its relative path)")
+	check(saved.contains('path="res://genesis_data/external/materials/brick/brick_Color.jpg"') and saved.contains("albedo_texture = ExtResource(") and not saved.contains("brick_albedo.png"),
+		"absent: saved, the material still uses the missing picture; the stand-in is not saved")
+	check(saved.count("beech.tscn") == 1 and saved.count('instance=ExtResource("%s")' % _ext_id_of(saved, "beech.tscn")) == 2 and not saved.contains("tree_round") and not saved.contains("StandIn"),
+		"absent: saved, both beeches (one a copy) are the library's beech; the stand-in is not saved")
+	check(saved.contains("[sub_resource type=\"PanoramaSkyMaterial\"") and saved.contains("partly_cloudy.hdr") and saved.contains("panorama = ExtResource(") and not saved.contains("gn_cloud_sky"),
+		"absent: saved, the sky is the photographed one again; Genesis's sky is not saved")
+	check(world.environment.sky.sky_material is ShaderMaterial and copies.size() == 1 and copies[0].get_node_or_null("StandIn") != null,
+		"absent: after saving, the stand-ins are shown again")
+	scenes.mark_dirty()
+	check(projects.autosave() and not FileAccess.get_file_as_string(projects.autosave_path(scene_file)).contains("tree_round")
+		and FileAccess.get_file_as_string(projects.autosave_path(scene_file)).contains("partly_cloudy.hdr"), "absent: the autosave copy keeps them the same way")
+	check(scenes.save() == "" and FileAccess.get_file_as_string(scene_file).count("gone_model.scn") == 1 and FileAccess.get_file_as_string(scene_file).count("brick_Color.jpg") == 1,
+		"absent: saving again does not add them twice")
+	scenes.open(scene_file)
+	check(scenes.missing_resources.size() == 4 and scenes.root.get_node_or_null("Kiosk/Lamp") != null and (scenes.root.get_node("Kiosk") as Node3D).position == Vector3(5, 0, 2),
+		"absent: opened again: the same four are missing, and the changes made meanwhile are kept")
+	# The model turns up: it is a model in the scene again, with what was added to it.
+	var box := MeshInstance3D.new()
+	box.name = "Box"
+	box.mesh = BoxMesh.new()
+	var model_root := Node3D.new()
+	model_root.name = "GoneModel"
+	model_root.add_child(box)
+	box.owner = model_root
+	var packed := PackedScene.new()
+	packed.pack(model_root)
+	model_root.free()
+	ResourceSaver.save(packed, tmp + "/Moved/assets/gone_model.scn")
+	scenes.open(scene_file)
+	var back: Node = scenes.root.get_node_or_null("Kiosk")
+	check(scenes.missing_resources.size() == 3 and back != null and back.scene_file_path.ends_with("gone_model.scn") and back.get_node_or_null("Box") != null and back.get_node_or_null("Lamp") != null,
+		"absent: once the model's file is there, the scene has the model again, with what was added to it")
+	projects.close()
+
+
+static func _ext_id_of(text: String, file_name: String) -> String:
+	for line in text.split("\n"):
+		if line.begins_with("[ext_resource") and line.contains(file_name):
+			return line.get_slice(' id="', 1).get_slice('"', 0)
+	return "?"
+
+
+# ---------------------------------------------------------- a real plugin project
+# GENESIS_PLUGIN_PROJECT=<folder of a Genesis project made in the Godot editor>
+# brings that project in, reads it, and checks every scene opens with nothing
+# missing but what only the downloaded library holds. Skipped without it.
+func _real_plugin_project() -> void:
+	var source := OS.get_environment("GENESIS_PLUGIN_PROJECT")
+	if source == "":
+		print("PROJECT_TEST note: GENESIS_PLUGIN_PROJECT is not set, so no real plugin project is brought in")
+		return
+	var scenes_before: Array = []
+	for f in DirAccess.get_files_at(source.path_join("scenes")):
+		if f.ends_with(".tscn"):
+			scenes_before.append(f)
+	var r: Dictionary = projects.import_plugin_project(source, tmp, "Real plugin project")
+	check(r.get("error", "x") == "" and DirAccess.dir_exists_absolute(tmp + "/Real plugin project"), "real project: %s is brought in %s" % [source.get_file(), r.get("error", "")])
+	if r.get("error", "x") != "":
+		return
+	var dir: String = r.folder
+	var problems: Array = []
+	var library_only: Array = []
+	var nodes := 0
+	for f in scenes_before:
+		var err: String = projects.open(dir) if not projects.is_open() else ""
+		if err != "":
+			problems.append(err)
+		var open_err: String = App.scenes.open(dir.path_join("scenes").path_join(f))
+		if open_err != "":
+			problems.append("%s: %s" % [f, open_err])
+			continue
+		nodes += App.scenes.root.find_children("*", "Node", true, false).size()
+		var miss: Array = projects.find_missing(App.scenes.root)
+		for m in App.scenes.missing_resources:
+			miss.append(m.path)
+		for m in miss:
+			var s := str(m)
+			# The downloaded library (scanned materials, photo skies, the plant
+			# library) is built by tools/setup.py, not carried by projects.
+			if SceneService.from_downloaded_library(s):
+				library_only.append(s)
+			else:
+				problems.append("%s: %s" % [f, s])
+		# Saved here, the scene keeps referring to all of it.
+		var scene_file: String = dir.path_join("scenes").path_join(f)
+		var refs_before := FileAccess.get_file_as_string(scene_file).count("[ext_resource ")
+		var gone_before: int = App.scenes.missing_resources.size()
+		if App.scenes.save() != "":
+			problems.append("%s: did not save" % f)
+		App.scenes.open(scene_file)
+		if App.scenes.missing_resources.size() != gone_before or FileAccess.get_file_as_string(scene_file).count("[ext_resource ") < refs_before:
+			problems.append("%s: saving lost references (%d of %d missing; %d of %d files)" % [f, App.scenes.missing_resources.size(), gone_before,
+				FileAccess.get_file_as_string(scene_file).count("[ext_resource "), refs_before])
+	check(problems.is_empty() and nodes > 0, "real project: its %d scenes open (%d nodes) and save without losing anything; nothing of the project's own is missing %s" % [scenes_before.size(), nodes, problems.slice(0, 4)])
+	check(str(r.report).contains("not on this computer"), "real project: the report lists what the scenes use that is not here")
+	print("PROJECT_TEST note: real project: %d references to the downloaded library (setup.py) not installed here; the scenes open without them" % library_only.size())
+	print(str(r.report).replace("\n", "\nPROJECT_TEST report: "))
+	projects.close()
 
 
 # ---------------------------------------------------------- PDF plans

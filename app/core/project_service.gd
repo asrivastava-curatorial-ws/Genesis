@@ -21,6 +21,7 @@ const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 const SettingsService := preload("res://app/core/settings_service.gd")
+const SceneService := preload("res://app/runtime/scene_service.gd")
 
 const MANIFEST := "genesis.project.json"
 const FORMAT := 1
@@ -253,13 +254,10 @@ func autosave_path(scene_file: String) -> String:
 func autosave() -> bool:
 	if not is_open() or not _scenes.has_scene() or not _scenes.dirty or _scenes.path == "":
 		return false
-	var packed := PackedScene.new()
-	if packed.pack(_scenes.root) != OK:
-		return false
 	var auto := autosave_path(_scenes.path)
 	DirAccess.make_dir_recursive_absolute(auto.get_base_dir())
-	# Same folder depth as scenes/, so relative paths in it work unchanged.
-	return _scenes.write_scene(packed, auto, folder) == OK
+	# Paths in it are written relative to where it is.
+	return _scenes.write_copy(auto, folder) == OK
 
 
 ## True when there is unsaved work from last time, newer than the scene.
@@ -458,6 +456,18 @@ func import_plugin_project(source: String, parent_dir: String, project: String) 
 	if scene_names.is_empty():
 		return {"error": "%s has no scenes to bring in." % source}
 	report.append("- %d scenes brought in: %s" % [scene_names.size(), ", ".join(scene_names)])
+	# What the scenes use that is not on this computer: they open without it.
+	var absent := {}
+	for s in scene_names:
+		var scene_file := dir.path_join("scenes").path_join(s)
+		for m in SceneService.missing_ext_resources(scene_file, FileAccess.get_file_as_string(scene_file)):
+			absent[str(m.path)] = true
+	if not absent.is_empty():
+		var lib := absent.keys().filter(func(p): return SceneService.from_downloaded_library(str(p)))
+		report.append("- %d files the scenes use are not on this computer; the scenes open without them and keep referring to them when saved%s:" % [absent.size(),
+			" (%d are the downloaded library of photo skies, scanned materials and plants, which this program was built without; see Known limitations)" % lib.size() if not lib.is_empty() else ""])
+		for p in absent.keys().slice(0, 40):
+			report.append("  - %s" % p)
 	# The main scene: the project's own, else the first.
 	var main := "scenes/" + scene_names[0]
 	var cfg := ConfigFile.new()

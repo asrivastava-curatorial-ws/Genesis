@@ -472,6 +472,16 @@ func _show_workspace() -> void:
 
 func _on_scene_opened(_root: Node) -> void:
 	_update_title()
+	# Things the scene refers to that are not on this computer were left out
+	# so that it opens; say what, so nothing is lost without a word.
+	var gone: Array = App.scenes.missing_resources
+	if not gone.is_empty():
+		for m in gone:
+			print("Genesis: not on this computer, left out of the scene: %s (%s)" % [m.path, m.type])
+		var library := gone.filter(func(m): return SceneService.from_downloaded_library(str(m.path)))
+		App.notify.warning("%d things this scene uses are not on this computer; it opened without them." % gone.size(),
+			("%d are from the downloaded library (photo skies, scanned materials, plants), which this program was built without. " % library.size() if not library.is_empty() else "")
+			+ "Models left out are empty markers in their place. Saving keeps every reference, so they come back once the files are here. The Console lists them all. First: %s" % gone[0].path)
 
 
 func _on_dirty(_dirty: bool) -> void:

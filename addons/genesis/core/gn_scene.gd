@@ -54,8 +54,12 @@ static func add_nodes(nodes: Array, parent: Node, action: String) -> void:
 
 # Every node under an added one needs the scene root as owner or it is not
 # saved. Instanced scenes are the exception: their insides belong to them.
+# So is a stand-in shown for a model that is not on this computer: never saved.
 static func _saved_nodes(node: Node) -> Array[Node]:
-	var out: Array[Node] = [node]
+	var out: Array[Node] = []
+	if node.has_meta(&"gn_stand_in"):
+		return out
+	out.append(node)
 	if node.scene_file_path == "":
 		for child in node.get_children():
 			out.append_array(_saved_nodes(child))

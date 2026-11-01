@@ -260,7 +260,10 @@ static func _sun_and_sky(light: DirectionalLight3D, env: Environment, vals: Dict
 		changes.append([light, "light_color", info.colour])
 		changes.append([env, "sky_rotation", Vector3(0, deg_to_rad(h), 0)])
 		if sky_changed or not env.sky.sky_material is PanoramaSkyMaterial 				or env.sky.sky_material.resource_name != photo:
-			changes.append([env.sky, "sky_material", GnSky.material(photo)])
+			# A photo that is not on this computer leaves the sky as it is.
+			var photo_mat := GnSky.material(photo)
+			if photo_mat:
+				changes.append([env.sky, "sky_material", photo_mat])
 		return changes
 	var el := sun_elevation(t)
 	var rot := sun_rotation(t, h)
@@ -303,6 +306,21 @@ static func _sun_and_sky(light: DirectionalLight3D, env: Environment, vals: Dict
 	changes.append([mat, "shader_parameter/energy", dusk])
 	changes.append([env, "fog_light_color", p.horizon * dusk])
 	return changes
+
+
+## Genesis's own clear sky with a few clouds, shown in place of a photographed
+## sky that is not on this computer. The scene keeps referring to the photo
+## (see SceneService); this is never saved.
+static func stand_in_sky() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = CLOUD_SKY
+	var p: Dictionary = SKIES["Clear"]
+	mat.set_shader_parameter("sky_top", p.top)
+	mat.set_shader_parameter("sky_horizon", p.horizon)
+	mat.set_shader_parameter("ground", p.ground)
+	mat.set_shader_parameter("cloudiness", float(DEFAULTS.cloudiness))
+	mat.set_shader_parameter("energy", 1.0)
+	return mat
 
 
 # Every sky a user can pick: the procedural ones that follow the time of

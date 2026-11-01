@@ -20,6 +20,15 @@ OUT="$HERE/build"
 TREE="$OUT/tree"
 TARGETS=("$@"); [ ${#TARGETS[@]} -eq 0 ] && TARGETS=(linux)
 
+# The material presets. tools/setup.py builds them from scanned materials when
+# those have been downloaded; without them tools/make_materials.gd draws its
+# own (CC0, no internet needed). Either way they are made here if missing.
+if [ "${NO_ASSETS:-0}" != 1 ] && [ ! -f "$HERE/genesis_data/materials/concrete.tres" ]; then
+	echo "Drawing the material presets (tools/make_materials.gd)..."
+	mkdir -p "$OUT"
+	"$GODOT" --headless --path "$HERE" -s res://tools/make_materials.gd > "$OUT/materials.log" 2>&1 || { tail -20 "$OUT/materials.log"; exit 1; }
+fi
+
 # Keep Godot's import cache (.godot) between builds: the library is imported once.
 mkdir -p "$TREE"
 find "$TREE" -mindepth 1 -maxdepth 1 ! -name .godot -exec rm -rf {} +
