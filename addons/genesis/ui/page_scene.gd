@@ -12,6 +12,7 @@ const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
 const GnLayers := preload("res://addons/genesis/core/gn_layers.gd")
 const GnLiveLink := preload("res://addons/genesis/core/gn_live_link.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 
 
 var _new_name: LineEdit
@@ -118,9 +119,11 @@ func refresh() -> void:
 	else:
 		_status.text = "Sun, sky and ground are in." if GnEnvironment.is_set_up() else ""
 	_setup_button.disabled = root == null or not root is Node3D or GnEnvironment.is_set_up()
-	var blender := str(GnHost.get_setting("blender_path"))
-	_blender.text = "Blender: %s" % blender.get_file() if blender != "" \
-		else "Blender isn't set up, so .blend files can't be brought in directly. GLB, FBX and OBJ work without it."
+	# The editor uses its own setting; the program finds Blender itself (the
+	# place set with Find Blender..., then the PATH and the usual places).
+	var blender := str(GnHost.get_setting("blender_path")) if GnHost.supports("editor_import") else GnModelImport.find_blender()
+	_blender.text = "Blender: %s" % blender if blender != "" \
+		else "Blender isn't found, so .blend files can't be brought in directly. GLB, FBX and OBJ work without it; install Blender, or tell Genesis where it is with Find Blender…"
 
 
 # A new scene with the world already in it: the scene a user wants in 95% of

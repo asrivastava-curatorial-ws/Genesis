@@ -95,16 +95,33 @@ func at_time(t: float) -> void:
 		_step(riders[i], fposmod(t * speed + i * gap, 1000000.0))
 
 
-# A walker (a person with a "walk" animation) steps in time with the ground
+# A walker (a person with a walk animation) steps in time with the ground
 # it covers: the cycle follows distance, not the clock, so feet don't skate
 # at any speed, and a given moment always shows the same step.
 static func _step(rider: Node, distance: float) -> void:
-	var ap := rider.find_child("AnimationPlayer", true, false) as AnimationPlayer
-	if ap == null or not ap.has_animation("walk"):
+	var players := rider.find_children("*", "AnimationPlayer", true, false)
+	var ap: AnimationPlayer = players[0] if not players.is_empty() else null
+	var anim := walk_animation(ap)
+	if anim == "":
 		return
-	var walk := ap.get_animation("walk")
+	var walk := ap.get_animation(anim)
 	walk.loop_mode = Animation.LOOP_LINEAR
 	var stride := float(rider.get_meta(&"gn_stride_m", 1.4))
-	ap.play("walk")
+	ap.play(anim)
 	ap.seek(fposmod(distance / stride, 1.0) * walk.length, true)
 	ap.pause()
+
+
+## The walk cycle of a model: its animation called "walk", else one with
+## "walk" in its name ("Walking", "Armature|Walk"), else its only animation
+## (a character downloaded with one walk cycle, as from Mixamo). "" if none.
+static func walk_animation(ap: AnimationPlayer) -> String:
+	if ap == null:
+		return ""
+	if ap.has_animation("walk"):
+		return "walk"
+	var names := Array(ap.get_animation_list()).filter(func(n): return n != "RESET")
+	for n in names:
+		if str(n).to_lower().contains("walk"):
+			return n
+	return names[0] if names.size() == 1 else ""

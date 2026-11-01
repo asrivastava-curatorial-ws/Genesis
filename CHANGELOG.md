@@ -6,6 +6,7 @@
 - **Paths for moving objects, drawn in the 3D view.** *Movie > Draw a path*: click points on the ground, a deck or a roof, Enter to finish. Drag a point to move it, Ctrl+click the line to add one, right-click to remove one, Backspace while drawing takes back the last; *Add points to it* carries on from the end. Curved or straight (*Smooth*), speed and direction in the Properties panel; every change is one undo step. Paths are drawn over the view and picked by clicking their line. This replaces the straight 20 m line of rc1.
 - **Walkthroughs with people walking.** Walkers from *Assets > People* put on a path walk along it, their stride matched to the ground they cover, in the preview and in the rendered film. The end-to-end test has a fourth launch, *walk*, that draws a path with the tool, puts two walkers on it from the Movie page, renders an MP4 and checks in the frames that they move and step.
 - **Still shots**: a shot from one saved camera holds that view.
+- **Your own walkers**: a character of your own walks along a path if its model has a walk animation (called *walk*, with *walk* in its name, or its only one, as Mixamo characters come).
 - **Your own library of models**: *Assets > Add a model…* (GLB, glTF, FBX, OBJ; .blend with Blender) with its name, category, unit, up axis and licence (your own work, CC0, CC BY, CC BY-SA or another), kept in your user data folder for every project. Your plants, trees and grass can be painted on the Landscape page. A project that uses one gets its own copy. *Remove it* and *Open your library folder*.
 - **Your own skies**: *Environment > Add a sky image…* takes a 360° panorama (HDR, JPG, PNG, WebP), finds the sun in it and lights the scene from there.
 - **Material presets in the build**: asphalt, brick, concrete, glass, grass, metal, stone and wood, drawn by `tools/make_materials.gd` (CC0, no internet needed). The build draws them when they are missing.
@@ -24,6 +25,8 @@
 - A scene referring to any file that was not on the computer could not be opened ("not a scene Genesis can read").
 - Blender's glTF exporter failing for want of numpy (Ubuntu's Blender package) gave an unhelpful error; it now says what to install.
 - A photographed sky whose file was missing turned the scene's sky empty when the time of day changed; the sky is now left as it is.
+- The Scene page said Blender was not set up when the program had found it on its own.
+- The self-test left the measured sun of its test sky in the user's cache.
 
 ## 1.0.0-rc1 (Genesis Community)
 

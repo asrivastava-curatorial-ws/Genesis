@@ -17,6 +17,7 @@ const LedWall := preload("res://addons/genesis/set/gn_led_wall.gd")
 const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const HdrFile := preload("res://app/hdr_file.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 static var _failures := 0
 
@@ -80,6 +81,8 @@ static func run(main: Node) -> int:
 		GnEnvironment.apply("sky", GnSky.label(sky.name))
 		_check(GnEnvironment.is_photo_sky(), "and the scene's sky is that photograph")
 		GnEnvironment.apply("sky", "Clear")
+		# Its measured sun is cached by name: leave nothing of the tour behind.
+		DirAccess.remove_absolute(GnPaths.cache_dir("skies").path_join("%s.sun.json" % sky.name))
 	App.host.library_dir = ""
 	# The undo checks below start from a clean history.
 	GnHost.undo_redo().clear_history()

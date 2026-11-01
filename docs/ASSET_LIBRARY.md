@@ -13,6 +13,7 @@ A model without a licence record is never listed. See [ASSET_LICENSING.md](ASSET
 - It is converted once, into a `.scn` file, with its licence record beside it as `.license.json`, in `~/.local/share/Genesis/library/<category>/` on Linux or `%APPDATA%\Genesis\library\<category>\` on Windows (*Open your library folder*).
 - It is listed in its category marked *(yours)*, and under the *Your own* filter.
 - Plants, trees and grass of your own can be painted on the Landscape page.
+- People of your own walk along Movie paths if the model carries a walk animation (called *walk*, with *walk* in its name, or its only animation).
 - A project that uses one gets a copy in its own `assets/library/` folder, so the project is complete on another computer.
 - *Remove it* takes it out of your library (projects keep their copies). The bundled models cannot be removed.
 

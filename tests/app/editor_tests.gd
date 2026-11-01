@@ -442,6 +442,29 @@ func _paths() -> void:
 	check(_near(rider.global_position, Vector3(30, 0, -6)), "paths: and follows when the path is reshaped")
 	ur.undo()
 	check(_near(rider.global_position, A), "paths: and when the reshaping is undone")
+	# A walker of one's own: a character with one animation (as Mixamo gives
+	# them, called "mixamo.com"), its player not named AnimationPlayer.
+	var walker := Node3D.new()
+	walker.name = "Own walker"
+	var player := AnimationPlayer.new()
+	player.name = "Player"
+	var cycle := Animation.new()
+	cycle.length = 1.0
+	var track := cycle.add_track(Animation.TYPE_VALUE)
+	cycle.track_set_path(track, NodePath(".:visible"))
+	cycle.track_insert_key(track, 0.0, true)
+	var anims := AnimationLibrary.new()
+	anims.add_animation("mixamo.com", cycle)
+	player.add_animation_library("", anims)
+	walker.add_child(player)
+	m.add_child(walker)
+	check(Mover.walk_animation(player) == "mixamo.com", "paths: a character of your own with one animation walks with it")
+	m.at_time(0.3)
+	var gap: float = m.curve.get_baked_length() / 2.0
+	var want := fposmod((0.3 * m.speed + gap) / 1.4, 1.0)
+	check(absf(player.current_animation_position - want) < 0.01, "paths: its steps follow the distance it covers (%.2f of its cycle, %.2f expected)" % [player.current_animation_position, want])
+	m.remove_child(walker)
+	walker.free()
 	# Picking a path by its line, which has nothing to click.
 	check(tool.route_at(cam, cam.unproject_position(mid), scene) == m, "paths: clicking the line of a path picks the path")
 	check(tool.route_at(cam, cam.unproject_position(Vector3(34, 0, 10)), scene) == null, "paths: clicking beside it does not")
