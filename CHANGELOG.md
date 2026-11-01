@@ -4,7 +4,7 @@
 
 ### New
 - **Paths for moving objects, drawn in the 3D view.** *Movie > Draw a path*: click points on the ground, a deck or a roof, Enter to finish. Drag a point to move it, Ctrl+click the line to add one, right-click to remove one, Backspace while drawing takes back the last; *Add points to it* carries on from the end. Curved or straight (*Smooth*), speed and direction in the Properties panel; every change is one undo step. Paths are drawn over the view and picked by clicking their line. This replaces the straight 20 m line of rc1.
-- **Walkthroughs with people walking.** Walkers from *Assets > People* put on a path walk along it, their stride matched to the ground they cover, in the preview and in the rendered film. The end-to-end test has a fourth launch, *walk*, that draws a path with the tool, puts two walkers on it from the Movie page, renders an MP4 and checks in the frames that they move and step.
+- **Walkthroughs with people walking.** Walkers from *Assets > People* put on a path walk along it, their stride matched to the ground they cover, in the preview and in the rendered film. The end-to-end test has a launch for it, *walk*, that draws a path with the tool, puts two walkers on it from the Movie page, renders an MP4 and checks in the frames that they move and step.
 - **Still shots**: a shot from one saved camera holds that view.
 - **Your own walkers**: a character of your own walks along a path if its model has a walk animation (called *walk*, with *walk* in its name, or its only one, as Mixamo characters come).
 - **Your own library of models**: *Assets > Add a model…* (GLB, glTF, FBX, OBJ; .blend with Blender) with its name, category, unit, up axis and licence (your own work, CC0, CC BY, CC BY-SA or another), kept in your user data folder for every project. Your plants, trees and grass can be painted on the Landscape page. A project that uses one gets its own copy. *Remove it* and *Open your library folder*.
@@ -15,6 +15,7 @@
 - **Site context from a saved map file**: *Scene > Bring in an OpenStreetMap file…* takes a `map.osm` exported from openstreetmap.org (or any extract), for computers that cannot reach the map services.
 
 ### Tested for the first time
+- The end-to-end test now runs in five launches (build, verify, views, media, walk). New: a site from an OpenStreetMap file, a material preset kept after relaunch, a sun study made from the Render page, render passes, a virtual tour and a stereo 360.
 - `.blend` import through Blender (Ubuntu's 4.0.2) and FBX (written by Blender): a 2 m bench comes in 2 m, in the suites and the end-to-end test.
 - PDF plans: CAD PDFs read as lines at scale, and drawings as pictures through Poppler at scale.
 - Outgoing show commands (OSC, text, TCP) to real listeners; live video on screens from a video file, an MPEG-TS stream over UDP and an SRT stream.

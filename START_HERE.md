@@ -4,7 +4,7 @@ Genesis Community is free architectural and event visualisation that runs as its
 
 > **This is a release candidate, not 1.0.0.**
 >
-> - **Linux:** the build was tested on Ubuntu 24.04 with software rendering. That covers every automated suite, a smoke tour of the built program, and the end-to-end test in four launches (build, save, relaunch, verify, render, 360°, photo match, upscale, film, and a walkthrough with people walking along a drawn path).
+> - **Linux:** the build was tested on Ubuntu 24.04 with software rendering. That covers every automated suite, a smoke tour of the built program, and the end-to-end test in five launches (build, save, relaunch, verify, render, 360°, photo match, upscale, film, and a walkthrough with people walking along a drawn path).
 > - **Windows:** this delivery is the Linux build only. The Windows program is built from the same source, but has **not** been run on Windows yet.
 >
 > What is still open is listed in [reports/ACCEPTANCE.md](reports/ACCEPTANCE.md) and [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
@@ -206,15 +206,18 @@ Start-Process -Wait .\Genesis.exe -ArgumentList '--headless','--','--smoke','--e
 Select-String -Path "$env:APPDATA\Genesis\logs\godot.log" -Pattern 'GENESIS_SMOKE (RESULT|FAIL)'
 ```
 
-**End-to-end test.** This is the full test from the brief, in four launches, with real rendering. On a computer with a GPU it takes a few minutes; in software it takes about an hour.
+**End-to-end test.** This is the full test from the brief, in five launches, with real rendering. On a computer with a GPU it takes a few minutes; in software it takes about an hour.
 
 1. *build* makes a project, brings in models (glTF, OBJ, FBX and `.blend` when Blender is there, and one into your own library), a DXF drawing and PDF plans, paints trees, sets the sun and your own sky, adds set pieces and cues, then saves and quits.
-2. *verify* reopens the project, checks every object and setting, then renders 1080p, 4K, a 360° panorama and a photo match.
-3. *media* covers upscaling (which needs the internet the first time), the film (which needs FFmpeg), a sun study made from the Render page, render passes, a virtual tour and a stereo 360 for headsets.
-4. *walk* draws a path with the path tool, puts two walkers on it from the Movie page, renders a short film and checks in its frames that they move and step.
+2. *verify* reopens the project, checks every object and setting, then renders 1080p and 4K.
+3. *views* renders a 360° panorama, a photo match, a sun study made from the Render page, render passes, a virtual tour and a stereo 360 for headsets.
+4. *media* covers upscaling (which needs the internet the first time), the film (which needs FFmpeg) and the concert.
+5. *walk* draws a path with the path tool, puts two walkers on it from the Movie page, renders a short film and checks in its frames that they move and step.
+
+Each launch starts the program afresh. With software rendering all graphics memory is the computer's own, and one launch doing every kind of picture needed more than the 6 GB of the build machine.
 
 ```bash
-for phase in build verify media walk; do ./Genesis.x86_64 -- --e2e $phase ~/genesis-e2e; done
+for phase in build verify views media walk; do ./Genesis.x86_64 -- --e2e $phase ~/genesis-e2e; done
 cat ~/genesis-e2e/E2E_RESULTS_*.md
 ```
 
@@ -279,9 +282,9 @@ python3 tools/build_release.py --skip-build --demos ~/genesis-demos --platforms 
 
 **Tested** on Ubuntu 24.04 with software Vulkan (lavapipe):
 
-- 377 headless checks in four suites, and a smoke tour of the whole program.
+- 386 headless checks in four suites, and a smoke tour of the whole program.
 - The built program's own smoke tour, with the bundled library and the material presets.
-- The end-to-end test in four launches with real renders: 1080p, 4K, 360° (mono, stereo and a virtual tour), photo match, a sun study, render passes, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
+- The end-to-end test in five launches with real renders: 1080p, 4K, 360° (mono, stereo and a virtual tour), photo match, a sun study, render passes, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
 - Importing glTF, OBJ, FBX and `.blend` (with Ubuntu's Blender 4.0.2), DXF, and PDF plans (as lines and as pictures).
 - Your own models and HDR skies, added, used, and carried into a project.
 - Saving and reopening across launches, and opening scenes whose files are not on the computer.
