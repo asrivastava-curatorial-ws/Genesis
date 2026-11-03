@@ -1,4 +1,4 @@
-# Known limitations (1.0.0 release candidate 2)
+# Known limitations (1.0.0 release candidate 3)
 
 Honest list of what does not work, is not included, or was not tested.
 
@@ -15,9 +15,13 @@ Honest list of what does not work, is not included, or was not tested.
 
 - **Scenes that use the downloaded library** (made with the plugin, or on a computer that has the library) open without it. While they are open, Genesis shows stand-ins in place of what is missing: the bundled tree, shrub or grass for a plant, its own sky for a photographed sky, and the drawn preset textures for a scanned material. A model that has no stand-in is an empty marker in its place. Saving keeps every reference, so the originals come back as soon as the library is installed. The stand-ins themselves are never saved.
 
-- **Windows**: this delivery is the Linux build only. The Windows program is built from the same source (`bash tools/build_standalone.sh windows`), but it has never been run on Windows.
+- **Windows**: this delivery is the Linux AppImage only. The Windows program is built from the same source (`bash tools/build_standalone.sh windows`), but it has never been run on Windows.
 
 ## Not tested in this release
+
+- **The interface on a real desktop**: the new look was checked in screenshots of every page and dialog taken on a virtual screen (Xvfb, 1500 × 900, at 100 % interface size), not on a KDE desktop or at other interface sizes.
+- **The desktop's own file dialogs**: on Kubuntu, Genesis asks the desktop portal (xdg-desktop-portal-kde, installed with Plasma) for KDE's dialog. The build machine has no desktop portal, so there Genesis's own dialog was used and tested. If the portal is missing or its dialog misbehaves, switch it off in Preferences (*Use this computer's own file dialogs*).
+- **Dropping files from a file manager**: dropping a model on the 3D view and a file on a dialog's path field were tested by calling the program's drop handling directly, not by dragging from Dolphin.
 
 - **Windows** (see above). In the previous release candidate a headless start under Wine 9 crashed inside Wine before any Genesis code ran.
 - **Real GPUs**: all graphical tests ran on Mesa's software Vulkan (lavapipe) on two CPU cores.

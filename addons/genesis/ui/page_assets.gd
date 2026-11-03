@@ -219,7 +219,7 @@ func _fill_icons(generation: int) -> void:
 			return  # the list was rebuilt, or the page closed; start over then
 		var path: String = _shown[i].path
 		if not _thumbs.has(path):
-			var icon := _thumbnail(path)
+			var icon: Texture2D = await _thumbnail(path)
 			if icon and i < _list.item_count:
 				_list.set_item_icon(i, icon)
 			done += 1
@@ -228,7 +228,8 @@ func _fill_icons(generation: int) -> void:
 
 
 # Godot's background previewer has nothing for an imported model, so the
-# thumbnail is rendered from the model's largest mesh, once per session.
+# thumbnail is rendered: the whole model where the host can, else its largest
+# mesh; once per session (and kept on disk by the host).
 static var _thumbs := {}
 
 static func _thumbnail(path: String) -> Texture2D:
@@ -252,11 +253,14 @@ static func _thumbnail(path: String) -> Texture2D:
 	var tex: Texture2D = null
 	# Without a GPU (headless runs, tests) there is nothing to render with.
 	if biggest and DisplayServer.get_name() != "headless":
-		tex = GnHost.model_preview(path, 128)
+		tex = await GnHost.model_preview(path, 128)
 		if tex == null:
-			var made := GnHost.mesh_previews([biggest], 96)
+			var made: Array = await GnHost.mesh_previews([biggest], 96)
 			tex = made[0] if not made.is_empty() else null
-	_thumbs[path] = tex
+	# A picture that did not come out is tried again next time; a model with
+	# nothing to draw, or no way to draw it, is not.
+	if tex != null or biggest == null or DisplayServer.get_name() == "headless":
+		_thumbs[path] = tex
 	return tex
 
 

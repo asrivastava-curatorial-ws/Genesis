@@ -53,7 +53,32 @@ done
 cat > "$APPDIR/AppRun" <<'EOF'
 #!/bin/sh
 # Starts Genesis Community from inside the AppImage.
+#   ./Genesis-Community-<version>-x86_64.AppImage                    start Genesis
+#   ./Genesis-Community-<version>-x86_64.AppImage "/path/to/project" start it with a project open
+#   ./Genesis-Community-<version>-x86_64.AppImage --install-shortcut add it to the applications menu
+#   ./Genesis-Community-<version>-x86_64.AppImage --remove-shortcut  take it off the menu again
 HERE="$(dirname "$(readlink -f "$0")")"
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+APPS="$DATA/applications"
+ICONS="$DATA/icons/hicolor/256x256/apps"
+case "${1:-}" in
+	--install-shortcut)
+		if [ -z "${APPIMAGE:-}" ]; then echo "Run this from the AppImage file itself."; exit 1; fi
+		mkdir -p "$APPS" "$ICONS"
+		cp "$HERE/genesis-community.png" "$ICONS/genesis-community.png"
+		sed "s|^Exec=.*|Exec=\"$APPIMAGE\" %F|" "$HERE/genesis-community.desktop" > "$APPS/genesis-community.desktop"
+		update-desktop-database "$APPS" >/dev/null 2>&1 || true
+		echo "Added Genesis Community to the applications menu:"
+		echo "  $APPS/genesis-community.desktop"
+		echo "  $ICONS/genesis-community.png"
+		echo "If you move the AppImage, run --install-shortcut again."
+		exit 0 ;;
+	--remove-shortcut)
+		rm -f "$APPS/genesis-community.desktop" "$ICONS/genesis-community.png"
+		update-desktop-database "$APPS" >/dev/null 2>&1 || true
+		echo "Removed Genesis Community from the applications menu."
+		exit 0 ;;
+esac
 exec "$HERE/usr/lib/genesis-community/Genesis.x86_64" "$@"
 EOF
 chmod +x "$APPDIR/AppRun"

@@ -59,7 +59,9 @@ var studio: Node
 
 
 func mesh_previews(meshes: Array, size: int) -> Array:
-	return studio.meshes(meshes, size) if is_instance_valid(studio) else []
+	if not is_instance_valid(studio):
+		return []
+	return await studio.meshes(meshes, size)
 
 
 func queue_resource_preview(path: String, receiver: Object, method: StringName, userdata: Variant) -> void:
@@ -111,7 +113,9 @@ func start_placing(path: String, category: String, label: String) -> bool:
 
 
 func model_preview(path: String, size: int) -> Texture2D:
-	return studio.model(path, size) if is_instance_valid(studio) else null
+	if not is_instance_valid(studio):
+		return null
+	return await studio.model(path, size)
 
 
 func dialog_parent() -> Node:

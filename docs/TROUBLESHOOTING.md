@@ -10,11 +10,11 @@
 
 **Files are missing when a project opens.** File > Find Missing Files… and choose a folder to search.
 
-**My own model or sky is not in the list.** Rescan library on the Assets page. Your library is in `~/.local/share/Genesis/library/` (Linux) or `%APPDATA%\Genesis\library\` (Windows); a model needs its `.license.json` beside it to be listed.
+**My own model or sky is not in the list.** Press the refresh button (two arrows, beside *Show*) on the Assets page. Your library is in `~/.local/share/Genesis/library/` (Linux) or `%APPDATA%\Genesis\library\` (Windows); a model needs its `.license.json` beside it to be listed.
 
 **A model looks too big, too small, or lying down.** Bring it in again with the right unit and *Up is Z* (CAD and SketchUp exports).
 
-**A .blend will not come in.** Blender must be installed; set its place in Tools > Dependencies. With Ubuntu's Blender package, the message may say its glTF exporter needs numpy: `sudo apt install python3-numpy`, or use Blender from blender.org.
+**A .blend will not come in.** Blender must be installed; set its place in Preferences > Other programs, or in Tools > Other Programs…. With Ubuntu's Blender package, the message may say its glTF exporter needs numpy: `sudo apt install python3-numpy`, or use Blender from blender.org.
 
 **A scene opened with "things this scene uses are not on this computer".** Usually the downloaded library (photographed skies, scanned materials, the plant library), which this build does not include. The scene opens with stand-ins where it can (bundled trees and shrubs, Genesis's own sky, drawn material textures) and empty markers for other models. The Console lists every missing file. Saving keeps the references, so nothing is lost: install the library (`tools/setup.py`, then build again) or put the missing files back, and they return. For files of the project's own, use File > Find Missing Files….
 

@@ -6,16 +6,16 @@ Genesis Community is free, open architectural and event visualisation, built on 
 
 It is the [Genesis](https://github.com/Utopian-Academy/Genesis) editor plugin by Utopian Academy, turned into a standalone desktop application: **no Godot editor is needed**. Every Genesis feature is kept; the plugin itself still works for those who prefer it.
 
-> **Release candidate 1.0.0-rc2.** Built and tested on Linux with software rendering. This delivery is the Linux build; the Windows build is made from the same source but has not yet been run on Windows. See [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) before relying on it.
+> **Release candidate 1.0.0-rc3.** Built and tested on Linux with software rendering, and delivered as one AppImage. New in rc3: a professional interface in GitHub's Dark Default theme with JetBrains Mono, models placed by clicking where they go, and one way of choosing files everywhere ([CHANGELOG.md](CHANGELOG.md)). The Windows build is made from the same source but has not yet been run on Windows. See [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) before relying on it.
 
 ## Get started
 
 **Read [START_HERE.md](START_HERE.md) first**: running it, the first ten minutes, a self-test for your computer, and where everything is kept. The whole manual is also one page: `docs/Genesis-Community-Manual.html` (and `.pdf`) in the release.
 
-- Linux: `applications/linux-x86_64/Genesis.sh` ([installation](docs/INSTALLATION_LINUX.md))
+- Linux: `Genesis-Community-1.0.0-rc3-x86_64.AppImage` ([installation](docs/INSTALLATION_LINUX.md))
 - Windows: `applications\windows-x86_64\Genesis.bat` ([installation](docs/INSTALLATION_WINDOWS.md))
 - Then the [quick start](docs/QUICK_START.md), and the [user manual](docs/USER_MANUAL.md).
-- Two demo projects are in `demos/`: open them with *Open Project…*.
+- Two demo projects come with it: choose one under *Try a demo* on the start screen.
 
 ## What the demos look like
 

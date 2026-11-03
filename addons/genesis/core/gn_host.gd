@@ -86,8 +86,9 @@ static func save_scene() -> void:
 	_be().save_scene()
 
 
+## Pictures of meshes. Some hosts draw them over a few frames: await it.
 static func mesh_previews(meshes: Array, size: int) -> Array:
-	return _be().mesh_previews(meshes, size)
+	return await _be().mesh_previews(meshes, size)
 
 
 static func queue_resource_preview(path: String, receiver: Object, method: StringName, userdata: Variant) -> void:
@@ -127,7 +128,7 @@ static func start_placing(path: String, category: String, label: String) -> bool
 
 ## A small picture of a whole model, or null where the host cannot draw one.
 static func model_preview(path: String, size: int) -> Texture2D:
-	return _be().model_preview(path, size)
+	return await _be().model_preview(path, size)
 
 
 static func supports(feature: String) -> bool:

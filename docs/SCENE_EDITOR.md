@@ -21,11 +21,11 @@ Q select, W move, E turn, R resize. Drag an arrow to move along it, a coloured s
 
 ## The scene tree
 
-Every object you placed, in groups as you arranged them. The insides of imported models and Genesis set pieces are not listed; they are edited as one object. Tick boxes show/hide and lock. Double-click (or F2) renames. Drag to reorder or to put one object inside another (it stays where it is in the world). Right-click: duplicate, delete, group, ungroup, show/hide, lock, frame.
+Every object you placed, in groups as you arranged them, each with an icon for its kind (a building, a tree, a person, a light, a camera...). The insides of imported models and Genesis set pieces are not listed; they are edited as one object. The eye at the end of a row shows or hides the object; the padlock locks it, so a click in the 3D view goes through it. *Search by name* narrows the list; the number at the top is how many objects there are. Double-click (or F2) renames. Drag to reorder or to put one object inside another (it stays where it is in the world). Right-click: duplicate, delete, group, ungroup, show/hide, lock, frame.
 
 ## Properties
 
-The selected object's place, turn and size, then what kind of thing it is: a light's colour, power and reach; a camera's lens; and every setting of a Genesis set piece (LED wall cabinets, truss length, crowd density...). Changes are undoable; dragging a value is one step.
+At the top, the selected object's name and what kind of thing it is. Then, in sections that fold (a folded section stays folded from one object to the next): its place, turn and size; a light's colour, brightness and reach; a camera's lens; every setting of a Genesis set piece (LED wall cabinets, truss length, crowd density...); and *About*: which library it is from, the file it was brought in from (the folder button shows it in the file manager) and the licence of a library model. Changes are undoable; dragging a value is one step.
 
 ## Adding
 

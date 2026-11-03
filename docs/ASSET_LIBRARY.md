@@ -2,7 +2,7 @@
 
 295 models ship with Genesis, all CC0, each with a licence record: people (posed MakeHuman figures and walkers), animals, vehicles, boats, aircraft, furniture, props, and a full production kit (speakers, lighting fixtures, consoles, racks, DJ gear, cameras, projectors, screens, barriers, road cases, tents). Stand-in trees, a shrub and grass are included; the 54-species plant library is built by `tools/setup.py`.
 
-ASSETS section: pick a category, search, click **Place** (it lands where the view looks), or **Place along a line** (two clicks). Thumbnails are drawn on first view and kept in the cache.
+ASSETS page: search, or choose what to *Show*; click a model, press **Place …** (or double-click it) and click where it goes in the 3D view. A see-through copy follows the mouse and stands on whatever is under it; **R** turns it, **Shift+click** places another, **Esc** stops. A model can also be dragged from the grid into the 3D view, and a model file dragged from the file manager onto the 3D view lands where it is dropped. **Place along a line** puts copies every few metres between two clicks. Thumbnails show the whole model; they are drawn on first view and kept in the cache.
 
 A model without a licence record is never listed. See [ASSET_LICENSING.md](ASSET_LICENSING.md).
 

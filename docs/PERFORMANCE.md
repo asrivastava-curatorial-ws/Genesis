@@ -6,4 +6,4 @@
 - **Memory**: a 4K render with 64 samples and a large site needs a GPU with 6 GB or more; Preview and Standard work on 4 GB. On low memory, render smaller and use AI upscaling.
 - **Software rendering** (no GPU, lavapipe) works for everything and is how this release was tested, but expect minutes per still.
 
-The release was tested on a 1-CPU virtual machine with software Vulkan. It has not been profiled on real GPUs; reports are welcome.
+The release was tested on a 2-core virtual machine with software Vulkan. It has not been profiled on real GPUs; reports are welcome.

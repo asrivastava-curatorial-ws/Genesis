@@ -1,6 +1,6 @@
 # Dependencies
 
-Genesis runs on its own. These free programs each add one thing. Tools > Dependencies shows what is found, its version, and how to get the rest; Blender's location can be set there.
+Genesis runs on its own. These free programs each add one thing. Tools > Other Programs… shows what is found, its version, and how to get the rest; Blender's location can be set there (and in Preferences).
 
 | Program | Adds | How Genesis finds it | Get it |
 |---|---|---|---|

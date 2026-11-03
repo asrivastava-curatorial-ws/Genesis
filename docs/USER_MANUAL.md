@@ -4,13 +4,18 @@ Genesis Community is a desktop program for showing buildings and events before t
 
 ## The window
 
-- **Menus and tool bar**: File, Edit, Add, Tools, View, Help; Select / Move / Turn / Resize; handles that follow the object (Local); Snap.
-- **Scene and Properties** (left): every object in the scene, and the settings of the selected one. Ctrl+K hides them.
-- **3D view** (centre), with the **Console** under it (Ctrl+J): everything the program logs.
-- **Genesis panel** (right, Ctrl+B): the twelve working sections.
-- **Status line**: scene, saved or not, tool, selection, projection.
+The look is GitHub's Dark Default colour theme, as VSCodium shows it, set in JetBrains Mono.
+
+- **Title bar and menus** (top): File, Edit, Add, Tools, View, Help, with the project and scene in the middle.
+- **Tool bar**: Select, Move, Turn and Resize; Local (handles follow the object) and Snap; Frame, Ortho and the grid; Add; and Undo, Redo and Save on the right. Hover over any button to see its keys.
+- **Scene and Properties** (left): every object in the scene, with an icon for its kind and an eye (show or hide) and a padlock (lock) at the end of its row; under it, the settings of the selected one, in sections that fold. Ctrl+K hides them.
+- **3D view** (centre). The **Console** (everything the program logs) opens under it with Ctrl+J, View > Console or the message counts in the status bar.
+- **Genesis panel** (right, Ctrl+B): the twelve working pages. The strip of icons on the right edge switches between them; hover an icon for its name. The page's name and what it is for are at the top.
+- **Status bar** (bottom): the scene; whether it is saved (click to save); the tool (click for the next); what is selected (click to frame it); perspective or orthographic (click to switch); warnings and errors (click for the console).
 
 The layout is remembered; Preferences > Reset the window layout puts it back.
+
+**Choosing files and folders.** Wherever Genesis asks for a file or a folder it uses your desktop's own dialog (KDE's on Kubuntu), with its bookmarks. Each kind of file opens where you last picked one of that kind. Fields that hold a path have *Browse…* beside them and a button that shows the file in the file manager, and a file dropped on the window while such a field is showing goes into it. Preferences > *Use this computer's own file dialogs* switches to Genesis's own, which has favourites and recent folders.
 
 ## Chapters
 
@@ -35,4 +40,4 @@ The layout is remembered; Preferences > Reset the window layout puts it back.
 | [SET](SET_EVENT_PRODUCTION.md) | stages, LED walls, truss, sound, lights, crowds, effects |
 | [SHOW](SHOW_EVENT_OPERATION.md) | live video, cues, GO, OSC |
 
-Also: [Dependencies](DEPENDENCIES.md), [Troubleshooting](TROUBLESHOOTING.md), [Performance](PERFORMANCE.md), [Known limitations](KNOWN_LIMITATIONS.md).
+Also: [Other programs (dependencies)](DEPENDENCIES.md), [Troubleshooting](TROUBLESHOOTING.md), [Performance](PERFORMANCE.md), [Known limitations](KNOWN_LIMITATIONS.md).

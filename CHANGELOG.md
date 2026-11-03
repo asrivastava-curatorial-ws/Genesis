@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.0.0-rc3 (Genesis Community)
+
+A professional interface. Every feature of rc2 is kept; what changed is how the program looks and how it is used.
+
+### The look
+- **GitHub Dark Default, as VSCodium shows it**: the exact colours of the GitHub VS Code theme 6.3.5 (computed from GitHub's Primer colour tokens 7.10.0) for every panel, menu, dialog, list, field, button and tooltip.
+- **JetBrains Mono** as the one typeface (OFL), bundled.
+- **Icons throughout** (Lucide, ISC), sharp at any interface size: the tool bar, the pages, the scene tree, buttons, notifications and dialogs.
+- **Title bar** with the project and scene; **tool bar** of icons (Select, Move, Turn, Resize; Local, Snap; Frame, Ortho, Grid; Add; Undo, Redo, Save), each with its keys in its tooltip; switches show whether they are on.
+- **Activity bar**: the twelve pages switch from a strip of icons on the right edge (as VSCodium's side bar), instead of a grid of twelve buttons that took a sixth of the panel. Each page has a header saying what it is for.
+- **Status bar** as in VSCodium, every item a button: the scene; saved or not (click to save); the tool (click for the next); the selection (click to frame it); perspective or orthographic (click to switch); warnings and errors (click for the console).
+- **Start screen** laid out like VSCodium's welcome page, with recent projects as cards and **Try a demo**: a copy of a bundled demo opens in your projects folder.
+- **Dialogs** restyled: the main button of a dialog is green, a button that removes or discards is red. Preferences grouped (Interface, Files and folders, Other programs, Show control, Window and logs). *Tools > Other Programs…* (was *Dependencies…*) shows each program as a card.
+- Notifications as cards with an icon for their kind; the 3D view's notes and labels on dark cards; the move/turn/resize handles in GitHub's red, green and blue.
+
+### Easier to use
+- **Placing models with the mouse.** On *Assets*, click a model and press *Place …* (or double-click it), then click where it goes: a see-through copy follows the mouse and stands on whatever is under it (ground, floor, terrace, table). **R** turns it (Shift+R the other way, or Ctrl+wheel), **Shift+click** places another, **Esc** or a right click stops. Or drag the model from the grid into the 3D view. A model file dropped from the file manager onto the 3D view lands where it is dropped.
+- **The asset grid** shows pictures of whole models (a tree with its leaves, not just its trunk), with the name under each and the licence of the one picked.
+- **Choosing files and folders**: one picker everywhere. It is your desktop's own dialog (KDE's on Kubuntu) where there is one, else Genesis's, with favourites (home, documents, desktop, downloads, pictures, videos, the project, your library) and recent folders. Each kind of file opens where the last one of that kind was picked. Fields that hold a path have *Browse…*, a button to show the file in the file manager, a warning when nothing is there, and take a file dropped on the window. Preferences can switch to Genesis's own dialog.
+- **Scene tree**: an icon for each kind of thing, and an eye (show or hide) and a padlock (lock) at the end of each row instead of two columns of tick boxes; the number of objects at the top.
+- **Properties**: the selected object's name and kind at the top, settings in sections that fold (and stay folded from one object to the next), in plain words (*Brightness*, *Reach*, *Beam angle*, *Field of view*... not the engine's names).
+- **Paths read as paths**: messages and pages show files relative to the project (`renders/Main_Exterior.png`) or the home folder (`~/…`), not as full system paths.
+
+### Developer leftovers removed
+- Properties no longer list Genesis's own bookkeeping (import options, file times, file hashes); an *About* section says which library a model is from, the file it was brought in from and its licence.
+- The console is out of the way until it is wanted (Ctrl+J, View > Console, or the counts in the status bar).
+- Engine class names are gone from tooltips and properties; undo steps read "Undo: Place Bench", not "Undo: Genesis: place Bench".
+
+### Packaging
+- **One AppImage for Linux**, with the manual and the two demo projects inside. `--install-shortcut` adds it to the applications menu; `--remove-shortcut` takes it off. [docs/INVENTORY.md](docs/INVENTORY.md) lists everything it contains and everything it writes on the computer.
+
+### Fixed
+- The Movie page's *Show the renders folder* opened the program's own folder, not the project's renders.
+- Tree thumbnails lost their leaves (the level of detail for a small picture dropped them).
+
 ## 1.0.0-rc2 (Genesis Community)
 
 ### New

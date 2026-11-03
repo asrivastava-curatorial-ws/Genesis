@@ -82,13 +82,42 @@ func _cached(key: String, size: int) -> Texture2D:
 	return null
 
 
+# One picture at a time: they share the studio.
+var _busy := false
+
+
+func _begin() -> void:
+	while _busy:
+		await get_tree().process_frame
+	_busy = true
+
+
 func _draw_now(size: int) -> Image:
 	_vp.size = Vector2i(size, size)
-	_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
-	RenderingServer.force_draw(false)
+	# Drawn with the program's own frames: what was just put in the studio is
+	# only there once a frame has gone by, and a material seen for the first
+	# time may need another while its shader is made.
+	_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	for i in FRAMES:
+		await RenderingServer.frame_post_draw
 	var img := _vp.get_texture().get_image()
 	_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	return img
+
+
+const FRAMES := 3
+
+
+# Only the backdrop: nothing was drawn (yet). Not kept, so it is tried again.
+static func _blank(img: Image) -> bool:
+	if img == null or img.is_empty():
+		return true
+	var first := img.get_pixel(0, 0)
+	for y in range(2, img.get_height(), maxi(img.get_height() / 12, 1)):
+		for x in range(2, img.get_width(), maxi(img.get_width() / 12, 1)):
+			if not img.get_pixel(x, y).is_equal_approx(first):
+				return false
+	return true
 
 
 func _frame(box: AABB) -> void:
@@ -116,6 +145,7 @@ func model(path: String, size: int) -> Texture2D:
 	var inst := packed.instantiate() as Node3D
 	if inst == null:
 		return null
+	await _begin()
 	_subject.add_child(inst)
 	var box := AABB()
 	var first := true
@@ -129,12 +159,14 @@ func model(path: String, size: int) -> Texture2D:
 	if first:
 		_subject.remove_child(inst)
 		inst.free()
+		_busy = false
 		return null
 	_frame(box)
-	var img := _draw_now(size)
+	var img := await _draw_now(size)
 	_subject.remove_child(inst)
 	inst.free()
-	if img == null or img.is_empty():
+	_busy = false
+	if _blank(img):
 		return null
 	img.save_png(_cache_file(key, size))
 	return ImageTexture.create_from_image(img)
@@ -144,7 +176,7 @@ func model(path: String, size: int) -> Texture2D:
 func meshes(list: Array, size: int) -> Array:
 	var out: Array = []
 	for mesh in list:
-		out.append(_mesh_picture(mesh, size) if mesh is Mesh else null)
+		out.append(await _mesh_picture(mesh, size) if mesh is Mesh else null)
 	return out
 
 
@@ -158,12 +190,14 @@ func _mesh_picture(mesh: Mesh, size: int) -> Texture2D:
 			return hit
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
+	await _begin()
 	_subject.add_child(mi)
 	_frame(mesh.get_aabb())
-	var img := _draw_now(size)
+	var img := await _draw_now(size)
 	_subject.remove_child(mi)
 	mi.free()
-	if img == null or img.is_empty():
+	_busy = false
+	if _blank(img):
 		return null
 	if key != "":
 		img.save_png(_cache_file(key, size))
@@ -180,12 +214,14 @@ func material(path: String, receiver: Object, method: StringName, userdata: Vari
 		if tex == null:
 			var mat := load(path) as Material
 			if mat:
+				await _begin()
 				_sphere.material_override = mat
 				_subject.add_child(_sphere)
 				_frame(_sphere.mesh.get_aabb())
-				var img := _draw_now(size)
+				var img := await _draw_now(size)
 				_subject.remove_child(_sphere)
-				if img and not img.is_empty():
+				_busy = false
+				if not _blank(img):
 					img.save_png(_cache_file(key, size))
 					tex = ImageTexture.create_from_image(img)
 	if is_instance_valid(receiver):

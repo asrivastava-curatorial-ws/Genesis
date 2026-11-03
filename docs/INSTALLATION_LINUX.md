@@ -1,23 +1,41 @@
 # Installing on Linux
 
-Tested on Ubuntu 24.04 (x86_64). Other current distributions with glibc 2.31 or newer and a Vulkan driver should work.
+Tested on Ubuntu 24.04 (x86_64), the base of Kubuntu 24.04. Other current distributions with glibc 2.31 or newer, FUSE and a Vulkan driver should work.
 
-## 1. Unpack
+## 1. Run the AppImage
+
+Genesis Community comes as one file, an AppImage. Make it runnable and start it:
 
 ```bash
-unzip Genesis-Community-1.0.0-rc2-linux-x86_64.zip
-cd Genesis-Community-1.0.0-rc2/applications/linux-x86_64
-./Genesis.sh
+chmod +x Genesis-Community-1.0.0-rc3-x86_64.AppImage
+./Genesis-Community-1.0.0-rc3-x86_64.AppImage
 ```
 
-Nothing is installed system-wide and no administrator rights are needed. Settings, logs and downloaded tools go in `~/.local/share/Genesis/`.
+(In Dolphin: right-click the file > Properties > Permissions > *Is executable*, then double-click it.)
+
+Nothing is installed and no administrator rights are needed. Settings, logs, your own library and downloaded tools go in `~/.local/share/Genesis/`; projects go where you make them (`~/Documents/Genesis Projects/` unless you choose). [INVENTORY.md](INVENTORY.md) lists everything the AppImage contains and writes.
+
+An AppImage mounts itself with FUSE. Ubuntu 24.04 and Kubuntu 24.04 have what it needs (`fusermount3`, from the `fuse3` package). If it says FUSE is missing, either install it or run it unpacked:
+
+```bash
+sudo apt install fuse3
+./Genesis-Community-1.0.0-rc3-x86_64.AppImage --appimage-extract-and-run
+```
+
+A project folder given after the file name opens straight away:
+
+```bash
+./Genesis-Community-1.0.0-rc3-x86_64.AppImage "$HOME/Documents/Genesis Projects/Museum hall"
+```
 
 ## 2. A menu entry (optional)
 
 ```bash
-./Genesis.sh --install-shortcut      # adds Genesis Community to your applications menu
-./Genesis.sh --remove-shortcut
+./Genesis-Community-1.0.0-rc3-x86_64.AppImage --install-shortcut   # adds Genesis Community to the applications menu
+./Genesis-Community-1.0.0-rc3-x86_64.AppImage --remove-shortcut    # takes it off again
 ```
+
+This writes two files, `~/.local/share/applications/genesis-community.desktop` and `~/.local/share/icons/hicolor/256x256/apps/genesis-community.png`. If you move the AppImage, run `--install-shortcut` again.
 
 ## 3. Graphics
 
@@ -40,4 +58,4 @@ Real-ESRGAN (AI upscaling) downloads itself the first time it is used. ODA File 
 
 ## 5. Check
 
-Tools > Dependencies shows what was found. Help > About > Copy diagnostics gives the facts a bug report needs.
+Tools > Other Programs… shows what was found. Help > About > Copy diagnostics gives the facts a bug report needs.

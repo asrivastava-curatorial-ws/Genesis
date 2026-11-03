@@ -53,8 +53,16 @@ For a PDF, choose the scale the sheet states, such as 1:100, under *PDF: the she
 
 ## ASSETS: the library
 
-1. Choose a *Category*: people, animals, vehicles, boats, aircraft, furniture, the production kit, plants and so on.
-2. Choose a model and press *Place in scene*.
+1. Type in *Search the library*, or choose what to *Show*: people, animals, vehicles, boats, aircraft, furniture, the production kit, plants and so on.
+2. Click a model in the grid. Its licence and author show under the grid.
+3. Press *Place …* (or double-click the model), then click where it goes in the 3D view. A see-through copy follows the mouse and stands on whatever is under it: the ground, a floor, a terrace, a table.
+   - **R** turns it by 15° (Shift+R the other way); Ctrl+mouse wheel turns it too.
+   - **Shift+click** puts it down and keeps placing, for a row of chairs or a group of people.
+   - **Esc** or a right click stops.
+   - The camera still moves as usual while you place.
+4. Or drag the model from the grid into the 3D view and let go where it goes.
+
+A model file dragged from your file manager onto the 3D view lands where you drop it.
 
 Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENSING.md](ASSET_LICENSING.md)).
 
@@ -63,7 +71,7 @@ Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENS
 1. Press *Add a model…* and choose a GLB, glTF, FBX or OBJ file (a `.blend` file works when Blender is installed).
 2. Give it a *Name* and a *Category*, and say what unit it was *Made in* (metres, centimetres, millimetres, inches or feet). GLB, glTF and FBX files carry their own size, so leave those at *Metres*; an OBJ file does not, so choose the unit it was modelled in.
 3. Say which way is up (*Y* for glTF and Blender exports, *Z* for CAD, SketchUp and 3ds Max), and under *May be used under* choose *My own work*, *CC0 1.0*, *CC BY 4.0*, *CC BY-SA 4.0* or *Other* (then describe it under *Licence*). Add the *Author*, *Where it came from* and a *Credit line* if the licence asks for one. A model without a licence is not added.
-4. Press *Add*. It appears in its category marked *(yours)*, and under the *Your own* filter.
+4. Press *Add*. It appears in its category, and under *Show: Your own*.
 
 - Models in the *Trees*, *Plants* and *Grass* categories can also be painted on the Landscape page.
 - The library is a folder of your own (*Open your library folder*): `~/.local/share/Genesis/library/` on Linux, `%APPDATA%\Genesis\library\` on Windows. Each model is a `.scn` file with its `.license.json` beside it.
