@@ -36,7 +36,6 @@ var _tools: Label
 
 func _init() -> void:
 	name = "Plans"
-	GnUi.note(self, "Build on the real drawings: a floor plan under the scene, or the CAD drawing itself, at true size.")
 
 	GnUi.heading(self, "Floor plan")
 	_plan_width = _spin(self, "Image: plan width (m)", 1.0, 5000.0, 0.1, 30.0)
@@ -46,8 +45,8 @@ func _init() -> void:
 			_pdf_ratio.value = GnCadImport.SCALES[t])
 	presets.tooltip_text = "Pick the scale printed on the drawing; it sets the ratio above."
 	_pdf_page = _spin(self, "PDF: page", 1.0, 999.0, 1.0, 1.0)
-	GnUi.button(self, "Bring in a plan (image or PDF)…", _pick_plan)
-	_scale_button = GnUi.button(self, "Set its scale: click two points on it", _start_scale)
+	GnUi.primary(self, "Bring in a plan (image or PDF)…", _pick_plan, "file_image")
+	_scale_button = GnUi.button(self, "Set its scale: click two points on it", _start_scale, "ruler")
 	_real_row = HBoxContainer.new()
 	var l := Label.new()
 	l.text = "Real distance (m)"
@@ -65,7 +64,7 @@ func _init() -> void:
 	_plan_report = GnUi.note(self, "")
 
 	GnUi.heading(self, "CAD drawing")
-	GnUi.button(self, "Bring in a drawing (DXF, DWG or CAD PDF)…", _pick_cad)
+	GnUi.button(self, "Bring in a drawing (DXF, DWG or CAD PDF)…", _pick_cad, "file_plus")
 	GnUi.note(self, "A PDF plotted from CAD comes in as its real lines, at the PDF scale above; each pen is a layer (the heaviest is usually the walls).")
 	_tools = GnUi.note(self, "")
 	_cad_report = GnUi.note(self, "")

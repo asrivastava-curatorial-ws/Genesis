@@ -28,22 +28,23 @@ var _message: Label
 
 func _init() -> void:
 	name = "Set"
-	GnUi.note(self, "Stage, screens and rigging at real sizes. Select one to change it in the %s." % GnHost.properties_panel())
+	GnUi.note(self, "Add one, then select it to change it in the %s." % GnHost.properties_panel())
 	GnUi.heading(self, "Add")
-	GnUi.button(self, "LED wall", func(): _add(LedWall.new(), "LED wall", "led_wall"))
-	GnUi.button(self, "Stage deck", func(): _add(StageDeck.new(), "Stage", "stage"))
-	GnUi.button(self, "Truss span", func(): _add_span())
-	GnUi.button(self, "Goalpost (two towers and a span)", _add_goalpost)
-	GnUi.button(self, "Circle truss, 8 m across", _add_circle)
-	GnUi.button(self, "Flying screen (LED wall under a helicopter)", _add_flying_screen)
+	GnUi.button(self, "LED wall", func(): _add(LedWall.new(), "LED wall", "led_wall"), "kind_screen")
+	GnUi.button(self, "Stage deck", func(): _add(StageDeck.new(), "Stage", "stage"), "kind_stage")
+	GnUi.button(self, "Truss span", func(): _add_span(), "kind_truss")
+	GnUi.button(self, "Goalpost (two towers and a span)", _add_goalpost, "kind_truss")
+	GnUi.button(self, "Circle truss, 8 m across", _add_circle, "kind_truss")
+	GnUi.button(self, "Flying screen (LED wall under a helicopter)", _add_flying_screen, "kind_aircraft")
 	GnUi.heading(self, "Sound")
-	GnUi.button(self, "Line array, flown", _add_line_array)
+	GnUi.button(self, "Line array, flown", _add_line_array, "kind_speaker")
 	GnUi.heading(self, "Lights")
 	GnUi.note(self, "Beams show in the air with Stage haze on (Environment).")
 	for k in ["Beam (moving head)", "Wash", "Downlight", "Bulb"]:
-		GnUi.button(self, k, _add_light.bind(k))
-	GnUi.button(self, "Moving spot (real fixture)", _add_light.bind("Beam (moving head)", "spot_gigapointe"))
-	GnUi.button(self, "LED wash (real fixture)", _add_light.bind("Wash", "wash_aurora"))
+		GnUi.button(self, k, _add_light.bind(k), {"Beam (moving head)": "kind_spot", "Wash": "kind_lighting",
+			"Downlight": "kind_area_light", "Bulb": "kind_light"}[k])
+	GnUi.button(self, "Moving spot (real fixture)", _add_light.bind("Beam (moving head)", "spot_gigapointe"), "kind_spot")
+	GnUi.button(self, "LED wash (real fixture)", _add_light.bind("Wash", "wash_aurora"), "kind_lighting")
 	var area_row := HBoxContainer.new()
 	for spec in [["Area light", "Rectangle", Vector2(1.2, 0.6)], ["Light strip", "Strip", Vector2(2.4, 0.05)], ["Round panel", "Disc", Vector2(0.6, 0.6)]]:
 		var b := GnUi.button(area_row, spec[0], _add_area.bind(spec[1], spec[2]))
@@ -61,10 +62,10 @@ func _init() -> void:
 	GnUi.note(self, "A crowd faces its forward: turn it to face the stage. Density is people per m².")
 	for m in ["Concert", "Seated", "Milling about", "Frustrated"]:
 		GnUi.button(self, {"Concert": "Concert crowd", "Seated": "Seated audience",
-			"Milling about": "People milling about", "Frustrated": "Frustrated queue"}[m], _add_crowd.bind(m))
+			"Milling about": "People milling about", "Frustrated": "Frustrated queue"}[m], _add_crowd.bind(m), "kind_crowd")
 	GnUi.heading(self, "Selected")
 	_report = GnUi.note(self, "")
-	_export = GnUi.button(self, "Save pixel map for the processor…", _save_map)
+	_export = GnUi.button(self, "Save pixel map for the processor…", _save_map, "save")
 	_message = GnUi.note(self, "")
 
 
@@ -244,7 +245,7 @@ func _save_map() -> void:
 	if img.get_size() != Vector2i(r.resolution):
 		img.resize(r.resolution.x, r.resolution.y, Image.INTERPOLATE_NEAREST)
 	img.save_png(path)
-	_message.text = "Saved %s" % path
+	_message.text = "Saved %s" % GnUi.shown(path)
 
 
 func _add_effect(kind: String) -> void:

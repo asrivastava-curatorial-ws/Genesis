@@ -56,7 +56,7 @@ func _init() -> void:
 		func(t): GnEnvironment.apply("sky", t))
 	if GnHost.user_library_dir() != "":
 		GnUi.note(_body, "Your own sky: a 360° panorama, twice as wide as high (HDR is best; JPG or PNG work too). The sun goes where the photo's sun is.")
-		GnUi.button(_body, "Add a sky image…", _add_sky)
+		GnUi.button(_body, "Add a sky image…", _add_sky, "image")
 		_sky_note = GnUi.note(_body, "")
 	_controls.fog = GnUi.slider(_body, "Distance haze", 0.0, 1.0, 0.01,
 		func(v): GnEnvironment.apply("fog", v), func(v): return "%d%%" % int(v * 100))

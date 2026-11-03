@@ -71,7 +71,9 @@ static func _idle(efs: Object) -> bool:
 ## assets folder (gn_model_import.gd) and that scene is placed. `options` are
 ## the import settings (scale, up axis); they are kept so a re-export comes in
 ## the same way.
-static func import_runtime(source: String, options := {}) -> String:
+## `at`: where in the scene it goes (a Vector3), else the origin, where a
+## building exported with its site coordinates belongs.
+static func import_runtime(source: String, options := {}, at: Variant = null) -> String:
 	var r := GnModelImport.convert_file(source, GnPaths.at(DEST), options)
 	if r.error != "":
 		return r.error
@@ -82,7 +84,7 @@ static func import_runtime(source: String, options := {}) -> String:
 	if node == null:
 		return "%s has nothing in it to show." % source.get_file()
 	node.scene_file_path = r.path
-	node.position = Vector3.ZERO
+	node.position = at if at is Vector3 else Vector3.ZERO
 	node.set_meta(&"gn_category", "architecture")
 	var root := GnScene.root()
 	if root == null:

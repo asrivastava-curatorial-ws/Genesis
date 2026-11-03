@@ -10,6 +10,9 @@ extends ScrollContainer
 const App := preload("res://app/core/app.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnIcons := preload("res://addons/genesis/ui/gn_icons.gd")
+const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
+const NodeKinds := preload("res://app/ui/node_kinds.gd")
 
 ## Built-in properties shown per kind of node, in this order.
 const SECTIONS := [
@@ -21,12 +24,28 @@ const SECTIONS := [
 ]
 ## Engine properties a script may expose that are not worth showing.
 const HIDDEN := ["script", "owner", "process_mode", "editor_description"]
+## The engine's names for the built-in settings, in the words used here.
+const LABELS := {
+	"light_color": "Colour", "light_energy": "Brightness", "shadow_enabled": "Casts shadows",
+	"light_specular": "Highlights", "omni_range": "Reach (m)", "omni_attenuation": "Falloff",
+	"spot_range": "Reach (m)", "spot_angle": "Beam angle (°)", "spot_attenuation": "Falloff",
+	"spot_angle_attenuation": "Soft edge", "fov": "Field of view (°)", "near": "Near clip (m)",
+	"far": "Far clip (m)", "projection": "Projection", "size": "View width (m)",
+	"cast_shadow": "Shadows", "transparency": "Transparency",
+}
+## Sections folded by the user stay folded from one object to the next.
+static var _folded := {}
 
 var target: Node = null
 
 var _box: VBoxContainer
 var _title: Label
+var _kind_label: Label
+var _icon: TextureRect
+var _head: Control
+var _current: Container
 var _editors := {}       # property -> refresh Callable
+var _headings: Array[String] = []
 var _building := false
 var _refresh_queued := false
 
@@ -35,14 +54,50 @@ func _init() -> void:
 	name = "InspectorPanel"
 	custom_minimum_size = Vector2(200, 120)
 	horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	theme_type_variation = &"PageScroll"
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var col := VBoxContainer.new()
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 0)
 	add_child(col)
+	var header := PanelContainer.new()
+	header.theme_type_variation = &"PanelHeader"
+	col.add_child(header)
+	var label := Label.new()
+	label.text = "PROPERTIES"
+	label.theme_type_variation = &"PageTitle"
+	header.add_child(label)
+	# What is selected: its icon, its name and what kind of thing it is.
+	var who := MarginContainer.new()
+	for side in ["left", "right"]:
+		who.add_theme_constant_override("margin_" + side, 12)
+	who.add_theme_constant_override("margin_top", 10)
+	who.add_theme_constant_override("margin_bottom", 8)
+	col.add_child(who)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	who.add_child(row)
+	_head = who
+	_icon = TextureRect.new()
+	_icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_icon.modulate = Color("#7d8590")
+	row.add_child(_icon)
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 0)
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(words)
 	_title = Label.new()
 	_title.text = "Properties"
-	col.add_child(_title)
+	_title.theme_type_variation = &"ValueLabel"
+	_title.clip_text = true
+	words.add_child(_title)
+	_kind_label = Label.new()
+	_kind_label.theme_type_variation = &"SmallLabel"
+	words.add_child(_kind_label)
 	_box = VBoxContainer.new()
 	_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_box.add_theme_constant_override("separation", 0)
 	col.add_child(_box)
 
 
@@ -74,11 +129,15 @@ func inspect(node: Node, count := 1) -> void:
 	for c in _box.get_children():
 		_box.remove_child(c)
 		c.queue_free()
+	_headings.clear()
+	_current = null
 	if node == null:
-		_title.text = "Properties" if count == 0 else "%d objects selected" % count
+		_title.text = "Nothing selected" if count == 0 else "%d objects selected" % count
+		_kind_label.text = "Click something in the 3D view or the scene list." if count == 0 else "Pick one to change its settings."
+		_icon.texture = GnIcons.get_icon("select" if count == 0 else "layers", 18)
 		return
 	_building = true
-	_title.text = "%s  ·  %s" % [node.name, _kind(node)]
+	_show_who(node)
 	if node is Node3D:
 		_section("Place")
 		_vector("position", "Position (m)")
@@ -92,21 +151,24 @@ func inspect(node: Node, count := 1) -> void:
 				_property(p)
 	if node.get_script():
 		_script_properties()
-	_metadata()
+	_about()
 	_building = false
 
 
 static func _kind(node: Node) -> String:
-	var role := str(node.get_meta(GnScene.ROLE, ""))
-	if role != "":
-		return role.capitalize()
-	if node.get_script():
-		var path: String = node.get_script().resource_path
-		if path.get_file().begins_with("gn_"):
-			return path.get_file().get_basename().trim_prefix("gn_").capitalize()
-	if node.scene_file_path != "":
-		return "Model (%s)" % node.scene_file_path.get_file()
-	return node.get_class()
+	return NodeKinds.kind(node)
+
+
+func _show_who(node: Node) -> void:
+	var about := NodeKinds.describe(node)
+	_title.text = str(node.name)
+	_kind_label.text = about.kind
+	_icon.texture = GnIcons.get_icon(about.icon, 18)
+
+
+## The names of the sections shown, in order.
+func headings() -> Array[String]:
+	return _headings
 
 
 func _queue_refresh() -> void:
@@ -124,7 +186,7 @@ func refresh() -> void:
 			inspect(null, 0)
 		return
 	_building = true
-	_title.text = "%s  ·  %s" % [target.name, _kind(target)]
+	_show_who(target)
 	for k in _editors:
 		_editors[k].call()
 	_building = false
@@ -132,23 +194,30 @@ func refresh() -> void:
 
 # ------------------------------------------------------------- sections
 func _section(text: String) -> void:
-	var l := Label.new()
-	l.text = text
-	l.add_theme_color_override("font_color", Color(0.91, 0.71, 0.29))
-	_box.add_child(l)
+	var fold := FoldableContainer.new()
+	fold.title = text.to_upper()
+	fold.folded = bool(_folded.get(text, false))
+	fold.folding_changed.connect(func(is_folded): _folded[text] = is_folded)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	fold.add_child(col)
+	_box.add_child(fold)
+	_current = col
+	_headings.append(text)
 
 
 func _row(label: String, editor: Control) -> void:
 	var row := HBoxContainer.new()
 	var l := Label.new()
 	l.text = label
-	l.custom_minimum_size = Vector2(118, 0)
+	l.theme_type_variation = &"NoteLabel"
+	l.custom_minimum_size = Vector2(112, 0)
 	l.clip_text = true
 	l.tooltip_text = label
 	row.add_child(l)
 	editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(editor)
-	_box.add_child(row)
+	(_current if _current else _box).add_child(row)
 
 
 func _apply(prop: String, value: Variant) -> void:
@@ -170,7 +239,7 @@ func _property(prop: String) -> void:
 	var info := _info_for(prop)
 	if info.is_empty():
 		return
-	_editor_for(info, prop.capitalize())
+	_editor_for(info, LABELS.get(prop, prop.capitalize()))
 
 
 func _script_properties() -> void:
@@ -338,7 +407,7 @@ func _vector(prop: String, label: String) -> void:
 
 func _readonly(prop: String, label: String) -> void:
 	var l := Label.new()
-	l.modulate = Color(1, 1, 1, 0.6)
+	l.theme_type_variation = &"NoteLabel"
 	l.clip_text = true
 	_editors[prop] = func():
 		var v: Variant = target.get(prop)
@@ -347,16 +416,51 @@ func _readonly(prop: String, label: String) -> void:
 	_row(label, l)
 
 
-# What Genesis has noted on the object (its role, category, source file...).
-func _metadata() -> void:
-	var keys := target.get_meta_list().filter(func(k): return str(k).begins_with("gn") or str(k).begins_with("genesis"))
-	if keys.is_empty():
+# Where the object came from, in words: its kind of thing, the file it was
+# brought in from (with a way to show it), and the licence of a library model.
+# The bookkeeping Genesis keeps on it (import settings, file times and hashes)
+# is not shown: it is for Genesis, not for the user.
+func _about() -> void:
+	var source := str(target.get_meta(&"gn_source", target.get_meta(&"gn_missing_model", "")))
+	if source == "" and target.scene_file_path != "":
+		source = target.scene_file_path
+	var category := str(target.get_meta(&"gn_category", ""))
+	var licence := _licence_of(target.scene_file_path)
+	if source == "" and category == "" and licence == "":
 		return
-	_section("Genesis notes")
-	for k in keys:
+	_section("About")
+	if category != "":
+		var c := Label.new()
+		c.text = category.capitalize()
+		_row("Library", c)
+	if source != "":
+		var path := source if not source.begins_with("res://") else ProjectSettings.globalize_path(source)
+		var line := HBoxContainer.new()
+		var name_label := Label.new()
+		name_label.text = path.get_file()
+		name_label.tooltip_text = GnUi.friendly_path(path)
+		name_label.clip_text = true
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.add_child(name_label)
+		if not source.begins_with("res://") and FileAccess.file_exists(path):
+			GnUi.tool_button(line, "folder_open", "Show it in the file manager", func(): OS.shell_show_in_file_manager(path))
+		_row("From", line)
+	if licence != "":
 		var l := Label.new()
-		var v: Variant = target.get_meta(k)
-		l.text = str(v) if not (v is Array or v is Dictionary) else "%d entries" % v.size()
+		l.text = licence
 		l.clip_text = true
-		l.modulate = Color(1, 1, 1, 0.7)
-		_row(str(k).trim_prefix("gn_").trim_prefix("genesis_").capitalize(), l)
+		l.tooltip_text = licence
+		_row("Licence", l)
+
+
+static func _licence_of(scene_path: String) -> String:
+	if scene_path == "":
+		return ""
+	var record := scene_path.get_basename() + ".license.json"
+	if not FileAccess.file_exists(record):
+		return ""
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(record))
+	if not data is Dictionary:
+		return ""
+	var author := str(data.get("author", ""))
+	return "%s%s" % [data.get("license", ""), (", by " + author) if author != "" else ""]

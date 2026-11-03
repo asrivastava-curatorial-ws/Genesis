@@ -283,17 +283,22 @@ func _run() -> void:
 	check(panel.item_of(far) != null and panel.item_of(a) == null, "tree: search narrows the list")
 	panel._search.text = ""
 	panel.rebuild()
-	var item_a: TreeItem = panel.item_of(a)
-	item_a.set_checked(SceneTreePanel.COL_SHOW, false)
-	panel.tree.set_selected(item_a, SceneTreePanel.COL_SHOW)
-	EditOps.set_visible([a], false)
+	# The eye at the end of the row hides and shows.
+	panel._on_button(panel.item_of(a), 0, SceneTreePanel.BUTTON_SHOW, MOUSE_BUTTON_LEFT)
 	await process_frame
 	await process_frame
-	check(not a.visible and not panel.item_of(a).is_checked(SceneTreePanel.COL_SHOW), "tree: shows what is hidden")
+	check(not a.visible and not panel.shows_visible(a), "tree: the eye hides, and the row shows it is hidden")
 	ur.undo()
 	await process_frame
 	await process_frame
-	check(a.visible and panel.item_of(a).is_checked(SceneTreePanel.COL_SHOW), "tree: follows undo")
+	check(a.visible and panel.shows_visible(a), "tree: follows undo")
+	panel._on_button(panel.item_of(a), 0, SceneTreePanel.BUTTON_LOCK, MOUSE_BUTTON_LEFT)
+	check(bool(a.get_meta(Picker.LOCK, false)), "tree: the padlock locks")
+	ur.undo()
+	await process_frame
+	await process_frame
+	var item_icon: Texture2D = panel.item_of(light).get_icon(0) if panel.item_of(light) else null
+	check(item_icon != null, "tree: rows have an icon for their kind")
 	check(not panel._can_drop(Vector2.ZERO, {"something": 1}), "tree: foreign drag data is refused")
 	panel.queue_free()
 
@@ -311,9 +316,10 @@ func _run() -> void:
 			exported.append(p.name)
 	check(exported.size() > 4 and exported.all(func(p): return p in props), "inspector: every LED wall setting has an editor (%d)" % exported.size())
 	check("position" in props and "rotation_degrees" in props and "scale" in props, "inspector: transform is editable")
-	var headings: Array = insp._box.get_children().filter(func(c): return c is Label).map(func(l): return l.text)
+	var headings: Array = insp.headings()
 	check(not headings.any(func(h): return h in ["Process", "Thread Group", "Physics Interpolation", "Auto Translate", "Editor Description", "Transform", "Visibility"]) and "Custom Panel" in headings,
 		"inspector: only headings with settings under them (%s)" % ", ".join(headings))
+	check(not headings.has("Genesis notes") and not insp._kind_label.text.contains("3D"), "inspector: no bookkeeping or engine names (%s)" % insp._kind_label.text)
 	var numeric := ""
 	for p in wall.get_property_list():
 		if p.name in exported and int(p.type) == TYPE_INT and p.hint != PROPERTY_HINT_ENUM:

@@ -507,6 +507,47 @@ static func _rewrite_scene(text: String, source: String, dir: String, models: Di
 	return out
 
 
+## Where new projects go unless the user has said: "Genesis Projects" in the
+## documents folder (or in the home folder, where there is no documents folder).
+static func default_projects_dir() -> String:
+	var docs := OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
+	if docs == "" or not DirAccess.dir_exists_absolute(docs):
+		docs = OS.get_environment("HOME") if OS.get_name() != "Windows" else OS.get_environment("USERPROFILE")
+	return docs.path_join("Genesis Projects") if docs != "" else OS.get_user_data_dir().path_join("Projects")
+
+
+## The demo projects that came with the program, {name: folder}: beside the
+## program (the AppImage), or at the top of the unpacked release.
+static func demos() -> Dictionary:
+	var out := {}
+	var here := OS.get_executable_path().get_base_dir()
+	for candidate in [here.path_join("demos"), here.path_join("../../demos")]:
+		var dir := str(candidate).simplify_path()
+		if not DirAccess.dir_exists_absolute(dir):
+			continue
+		for d in DirAccess.get_directories_at(dir):
+			var folder := dir.path_join(d)
+			var m := manifest_of(folder)
+			if not m.is_empty():
+				out[str(m.get("name", d))] = folder
+		if not out.is_empty():
+			break
+	return out
+
+
+## Copies a demo project into `parent` (the program's own copy is never
+## changed) and returns the copy's folder, or "" if it could not be made.
+static func copy_demo(source: String, parent: String) -> String:
+	DirAccess.make_dir_recursive_absolute(parent)
+	var base := str(manifest_of(source).get("name", source.get_file())).validate_filename()
+	var target := parent.path_join(base)
+	var n := 2
+	while DirAccess.dir_exists_absolute(target):
+		target = parent.path_join("%s %d" % [base, n])
+		n += 1
+	return target if _copy_tree(source, target) > 0 and not manifest_of(target).is_empty() else ""
+
+
 static func _copy_tree(from: String, to: String) -> int:
 	if not DirAccess.dir_exists_absolute(from):
 		return 0

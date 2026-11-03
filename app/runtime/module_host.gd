@@ -12,6 +12,7 @@ const GnLiveLink := preload("res://addons/genesis/core/gn_live_link.gd")
 const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
 const GnOscIn := preload("res://addons/genesis/core/gn_osc_in.gd")
 const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
+const Placer := preload("res://app/runtime/placer.gd")
 
 signal poll_changed
 
@@ -19,6 +20,8 @@ var brush: GnBrush
 var measure: GnMeasure
 ## Drawing and shaping the routes of moving objects in the 3D view.
 var paths: GnPathTool
+## Placing library models with the mouse.
+var placer: Placer
 ## Cues from outside (OSC or plain UDP text), when switched on in Preferences.
 var osc := GnOscIn.new()
 
@@ -28,6 +31,7 @@ func _init() -> void:
 	brush = GnBrush.new()
 	measure = GnMeasure.new()
 	paths = GnPathTool.new()
+	placer = Placer.new()
 
 
 func _ready() -> void:
@@ -58,5 +62,6 @@ func _process(_delta: float) -> void:
 
 
 func _exit_tree() -> void:
+	placer.stop()
 	osc.stop()
 	GnLiveVideo.stop_all()

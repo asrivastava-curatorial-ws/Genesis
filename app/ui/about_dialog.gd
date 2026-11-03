@@ -9,13 +9,39 @@ const App := preload("res://app/core/app.gd")
 func _init() -> void:
 	title = "About %s" % App.NAME
 	ok_button_text = "Close"
-	min_size = Vector2i(560, 0)
+	min_size = Vector2i(600, 0)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 14)
+	add_child(col)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 14)
+	col.add_child(head)
+	var logo := TextureRect.new()
+	var svg := FileAccess.get_file_as_string("res://app/assets/icon.svg")
+	if svg != "":
+		logo.texture = DPITexture.create_from_string(svg, 48.0 / 128.0)
+	logo.custom_minimum_size = Vector2(48, 48)
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	head.add_child(logo)
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 0)
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(words)
+	var name_label := Label.new()
+	name_label.text = App.NAME
+	name_label.theme_type_variation = &"HeadingLabel"
+	words.add_child(name_label)
+	var version := Label.new()
+	version.text = "Version %s" % App.VERSION
+	version.theme_type_variation = &"MutedLabel"
+	words.add_child(version)
 	var text := RichTextLabel.new()
 	text.bbcode_enabled = true
 	text.fit_content = true
-	text.custom_minimum_size = Vector2(520, 0)
-	text.text = "[b]%s[/b]  %s\nFree architectural and event visualisation, on the Godot engine.\n\nThis program is free software under the MIT licence. Every bundled model carries its own licence record. The licences of the optional tools it can use (FFmpeg, Blender, Real-ESRGAN, Poppler, ODA File Converter) and of OpenStreetMap data apply to them; see THIRD_PARTY_NOTICES.md." % [App.NAME, App.VERSION]
-	add_child(text)
+	text.custom_minimum_size = Vector2(560, 0)
+	text.text = "Free architectural and event visualisation, on the Godot engine.\n\nThis program is free software under the MIT licence. Every bundled model carries its own licence record. The look follows GitHub's Dark Default colour theme (MIT); the type is JetBrains Mono (SIL Open Font Licence 1.1); the icons are Lucide's (ISC). The licences of the optional tools it can use (FFmpeg, Blender, Real-ESRGAN, Poppler, ODA File Converter) and of OpenStreetMap data apply to them; see THIRD_PARTY_NOTICES.md."
+	col.add_child(text)
 	add_button("Copy diagnostics", false, "copy")
 	add_button("Licence", false, "licence")
 	custom_action.connect(_on_action)

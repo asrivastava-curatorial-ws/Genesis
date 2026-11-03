@@ -8,6 +8,7 @@ extends SubViewportContainer
 # a camera.
 #
 # Mouse, in order of who gets it first:
+#   placing a model from the library, while one follows the mouse;
 #   the landscape brush or the tape measure, while one is switched on, and the
 #       path tool while a moving-objects path is drawn or selected;
 #   the move / turn / resize handles of what is selected;
@@ -97,6 +98,7 @@ func _init() -> void:
 	add_child(_overlay)
 	_hint = Label.new()
 	_hint.text = "No scene open"
+	_hint.theme_type_variation = &"MutedLabel"
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -112,7 +114,7 @@ func _ready() -> void:
 	App.scenes.closed.connect(detach)
 	GnHost.selection().selection_changed.connect(_on_selection)
 	GnHost.undo_redo().changed.connect(_redraw)
-	for tool in [App.modules.brush, App.modules.measure, App.modules.paths]:
+	for tool in [App.modules.brush, App.modules.measure, App.modules.paths, App.modules.placer]:
 		tool.changed.connect(_redraw)
 	if App.scenes.has_scene():
 		attach(App.scenes.root)
@@ -133,7 +135,7 @@ func _exit_tree() -> void:
 		if App.host.viewport == viewport:
 			App.host.viewport = null
 	if App.modules:
-		for tool in [App.modules.brush, App.modules.measure, App.modules.paths]:
+		for tool in [App.modules.brush, App.modules.measure, App.modules.paths, App.modules.placer]:
 			if tool.changed.is_connected(_redraw):
 				tool.changed.disconnect(_redraw)
 	# The scene belongs to the scene service, not to this panel.
@@ -302,7 +304,16 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouse:
 		_mouse = event.position
-	# 1. The brush, the tape measure and the path tool, while switched on.
+	# 1. A library model being placed follows the mouse; a click puts it down.
+	var placer = App.modules.placer
+	if placer.active and _drag == "" and placer.handle(camera, event):
+		accept_event()
+		grab_focus()
+		_redraw()
+		return
+	if placer.active and event is InputEventMouseMotion:
+		_redraw()
+	# 2. The brush, the tape measure and the path tool, while switched on.
 	for tool in [App.modules.measure, App.modules.brush, App.modules.paths]:
 		if tool.active and _drag == "" and tool.handle(camera, event):
 			accept_event()
@@ -449,6 +460,57 @@ func mouse_position() -> Vector2:
 	return _mouse
 
 
+## The point in the scene under a place on the screen (in screen pixels, as
+## DisplayServer gives the mouse), or null when that is not over the view.
+func point_at_screen(screen_point: Vector2i) -> Variant:
+	if not is_instance_valid(_attached):
+		return null
+	var w := get_window()
+	var canvas := Vector2(screen_point - w.position) / maxf(w.content_scale_factor, 0.01)
+	var local := canvas - get_global_rect().position
+	if not Rect2(Vector2.ZERO, size).has_point(local):
+		return null
+	var hit := Picker.pick(camera, local, _attached)
+	if not hit.is_empty():
+		return hit.position
+	var at = Plane(Vector3.UP, 0.0).intersects_ray(camera.project_ray_origin(local), camera.project_ray_normal(local))
+	return at
+
+
+# ------------------------------------------------------------------ dropping
+# A model dragged from the asset grid: it follows the mouse over the view as it
+# would when placed by clicking, and lands where it is let go.
+func _can_drop_data(at: Vector2, data: Variant) -> bool:
+	if not (data is Dictionary and data.has("genesis_asset")) or not is_instance_valid(_attached):
+		return false
+	var a: Dictionary = data.genesis_asset
+	var placer = App.modules.placer
+	if not placer.active or placer.asset.get("path", "") != a.path:
+		if not placer.start(a.path, a.category, a.label):
+			return false
+		placer.by_drag = true
+	placer.hover(camera, at)
+	_mouse = at
+	_redraw()
+	return true
+
+
+func _drop_data(at: Vector2, _data: Variant) -> void:
+	var placer = App.modules.placer
+	placer.hover(camera, at)
+	placer.place_here()
+	placer.stop()
+	grab_focus()
+	_redraw()
+
+
+func _notification(what: int) -> void:
+	# Let go somewhere else: nothing is placed.
+	if what == NOTIFICATION_DRAG_END and App.modules and App.modules.placer.by_drag:
+		App.modules.placer.stop()
+		_redraw()
+
+
 # ------------------------------------------------------------------ drawing
 func _redraw() -> void:
 	if is_instance_valid(_overlay):
@@ -474,25 +536,48 @@ func _draw_overlay() -> void:
 		var line: Dictionary = measure.preview(camera)
 		if not line.is_empty():
 			_overlay.draw_line(line.from, line.to, Color(1.0, 0.85, 0.2), 2.0, true)
-			_overlay.draw_string(_overlay.get_theme_default_font(), (line.from + line.to) * 0.5 + Vector2(8, -8),
-				line.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.0, 0.85, 0.2))
+			_pill((line.from + line.to) * 0.5 + Vector2(10, -14), line.text, Color(1.0, 0.85, 0.2), 14)
 	var brush = App.modules.brush
 	if brush.active:
 		var ring: PackedVector2Array = brush.outline(camera)
 		if ring.size() > 1:
 			_overlay.draw_polyline(ring, Color(1, 1, 1, 0.85), 2.0, true)
 	_draw_axes()
-	var tool_note: String = App.modules.paths.status()
+	var tool_note: String = App.modules.placer.status() if App.modules.placer.active else App.modules.paths.status()
 	if tool_note != "":
-		# Wrapped to the view, on a dark band so it reads over any scene.
+		# Wrapped to the view, on a dark card so it reads over any scene.
 		var font := _overlay.get_theme_default_font()
-		var room := maxf(_overlay.size.x - 32.0, 120.0)
-		var box := font.get_multiline_string_size(tool_note, HORIZONTAL_ALIGNMENT_LEFT, room, 15)
-		_overlay.draw_rect(Rect2(Vector2(8, 8), box + Vector2(16, 10)), Color(0, 0, 0, 0.55))
-		_overlay.draw_multiline_string(font, Vector2(16, 8 + font.get_ascent(15) + 5), tool_note, HORIZONTAL_ALIGNMENT_LEFT, room, 15, -1, Color.WHITE)
+		var room := maxf(_overlay.size.x - 48.0, 120.0)
+		var box := font.get_multiline_string_size(tool_note, HORIZONTAL_ALIGNMENT_LEFT, room, 13)
+		_overlay.draw_style_box(_card_style(), Rect2(Vector2(12, 12), box + Vector2(24, 16)))
+		_overlay.draw_multiline_string(font, Vector2(24, 20 + font.get_ascent(13)), tool_note, HORIZONTAL_ALIGNMENT_LEFT, room, 13, -1, Color("#e6edf3"))
 	var s := gizmo.status()
 	if s != "":
-		_overlay.draw_string(_overlay.get_theme_default_font(), _mouse + Vector2(16, -12), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+		_pill(_mouse + Vector2(18, -16), s, Color("#e6edf3"), 13)
+
+
+static var _card: StyleBoxFlat
+
+
+# The dark card notes are drawn on over the 3D view.
+static func _card_style() -> StyleBoxFlat:
+	if _card == null:
+		_card = StyleBoxFlat.new()
+		_card.bg_color = Color("#0d1117e6")
+		_card.border_color = Color("#30363d")
+		_card.set_border_width_all(1)
+		_card.set_corner_radius_all(6)
+		_card.anti_aliasing = true
+	return _card
+
+
+# A short label on a small dark card, its baseline at `at`.
+func _pill(at: Vector2, text: String, colour: Color, font_size: int) -> void:
+	var font := _overlay.get_theme_default_font()
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var h := font.get_height(font_size)
+	_overlay.draw_style_box(_card_style(), Rect2(at + Vector2(-8, -font.get_ascent(font_size) - 5), Vector2(w + 16, h + 10)))
+	_overlay.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, colour)
 
 
 func _draw_box(box: AABB, colour: Color) -> void:
@@ -539,7 +624,7 @@ func _draw_axes() -> void:
 		var v: Vector3 = b * Vector3(1 if i == 0 else 0, 1 if i == 1 else 0, 1 if i == 2 else 0)
 		var tip := origin + Vector2(v.x, -v.y) * 30.0
 		_overlay.draw_line(origin, tip, TransformGizmo.AXIS_COLOURS[i], 2.0, true)
-		_overlay.draw_string(_overlay.get_theme_default_font(), tip + Vector2(-4, 5), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, TransformGizmo.AXIS_COLOURS[i])
+		_overlay.draw_string(_overlay.get_theme_default_font(), tip + Vector2(-4, 5), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, TransformGizmo.AXIS_COLOURS[i])
 
 
 # A floor grid of the view, not the scene: metres, with every tenth line

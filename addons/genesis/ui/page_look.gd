@@ -88,7 +88,7 @@ func _init() -> void:
 	_logo_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_logo_label.clip_text = true
 	lrow.add_child(_logo_label)
-	GnUi.button(lrow, "Choose…", _choose_logo)
+	GnUi.button(lrow, "Choose…", _choose_logo, "folder_open")
 	GnUi.button(lrow, "Clear", func(): _set_look("logo", ""))
 	_body.add_child(lrow)
 	_logo_corner = GnUi.option(_body, "Corner", GnLook.CORNERS, func(t): _set_look("logo_corner", t))
@@ -101,7 +101,7 @@ func _init() -> void:
 	_save_name.placeholder_text = "Name"
 	_save_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(_save_name)
-	GnUi.button(row, "Save", _save_look)
+	GnUi.button(row, "Save", _save_look, "save")
 	_body.add_child(row)
 
 

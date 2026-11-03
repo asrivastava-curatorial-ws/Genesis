@@ -118,5 +118,17 @@ static func start_tool(tool: String) -> bool:
 	return _be().start_tool(tool)
 
 
+## Starts placing a library model with the mouse (it follows the pointer over
+## the 3D view until clicked). False where the host has no such tool; the
+## caller then places it in the middle of the view.
+static func start_placing(path: String, category: String, label: String) -> bool:
+	return _be().start_placing(path, category, label)
+
+
+## A small picture of a whole model, or null where the host cannot draw one.
+static func model_preview(path: String, size: int) -> Texture2D:
+	return _be().model_preview(path, size)
+
+
 static func supports(feature: String) -> bool:
 	return _be().supports(feature)

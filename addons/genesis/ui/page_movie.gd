@@ -5,6 +5,7 @@ extends VBoxContainer
 # the building, preview with play and scrub, render to video.
 
 const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const GnMovie := preload("res://addons/genesis/core/gn_movie.gd")
 const Mover := preload("res://addons/genesis/set/gn_mover.gd")
@@ -78,7 +79,7 @@ func _init() -> void:
 	add_child(_cams)
 	_path_secs = GnUi.slider(self, "Length", 2.0, 60.0, 0.5, func(_v): pass, func(v): return "%.1f s" % v)
 	GnUi.show_value(_path_secs, 8.0)
-	GnUi.button(self, "Add path", _add_path)
+	GnUi.button(self, "Add path", _add_path, "add")
 
 	GnUi.heading(self, "Add an orbit")
 	GnUi.note(self, "Circles whatever is selected in the scene (the building, usually).")
@@ -88,7 +89,7 @@ func _init() -> void:
 	GnUi.show_value(_orbit_deg, 120.0)
 	GnUi.show_value(_orbit_height, 8.0)
 	GnUi.show_value(_orbit_secs, 10.0)
-	GnUi.button(self, "Add orbit", _add_orbit)
+	GnUi.button(self, "Add orbit", _add_orbit, "orbit")
 
 	GnUi.heading(self, "Time-lapse")
 	_lapse = CheckBox.new()
@@ -107,7 +108,7 @@ func _init() -> void:
 		GnUi.button(mrow, "Add a path", _add_mover)
 	else:
 		GnUi.note(self, "Traffic, people, boats. Draw a path: click points on the ground, a deck or a roof, then press Enter. Drag a point to move it, Ctrl + click the path to add one, right-click a point to remove it. Then select what should travel and put it on the path; speed, direction and round corners are in the Properties panel. The walkers (Assets, people) walk as they go.")
-		GnUi.button(mrow, "Draw a path", func(): GnHost.start_tool("draw_path"))
+		GnUi.button(mrow, "Draw a path", func(): GnHost.start_tool("draw_path"), "route")
 		GnUi.button(mrow, "Add points to it", _extend)
 	add_child(mrow)
 	var rrow := HBoxContainer.new()
@@ -129,10 +130,10 @@ func _init() -> void:
 
 	GnUi.heading(self, "Render")
 	_size = GnUi.option(self, "Size", SIZES.keys(), func(_t): pass)
-	_render_button = GnUi.button(self, "Render movie", _render)
+	_render_button = GnUi.primary(self, "Render the movie", _render, "film")
 	_status = GnUi.note(self, "")
-	GnUi.button(self, "Show renders folder", func():
-		OS.shell_show_in_file_manager(ProjectSettings.globalize_path(GnRender.OUTPUT_DIR) if _last == "" else _last))
+	GnUi.button(self, "Show the renders folder", func():
+		OS.shell_show_in_file_manager(ProjectSettings.globalize_path(GnPaths.at(GnRender.OUTPUT_DIR)) if _last == "" else _last), "folder_open")
 
 
 func refresh() -> void:
@@ -294,8 +295,8 @@ func _render() -> void:
 		func(f, total): _status.text = "Rendering frame %d of %d…" % [f, total])
 	_render_button.disabled = false
 	_last = out
-	_status.text = "Saved %s" % out if out.ends_with(".mp4") \
-		else ("Frames saved in %s (ffmpeg wasn't found to make a video)." % out if out != "" else "Nothing to render.")
+	_status.text = "Saved %s" % GnUi.shown(out) if out.ends_with(".mp4") \
+		else ("Frames saved in %s (FFmpeg wasn't found to make a video)." % GnUi.shown(out) if out != "" else "Nothing to render.")
 
 
 static func _clock(hours: float) -> String:

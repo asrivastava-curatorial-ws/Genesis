@@ -28,6 +28,10 @@ const GnImport := preload("res://addons/genesis/core/gn_import.gd")
 const PreviewStudio := preload("res://app/runtime/preview_studio.gd")
 const DependenciesDialog := preload("res://app/ui/dependencies_dialog.gd")
 const Dependencies := preload("res://app/runtime/dependencies.gd")
+const GenesisTheme := preload("res://app/ui/genesis_theme.gd")
+const UiTour := preload("res://app/ui_tour.gd")
+const GnFileDialog := preload("res://addons/genesis/core/gn_file_dialog.gd")
+const GnPathField := preload("res://addons/genesis/ui/gn_path_field.gd")
 
 var screen: Control
 
@@ -37,6 +41,7 @@ var _settings_dialog: AcceptDialog
 
 
 func _ready() -> void:
+	GenesisTheme.apply(get_tree())
 	_start_services()
 	_restore_window()
 	_register_actions()
@@ -91,6 +96,7 @@ func _start_services() -> void:
 		App.notify.warning(settings_note)
 	App.settings.changed.connect(_on_setting)
 	_apply_osc.call_deferred()
+	GnFileDialog.system_dialogs = bool(App.settings.get_value("system_file_dialogs", true))
 	print("Dependencies:\n" + Dependencies.report())
 
 
@@ -142,7 +148,7 @@ func _register_actions() -> void:
 	A.add("app.preferences", "Preferences…", preferences, [K.key(KEY_COMMA, true)])
 	A.add("help.about", "About %s" % App.NAME, about)
 	A.add("help.logs", "Show the Log Folder", _show_logs)
-	A.add("tools.dependencies", "Dependencies…", dependencies)
+	A.add("tools.dependencies", "Other Programs…", dependencies)
 	A.add("help.docs", "Documentation", _open_docs, [])
 
 
@@ -175,11 +181,17 @@ func _can_redo() -> bool:
 
 
 func _undo_label() -> String:
-	return "Undo: %s" % GnHost.undo_redo().undo_name() if _can_undo() else "Undo"
+	return "Undo: %s" % _step_name(GnHost.undo_redo().undo_name()) if _can_undo() else "Undo"
 
 
 func _redo_label() -> String:
-	return "Redo: %s" % GnHost.undo_redo().redo_name() if _can_redo() else "Redo"
+	return "Redo: %s" % _step_name(GnHost.undo_redo().redo_name()) if _can_redo() else "Redo"
+
+
+# "Genesis: place TreeRound" reads as "Place TreeRound" in a menu.
+static func _step_name(action: String) -> String:
+	var n := action.trim_prefix("Genesis: ").strip_edges()
+	return n.substr(0, 1).to_upper() + n.substr(1) if n != "" else n
 
 
 func dependencies() -> void:
@@ -206,6 +218,8 @@ func _open_docs() -> void:
 func _on_setting(key: String) -> void:
 	if key in ["osc_listen", "osc_port"]:
 		_apply_osc()
+	elif key == "system_file_dialogs":
+		GnFileDialog.system_dialogs = bool(App.settings.get_value("system_file_dialogs", true))
 
 
 func _apply_osc() -> void:
@@ -243,15 +257,19 @@ func open_project() -> void:
 
 
 func _open_project_now() -> void:
-	var d := FileDialog.new()
-	d.access = FileDialog.ACCESS_FILESYSTEM
+	pick_folder("Open a Genesis project folder", "project", open_project_at)
+
+
+## Asks for a folder with the file picker, then calls `chosen` with it.
+func pick_folder(title: String, purpose: String, chosen: Callable) -> void:
+	var d := GnFileDialog.new()
+	d.title = title
+	d.purpose = purpose
 	d.file_mode = FileDialog.FILE_MODE_OPEN_DIR
-	d.use_native_dialog = true
-	d.title = "Open a Genesis project folder"
-	d.dir_selected.connect(open_project_at)
+	d.dir_selected.connect(chosen)
 	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
 	add_child(d)
-	d.popup_centered_ratio(0.6)
+	d.popup_file_dialog()
 
 
 ## Opens a project folder, and says why if it cannot.
@@ -262,6 +280,8 @@ func open_project_at(folder: String) -> void:
 
 
 func _on_project_opened() -> void:
+	# The project and the user's own library are places the file picker offers.
+	GnFileDialog.extra_places = PackedStringArray([App.projects.folder, App.host.user_library_dir()])
 	_show_workspace()
 	if App.projects.recovery_available():
 		_offer_recovery()
@@ -305,6 +325,11 @@ func import_model() -> void:
 
 
 func _on_files_dropped(files: PackedStringArray) -> void:
+	# A dialog asking for a file takes what is dropped on the window.
+	var fields := GnPathField.showing()
+	for i in range(fields.size() - 1, -1, -1):
+		if fields[i].accept_dropped_files(files):
+			return
 	for f in files:
 		if DirAccess.dir_exists_absolute(f) and not ProjectService.manifest_of(f).is_empty():
 			confirm_unsaved(open_project_at.bind(f))
@@ -312,14 +337,23 @@ func _on_files_dropped(files: PackedStringArray) -> void:
 	if not App.scenes.has_scene():
 		App.notify.info("Open a project first, then drop models into it.")
 		return
+	# Over the 3D view, a model lands where it is dropped.
+	var at: Variant = null
+	if screen is Workspace and screen.viewport_panel.is_visible_in_tree():
+		at = screen.viewport_panel.point_at_screen(DisplayServer.mouse_get_position())
+	var used := 0
 	for f in files:
 		if f.get_extension().to_lower() in GnModelImport.EXTENSIONS:
+			used += 1
 			App.notify.info("Bringing in %s…" % f.get_file())
-			var err: String = GnImport.import_runtime(f)
+			var err: String = GnImport.import_runtime(f, {}, at)
 			if err == "":
 				App.notify.success("%s is in the scene." % f.get_file())
 			else:
 				App.notify.error("%s could not be brought in." % f.get_file(), err)
+	if used == 0:
+		App.notify.info("Only models can be dropped here (%s). Plans, skies and videos go in on their pages." %
+			", ".join(GnModelImport.EXTENSIONS.map(func(e): return "." + e)))
 
 
 func import_plugin_project() -> void:
@@ -327,22 +361,14 @@ func import_plugin_project() -> void:
 
 
 func _import_plugin_now() -> void:
-	var d := FileDialog.new()
-	d.access = FileDialog.ACCESS_FILESYSTEM
-	d.file_mode = FileDialog.FILE_MODE_OPEN_DIR
-	d.use_native_dialog = true
-	d.title = "The old Genesis project (the folder with project.godot)"
-	d.dir_selected.connect(import_plugin_project_at)
-	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
-	add_child(d)
-	d.popup_centered_ratio(0.6)
+	pick_folder("The old Genesis project (the folder with project.godot)", "old_project", import_plugin_project_at)
 
 
 ## Makes a new project beside the usual ones from an old plugin project, and opens it.
 func import_plugin_project_at(source: String) -> void:
 	var parent: String = App.settings.get_value("projects_dir", "")
 	if parent == "":
-		parent = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS).path_join("Genesis Projects")
+		parent = ProjectService.default_projects_dir()
 	DirAccess.make_dir_recursive_absolute(parent)
 	var new_name := source.get_file() + " (Genesis Community)"
 	var r: Dictionary = App.projects.import_plugin_project(source, parent, new_name)
@@ -357,17 +383,9 @@ func import_plugin_project_at(source: String) -> void:
 
 
 func relink() -> void:
-	var d := FileDialog.new()
-	d.access = FileDialog.ACCESS_FILESYSTEM
-	d.file_mode = FileDialog.FILE_MODE_OPEN_DIR
-	d.use_native_dialog = true
-	d.title = "Where might the missing files be?"
-	d.dir_selected.connect(func(dir):
+	pick_folder("Where might the missing files be?", "relink", func(dir):
 		var n: int = App.projects.relink(dir)
 		App.notify.info("Found %d of the missing files." % n if n > 0 else "None of the missing files were in that folder."))
-	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
-	add_child(d)
-	d.popup_centered_ratio(0.6)
 
 
 func save_scene() -> void:
@@ -524,6 +542,12 @@ func _command_line() -> void:
 	if e >= 0 and e + 2 < args.size():
 		var failures: int = await E2E.run(self, args[e + 1], args[e + 2])
 		print("GENESIS_E2E RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
+		get_tree().quit(failures)
+		return
+	var u := args.find("--ui-tour")
+	if u >= 0 and u + 2 < args.size():
+		var failures: int = await UiTour.run(self, args[u + 1], args[u + 2])
+		print("GENESIS_UI_TOUR RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return
 	if "--smoke" in args:

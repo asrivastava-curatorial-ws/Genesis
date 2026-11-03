@@ -56,7 +56,7 @@ func _init() -> void:
 	GnUi.heading(_body, "Your own image")
 	_tile = GnUi.slider(_body, "One tile is", 0.1, 10.0, 0.05, func(_v): pass, func(v): return "%.2f m across" % v)
 	GnUi.show_value(_tile, 1.0)
-	GnUi.button(_body, "Use an image…", _pick_image)
+	GnUi.button(_body, "Use an image…", _pick_image, "image")
 	_own_note = GnUi.note(_body, "A photo or texture map. Normal and roughness maps beside it, named the usual way, come too.")
 
 	GnUi.heading(_body, "Tiles and grout")

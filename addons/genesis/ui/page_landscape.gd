@@ -78,7 +78,7 @@ func _init() -> void:
 	_ground.get_parent().visible = false
 	_paint_strength.get_parent().visible = false
 	GnUi.heading(self, "Terrain and water")
-	GnUi.button(self, "Add terrain (replaces the flat ground)", _add_terrain)
+	GnUi.button(self, "Add terrain (replaces the flat ground)", _add_terrain, "kind_terrain")
 	var row := HBoxContainer.new()
 	for k in ["Pond", "Pool", "River", "Ocean"]:
 		GnUi.button(row, k, _add_water.bind(k))

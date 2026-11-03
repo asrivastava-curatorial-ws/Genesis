@@ -56,7 +56,6 @@ var _timer: Timer
 
 func _init() -> void:
 	name = "Show"
-	GnUi.note(self, "Run the event before it happens: real content on the screens, and a click-through of the cues.")
 
 	GnUi.heading(self, "Live video on the screens")
 	GnUi.note(self, "Pick screens (LED walls and flying screens), choose what feeds them, and show it.")
@@ -72,7 +71,7 @@ func _init() -> void:
 	_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_pick.clip_text = true
 	pick_row.add_child(_pick)
-	GnUi.button(pick_row, "Refresh", _fill_pick)
+	GnUi.button(pick_row, "Refresh", _fill_pick, "refresh")
 	add_child(pick_row)
 	_url = LineEdit.new()
 	_url.placeholder_text = "srt://host:port, rtsp://…, http://…"
@@ -83,9 +82,9 @@ func _init() -> void:
 	_file_label.clip_text = true
 	_file_label.text = "No file chosen"
 	_file_row.add_child(_file_label)
-	GnUi.button(_file_row, "Choose…", _choose_file)
+	GnUi.button(_file_row, "Choose…", _choose_file, "folder_open")
 	add_child(_file_row)
-	GnUi.button(self, "Show it on the chosen screens", _apply_source)
+	GnUi.primary(self, "Show it on the chosen screens", _apply_source, "play")
 	_help = GnUi.note(self, "")
 	_live_status = GnUi.note(self, "")
 
@@ -116,13 +115,13 @@ func _init() -> void:
 	GnUi.button(order, "Test the command", _test_send)
 	add_child(order)
 	var run := HBoxContainer.new()
-	var go := GnUi.button(run, "GO", _go)
+	var go := GnUi.primary(run, "GO", _go, "play")
 	go.custom_minimum_size = Vector2(90, 40)
 	go.add_theme_font_size_override("font_size", 20)
 	GnUi.button(run, "Back", _back)
 	GnUi.button(run, "Go to selected", _go_selected)
 	add_child(run)
-	GnUi.button(self, "Open the show view (full screen with F)", _open_window)
+	GnUi.button(self, "Open the show view (full screen with F)", _open_window, "fullscreen")
 	_status = GnUi.note(self, "")
 
 	_timer = Timer.new()

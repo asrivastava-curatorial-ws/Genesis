@@ -28,7 +28,7 @@ static func defaults() -> Dictionary:
 		"view_quality": "balanced",
 		"osc_listen": false,
 		"osc_port": 9000,
-		"layout": {"panel_offset": -60, "console_offset": -60, "console_visible": true, "panel_visible": true},
+		"layout": {"panel_offset": -60, "console_offset": -60, "console_visible": false, "panel_visible": true},
 		"window": {"maximized": false, "width": 0, "height": 0, "x": 0, "y": 0},
 	}
 

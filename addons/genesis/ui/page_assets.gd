@@ -1,9 +1,12 @@
 @tool
 extends VBoxContainer
 
-# The library: pick something, click Place, it lands where you are looking.
+# The library: find something, then click where it goes in the 3D view (or
+# drag it there). Where the host has no placing tool (the Godot editor), Place
+# puts it in the middle of the view instead.
 
 const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
+const GnIcons := preload("res://addons/genesis/ui/gn_icons.gd")
 const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
@@ -14,11 +17,16 @@ const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 ## Units a model may have been made in, as the import scale to metres.
 const UNITS := {"Metres": 1.0, "Centimetres": 0.01, "Millimetres": 0.001, "Inches": 0.0254, "Feet": 0.3048}
 const YOURS := "Your own"
+const THUMB := 72
 
 var _search: LineEdit
 var _category: OptionButton
 var _list: ItemList
 var _info: Label
+var _card: PanelContainer
+var _card_title: Label
+var _card_text: Label
+var _place_button: Button
 var _assets: Array = []
 var _shown: Array = []
 var _line: Button
@@ -43,39 +51,75 @@ var _d_error: Label
 
 func _init() -> void:
 	name = "Assets"
+	# Find: words, then a kind of thing.
 	_search = LineEdit.new()
-	_search.placeholder_text = "Search"
+	_search.placeholder_text = "Search the library"
 	_search.clear_button_enabled = true
+	_search.right_icon = GnIcons.tinted("search", 14, Color("#7d8590"))
 	_search.text_changed.connect(func(_t): _fill())
 	add_child(_search)
+	var find := HBoxContainer.new()
+	add_child(find)
+	var show := Label.new()
+	show.text = "Show"
+	find.add_child(show)
 	var filters: Array = ["All"] + GnAssets.CATEGORIES.map(func(c): return c.capitalize())
 	if GnAssets.user_library_dir() != "":
 		filters.append(YOURS)
-	_category = GnUi.option(self, "Category", filters, func(_t): _fill())
+	_category = OptionButton.new()
+	for f in filters:
+		_category.add_item(f)
+	_category.tooltip_text = "Show one kind of thing"
+	_category.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_category.item_selected.connect(func(_i): _fill())
+	find.add_child(_category)
+	GnUi.tool_button(find, "refresh", "Look for new models in the library", refresh)
+	# The grid: a picture and a name each.
 	_list = ItemList.new()
-	_list.custom_minimum_size.y = 260
+	_list.custom_minimum_size.y = 300
 	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_list.fixed_icon_size = Vector2i(64, 64)
+	_list.fixed_icon_size = Vector2i(THUMB, THUMB)
 	_list.icon_mode = ItemList.ICON_MODE_TOP
 	_list.max_columns = 0
 	_list.same_column_width = true
+	_list.fixed_column_width = THUMB + 22
+	_list.max_text_lines = 2
+	_list.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_list.item_selected.connect(_describe)
 	_list.item_activated.connect(func(_i): _place())
+	_list.set_drag_forwarding(_drag_asset, Callable(), Callable())
 	add_child(_list)
-	GnUi.button(self, "Place in scene", _place)
-	_info = GnUi.note(self, "")
-	GnUi.button(self, "Rescan library", refresh)
+	# The one picked, and putting it in.
+	_card = PanelContainer.new()
+	_card.theme_type_variation = &"Card"
+	_card.visible = false
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 2)
+	_card.add_child(words)
+	_card_title = Label.new()
+	_card_title.theme_type_variation = &"ValueLabel"
+	_card_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	words.add_child(_card_title)
+	_card_text = Label.new()
+	_card_text.theme_type_variation = &"SmallLabel"
+	_card_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_card_text.custom_minimum_size.x = 160
+	words.add_child(_card_text)
+	add_child(_card)
+	_place_button = GnUi.primary(self, "Place in the scene", _place, "crosshair")
+	_place_button.disabled = true
+	_place_button.tooltip_text = "Then click where it goes in the 3D view. R turns it; Shift + click places another; Esc stops."
+	_info = GnUi.note(self, "Pick one, then Place and click where it goes, or drag it into the 3D view.")
 
 	if GnAssets.user_library_dir() != "":
 		GnUi.heading(self, "Your own models")
 		GnUi.note(self, "Add models of your own (GLB, glTF, FBX, OBJ; .blend with Blender) to a library every project can use: furniture, people, plants (they can be painted in Landscape), vehicles. Say what each may be used under; the licence travels with it. A project gets its own copy of what it uses.")
-		var own := HBoxContainer.new()
-		GnUi.button(own, "Add a model…", _add_own)
-		GnUi.button(own, "Remove it", _remove_own)
-		add_child(own)
+		var own := GnUi.row(self)
+		GnUi.fill(GnUi.button(own, "Add a model…", _add_own, "add"))
+		GnUi.fill(GnUi.button(own, "Remove it", _remove_own, "trash"))
 		GnUi.button(self, "Open your library folder", func():
 			DirAccess.make_dir_recursive_absolute(GnAssets.user_library_dir())
-			OS.shell_open(GnAssets.user_library_dir()))
+			OS.shell_open(GnAssets.user_library_dir()), "folder_open")
 
 	GnUi.heading(self, "Place along a line")
 	GnUi.note(self, "Pick something above, then click the start and the end of the line in the 3D view.")
@@ -84,8 +128,34 @@ func _init() -> void:
 	GnUi.show_value(_spacing, 5.0)
 	_facing = GnUi.option(self, "Facing", ["Along the line", "Across the line", "Random"],
 		func(t): if measure: measure.line_facing = {"Along the line": "along", "Across the line": "across"}.get(t, "random"))
-	_line = GnUi.button(self, "Start placing along a line", _toggle_line)
+	_line = GnUi.button(self, "Start placing along a line", _toggle_line, "route")
 	_line.toggle_mode = true
+
+
+# Dragging a model out of the grid: what is dragged, and a picture of it.
+func _drag_asset(at: Vector2) -> Variant:
+	var i := _list.get_item_at_position(at, true)
+	if i < 0 or i >= _shown.size():
+		return null
+	_list.select(i)
+	_describe(i)
+	var a = _shown[i]
+	var tag := PanelContainer.new()
+	tag.theme_type_variation = &"Card"
+	var row := HBoxContainer.new()
+	tag.add_child(row)
+	if _list.get_item_icon(i):
+		var pic := TextureRect.new()
+		pic.texture = _list.get_item_icon(i)
+		pic.custom_minimum_size = Vector2(40, 40)
+		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(pic)
+	var l := Label.new()
+	l.text = a.label()
+	row.add_child(l)
+	_list.set_drag_preview(tag)
+	return {"genesis_asset": {"path": a.path, "category": a.category, "label": a.label()}}
 
 
 # The list (and its thumbnails, which load every model) is built only while
@@ -109,13 +179,13 @@ func refresh() -> void:
 	_assets = result.assets
 	_fill()
 	if not result.unlicensed.is_empty():
-		_info.text = "%d model(s) skipped: no .license.json beside them." % result.unlicensed.size()
+		_info.text = "%d model(s) left out: they have no licence record (.license.json) beside them." % result.unlicensed.size()
 
 
 func _fill() -> void:
 	_list.clear()
 	_shown.clear()
-	var want := _category.get_item_text(_category.selected).to_lower()
+	var want := _category.get_item_text(maxi(_category.selected, 0)).to_lower()
 	var q := _search.text.strip_edges().to_lower()
 	for a in _assets:
 		if want == YOURS.to_lower():
@@ -125,8 +195,9 @@ func _fill() -> void:
 			continue
 		if q != "" and not (q in a.name.to_lower() or q in a.category or q in a.label().to_lower()):
 			continue
-		var i := _list.add_item(a.label() + ("  (yours)" if a.user else ""))
-		_list.set_item_tooltip(i, "%s%s · %s" % ["Your library · " if a.user else "", a.category, a.license.get("license", "")])
+		var i := _list.add_item(a.label())
+		_list.set_item_tooltip(i, "%s\n%s%s · %s\nDouble-click to place it, or drag it into the 3D view." % [a.label(),
+			"Your own · " if a.user else "", a.category.capitalize(), a.license.get("license", "")])
 		_shown.append(a)
 		if _thumbs.has(a.path) and _thumbs[a.path]:
 			_list.set_item_icon(i, _thumbs[a.path])
@@ -181,16 +252,26 @@ static func _thumbnail(path: String) -> Texture2D:
 	var tex: Texture2D = null
 	# Without a GPU (headless runs, tests) there is nothing to render with.
 	if biggest and DisplayServer.get_name() != "headless":
-		var made := GnHost.mesh_previews([biggest], 96)
-		tex = made[0] if not made.is_empty() else null
+		tex = GnHost.model_preview(path, 128)
+		if tex == null:
+			var made := GnHost.mesh_previews([biggest], 96)
+			tex = made[0] if not made.is_empty() else null
 	_thumbs[path] = tex
 	return tex
 
 
 func _describe(index: int) -> void:
+	if index < 0 or index >= _shown.size():
+		return
 	var a = _shown[index]
-	_info.text = "%s%s\n%s · by %s\n%s" % [a.label(), "  (your own)" if a.user else "", a.license.get("license", "?"),
-		a.license.get("author", "?") if str(a.license.get("author", "")) != "" else "?", a.license.get("attribution", "")]
+	var author := str(a.license.get("author", ""))
+	_card_title.text = a.label()
+	_card_text.text = "%s%s\n%s%s%s" % ["Your own · " if a.user else "", a.category.capitalize(),
+		a.license.get("license", "?"), (", by " + author) if author != "" else "",
+		("\n" + str(a.license.get("attribution", ""))) if str(a.license.get("attribution", "")) != "" else ""]
+	_card.visible = true
+	_place_button.disabled = false
+	_place_button.text = "Place %s" % a.label()
 
 
 func _place() -> void:
@@ -199,7 +280,9 @@ func _place() -> void:
 		_info.text = "Pick something first."
 		return
 	var a = _shown[picked[0]]
-	GnPlacement.place(a.path, a.category)
+	# Follows the mouse until clicked, where the host can; else straight in.
+	if not GnHost.start_placing(a.path, a.category, a.label()):
+		GnPlacement.place(a.path, a.category)
 
 
 func _toggle_line() -> void:
@@ -326,7 +409,7 @@ func add_own(file: String, category: String, label: String, record: Dictionary, 
 func _remove_own() -> void:
 	var picked := _list.get_selected_items()
 	if picked.is_empty() or not _shown[picked[0]].user:
-		_info.text = "Pick one of your own models (marked “yours”) first."
+		_info.text = "Pick one of your own models first (choose “Your own” to list them)."
 		return
 	var a = _shown[picked[0]]
 	var ask := ConfirmationDialog.new()

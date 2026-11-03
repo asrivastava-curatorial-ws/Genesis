@@ -72,6 +72,11 @@ func dialog_parent() -> Node:
 func make_file_dialog(title: String) -> Node:
 	var d := GnFileDialog.new()
 	d.title = title
+	# Each kind of file opens where it was picked last; the title says the kind.
+	var key := ""
+	for c in title.to_lower():
+		key += c if (c >= "a" and c <= "z") or (c >= "0" and c <= "9") else ("_" if not key.ends_with("_") else "")
+	d.purpose = key.strip_edges().trim_suffix("_").trim_prefix("_")
 	return d
 
 
@@ -135,6 +140,17 @@ func user_library_dir() -> String:
 ## False when the host has no such tool (the editor has Godot's own).
 func start_tool(_tool: String) -> bool:
 	return false
+
+
+## Placing a library model with the mouse; see GnHost.start_placing.
+func start_placing(_path: String, _category: String, _label: String) -> bool:
+	return false
+
+
+## A picture of a whole model, `size` pixels square; null when this host
+## cannot draw one.
+func model_preview(_path: String, _size: int) -> Texture2D:
+	return null
 
 
 ## Things only some hosts can do. "editor_import": models and images are

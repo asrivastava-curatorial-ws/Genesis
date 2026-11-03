@@ -38,8 +38,6 @@ var _link_on: CheckBox
 
 func _init() -> void:
 	name = "Scene"
-	GnUi.note(self, "Import your building. Make it beautiful.")
-
 	GnUi.heading(self, "Scene")
 	var row := HBoxContainer.new()
 	_new_name = LineEdit.new()
@@ -47,11 +45,11 @@ func _init() -> void:
 	_new_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_new_name.text_submitted.connect(func(_t): _new_scene())
 	row.add_child(_new_name)
-	GnUi.button(row, "New scene", _new_scene)
+	GnUi.button(row, "New scene", _new_scene, "add")
 	add_child(row)
 
 	GnUi.heading(self, "Building")
-	GnUi.button(self, "Bring in a building…", _pick_building)
+	GnUi.primary(self, "Bring in a building…", _pick_building, "download")
 	_link_on = CheckBox.new()
 	_link_on.text = "Live link: bring in re-exports automatically"
 	_link_on.button_pressed = true
@@ -59,7 +57,7 @@ func _init() -> void:
 	add_child(_link_on)
 	_link = GnUi.note(self, "")
 	_blender = GnUi.note(self, "")
-	GnUi.button(self, "Find Blender…", _pick_blender)
+	GnUi.button(self, "Find Blender…", _pick_blender, "folder_search")
 
 	GnUi.heading(self, "Site context")
 	GnUi.note(self, "The real neighbourhood from OpenStreetMap: buildings, roads, parks and water, on the real ground.")
@@ -77,18 +75,18 @@ func _init() -> void:
 	_photo.text = "Aerial photograph (2 m a pixel in the US, 10 m elsewhere)"
 	_photo.button_pressed = true
 	add_child(_photo)
-	_site_button = GnUi.button(self, "Bring in the neighbourhood", _bring_site)
-	GnUi.button(self, "Bring in an OpenStreetMap file…", _pick_site_file)
+	_site_button = GnUi.button(self, "Bring in the neighbourhood", _bring_site, "globe")
+	GnUi.button(self, "Bring in an OpenStreetMap file…", _pick_site_file, "file_plus")
 	_site_status = GnUi.note(self, "")
 
 	GnUi.heading(self, "World")
-	_setup_button = GnUi.button(self, "Add sun, sky and ground", _set_up)
+	_setup_button = GnUi.button(self, "Add sun, sky and ground", _set_up, "sun")
 	_status = GnUi.note(self, "")
 	_message = GnUi.note(self, "")
 
 	GnUi.heading(self, "Measure")
 	GnUi.note(self, "Click two points in the 3D view; a dimension stays there. Right-click or Esc starts again.")
-	_measure_button = GnUi.button(self, "Start measuring", _toggle_measure)
+	_measure_button = GnUi.button(self, "Start measuring", _toggle_measure, "ruler")
 	_measure_button.toggle_mode = true
 
 	GnUi.heading(self, "Layers")
@@ -98,7 +96,7 @@ func _init() -> void:
 	_layer_name.placeholder_text = "Layer name"
 	_layer_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lrow.add_child(_layer_name)
-	GnUi.button(lrow, "Put selection on it", _put_on_layer)
+	GnUi.button(lrow, "Put selection on it", _put_on_layer, "layers")
 	add_child(lrow)
 	_layer_list = VBoxContainer.new()
 	add_child(_layer_list)
@@ -107,7 +105,7 @@ func _init() -> void:
 func refresh() -> void:
 	_refresh_layers()
 	var links := GnLiveLink.linked()
-	_link.text = "" if links.is_empty() else "Watching %s.%s" % [
+	_link.text = "" if links.is_empty() else "Watching for new versions of %s.%s" % [
 		", ".join(links.map(func(n): return str(n.get_meta(GnLiveLink.SOURCE)).get_file())),
 		"" if GnLiveLink.last_update == "" else " Last update: %s." % GnLiveLink.last_update]
 	var root := GnScene.root()
@@ -122,8 +120,9 @@ func refresh() -> void:
 	# The editor uses its own setting; the program finds Blender itself (the
 	# place set with Find Blender..., then the PATH and the usual places).
 	var blender := str(GnHost.get_setting("blender_path")) if GnHost.supports("editor_import") else GnModelImport.find_blender()
-	_blender.text = "Blender: %s" % blender if blender != "" \
+	_blender.text = "Blender is ready for .blend files." if blender != "" \
 		else "Blender isn't found, so .blend files can't be brought in directly. GLB, FBX and OBJ work without it; install Blender, or tell Genesis where it is with Find Blender…"
+	_blender.tooltip_text = blender
 
 
 # A new scene with the world already in it: the scene a user wants in 95% of

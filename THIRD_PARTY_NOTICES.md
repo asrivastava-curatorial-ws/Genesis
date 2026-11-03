@@ -10,6 +10,9 @@ Genesis Community is MIT-licensed (see `LICENSE`). It is built on the Godot Engi
 | Godot Engine 4.7.2 and the components compiled into it | MIT, and the licences listed below | the executables |
 | The model library (295 models) | CC0-1.0 | `genesis_assets/`, each with its `.license.json`; see `docs/ASSET_LICENSING.md` |
 | The eight material presets and their textures | CC0-1.0 | drawn by `tools/make_materials.gd` when the program is built; `genesis_data/materials/materials.license.json` |
+| JetBrains Mono 2.304 (the interface typeface: Regular, Medium, SemiBold, Bold, Italic) | OFL-1.1 | `app/ui/fonts/`, with its `OFL.txt` and `AUTHORS.txt`; see "Interface" below |
+| Lucide 1.67.0 icons (146 of them; some derived from Feather) | ISC; MIT for the Feather-derived ones | inside `addons/genesis/ui/gn_icons.gd`, which carries the licence text; see "Interface" below |
+| The GitHub Dark Default colour values (from the GitHub VS Code theme 6.3.5, built on Primer primitives 7.10.0) | MIT | the colour constants in `app/ui/genesis_theme.gd`; see "Interface" below |
 
 Models and skies a user adds to their own library carry the licence the user gives them, in a `.license.json` beside each; they are the user's, not part of the release.
 
@@ -31,6 +34,34 @@ These are separate programs. Genesis finds them on the computer (or, for Real-ES
 - Elevation: Mapzen Terrain Tiles on AWS Open Data (sources include SRTM, GMTED, ETOPO1, USGS 3DEP, EU-DEM; see their attribution).
 - Imagery: USGS The National Map orthoimagery (public domain); Copernicus Sentinel-2 (contains modified Copernicus Sentinel data).
 - HDRI skies and scanned materials (when downloaded by setup): Poly Haven and ambientCG, CC0.
+
+---
+
+## Interface
+
+### JetBrains Mono
+
+The interface is set in JetBrains Mono 2.304, from https://github.com/JetBrains/JetBrainsMono (release v2.304). Copyright 2020 The JetBrains Mono Project Authors. It is licensed under the SIL Open Font License, Version 1.1 (the full text is under "OFL-1.1" below, and in `app/ui/fonts/OFL.txt`). The font files are unchanged.
+
+### Lucide icons
+
+The interface icons are from Lucide 1.67.0 (https://lucide.dev, the `lucide-static` npm package), redrawn white so the theme can tint them.
+
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Some Lucide icons are derived from the Feather project (among those used here: aperture, check, chevron-down/left/right/up, clock, compass, corner-left-up, crosshair, download, external-link, info, link, lock, log-out, minus, monitor, moon, plus, search, square, terminal, trash-2, tv, upload, x), under:
+
+The MIT License (MIT). Copyright (c) 2013-present Cole Bemis. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+### GitHub Dark Default colours
+
+The colours are those of "GitHub Dark Default" in the GitHub VS Code theme 6.3.5 (https://github.com/primer/github-vscode-theme), computed from GitHub's Primer primitives 7.10.0 (https://github.com/primer/primitives). Both are under the MIT licence: Copyright (c) 2020 Primer (theme) and Copyright (c) 2018 GitHub Inc. (primitives). Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 

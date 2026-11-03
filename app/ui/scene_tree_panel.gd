@@ -7,15 +7,22 @@ extends VBoxContainer
 
 const App := preload("res://app/core/app.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnIcons := preload("res://addons/genesis/ui/gn_icons.gd")
 const Picker := preload("res://app/runtime/picker.gd")
 const EditOps := preload("res://app/runtime/edit_ops.gd")
+const NodeKinds := preload("res://app/ui/node_kinds.gd")
 
 const COL_NAME := 0
-const COL_SHOW := 1
-const COL_LOCK := 2
+## The buttons at the end of each row: show or hide, lock or unlock.
+const BUTTON_SHOW := 0
+const BUTTON_LOCK := 1
+const ON := Color("#e6edf3")
+const QUIET := Color("#7d8590")
+const FAINT := Color("#6e768155")
 
 var tree: Tree
 var _search: LineEdit
+var _count: Label
 var _menu: PopupMenu
 var _items := {}          # Node instance id -> TreeItem
 var _syncing := false
@@ -25,25 +32,38 @@ var _rebuild_queued := false
 func _init() -> void:
 	name = "SceneTreePanel"
 	custom_minimum_size = Vector2(200, 120)
+	add_theme_constant_override("separation", 0)
+	var header := PanelContainer.new()
+	header.theme_type_variation = &"PanelHeader"
+	add_child(header)
+	var top := HBoxContainer.new()
+	header.add_child(top)
 	var title := Label.new()
-	title.text = "Scene"
-	add_child(title)
+	title.text = "SCENE"
+	title.theme_type_variation = &"PageTitle"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(title)
+	_count = Label.new()
+	_count.theme_type_variation = &"StatusLabel"
+	top.add_child(_count)
+	var search_box := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		search_box.add_theme_constant_override("margin_" + side, 8 if side != "top" else 8)
+	search_box.add_theme_constant_override("margin_bottom", 6)
+	var bg := PanelContainer.new()
+	bg.theme_type_variation = &"SideBar"
+	bg.add_child(search_box)
+	add_child(bg)
 	_search = LineEdit.new()
 	_search.placeholder_text = "Search by name"
 	_search.clear_button_enabled = true
+	_search.right_icon = GnIcons.tinted("search", 14, QUIET)
 	_search.text_changed.connect(_on_search)
-	add_child(_search)
+	search_box.add_child(_search)
 	tree = Tree.new()
 	tree.name = "Tree"
-	tree.columns = 3
-	tree.column_titles_visible = true
-	tree.set_column_title(COL_NAME, "Name")
-	tree.set_column_title(COL_SHOW, "Show")
-	tree.set_column_title(COL_LOCK, "Lock")
-	tree.set_column_expand(COL_SHOW, false)
-	tree.set_column_expand(COL_LOCK, false)
-	tree.set_column_custom_minimum_width(COL_SHOW, 46)
-	tree.set_column_custom_minimum_width(COL_LOCK, 42)
+	tree.columns = 1
+	tree.column_titles_visible = false
 	tree.select_mode = Tree.SELECT_MULTI
 	tree.hide_root = true
 	tree.allow_rmb_select = true
@@ -53,6 +73,7 @@ func _init() -> void:
 	tree.item_mouse_selected.connect(_on_mouse_selected)
 	tree.empty_clicked.connect(_on_empty_clicked)
 	tree.item_activated.connect(_on_activated)
+	tree.button_clicked.connect(_on_button)
 	tree.set_drag_forwarding(_get_drag, _can_drop, _drop)
 	add_child(tree)
 	_menu = PopupMenu.new()
@@ -106,11 +127,13 @@ func rebuild() -> void:
 	_items.clear()
 	var root := GnHost.edited_scene_root()
 	if root == null:
+		_count.text = ""
 		return
 	var top := tree.create_item()
 	var filter := _search.text.strip_edges().to_lower()
 	for c in root.get_children():
 		_add(c, top, root, filter)
+	_count.text = "%d" % _items.size() if filter == "" else "%d found" % _items.size()
 	_sync_from_selection()
 
 
@@ -119,17 +142,17 @@ func _add(node: Node, parent_item: TreeItem, root: Node, filter: String) -> bool
 	if not Picker.is_user_level(node, root):
 		return false
 	var item := tree.create_item(parent_item)
+	var about := NodeKinds.describe(node)
 	item.set_text(COL_NAME, str(node.name))
-	item.set_tooltip_text(COL_NAME, "%s (%s)" % [node.name, node.get_class()])
+	item.set_icon(COL_NAME, GnIcons.get_icon(about.icon, 16))
+	item.set_icon_modulate(COL_NAME, QUIET)
+	item.set_tooltip_text(COL_NAME, "%s  ·  %s" % [node.name, about.kind])
 	item.set_metadata(COL_NAME, node.get_instance_id())
 	item.set_editable(COL_NAME, false)
 	if node is Node3D:
-		item.set_cell_mode(COL_SHOW, TreeItem.CELL_MODE_CHECK)
-		item.set_checked(COL_SHOW, (node as Node3D).visible)
-		item.set_editable(COL_SHOW, true)
-	item.set_cell_mode(COL_LOCK, TreeItem.CELL_MODE_CHECK)
-	item.set_checked(COL_LOCK, bool(node.get_meta(Picker.LOCK, false)))
-	item.set_editable(COL_LOCK, true)
+		item.add_button(COL_NAME, GnIcons.get_icon("eye", 16), BUTTON_SHOW, false, "Hide")
+	item.add_button(COL_NAME, GnIcons.get_icon("unlock", 16), BUTTON_LOCK, false, "Lock")
+	_show_state(item, node)
 	_items[node.get_instance_id()] = item
 	var any_child := false
 	# Imported models and set pieces are one object; their insides are theirs.
@@ -147,6 +170,49 @@ func _add(node: Node, parent_item: TreeItem, root: Node, filter: String) -> bool
 	if not matches:
 		item.set_custom_color(COL_NAME, Color(1, 1, 1, 0.45))
 	return true
+
+
+# The row's buttons and colour follow whether the object is shown and locked.
+func _show_state(item: TreeItem, node: Node) -> void:
+	var shown := not (node is Node3D) or (node as Node3D).visible
+	var locked := bool(node.get_meta(Picker.LOCK, false))
+	var lock_index := item.get_button_by_id(COL_NAME, BUTTON_LOCK)
+	var show_index := item.get_button_by_id(COL_NAME, BUTTON_SHOW)
+	if show_index >= 0:
+		item.set_button(COL_NAME, show_index, GnIcons.get_icon("eye" if shown else "eye_off", 16))
+		item.set_button_color(COL_NAME, show_index, QUIET if shown else ON)
+		item.set_button_tooltip_text(COL_NAME, show_index, "Hide" if shown else "Show")
+	if lock_index >= 0:
+		item.set_button(COL_NAME, lock_index, GnIcons.get_icon("lock" if locked else "unlock", 16))
+		item.set_button_color(COL_NAME, lock_index, ON if locked else FAINT)
+		item.set_button_tooltip_text(COL_NAME, lock_index, "Unlock" if locked else "Lock: cannot be picked in the 3D view")
+	item.set_metadata(0, node.get_instance_id())
+	if not shown:
+		item.set_custom_color(COL_NAME, Color("#6e7681"))
+	else:
+		item.clear_custom_color(COL_NAME)
+
+
+## Whether the row of `node` says it is shown (the eye is open).
+func shows_visible(node: Node) -> bool:
+	var item := item_of(node)
+	if item == null:
+		return false
+	var i := item.get_button_by_id(COL_NAME, BUTTON_SHOW)
+	return i >= 0 and item.get_button_tooltip_text(COL_NAME, i) == "Hide"
+
+
+func _on_button(item: TreeItem, _column: int, id: int, mouse_button: int) -> void:
+	if mouse_button != MOUSE_BUTTON_LEFT:
+		return
+	var node := node_of(item)
+	if node == null:
+		return
+	match id:
+		BUTTON_SHOW:
+			EditOps.set_visible([node], not (node as Node3D).visible)
+		BUTTON_LOCK:
+			EditOps.set_locked([node], not bool(node.get_meta(Picker.LOCK, false)))
 
 
 func node_of(item: TreeItem) -> Node:
@@ -222,18 +288,11 @@ func _on_activated() -> void:
 # ------------------------------------------------------------- editing
 func _on_item_edited() -> void:
 	var item := tree.get_edited()
-	var col := tree.get_edited_column()
 	var node := node_of(item)
 	if node == null:
 		return
-	match col:
-		COL_NAME:
-			item.set_editable(COL_NAME, false)
-			EditOps.rename(node, item.get_text(COL_NAME))
-		COL_SHOW:
-			EditOps.set_visible([node], item.is_checked(COL_SHOW))
-		COL_LOCK:
-			EditOps.set_locked([node], item.is_checked(COL_LOCK))
+	item.set_editable(COL_NAME, false)
+	EditOps.rename(node, item.get_text(COL_NAME))
 
 
 func _selected_nodes() -> Array:
@@ -275,9 +334,12 @@ func _get_drag(_at: Vector2) -> Variant:
 	var nodes := _selected_nodes()
 	if nodes.is_empty():
 		return null
+	var tag := PanelContainer.new()
+	tag.theme_type_variation = &"Card"
 	var l := Label.new()
 	l.text = str(nodes[0].name) if nodes.size() == 1 else "%d objects" % nodes.size()
-	tree.set_drag_preview(l)
+	tag.add_child(l)
+	tree.set_drag_preview(tag)
 	tree.drop_mode_flags = Tree.DROP_MODE_ON_ITEM | Tree.DROP_MODE_INBETWEEN
 	return {"genesis_nodes": nodes}
 

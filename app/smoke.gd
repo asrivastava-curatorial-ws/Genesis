@@ -109,6 +109,27 @@ static func run(main: Node) -> int:
 		_check(placed != null and not placed.find_children("*", "MeshInstance3D", true, false).is_empty(), "a vehicle from the library is placed, with its geometry")
 		if placed:
 			App.actions.run("edit.undo")
+		# Placing with the mouse: the model follows the pointer, a click puts it down.
+		var placer = App.modules.placer
+		var vp: Control = main.screen.viewport_panel
+		var middle: Vector2 = vp.size / 2.0
+		var count := root.get_child_count()
+		_check(car != "" and placer.start(car, "vehicles", "Car"), "a library model can be picked up to place with the mouse")
+		placer.hover(vp.camera, middle)
+		placer.rotate_by(90.0)
+		var put: Node3D = placer.place_here()
+		_check(put != null and put.get_parent() == root and root.get_child_count() == count + 1
+			and is_equal_approx(put.rotation_degrees.y, 90.0) and not placer.status().is_empty(),
+			"a click puts it into the scene where the mouse is, turned as shown")
+		placer.stop()
+		_check(not placer.active and vp.viewport.find_children("PlacingPreview", "", false, false).all(func(n): return n.is_queued_for_deletion()),
+			"stopping takes the see-through copy away; it was never in the scene")
+		App.actions.run("edit.undo")
+		var drag := {"genesis_asset": {"path": car, "category": "vehicles", "label": "Car"}}
+		_check(vp._can_drop_data(middle, drag) and placer.active, "dragging a model over the 3D view shows where it would land")
+		vp._drop_data(middle, drag)
+		_check(root.get_child_count() == count + 1 and not placer.active, "letting go of it puts it there")
+		App.actions.run("edit.undo")
 		# The material presets Genesis draws, as a built program reads them.
 		var presets := GnMaterials.presets()
 		var block := MeshInstance3D.new()
@@ -129,7 +150,7 @@ static func run(main: Node) -> int:
 	GnHost.select(wall)
 	await tree.process_frame
 	await tree.process_frame
-	var headings: Array = ws.inspector._box.get_children().filter(func(c): return c is Label).map(func(l): return l.text)
+	var headings: Array = ws.inspector.headings()
 	_check(ws.inspector.target == wall and headings.has("Custom Panel") and not headings.any(func(h): return h in ["Process", "Thread Group", "Transform", "Visibility"]),
 		"the LED wall's properties have only their own headings (%s)" % ", ".join(headings))
 	App.actions.run("edit.undo")
@@ -196,9 +217,11 @@ static func run(main: Node) -> int:
 	var toasts: ToastHost = main.get_node("ToastHost")
 	_check(toasts.shown_count() >= 1, "a notice appears as a toast")
 	_check(App.actions.run("project.save") and not App.scenes.dirty, "Save writes the scene and cleans it")
+	_check(not ws.console.visible, "the console is out of the way until it is wanted")
 	ws.toggle_console()
-	_check(not ws.console.visible and App.settings.get_value("layout/console_visible") == false, "the console can be hidden, and that is remembered")
+	_check(ws.console.visible and App.settings.get_value("layout/console_visible") == true, "the console can be shown, and that is remembered")
 	ws.toggle_console()
+	_check(not ws.console.visible and App.settings.get_value("layout/console_visible") == false, "and hidden again")
 	ws._hsplit.split_offsets = PackedInt32Array([-210])
 	ws._remember_layout()
 	_check(App.settings.get_value("layout/panel_offset") == -210, "a dragged layout is remembered")

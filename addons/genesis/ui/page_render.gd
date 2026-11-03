@@ -42,26 +42,26 @@ func _init() -> void:
 	# clean edges, for about twice the time at 16 samples.
 	_quality = GnUi.option(self, "Quality", QUALITY.keys(), func(_t): pass)
 	GnUi.select_text(_quality, "High quality (16 samples)")
-	_button = GnUi.button(self, "Render still", _render)
-	_all_button = GnUi.button(self, "Render every camera", _render_all)
-	_study_button = GnUi.button(self, "Sun study: 9:00, 12:00, 15:00", _sun_study)
-	_pano_button = GnUi.button(self, "360° panorama from this camera", _panorama)
+	_button = GnUi.primary(self, "Render still", _render, "image")
+	_all_button = GnUi.button(self, "Render every camera", _render_all, "layers")
+	_study_button = GnUi.button(self, "Sun study: 9:00, 12:00, 15:00", _sun_study, "sun")
+	_pano_button = GnUi.button(self, "360° panorama from this camera", _panorama, "orbit")
 	_stereo = CheckBox.new()
 	_stereo.text = "Stereo, for VR headsets (3D 360, top-bottom)"
 	add_child(_stereo)
-	_tour_button = GnUi.button(self, "Virtual tour of every camera (one web page)", _tour)
-	_passes_button = GnUi.button(self, "Render passes (depth, normals, ID, mask, clay)", _passes)
+	_tour_button = GnUi.button(self, "Virtual tour of every camera (one web page)", _tour, "globe")
+	_passes_button = GnUi.button(self, "Render passes (depth, normals, ID, mask, clay)", _passes, "layers")
 	# AI upscaling: a 4K still to 8K in seconds rather than rendering 8K.
 	_upscale_factor = GnUi.option(self, "AI upscale", ["×2", "×4"], func(_t): pass)
-	_upscale_button = GnUi.button(self, "AI upscale the last render", _upscale)
+	_upscale_button = GnUi.button(self, "AI upscale the last render", _upscale, "wand")
 	if GnUpscale.available() and not GnUpscale.installed():
 		_upscale_button.tooltip_text = "The first time, this downloads the free Real-ESRGAN upscaler (%d MB)." % GnUpscale.download_mb()
 	_upscale_factor.get_parent().visible = GnUpscale.available()
 	_upscale_button.visible = GnUpscale.available()
 	_result = GnUi.note(self, "")
-	GnUi.button(self, "Show renders folder", func():
+	GnUi.button(self, "Show the renders folder", func():
 		OS.shell_show_in_file_manager(ProjectSettings.globalize_path(
-			_last_path if _last_path != "" else GnPaths.at(GnRender.OUTPUT_DIR))))
+			_last_path if _last_path != "" else GnPaths.at(GnRender.OUTPUT_DIR))), "folder_open")
 
 
 func refresh() -> void:
@@ -99,7 +99,7 @@ func _panorama() -> void:
 	_pano_button.disabled = false
 	if path != "":
 		_last_path = path
-	_result.text = "Saved %s" % path if path != "" else "The panorama failed. See the %s panel." % GnHost.log_panel()
+	_result.text = "Saved %s" % GnUi.shown(path) if path != "" else "The panorama failed. See the %s panel." % GnHost.log_panel()
 
 
 # A 360 from every camera, walkable from one to the next, in a single web
@@ -162,7 +162,7 @@ func _passes() -> void:
 	_result.text = "Rendering passes…"
 	var out: Dictionary = await GnPasses.render(cam, size, self)
 	_passes_button.disabled = false
-	_result.text = "Saved %s passes in %s: %s." % [out.size(), GnPaths.at(GnRender.OUTPUT_DIR), ", ".join(out.keys())]
+	_result.text = "Saved %s passes in %s: %s." % [out.size(), GnUi.shown(GnPaths.at(GnRender.OUTPUT_DIR)), ", ".join(out.keys())]
 
 
 # The same view at three times of day: the shadow study planning
@@ -185,7 +185,7 @@ func _sun_study() -> void:
 			_last_path = named
 	GnEnvironment.apply("time_of_day", keep, false)
 	_study_button.disabled = false
-	_result.text = "Sun study saved: 9:00, 12:00 and 15:00 in %s." % GnPaths.at(GnRender.OUTPUT_DIR)
+	_result.text = "Sun study saved: 9:00, 12:00 and 15:00 in %s." % GnUi.shown(GnPaths.at(GnRender.OUTPUT_DIR))
 
 
 # Every saved view in order: the presentation set, in one click.
@@ -203,7 +203,7 @@ func _render_all() -> void:
 			done += 1
 	_button.disabled = false
 	_all_button.disabled = false
-	_result.text = "Rendered %d of %d cameras into %s." % [done, cams.size(), GnPaths.at(GnRender.OUTPUT_DIR)]
+	_result.text = "Rendered %d of %d cameras into %s." % [done, cams.size(), GnUi.shown(GnPaths.at(GnRender.OUTPUT_DIR))]
 
 
 func _render() -> void:
@@ -220,7 +220,7 @@ func _render() -> void:
 		_result.text = "The render failed. See the %s panel." % GnHost.log_panel()
 		return
 	_last_path = path
-	_result.text = "Saved %s" % path
+	_result.text = "Saved %s" % GnUi.shown(path)
 
 
 func _samples() -> int:

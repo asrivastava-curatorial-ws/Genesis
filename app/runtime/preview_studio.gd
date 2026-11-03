@@ -26,11 +26,14 @@ func _ready() -> void:
 	_vp.transparent_bg = false
 	_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_vp.msaa_3d = Viewport.MSAA_4X
+	# A thumbnail is small: at the usual level of detail a tree's canopy is
+	# simplified away. Always the full model.
+	_vp.mesh_lod_threshold = 0.0
 	add_child(_vp)
 	var env := WorldEnvironment.new()
 	var e := Environment.new()
 	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.2, 0.21, 0.23)
+	e.background_color = Color("#161b22")
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	e.ambient_light_color = Color(0.55, 0.57, 0.6)
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
@@ -96,6 +99,45 @@ func _frame(box: AABB) -> void:
 	_cam.near = d * 0.02
 	_cam.far = d * 4.0
 	_cam.look_at(c)
+
+
+## A picture of a whole model (a tree with its leaves, a person with their
+## clothes), `size` pixels square, or null.
+func model(path: String, size: int) -> Texture2D:
+	if not can_draw() or not ResourceLoader.exists(path):
+		return null
+	var key := "model:%s" % path
+	var hit := _cached(key, size)
+	if hit:
+		return hit
+	var packed := load(path) as PackedScene
+	if packed == null:
+		return null
+	var inst := packed.instantiate() as Node3D
+	if inst == null:
+		return null
+	_subject.add_child(inst)
+	var box := AABB()
+	var first := true
+	for g in inst.find_children("*", "VisualInstance3D", true, false):
+		var vi := g as VisualInstance3D
+		var b: AABB = vi.global_transform * vi.get_aabb()
+		if b.size == Vector3.ZERO:
+			continue
+		box = b if first else box.merge(b)
+		first = false
+	if first:
+		_subject.remove_child(inst)
+		inst.free()
+		return null
+	_frame(box)
+	var img := _draw_now(size)
+	_subject.remove_child(inst)
+	inst.free()
+	if img == null or img.is_empty():
+		return null
+	img.save_png(_cache_file(key, size))
+	return ImageTexture.create_from_image(img)
 
 
 ## Pictures of meshes, `size` pixels square, one per mesh (null where it failed).

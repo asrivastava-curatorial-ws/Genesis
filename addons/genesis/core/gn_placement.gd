@@ -15,7 +15,9 @@ const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const RANDOM_TURN_CATEGORIES := ["trees", "plants", "grass"]
 
 
-static func place(path: String, category := "", at = null) -> Node3D:
+## `turn`: degrees about the vertical; left out, vegetation faces any way and
+## everything else faces the way it was modelled.
+static func place(path: String, category := "", at = null, turn := NAN) -> Node3D:
 	var root := GnScene.root()
 	if root == null:
 		push_warning("Genesis: open or create a 3D scene first.")
@@ -32,7 +34,9 @@ static func place(path: String, category := "", at = null) -> Node3D:
 		return null
 	node.name = path.get_file().get_basename().to_pascal_case()
 	node.position = at if at is Vector3 else drop_point()
-	if category in RANDOM_TURN_CATEGORIES:
+	if not is_nan(turn):
+		node.rotation.y = deg_to_rad(turn)
+	elif category in RANDOM_TURN_CATEGORIES:
 		node.rotation.y = randf() * TAU
 	# Remembered so other tools know a tree from a building (the fly-through
 	# clearance check treats a tree's whole crown as solid).

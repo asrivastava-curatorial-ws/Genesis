@@ -23,15 +23,21 @@ func select(node: Node) -> void:
 	inspect_requested.emit(node)
 
 
+## Settings that outlive the session: Blender's place, and the folders files
+## were last picked from ("files/last/<kind>").
+static func _kept(key: String) -> bool:
+	return key == "blender_path" or key.begins_with("files/")
+
+
 func get_setting(key: String, default: Variant = "") -> Variant:
-	if key == "blender_path":
-		return App.settings.get_value("blender_path", default)
+	if _kept(key) and App.settings:
+		return App.settings.get_value(key, default)
 	return super(key, default)
 
 
 func set_setting(key: String, value: Variant) -> void:
-	if key == "blender_path":
-		App.settings.set_value("blender_path", value)
+	if _kept(key) and App.settings:
+		App.settings.set_value(key, value)
 		App.settings.save()
 	else:
 		super(key, value)
@@ -97,6 +103,15 @@ func start_tool(tool: String) -> bool:
 			paths.extend(paths.path)
 			return true
 	return false
+
+
+func start_placing(path: String, category: String, label: String) -> bool:
+	var placer = App.modules.placer if App.modules else null
+	return placer != null and placer.start(path, category, label)
+
+
+func model_preview(path: String, size: int) -> Texture2D:
+	return studio.model(path, size) if is_instance_valid(studio) else null
 
 
 func dialog_parent() -> Node:

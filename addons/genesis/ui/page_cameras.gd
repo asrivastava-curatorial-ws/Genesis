@@ -28,8 +28,7 @@ var _cams: Array[Camera3D] = []
 
 func _init() -> void:
 	name = "Cameras"
-	GnUi.note(self, "Frame the shot in the 3D view, then save it.")
-	GnUi.button(self, "Save this view", _save)
+	GnUi.primary(self, "Save this view", _save, "camera")
 	_list = ItemList.new()
 	_list.custom_minimum_size.y = 110
 	_list.item_selected.connect(_pick)
@@ -58,7 +57,7 @@ func _init() -> void:
 	GnUi.heading(_match, "Photo match")
 	_photo_label = GnUi.note(_match, "")
 	var row := HBoxContainer.new()
-	GnUi.button(row, "Site photo…", _pick_photo)
+	GnUi.button(row, "Site photo…", _pick_photo, "image")
 	GnUi.button(row, "Remove", func(): if _selected(): GnPhotomatch.clear_photo(_selected()); refresh())
 	_match.add_child(row)
 	_horizon = GnUi.slider(_match, "Horizon in photo", 0.0, 1.0, 0.005,
