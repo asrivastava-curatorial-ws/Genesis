@@ -545,7 +545,9 @@ func _build_body() -> void:
 	var side := PanelContainer.new()
 	side.name = "SidePanel"
 	side.theme_type_variation = &"SideBar"
-	side.custom_minimum_size = Vector2(330, 0)
+	# Wide enough for three thumbnails across and for help text that does
+	# not wrap every few words.
+	side.custom_minimum_size = Vector2(392, 0)
 	_hsplit.add_child(side)
 	_side = side
 	genesis_panel = GnPanel.new()

@@ -89,6 +89,7 @@ func _init() -> void:
 	deps.icon = GnIcons.get_icon("cpu", 16)
 	deps.pressed.connect(func(): App.actions.run("tools.dependencies"))
 	_field(tools, "", deps)
+	deps.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	# Show control.
 	_heading(col, "Show control")
 	var o_row := HBoxContainer.new()

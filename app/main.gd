@@ -546,7 +546,7 @@ func _command_line() -> void:
 		return
 	var u := args.find("--ui-tour")
 	if u >= 0 and u + 2 < args.size():
-		var failures: int = await UiTour.run(self, args[u + 1], args[u + 2])
+		var failures: int = await UiTour.run(self, args[u + 1], args[u + 2], "docs" in args)
 		print("GENESIS_UI_TOUR RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return

@@ -10,11 +10,13 @@ extends RefCounted
 const App := preload("res://app/core/app.gd")
 const GnFileDialog := preload("res://addons/genesis/core/gn_file_dialog.gd")
 const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
+const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const PAGES := ["Scene", "Plans", "Assets", "Environment", "Landscape", "Set", "Materials",
 	"Cameras", "Look", "Render", "Movie", "Show"]
 
 
-static func run(main: Node, project: String, out: String) -> int:
+## `only_docs`: just the start screen and the workspace, for the documentation.
+static func run(main: Node, project: String, out: String, only_docs := false) -> int:
 	DirAccess.make_dir_recursive_absolute(out)
 	await _settle(main, 40)
 	await shot(main, out, "01_start")
@@ -25,7 +27,11 @@ static func run(main: Node, project: String, out: String) -> int:
 		push_error("The project did not open: %s" % project)
 		return 1
 	await shot(main, out, "02_workspace")
-	# Something selected, so the properties show.
+	# The view through the project's first saved camera, with the first model
+	# in the scene selected, so the properties show.
+	var cams: Array = GnCameras.cameras()
+	if not cams.is_empty():
+		ws.viewport_panel.look_through(cams[0])
 	var root: Node = App.scenes.root
 	var picked: Node = null
 	for c in root.get_children():
@@ -34,8 +40,13 @@ static func run(main: Node, project: String, out: String) -> int:
 			break
 	if picked:
 		App.host.selection().set_nodes([picked])
-		await _settle(main, 30)
+		await _settle(main, 40)
 		await shot(main, out, "03_selected")
+	if only_docs:
+		ws.genesis_panel.show_section("Assets")
+		await _settle(main, 120)
+		await shot(main, out, "04_assets")
+		return 0
 	for page in PAGES:
 		ws.genesis_panel.show_section(page)
 		await _settle(main, 25)

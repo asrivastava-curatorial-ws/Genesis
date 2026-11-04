@@ -38,10 +38,11 @@ var _link_on: CheckBox
 
 func _init() -> void:
 	name = "Scene"
-	GnUi.heading(self, "Scene")
+	# The page header already says SCENE: this section starts another one.
+	GnUi.heading(self, "Another scene")
 	var row := HBoxContainer.new()
 	_new_name = LineEdit.new()
-	_new_name.placeholder_text = "Scene name"
+	_new_name.placeholder_text = "Name, e.g. Night or Option B"
 	_new_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_new_name.text_submitted.connect(func(_t): _new_scene())
 	row.add_child(_new_name)

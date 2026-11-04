@@ -20,6 +20,7 @@ extends SubViewportContainer
 
 const App := preload("res://app/core/app.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const Picker := preload("res://app/runtime/picker.gd")
 const TransformGizmo := preload("res://app/runtime/transform_gizmo.gd")
 
@@ -261,8 +262,14 @@ static func bounds_of(nodes: Array) -> AABB:
 	return box
 
 
+## What "everything" means when framing: the design, not the ground or the
+## terrain it stands on (a 400 m lawn would leave the building a speck).
 static func scene_bounds(root: Node) -> AABB:
-	return bounds_of(root.get_children()) if root else AABB()
+	if root == null:
+		return AABB()
+	var parts := root.get_children().filter(func(c): return not str(c.get_meta(GnScene.ROLE, "")) in ["ground", "terrain"])
+	var box := bounds_of(parts)
+	return box if box.size != Vector3.ZERO else bounds_of(root.get_children())
 
 
 func _frame_box(box: AABB) -> void:

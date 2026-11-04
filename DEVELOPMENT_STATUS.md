@@ -1,4 +1,4 @@
-# Development status: Genesis Community 1.0.0-rc2
+# Development status: Genesis Community 1.0.0-rc3
 
 ## Stages
 
@@ -14,8 +14,8 @@
 | 8 | Rendering and LOOK | Preview/Standard/High/Maximum quality; renders from the built program (E2E). |
 | 9 | AI, panorama, MOVIE | Real-ESRGAN per-user install; panorama and MP4 from the built program (E2E); a path tool for moving objects; walkers walking in the rendered film (E2E *walk*). |
 | 10 | SET and SHOW | Set pieces, cues, GO; OSC/UDP cue input added; outgoing OSC/text/TCP and live video (file, UDP, SRT) tested; planning-estimate labels. |
-| 11 | UI polish and performance | Layout fits the smallest window; view quality setting; crashes on exit fixed. Visual polish beyond defaults not done. |
-| 12 | Testing, documentation, packaging | Four headless suites (386 checks) and a smoke tour, the built program's own smoke tour, five-launch E2E with real rendering; 32 pages in docs/, START_HERE.md and the manual as one HTML/PDF file; launchers; release zip (Linux only for rc2). |
+| 11 | UI polish and performance | Layout fits the smallest window; view quality setting; crashes on exit fixed. **rc3:** GitHub Dark Default theme (VSCodium's) with JetBrains Mono and Lucide icons; activity bar for the pages; VS Code-style status bar; foldable properties in plain words; developer leftovers removed; placing models with the mouse; one file picker with remembered folders and path fields; whole-model thumbnails. |
+| 12 | Testing, documentation, packaging | Four headless suites (389 checks) and a smoke tour, the built program's own smoke tour, five-launch E2E with real rendering, a screenshot tour of every page and dialog (`--ui-tour`); 33 pages in docs/ (with INVENTORY.md), START_HERE.md and the manual as one HTML/PDF file; launchers; one AppImage for Linux (rc3). |
 
 Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limitations: `docs/KNOWN_LIMITATIONS.md`.
 

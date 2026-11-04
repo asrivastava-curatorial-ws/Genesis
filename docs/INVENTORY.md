@@ -67,7 +67,7 @@ APPIMAGE_CONTENTS
 | The model library: 295 models, each with its licence record | as in rc2 | CC0-1.0 |
 | The eight material presets and their textures | drawn when the program is built | CC0-1.0 |
 | JetBrains Mono (Regular, Medium, SemiBold, Bold, Italic) | 2.304 | SIL Open Font Licence 1.1 |
-| 146 Lucide icons, as SVG text inside the program | 1.67.0 | ISC (some derived from Feather: MIT) |
+| 148 Lucide icons, as SVG text inside the program | 1.67.0 | ISC (some derived from Feather: MIT) |
 | GitHub Dark Default colour values | GitHub VS Code theme 6.3.5 / Primer primitives 7.10.0 | MIT |
 | The two demo projects (Architecture demo, Event production demo) | as in rc2 | MIT (Genesis's own); their models CC0 |
 | The manual (HTML and PDF) and the guides | 1.0.0-rc3 | MIT |
@@ -82,7 +82,13 @@ These were downloaded on the cloud build machine for rc3. "Shipped" says whether
 
 | What | From | Size | SHA-256 | Licence | Shipped |
 |---|---|---|---|---|---|
-DOWNLOAD_ROWS
+| JetBrains Mono 2.304 (the typeface) | `github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip` | 5.6 MB | `6f6376c6ed2960ea8a963cd7387ec9d76e3f629125bc33d1fdcd7eb7012f7bbf` | OFL-1.1 | Yes: five of its fonts (1.4 MB) and its OFL.txt |
+| Lucide icons 1.67.0 (`lucide-static`) | `registry.npmjs.org/lucide-static/-/lucide-static-1.67.0.tgz` | 7.3 MB | `7dde5a356b87f250cabba45a6343917711f59345f800036c0474418e3c27b840` | ISC (Feather-derived icons: MIT) | Yes: 148 of its 2,296 icons, as SVG text in the program |
+| GitHub VS Code theme 6.3.5, source: `package.json`, `src/theme.js`, `src/colors.js`, `src/index.js` | `raw.githubusercontent.com/primer/github-vscode-theme/main/` | 35 KB (4 files) | `theme.js a1fa66e9…c7256; colors.js d45100e8…7ecfd9` | MIT | No: run once to compute the colours |
+| GitHub Primer primitives 7.10.0 (`@primer/primitives`) | `registry.npmjs.org/@primer/primitives/-/primitives-7.10.0.tgz` | 1.6 MB unpacked | `npm integrity sha512-DdLHq21e…Q5qsxQ==` | MIT | No: the colour tokens the theme is computed from |
+| chroma-js 2.4.2, and the theme's other development packages that npm installed with it (225 packages, 59 MB) | `registry.npmjs.org` | 59 MB unpacked | `npm integrity sha512-U9eDw6+w…HIR4A== (chroma-js)` | chroma-js: BSD-3-Clause and Apache-2.0; the rest their own | No: left in a scratch folder on the build machine |
+| appimagetool (continuous build) | `github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage` | 15.1 MB | `62aebc77c2149e96b593b94da9bbd1881e0984a56399ff6d7a03b7ddd7c9ce68` | MIT | No: the tool that packs the AppImage |
+| AppImage type2 runtime (continuous build) | `github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64` | 0.9 MB | `617aa77314d57c8b8e4fae9c3f0b35af7b30d5529cb69e98f64f92510ed98a46` | MIT | Yes: it is the first 0.9 MB of the AppImage, which opens the rest |
 
 The colour values were computed by running the theme's own source (`src/theme.js` with `src/colors.js`) under Node.js 22 against those packages, which produces the "GitHub Dark Default" theme exactly as the extension does; the values were then written into `app/ui/genesis_theme.gd`. The packages stayed in a scratch folder on the build machine.
 

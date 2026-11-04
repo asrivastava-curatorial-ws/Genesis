@@ -65,6 +65,7 @@ ICONS = {
     "sun": "sun", "sunrise": "sunrise", "sunset": "sunset", "moon": "moon", "cloud": "cloud",
     "rain": "cloud-rain", "snow": "snowflake", "wind": "wind", "compass": "compass",
     "wand": "wand-sparkles", "sliders": "sliders-horizontal", "ruler": "ruler", "route": "route",
+    "globe": "globe", "camera": "camera",
 }
 
 HEADER = '''@tool

@@ -50,6 +50,11 @@ func popup_file_dialog() -> void:
 		current_dir = start
 	min_size = Vector2i(760, 480)
 	popup_centered_ratio(0.7)
+	# Godot's own dialog goes back to the program's working folder the first
+	# time it opens, so the folder is set again once it is showing. (The
+	# system's dialog read it above, as it opened.)
+	if start != "" and not use_native_dialog:
+		current_dir = start
 
 
 ## Where a dialog for `kind` should open: where it was last, else the open
