@@ -262,7 +262,7 @@ func _pick_image() -> void:
 			_image_dialog.add_filter("*.%s" % ext)
 		_image_dialog.file_selected.connect(_use_image)
 		GnHost.dialog_parent().add_child(_image_dialog)
-	_image_dialog.popup_file_dialog()
+	GnUi.pick(_image_dialog)
 
 
 func _use_image(path: String) -> void:

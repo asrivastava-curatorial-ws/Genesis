@@ -305,31 +305,116 @@ func _toggle_grid() -> void:
 	_refresh_menus()
 
 
+## What the mouse and keys do, as a reference card: one row per action, the
+## keys drawn as keys. "a | b" in KEYS is two ways of doing the same thing.
+const MOUSE_HELP := [
+	["Moving around the 3D view", [
+		["Orbit", "Middle drag | Alt + Left drag"],
+		["Pan", "Shift + Middle drag | Alt + Shift + Left drag"],
+		["Zoom", "Wheel"],
+		["Look around", "Right drag"],
+		["Fly while looking around", "W A S D"],
+		["Go down or up while looking around", "Q E"],
+		["Faster while flying", "Shift"],
+	]],
+	["Selecting and changing", [
+		["Select", "Click"],
+		["Add to or take from the selection", "Ctrl + Click"],
+		["Select in a box", "Drag on empty space"],
+		["Move, turn or resize", "Drag a handle"],
+		["Snap while dragging a handle", "Ctrl"],
+		["Cancel while dragging", "Esc | Right click"],
+	]],
+	["Placing from the library", [
+		["Place", "Click"],
+		["Place another after this one", "Shift + Click"],
+		["Turn it before placing", "R"],
+		["Stop placing", "Esc"],
+	]],
+]
+
+
 func _show_shortcuts() -> void:
 	var d := AcceptDialog.new()
-	d.title = "Keyboard and mouse"
-	d.min_size = Vector2i(620, 560)
-	var t := RichTextLabel.new()
-	t.bbcode_enabled = true
-	t.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var lines := PackedStringArray([
-		"[b]In the 3D view[/b]",
-		"Middle drag: orbit    Shift + middle drag: pan    Wheel: zoom",
-		"Alt + left drag: orbit    Alt + Shift + left drag: pan  (for laptops)",
-		"Right drag: look around; while held, W A S D move and Q E go down and up (Shift: faster)",
-		"Click: select    Ctrl + click: add or remove    Drag on empty space: select in a box",
-		"Drag a handle: move, turn or resize; hold Ctrl to snap; Esc or right click while dragging cancels",
-		"", "[b]Commands[/b]"])
+	d.title = "Keyboard and Mouse"
+	d.ok_button_text = "Close"
+	d.min_size = Vector2i(680, 600)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(640, 520)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 6)
+	scroll.add_child(col)
+	d.add_child(scroll)
+	var sections: Array = MOUSE_HELP.duplicate(true)
+	# The commands with keys, in menu order, read from the commands themselves
+	# so this card can never disagree with the menus.
+	var commands: Array = []
 	for entry in MENUS:
 		for id in entry[1]:
 			var a: Variant = App.actions.get_action(id) if id != "-" else null
 			if a and a.shortcut:
-				lines.append("%s:  %s" % [App.actions.label_of(id), a.shortcut.get_as_text()])
-	t.text = "\n".join(lines)
-	d.add_child(t)
+				commands.append([App.actions.label_of(id).trim_suffix("…"), a.shortcut.get_as_text()])
+	sections.append(["Commands", commands])
+	for section in sections:
+		var heading := Label.new()
+		heading.text = str(section[0]).to_upper()
+		heading.theme_type_variation = &"SectionLabel"
+		if col.get_child_count() > 0:
+			var gap := Control.new()
+			gap.custom_minimum_size.y = 8
+			col.add_child(gap)
+		col.add_child(heading)
+		var grid := GridContainer.new()
+		grid.columns = 2
+		grid.add_theme_constant_override("h_separation", 16)
+		grid.add_theme_constant_override("v_separation", 6)
+		col.add_child(grid)
+		for row in section[1]:
+			var what := Label.new()
+			what.text = row[0]
+			what.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			grid.add_child(what)
+			grid.add_child(_keys(str(row[1])))
 	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
 	add_child(d)
 	d.popup_centered()
+
+
+## "Ctrl + Click | Esc" drawn as keys: each key a cap, "+" between keys
+## pressed together, "or" between alternatives.
+func _keys(spec: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	var ways := spec.split(" | ")
+	for w in ways.size():
+		if w > 0:
+			var o := Label.new()
+			o.text = "or"
+			o.theme_type_variation = &"MutedLabel"
+			row.add_child(o)
+		# Godot writes shortcuts as "Ctrl+Shift+S"; the card writes "Ctrl + S".
+		var parts: Array = []
+		for p in ways[w].replace(" + ", "+").split("+"):
+			parts.append(p.strip_edges())
+		# Keys pressed one after another ("W A S D") are separate caps too.
+		if parts.size() == 1 and ways[w].length() <= 7 and ways[w].contains(" "):
+			parts = Array(ways[w].split(" "))
+		for i in parts.size():
+			if i > 0 and not (parts.size() > 1 and ways[w].contains(" ") and not ways[w].contains("+")):
+				var plus := Label.new()
+				plus.text = "+"
+				plus.theme_type_variation = &"MutedLabel"
+				row.add_child(plus)
+			var cap := PanelContainer.new()
+			cap.theme_type_variation = &"Kbd"
+			var l := Label.new()
+			l.text = str(parts[i])
+			l.theme_type_variation = &"KbdLabel"
+			cap.add_child(l)
+			row.add_child(cap)
+	return row
 
 
 ## Every shortcut is handled here, once. Menus show the keys but do not act on
@@ -518,7 +603,8 @@ func _build_body() -> void:
 	var left_bg := PanelContainer.new()
 	left_bg.name = "LeftSideBar"
 	left_bg.theme_type_variation = &"SideBar"
-	left_bg.custom_minimum_size = Vector2(240, 0)
+	# With the side panel's 392, the window's smallest size (1100 wide) still fits.
+	left_bg.custom_minimum_size = Vector2(220, 0)
 	_outer.add_child(left_bg)
 	var left := VSplitContainer.new()
 	left.name = "LeftColumn"

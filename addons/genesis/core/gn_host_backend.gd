@@ -68,7 +68,7 @@ func dialog_parent() -> Node:
 
 
 ## An "open a file" dialog that is not yet shown or added to a scene. Add it to
-## the tree, connect file_selected, then call popup_file_dialog().
+## the tree, connect file_selected, then show it with GnUi.pick().
 func make_file_dialog(title: String) -> Node:
 	var d := GnFileDialog.new()
 	d.title = title

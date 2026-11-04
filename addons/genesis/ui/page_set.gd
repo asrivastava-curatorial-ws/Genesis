@@ -35,7 +35,7 @@ func _init() -> void:
 	GnUi.button(self, "Truss span", func(): _add_span(), "kind_truss")
 	GnUi.button(self, "Goalpost (two towers and a span)", _add_goalpost, "kind_truss")
 	GnUi.button(self, "Circle truss, 8 m across", _add_circle, "kind_truss")
-	GnUi.button(self, "Flying screen (LED wall under a helicopter)", _add_flying_screen, "kind_aircraft")
+	GnUi.button(self, "Flying screen", _add_flying_screen, "kind_aircraft").tooltip_text = "An LED wall hung under a helicopter, swinging gently"
 	GnUi.heading(self, "Sound")
 	GnUi.button(self, "Line array, flown", _add_line_array, "kind_speaker")
 	GnUi.heading(self, "Lights")
@@ -45,7 +45,8 @@ func _init() -> void:
 			"Downlight": "kind_area_light", "Bulb": "kind_light"}[k])
 	GnUi.button(self, "Moving spot (real fixture)", _add_light.bind("Beam (moving head)", "spot_gigapointe"), "kind_spot")
 	GnUi.button(self, "LED wash (real fixture)", _add_light.bind("Wash", "wash_aurora"), "kind_lighting")
-	var area_row := HBoxContainer.new()
+	# Rows of buttons wrap when the panel is narrow, rather than widening it.
+	var area_row := HFlowContainer.new()
 	for spec in [["Area light", "Rectangle", Vector2(1.2, 0.6)], ["Light strip", "Strip", Vector2(2.4, 0.05)], ["Round panel", "Disc", Vector2(0.6, 0.6)]]:
 		var b := GnUi.button(area_row, spec[0], _add_area.bind(spec[1], spec[2]))
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL

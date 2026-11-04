@@ -35,6 +35,16 @@ static func note(parent: Control, text: String) -> Label:
 	return l
 
 
+## Shows a file dialog from GnHost.file_dialog(): Genesis's picker (which
+## opens where that kind of file was last picked, with the usual places as
+## favourites) in the program, the editor's own in the Godot editor.
+static func pick(dialog: Window) -> void:
+	if dialog.has_method("show_picker"):
+		dialog.call("show_picker")
+	else:
+		dialog.call("popup_file_dialog")
+
+
 static func button(parent: Control, text: String, pressed: Callable, icon_name := "") -> Button:
 	var b := Button.new()
 	b.text = text

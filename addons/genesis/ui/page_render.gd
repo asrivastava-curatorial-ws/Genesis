@@ -47,10 +47,13 @@ func _init() -> void:
 	_study_button = GnUi.button(self, "Sun study: 9:00, 12:00, 15:00", _sun_study, "sun")
 	_pano_button = GnUi.button(self, "360° panorama from this camera", _panorama, "orbit")
 	_stereo = CheckBox.new()
-	_stereo.text = "Stereo, for VR headsets (3D 360, top-bottom)"
+	_stereo.text = "Stereo, for VR headsets"
+	_stereo.tooltip_text = "A 3D 360: the left eye above the right (top-bottom)"
 	add_child(_stereo)
-	_tour_button = GnUi.button(self, "Virtual tour of every camera (one web page)", _tour, "globe")
-	_passes_button = GnUi.button(self, "Render passes (depth, normals, ID, mask, clay)", _passes, "layers")
+	_tour_button = GnUi.button(self, "Virtual tour of every camera", _tour, "globe")
+	_tour_button.tooltip_text = "One web page that opens in any browser, and in a VR headset's"
+	_passes_button = GnUi.button(self, "Render passes for compositing", _passes, "layers")
+	_passes_button.tooltip_text = "Depth, normals, object ID, mask and clay, as separate pictures"
 	# AI upscaling: a 4K still to 8K in seconds rather than rendering 8K.
 	_upscale_factor = GnUi.option(self, "AI upscale", ["×2", "×4"], func(_t): pass)
 	_upscale_button = GnUi.button(self, "AI upscale the last render", _upscale, "wand")

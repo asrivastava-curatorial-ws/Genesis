@@ -46,10 +46,14 @@ func _init() -> void:
 	_preview = Label.new()
 	_preview.theme_type_variation = &"SmallLabel"
 	_preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# A wrapping label is measured at its minimum width: without one, a
+	# word to a line, and the dialog would grow to the height of the screen.
+	_preview.custom_minimum_size.x = 560
 	col.add_child(_preview)
 	_error = Label.new()
 	_error.theme_type_variation = &"ErrorLabel"
 	_error.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_error.custom_minimum_size.x = 560
 	col.add_child(_error)
 	confirmed.connect(_create)
 

@@ -94,17 +94,17 @@ The colour values were computed by running the theme's own source (`src/theme.js
 
 ## 4. The build machine
 
-A cloud workspace: Ubuntu 24.04.5 LTS, 2 CPU cores, about 7 GB of memory, no GPU (Vulkan in software through Mesa's lavapipe). **Nothing new was installed on it with apt for rc3.** These were already there, installed for rc1 and rc2, and were used again:
+A cloud workspace: Ubuntu 24.04.5 LTS, 2 CPU cores, about 7 GB of memory, no GPU (Vulkan in software through Mesa's lavapipe). **Nothing was installed on it for rc3** beyond the downloads in section 3.
 
-| Tool | Version | Used for |
-|---|---|---|
-| Godot Engine (editor binary) and its export templates | 4.7.2-stable official | building the program, running every test |
-| Mesa Vulkan drivers (lavapipe) | 25.2.8 | software rendering for tests and screenshots |
-| Xvfb | 21.1.12 | a virtual screen for screenshots and the end-to-end test |
-| Blender (Ubuntu package) with python3-numpy | 4.0.2 / 1.26.4 | `.blend` import tests |
-| FFmpeg | 6.1.1 | film tests |
-| Poppler (`pdftoppm`) | 24.02.0 | PDF plan tests |
-| ImageMagick | 6.9.12 | trimming screenshots |
-| librsvg (`rsvg-convert`) | 2.58.0 | the AppImage icon |
-| pandoc, and Chromium through Playwright | 3.1.3 | the manual as HTML and PDF |
-| Python, Node.js, git | 3.13, 22, 2.43 | the build scripts, the colour computation, the source history |
+Installed on it earlier for this project (for rc1 and rc2), and used again for rc3:
+
+| What | Version | How it got there | Used for |
+|---|---|---|---|
+| Godot Engine editor and export templates | 4.7.2-stable, official | `github.com/godotengine/godot-builds/releases/download/4.7.2-stable/` (`Godot_v4.7.2-stable_linux.x86_64.zip`, `Godot_v4.7.2-stable_export_templates.tpz`) | building the program, running every test |
+| Mesa Vulkan drivers (lavapipe) and vulkan-tools | 25.2.8 / 1.3.275 | `apt install mesa-vulkan-drivers vulkan-tools` | software Vulkan for the tests and the screenshots |
+| Blender, with python3-numpy | 4.0.2 / 1.26.4 | `apt install blender python3-numpy` | the `.blend` import tests |
+| xdotool | 3.20160805 | `apt install xdotool` | an earlier window test; not used for rc3 |
+| Wine | 9.0 | `apt install wine64` | rc1's Windows start test; not used for rc3 |
+| Real-ESRGAN ncnn-vulkan | 0.2.5.0 | downloaded by Genesis itself, as for a user (`github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/`) | the AI upscale tests |
+
+Already part of the cloud workspace, not installed for this project: FFmpeg 6.1.1, Xvfb 21.1.12, Poppler 24.02 (`pdftoppm`), ImageMagick 6.9.12, librsvg 2.58 (`rsvg-convert`, for the AppImage's icon), pandoc 3.1.3 and Chromium through Playwright 1.63 (the manual as HTML and PDF), fuse3 3.14 (to open the AppImage in its test), Python 3.13, Node.js 22 and git 2.43.

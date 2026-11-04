@@ -32,6 +32,7 @@ const GenesisTheme := preload("res://app/ui/genesis_theme.gd")
 const UiTour := preload("res://app/ui_tour.gd")
 const GnFileDialog := preload("res://addons/genesis/core/gn_file_dialog.gd")
 const GnPathField := preload("res://addons/genesis/ui/gn_path_field.gd")
+const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
 
 var screen: Control
 
@@ -269,7 +270,7 @@ func pick_folder(title: String, purpose: String, chosen: Callable) -> void:
 	d.dir_selected.connect(chosen)
 	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
 	add_child(d)
-	d.popup_file_dialog()
+	d.show_picker()
 
 
 ## Opens a project folder, and says why if it cannot.
@@ -287,7 +288,7 @@ func _on_project_opened() -> void:
 		_offer_recovery()
 	if not App.projects.missing.is_empty():
 		App.notify.warning("%d files this scene uses are missing." % App.projects.missing.size(),
-			"File > Find Missing Files… looks for them in a folder you choose. First: %s" % App.projects.missing[0])
+			"File > Find Missing Files… looks for them in a folder you choose. First: %s" % GnUi.friendly_path(str(App.projects.missing[0]), App.projects.folder))
 
 
 func _offer_recovery() -> void:
@@ -499,7 +500,7 @@ func _on_scene_opened(_root: Node) -> void:
 		var library := gone.filter(func(m): return SceneService.from_downloaded_library(str(m.path)))
 		App.notify.warning("%d things this scene uses are not on this computer; it opened without them." % gone.size(),
 			("%d are from the downloaded library (photo skies, scanned materials, plants), which this program was built without. " % library.size() if not library.is_empty() else "")
-			+ "Models left out are empty markers in their place. Saving keeps every reference, so they come back once the files are here. The Console lists them all. First: %s" % gone[0].path)
+			+ "Models left out are empty markers in their place. Saving keeps every reference, so they come back once the files are here. The Console lists them all. First: %s" % str(gone[0].path).get_file())
 
 
 func _on_dirty(_dirty: bool) -> void:

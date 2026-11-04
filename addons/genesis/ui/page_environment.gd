@@ -133,7 +133,7 @@ func _add_sky() -> void:
 			_sky_dialog.add_filter("*.%s" % ext)
 		_sky_dialog.file_selected.connect(use_sky_file)
 		add_child(_sky_dialog)
-	_sky_dialog.popup_file_dialog()
+	GnUi.pick(_sky_dialog)
 
 
 ## Adds a panorama to the user's skies and puts it in this scene's sky.

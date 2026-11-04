@@ -94,6 +94,10 @@ func _init() -> void:
 	words.add_child(_title)
 	_kind_label = Label.new()
 	_kind_label.theme_type_variation = &"SmallLabel"
+	# The hint when nothing is selected wraps rather than widening the column
+	# (measured at this width, not a word to a line).
+	_kind_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_kind_label.custom_minimum_size.x = 150
 	words.add_child(_kind_label)
 	_box = VBoxContainer.new()
 	_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL

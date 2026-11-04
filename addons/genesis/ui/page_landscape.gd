@@ -67,7 +67,8 @@ func _init() -> void:
 	_turn.toggled.connect(func(on): brush.random_turn = on)
 	add_child(_turn)
 	_surfaces = CheckBox.new()
-	_surfaces.text = "Paint on any surface (terrain, roofs, planters)"
+	_surfaces.text = "Paint on any surface"
+	_surfaces.tooltip_text = "Terrain, roofs and planters too, not only the ground"
 	_surfaces.toggled.connect(func(on): brush.on_surfaces = on)
 	add_child(_surfaces)
 	_strength = GnUi.slider(self, "Sculpt strength", 0.02, 2.0, 0.01,
@@ -78,7 +79,7 @@ func _init() -> void:
 	_ground.get_parent().visible = false
 	_paint_strength.get_parent().visible = false
 	GnUi.heading(self, "Terrain and water")
-	GnUi.button(self, "Add terrain (replaces the flat ground)", _add_terrain, "kind_terrain")
+	GnUi.button(self, "Add terrain", _add_terrain, "kind_terrain").tooltip_text = "Ground you can shape and paint; it replaces the flat ground"
 	var row := HBoxContainer.new()
 	for k in ["Pond", "Pool", "River", "Ocean"]:
 		GnUi.button(row, k, _add_water.bind(k))

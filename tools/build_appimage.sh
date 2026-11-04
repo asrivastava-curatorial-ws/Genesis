@@ -131,4 +131,5 @@ ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$TOOL" --no-appstream --runtime-file "$R
 	"$APPDIR" "$OUT"
 chmod +x "$OUT"
 ls -la "$OUT"
-sha256sum "$OUT" | tee "$OUT.sha256"
+# The checksum names the file alone, so `sha256sum -c` works wherever the two are saved.
+(cd "$(dirname "$OUT")" && sha256sum "$(basename "$OUT")") | tee "$OUT.sha256"

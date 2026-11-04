@@ -759,6 +759,14 @@ static func _variations(t: Theme) -> void:
 	t.set_stylebox("panel", "HoverCard", box(HOVER, BORDER, 1, RADIUS, 12, 10))
 	t.set_type_variation("Overlay", "PanelContainer")
 	t.set_stylebox("panel", "Overlay", box(Color("#0d1117d9"), BORDER, 1, RADIUS, 10, 6))
+	# A key on the keyboard, as GitHub draws <kbd>: a small raised cap.
+	t.set_type_variation("Kbd", "PanelContainer")
+	var kbd := box(OVERLAY, BORDER, 1, 4, 6, 1)
+	kbd.border_width_bottom = 2
+	t.set_stylebox("panel", "Kbd", kbd)
+	t.set_type_variation("KbdLabel", "Label")
+	t.set_color("font_color", "KbdLabel", FG)
+	t.set_font_size("font_size", "KbdLabel", SMALL)
 	# Text by role.
 	t.set_type_variation("MutedLabel", "Label")
 	t.set_color("font_color", "MutedLabel", FG_MUTED)

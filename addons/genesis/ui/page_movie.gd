@@ -66,7 +66,7 @@ func _init() -> void:
 	_shots = ItemList.new()
 	_shots.custom_minimum_size.y = 90
 	add_child(_shots)
-	var edit := HBoxContainer.new()
+	var edit := HFlowContainer.new()
 	GnUi.button(edit, "Move up", _move_up)
 	GnUi.button(edit, "Remove", _remove)
 	add_child(edit)
@@ -102,7 +102,7 @@ func _init() -> void:
 	GnUi.show_value(_lapse_to, 19.0)
 
 	GnUi.heading(self, "Moving objects")
-	var mrow := HBoxContainer.new()
+	var mrow := HFlowContainer.new()
 	if GnHost.supports("editor"):
 		GnUi.note(self, "Traffic, people, boats. Add a path, shape it with Godot's path tool, put things on it; set the speed in the Inspector.")
 		GnUi.button(mrow, "Add a path", _add_mover)
@@ -121,7 +121,7 @@ func _init() -> void:
 	_phase_over = GnUi.slider(self, "Taking", 0.0, 30.0, 0.5, func(_v): pass, func(v): return "%.1f s" % v)
 	GnUi.show_value(_phase_over, 2.0)
 	_phase_style = GnUi.option(self, "How", GnPhasing.STYLES, func(_t): pass)
-	var prow := HBoxContainer.new()
+	var prow := HFlowContainer.new()
 	GnUi.button(prow, "Phase the selection", _phase)
 	GnUi.button(prow, "Clear its phasing", func():
 		GnPhasing.clear(_selected3d())

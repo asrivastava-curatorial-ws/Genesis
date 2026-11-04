@@ -40,13 +40,13 @@ func _init() -> void:
 	GnUi.heading(self, "Floor plan")
 	_plan_width = _spin(self, "Image: plan width (m)", 1.0, 5000.0, 0.1, 30.0)
 	_pdf_ratio = _spin(self, "PDF: scale 1 :", 1.0, 100000.0, 1.0, 100.0)
-	var presets := GnUi.option(self, "PDF: the sheet says", ["…"] + GnCadImport.SCALES.keys(), func(t):
+	var presets := GnUi.option(self, "PDF: scale on the sheet", ["Choose…"] + GnCadImport.SCALES.keys(), func(t):
 		if GnCadImport.SCALES.has(t):
 			_pdf_ratio.value = GnCadImport.SCALES[t])
 	presets.tooltip_text = "Pick the scale printed on the drawing; it sets the ratio above."
 	_pdf_page = _spin(self, "PDF: page", 1.0, 999.0, 1.0, 1.0)
 	GnUi.primary(self, "Bring in a plan (image or PDF)…", _pick_plan, "file_image")
-	_scale_button = GnUi.button(self, "Set its scale: click two points on it", _start_scale, "ruler")
+	_scale_button = GnUi.button(self, "Set its scale: click two points", _start_scale, "ruler")
 	_real_row = HBoxContainer.new()
 	var l := Label.new()
 	l.text = "Real distance (m)"
@@ -64,7 +64,7 @@ func _init() -> void:
 	_plan_report = GnUi.note(self, "")
 
 	GnUi.heading(self, "CAD drawing")
-	GnUi.button(self, "Bring in a drawing (DXF, DWG or CAD PDF)…", _pick_cad, "file_plus")
+	GnUi.button(self, "Bring in a CAD drawing…", _pick_cad, "file_plus").tooltip_text = "DXF; DWG with the free ODA File Converter; or a PDF plotted from CAD"
 	GnUi.note(self, "A PDF plotted from CAD comes in as its real lines, at the PDF scale above; each pen is a layer (the heaviest is usually the walls).")
 	_tools = GnUi.note(self, "")
 	_cad_report = GnUi.note(self, "")
@@ -145,13 +145,13 @@ func _spin(parent: Control, text: String, lo: float, hi: float, step: float, val
 func _pick_plan() -> void:
 	if _plan_dialog == null:
 		_plan_dialog = _file_dialog("Bring in a floor plan", GnCadImport.PLAN_EXTENSIONS, _add_plan)
-	_plan_dialog.popup_file_dialog()
+	GnUi.pick(_plan_dialog)
 
 
 func _pick_cad() -> void:
 	if _cad_dialog == null:
 		_cad_dialog = _file_dialog("Bring in a CAD drawing", GnCadImport.CAD_EXTENSIONS, _add_cad)
-	_cad_dialog.popup_file_dialog()
+	GnUi.pick(_cad_dialog)
 
 
 func _file_dialog(title: String, extensions: Array, chosen: Callable) -> Node:

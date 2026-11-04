@@ -95,7 +95,7 @@ func browse() -> void:
 		d.file_selected.connect(_chosen)
 	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())
 	GnHost.dialog_parent().add_child(d)
-	d.popup_file_dialog()
+	d.show_picker()
 
 
 ## Takes the first dropped file that fits. Returns whether one did.

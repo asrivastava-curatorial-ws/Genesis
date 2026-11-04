@@ -42,7 +42,9 @@ func _init() -> void:
 
 
 ## Shows the dialog, opening where this kind of file was picked last.
-func popup_file_dialog() -> void:
+## (Not named popup_file_dialog: that is FileDialog's own method, and a
+## script method of the same name is never the one called.)
+func show_picker() -> void:
 	use_native_dialog = system_dialogs and DisplayServer.has_feature(DisplayServer.FEATURE_NATIVE_DIALOG_FILE)
 	_set_places()
 	var start := start_folder(purpose)

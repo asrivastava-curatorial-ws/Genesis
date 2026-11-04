@@ -76,7 +76,8 @@ func _init() -> void:
 	GnUi.tool_button(find, "refresh", "Look for new models in the library", refresh)
 	# The grid: a picture and a name each.
 	_list = ItemList.new()
-	_list.custom_minimum_size.y = 300
+	# Tall enough for four rows: the library is what this page is for.
+	_list.custom_minimum_size.y = 430
 	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_list.fixed_icon_size = Vector2i(THUMB, THUMB)
 	_list.icon_mode = ItemList.ICON_MODE_TOP
@@ -319,7 +320,7 @@ func _add_own() -> void:
 			_own_dialog.add_filter("*.%s" % ext)
 		_own_dialog.file_selected.connect(_ask_details)
 		add_child(_own_dialog)
-	_own_dialog.popup_file_dialog()
+	GnUi.pick(_own_dialog)
 
 
 ## Asks what the model is and where it comes from, then adds it.

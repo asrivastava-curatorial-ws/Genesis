@@ -51,7 +51,8 @@ func _init() -> void:
 	_add("warmth", "Warmth", -1.0, 1.0, 0.01, func(v): return "cooler" if v < -0.05 else ("warmer" if v > 0.05 else "neutral"))
 	GnUi.heading(_body, "Lens")
 	_two_point = CheckBox.new()
-	_two_point.text = "2-point perspective (keep walls vertical)"
+	_two_point.text = "2-point perspective"
+	_two_point.tooltip_text = "Keeps vertical lines vertical, as an architectural photographer's shift lens does"
 	_two_point.toggled.connect(func(on): _set_look("two_point", on))
 	_body.add_child(_two_point)
 	_add("dof", "Depth of field", 0.0, 1.0, 0.01, func(v): return "off" if v <= 0.0 else _pct(v))
@@ -73,7 +74,8 @@ func _init() -> void:
 	_add("outlines", "Outlines", 0.0, 1.0, 0.01, _pct)
 	_add("manga", "Manga", 0.0, 1.0, 0.01, _pct)
 	_clay = CheckBox.new()
-	_clay.text = "Clay model (everything white, to show form)"
+	_clay.text = "Clay model (all white)"
+	_clay.tooltip_text = "Every surface plain white matte, to show the form"
 	_clay.toggled.connect(func(on): _set_look("clay", on))
 	_body.add_child(_clay)
 	GnUi.heading(_body, "Title")
@@ -169,7 +171,7 @@ func _choose_logo() -> void:
 				DirAccess.copy_absolute(p, ProjectSettings.globalize_path(dest))
 			_set_look("logo", dest))
 		add_child(_logo_dialog)
-	_logo_dialog.popup_file_dialog()
+	GnUi.pick(_logo_dialog)
 
 
 func _apply_look(look_name: String) -> void:

@@ -24,6 +24,8 @@ func _init() -> void:
 	intro.text = "Genesis works without these. Each one adds one thing; none of them needs administrator rights."
 	intro.theme_type_variation = &"NoteLabel"
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# Wrapping labels are measured at their minimum width (see below).
+	intro.custom_minimum_size.x = 760
 	col.add_child(intro)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -100,6 +102,8 @@ func refresh() -> void:
 		what.text = r.purpose
 		what.theme_type_variation = &"NoteLabel"
 		what.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		# Measured at this width, not a word to a line.
+		what.custom_minimum_size.x = 520
 		words.add_child(what)
 		if r.found and r.path != "":
 			var at := Label.new()
@@ -112,4 +116,5 @@ func refresh() -> void:
 			how.text = r.how
 			how.theme_type_variation = &"SmallLabel"
 			how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			how.custom_minimum_size.x = 520
 			words.add_child(how)

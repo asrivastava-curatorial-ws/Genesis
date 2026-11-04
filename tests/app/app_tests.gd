@@ -21,6 +21,7 @@ const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
 const GnImport := preload("res://addons/genesis/core/gn_import.gd")
 const GnPanel := preload("res://addons/genesis/ui/gn_panel.gd")
+const GnFileDialog := preload("res://addons/genesis/core/gn_file_dialog.gd")
 
 ## Fewer than this means a script error cut the run short.
 const MIN_CHECKS := 75
@@ -65,6 +66,8 @@ func _run() -> void:
 	await _scenes_and_projects()
 	await _modules_and_panel()
 	_no_editor_names()
+	_no_hidden_methods()
+	await _file_picker()
 
 
 # ------------------------------------------------------------------ settings
@@ -365,6 +368,53 @@ func _no_editor_names() -> void:
 			if rx.search(code):
 				bad.append("%s:%d" % [path, n])
 	check(bad.is_empty() and scanned > 60, "export-safe: none of %d runtime scripts names an Editor class %s" % [scanned, bad])
+
+
+## A script method named like one of its engine class's own methods is never
+## the one called (the picker's popup_file_dialog was, and so never opened
+## where it should). None may be left.
+func _no_hidden_methods() -> void:
+	var hidden := []
+	for path in _gd_files("res://addons/genesis") + _gd_files("res://app"):
+		var s: GDScript = load(path)
+		if s == null:
+			continue
+		var native := s.get_instance_base_type()
+		for m in s.get_script_method_list():
+			if not str(m.name).begins_with("_") and ClassDB.class_has_method(native, m.name, false):
+				hidden.append("%s: %s" % [path.get_file(), m.name])
+	check(hidden.is_empty(), "no script method is hidden by an engine method of the same name %s" % [hidden])
+
+
+## The file picker opens where that kind of file was last picked, else in the
+## open project; and offers the usual places and the project as favourites.
+func _file_picker() -> void:
+	var was := GnFileDialog.system_dialogs
+	GnFileDialog.system_dialogs = false
+	var project_dir := _tmp.path_join("picker_project")
+	var last_dir := _tmp.path_join("picker_last")
+	DirAccess.make_dir_recursive_absolute(project_dir)
+	DirAccess.make_dir_recursive_absolute(last_dir)
+	GnFileDialog.extra_places = PackedStringArray([project_dir])
+	var d := GnFileDialog.new()
+	d.purpose = "picker_test"
+	root.add_child(d)
+	d.show_picker()
+	await process_frame
+	check(d.current_dir.simplify_path() == project_dir.simplify_path(),
+		"file picker: with nothing picked before, it opens in the open project (%s)" % d.current_dir)
+	check(Array(FileDialog.get_favorite_list()).any(func(f): return str(f).simplify_path().trim_suffix("/") == project_dir.simplify_path()),
+		"file picker: the project is one of its favourites")
+	d.dir_selected.emit(last_dir)
+	d.hide()
+	d.show_picker()
+	await process_frame
+	check(d.current_dir.simplify_path() == last_dir.simplify_path(),
+		"file picker: next time it opens where that kind of file was last picked (%s)" % d.current_dir)
+	d.hide()
+	d.queue_free()
+	GnFileDialog.extra_places = PackedStringArray()
+	GnFileDialog.system_dialogs = was
 
 
 func _gd_files(dir: String) -> Array:

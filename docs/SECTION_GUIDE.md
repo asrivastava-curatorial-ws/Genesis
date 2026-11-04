@@ -40,11 +40,11 @@ This needs the internet. Renders that show the data carry "© OpenStreetMap cont
 **Floor plan.**
 
 1. *Bring in a plan (image or PDF)…* lays the plan under the scene.
-2. Give it its real size: press *Set its scale: click two points on it*, click two points whose distance you know, type that distance, and press *Apply*.
+2. Give it its real size: press *Set its scale: click two points*, click two points whose distance you know, type that distance, and press *Apply*.
 
-For a PDF, choose the scale the sheet states, such as 1:100, under *PDF: the sheet says*. PDF pages need Poppler or MuPDF.
+For a PDF, choose the scale the sheet states, such as 1:100, under *PDF: scale on the sheet*. PDF pages need Poppler or MuPDF.
 
-**CAD drawing.** *Bring in a drawing (DXF, DWG or CAD PDF)…* brings in the real lines at true size, with their layers and colours.
+**CAD drawing.** *Bring in a CAD drawing…* (DXF; DWG with the ODA File Converter; or a PDF plotted from CAD) brings in the real lines at true size, with their layers and colours.
 
 - Choose the drawing's *Units*.
 - Tick a layer to show it. *Walls* raises that layer's lines into walls, for a quick massing model from a plan.
@@ -125,11 +125,11 @@ Adjust the brush as you go:
 
 - *Size* and *Density*.
 - *Variation*: the *Smallest* and *Largest* plant scale, and *Random rotation*.
-- *Paint on any surface (terrain, roofs, planters)* lets plants land on roofs and planters, not only the ground.
+- *Paint on any surface* lets plants land on roofs and planters, not only the ground.
 
 **Terrain and water.**
 
-- *Add terrain (replaces the flat ground)* gives you ground to sculpt and paint. A terrain holds up to four ground types.
+- *Add terrain* replaces the flat ground with ground to sculpt and paint. A terrain holds up to four ground types.
 - Water comes as a pond, pool, river or ocean.
 
 ## SET: staging at real sizes
@@ -143,7 +143,7 @@ Adjust the brush as you go:
 - *Truss span*
 - *Goalpost (two towers and a span)*
 - *Circle truss, 8 m across*
-- *Flying screen (LED wall under a helicopter)*
+- *Flying screen* (an LED wall under a helicopter)
 
 Select a piece to change it in the Properties panel. For an LED wall, that means the panel type and pitch, columns and rows, curve, height above the floor, content (an image or a video), live source and brightness. For a truss, it means length.
 
@@ -235,8 +235,8 @@ The page also offers:
 - *Render every camera*.
 - *Sun study: 9:00, 12:00, 15:00*.
 - *360° panorama from this camera*. Tick *Stereo, for VR headsets* for a 3D 360° image.
-- *Virtual tour of every camera (one web page)*, which opens in any browser.
-- *Render passes (depth, normals, ID, mask, clay)*, for compositing.
+- *Virtual tour of every camera*: one web page, which opens in any browser.
+- *Render passes for compositing*: depth, normals, object ID, mask and clay.
 - *AI upscale* ×2 or ×4, then *AI upscale the last render*. This uses Real-ESRGAN on your own computer. The first time, it downloads the upscaler (about 47 MB) and checks it.
 
 ## MOVIE
@@ -297,7 +297,7 @@ To run the show:
 
 - **GO** fades to the next cue.
 - *Back* returns to the previous cue, and *Go to selected* jumps to the one you picked.
-- *Open the show view (full screen with F)* gives a clean run-through for a client.
+- *Open the show view* (F for full screen) gives a clean run-through for a client.
 
 **Cues from a desk or show controller.**
 

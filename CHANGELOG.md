@@ -22,6 +22,8 @@ A professional interface. Every feature of rc2 is kept; what changed is how the 
 - **Scene tree**: an icon for each kind of thing, and an eye (show or hide) and a padlock (lock) at the end of each row instead of two columns of tick boxes; the number of objects at the top.
 - **Properties**: the selected object's name and kind at the top, settings in sections that fold (and stay folded from one object to the next), in plain words (*Brightness*, *Reach*, *Beam angle*, *Field of view*... not the engine's names).
 - **Paths read as paths**: messages and pages show files relative to the project (`renders/Main_Exterior.png`) or the home folder (`~/…`), not as full system paths.
+- **Keyboard and Mouse** (Help, or F1) is a reference card: every mouse action and every command with its keys, the keys drawn as keys.
+- **Frame Everything** (View, or Home) frames the design, not the 400 m lawn it stands on.
 
 ### Developer leftovers removed
 - Properties no longer list Genesis's own bookkeeping (import options, file times, file hashes); an *About* section says which library a model is from, the file it was brought in from and its licence.
@@ -34,6 +36,11 @@ A professional interface. Every feature of rc2 is kept; what changed is how the 
 ### Fixed
 - The Movie page's *Show the renders folder* opened the program's own folder, not the project's renders.
 - Tree thumbnails lost their leaves (the level of detail for a small picture dropped them).
+- Genesis's own file picker always opened in the program's folder and showed no favourites: a method of Godot's with the same name was called instead of Genesis's. It now opens where that kind of file was last picked, else in the open project, with the usual places as favourites. A test checks it, and another that no Genesis method is hidden by one of Godot's.
+- The *New project* and *Bring in a model* dialogs could grow to the height of the screen, with their buttons out of sight.
+- Pages no longer widen the side panel as you switch between them: long button labels are shorter (the detail is in their tooltips) and rows of buttons wrap.
+- The Show page's empty lists say what goes in them, instead of showing blank boxes.
+- Warnings about files missing from a scene name the file, not its internal path.
 
 ## 1.0.0-rc2 (Genesis Community)
 

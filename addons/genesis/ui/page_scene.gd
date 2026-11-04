@@ -42,7 +42,7 @@ func _init() -> void:
 	GnUi.heading(self, "Another scene")
 	var row := HBoxContainer.new()
 	_new_name = LineEdit.new()
-	_new_name.placeholder_text = "Name, e.g. Night or Option B"
+	_new_name.placeholder_text = "Name, e.g. Night"
 	_new_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_new_name.text_submitted.connect(func(_t): _new_scene())
 	row.add_child(_new_name)
@@ -153,7 +153,7 @@ func _pick_building() -> void:
 			_dialog.add_filter("*.%s" % ext)
 		_dialog.file_selected.connect(_import)
 		add_child(_dialog)
-	_dialog.popup_file_dialog()
+	GnUi.pick(_dialog)
 
 
 func _import(path: String) -> void:
@@ -174,7 +174,7 @@ func _pick_blender() -> void:
 			GnHost.set_setting("blender_path", p)
 			refresh())
 		add_child(_blender_dialog)
-	_blender_dialog.popup_file_dialog()
+	GnUi.pick(_blender_dialog)
 
 
 func _bring_site() -> void:
@@ -198,7 +198,7 @@ func _pick_site_file() -> void:
 		_site_dialog.add_filter("*.osm", "OpenStreetMap map file")
 		_site_dialog.file_selected.connect(func(p): bring_site_file(p))
 		add_child(_site_dialog)
-	_site_dialog.popup_file_dialog()
+	GnUi.pick(_site_dialog)
 
 
 ## A map saved from openstreetmap.org (Export) or any .osm extract: the same

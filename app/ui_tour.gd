@@ -38,6 +38,12 @@ static func run(main: Node, project: String, out: String, only_docs := false) ->
 		if c is Node3D and c.scene_file_path != "":
 			picked = c
 			break
+	# For the documentation, an event scene shows its LED wall's settings.
+	if only_docs:
+		for n in root.find_children("*", "Node3D", true, false):
+			if n.get_script() and str(n.get_script().resource_path).ends_with("gn_led_wall.gd"):
+				picked = n
+				break
 	if picked:
 		App.host.selection().set_nodes([picked])
 		await _settle(main, 40)
@@ -66,6 +72,12 @@ static func run(main: Node, project: String, out: String, only_docs := false) ->
 	await _settle(main, 15)
 	await shot(main, out, "menu_file")
 	file_menu.hide()
+	# The keyboard and mouse card (Help, F1).
+	App.actions.run("help.shortcuts")
+	await _settle(main, 20)
+	await shot(main, out, "dialog_shortcuts")
+	_close_dialogs(main)
+	await _settle(main, 5)
 	main.new_project()
 	await _settle(main, 20)
 	await shot(main, out, "dialog_new_project")
@@ -79,7 +91,7 @@ static func run(main: Node, project: String, out: String, only_docs := false) ->
 	picker.use_native_dialog = false
 	main.add_child(picker)
 	GnFileDialog.system_dialogs = false
-	picker.popup_file_dialog()
+	picker.show_picker()
 	await _settle(main, 20)
 	await shot(main, out, "dialog_file_picker")
 	picker.hide()

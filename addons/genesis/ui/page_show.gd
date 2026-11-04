@@ -104,12 +104,12 @@ func _init() -> void:
 	_host = _line_row("Host", "127.0.0.1")
 	_send_port = _spin_row("Port", 1, 65535, 1, CueList.DECKBOY_PORT)
 	_message = _line_row("Command", "GO")
-	var rec := HBoxContainer.new()
+	var rec := HFlowContainer.new()
 	GnUi.button(rec, "Record new cue", _record)
 	GnUi.button(rec, "Re-record", _rerecord)
 	GnUi.button(rec, "Delete", _delete)
 	add_child(rec)
-	var order := HBoxContainer.new()
+	var order := HFlowContainer.new()
 	GnUi.button(order, "Move up", _move.bind(-1))
 	GnUi.button(order, "Move down", _move.bind(1))
 	GnUi.button(order, "Test the command", _test_send)
@@ -121,7 +121,7 @@ func _init() -> void:
 	GnUi.button(run, "Back", _back)
 	GnUi.button(run, "Go to selected", _go_selected)
 	add_child(run)
-	GnUi.button(self, "Open the show view (full screen with F)", _open_window, "fullscreen")
+	GnUi.button(self, "Open the show view", _open_window, "fullscreen").tooltip_text = "The audience's view in its own window; F makes it full screen"
 	_status = GnUi.note(self, "")
 
 	_timer = Timer.new()
@@ -145,6 +145,8 @@ func refresh() -> void:
 		_screens.set_item_metadata(i, n.get_path())
 		if n.get_path() in picked or (picked.is_empty() and GnHost.selected_nodes().has(n)):
 			_screens.select(i, false)
+	if _screens.item_count == 0:
+		_empty_hint(_screens, "No screens here yet: add an LED wall on the Set page.")
 	# Cameras.
 	var chosen := _camera.get_item_text(_camera.selected) if _camera.selected >= 0 else ""
 	_camera.clear()
@@ -263,7 +265,7 @@ func _choose_file() -> void:
 		_file_dialog.add_filter("*.mp4, *.mov, *.m4v, *.webm, *.mkv, *.avi, *.mxf", "Video")
 		_file_dialog.file_selected.connect(func(p): _file = p; _file_label.text = p.get_file())
 		add_child(_file_dialog)
-	_file_dialog.popup_file_dialog()
+	GnUi.pick(_file_dialog)
 
 
 ## The source text for what the controls say, or "" for none.
@@ -322,7 +324,8 @@ func _fill_cues() -> void:
 	var cl := _hooked(_cue_list())
 	var keep := _cues.get_selected_items()
 	_cues.clear()
-	if cl == null:
+	if cl == null or cl.cues.is_empty():
+		_empty_hint(_cues, "No cues yet: set the look, then Record new cue.")
 		return
 	for i in cl.cues.size():
 		var c: Dictionary = cl.cues[i]
@@ -331,6 +334,14 @@ func _fill_cues() -> void:
 			("   → %s" % send.get("message", "")) if send.get("on", false) else ""])
 	if not keep.is_empty() and keep[0] < _cues.item_count:
 		_cues.select(keep[0])
+
+
+## What an empty list is for, written in it: a quiet line that cannot be
+## picked, in place of a blank box.
+static func _empty_hint(list: ItemList, text: String) -> void:
+	var i := list.add_item(text, null, false)
+	list.set_item_disabled(i, true)
+	list.set_item_tooltip_enabled(i, false)
 
 
 func _selected_cue() -> int:

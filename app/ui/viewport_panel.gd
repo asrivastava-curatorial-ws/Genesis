@@ -264,12 +264,28 @@ static func bounds_of(nodes: Array) -> AABB:
 
 ## What "everything" means when framing: the design, not the ground or the
 ## terrain it stands on (a 400 m lawn would leave the building a speck).
+## Only things with a shape count: a light, a camera or the environment has
+## a place but nothing to frame. With no design yet (a new project), it is the
+## whole scene, ground and all.
 static func scene_bounds(root: Node) -> AABB:
 	if root == null:
 		return AABB()
-	var parts := root.get_children().filter(func(c): return not str(c.get_meta(GnScene.ROLE, "")) in ["ground", "terrain"])
+	var parts := root.get_children().filter(func(c): return not str(c.get_meta(GnScene.ROLE, "")) in ["ground", "terrain"] \
+		and _has_shape(c))
 	var box := bounds_of(parts)
 	return box if box.size != Vector3.ZERO else bounds_of(root.get_children())
+
+
+## Whether a node, or something under it, is drawn in the picture (helpers
+## drawn only in the view do not count).
+static func _has_shape(n: Node) -> bool:
+	var list: Array = n.find_children("*", "GeometryInstance3D", true, false)
+	if n is GeometryInstance3D:
+		list.append(n)
+	for g in list:
+		if (g as GeometryInstance3D).layers & ~(1 << (GnHost.VIEW_ONLY_LAYER - 1)) != 0:
+			return true
+	return false
 
 
 func _frame_box(box: AABB) -> void:

@@ -159,6 +159,7 @@ func refresh() -> void:
 		none.text = "Nothing here yet. Make a new project to begin, or open one you have."
 		none.theme_type_variation = &"MutedLabel"
 		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		none.custom_minimum_size.x = 400
 		_list.add_child(none)
 		return
 	for dir in recent:

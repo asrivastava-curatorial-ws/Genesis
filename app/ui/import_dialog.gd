@@ -55,10 +55,14 @@ func _init() -> void:
 	note.text = "Re-exports of the same file come in by themselves, with the same settings."
 	note.theme_type_variation = &"SmallLabel"
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# Measured at this width, not a word to a line (which makes the dialog
+	# as tall as the screen).
+	note.custom_minimum_size.x = 500
 	col.add_child(note)
 	_error = Label.new()
 	_error.theme_type_variation = &"ErrorLabel"
 	_error.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_error.custom_minimum_size.x = 500
 	col.add_child(_error)
 	confirmed.connect(_go)
 

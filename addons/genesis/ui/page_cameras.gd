@@ -142,4 +142,4 @@ func _pick_photo() -> void:
 				_photo_label.text = err
 			refresh())
 		add_child(_dialog)
-	_dialog.popup_file_dialog()
+	GnUi.pick(_dialog)
