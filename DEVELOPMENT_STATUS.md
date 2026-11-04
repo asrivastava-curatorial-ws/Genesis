@@ -15,7 +15,7 @@
 | 9 | AI, panorama, MOVIE | Real-ESRGAN per-user install; panorama and MP4 from the built program (E2E); a path tool for moving objects; walkers walking in the rendered film (E2E *walk*). |
 | 10 | SET and SHOW | Set pieces, cues, GO; OSC/UDP cue input added; outgoing OSC/text/TCP and live video (file, UDP, SRT) tested; planning-estimate labels. |
 | 11 | UI polish and performance | Layout fits the smallest window; view quality setting; crashes on exit fixed. **rc3:** GitHub Dark Default theme (VSCodium's) with JetBrains Mono and Lucide icons; activity bar for the pages; VS Code-style status bar; foldable properties in plain words; developer leftovers removed; placing models with the mouse; one file picker with remembered folders and path fields; whole-model thumbnails. |
-| 12 | Testing, documentation, packaging | Four headless suites (389 checks) and a smoke tour, the built program's own smoke tour, five-launch E2E with real rendering, a screenshot tour of every page and dialog (`--ui-tour`); 33 pages in docs/ (with INVENTORY.md), START_HERE.md and the manual as one HTML/PDF file; launchers; one AppImage for Linux (rc3). |
+| 12 | Testing, documentation, packaging | Four headless suites (393 checks) and a smoke tour, the built program's own smoke tour, five-launch E2E with real rendering, a screenshot tour of every page and dialog (`--ui-tour`); 33 pages in docs/ (with INVENTORY.md), START_HERE.md and the manual as one HTML/PDF file; launchers; one AppImage for Linux (rc3). |
 
 Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limitations: `docs/KNOWN_LIMITATIONS.md`.
 
@@ -43,6 +43,9 @@ Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limit
 - Ubuntu's Blender package cannot export glTF without numpy; the error now says so.
 - A photographed sky whose file was missing emptied the sky when the time of day changed.
 - Stopping a live video source could log an error from the reader thread asking about the FFmpeg process just reaped (a flaky module test).
+- Genesis's file picker was never shown by its own code: its method had the name of FileDialog's own (`popup_file_dialog`), and the engine's method is the one that runs. It now opens where each kind of file was last picked, with favourites. Tests check its folders, and that no Genesis method is hidden by an engine method of the same name.
+- Labels that wrap had no width to be measured at, so some dialogs grew to the height of the screen with their buttons out of sight, and a hint in the Properties panel widened the left column past the smallest window.
+- *Frame Everything* on a scene with no design yet framed the sun's position from 3 m away.
 
 ## Findings about the original
 

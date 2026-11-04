@@ -97,7 +97,7 @@ Then start your own project:
 3. Say what unit the model was made in and which way is up.
 4. With *Live link* on, re-exporting from your modelling program updates the model in Genesis.
 
-![The workspace](docs/screenshots/02_workspace_architecture.png)
+![The workspace with the Assets page open: the scene and its properties on the left, the 3D view, and the library on the right, where you pick a model and then click where it goes](docs/screenshots/02_workspace_architecture.png)
 
 ## 5. Optional tools
 

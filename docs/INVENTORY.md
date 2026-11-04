@@ -16,6 +16,7 @@ It installs nothing: no system packages, no services, nothing that needs adminis
 |---|---|---|
 | Settings and the recent-projects list | `~/.local/share/Genesis/settings.json` | always |
 | Logs | `~/.local/share/Genesis/logs/` | always |
+| Compiled shaders: the engine's shader and pipeline caches, which make the second start faster | `~/.local/share/Genesis/shader_cache/` and `~/.local/share/Genesis/vulkan/` (safe to delete) | always |
 | Thumbnails of models and materials | `~/.local/share/Genesis/cache/` (safe to delete) | when the Assets or Materials page is shown |
 | A scratch folder for work with no project open | `~/.local/share/Genesis/scratch/` | rarely |
 | Your own library of models and skies | `~/.local/share/Genesis/library/` | only when you add your own models or skies |
@@ -28,7 +29,7 @@ It installs nothing: no system packages, no services, nothing that needs adminis
 
 | What | From | When | Size |
 |---|---|---|---|
-| Real-ESRGAN (realesrgan-ncnn-vulkan v0.2.5.0, BSD-3-Clause) and its licence | github.com/xinntao/Real-ESRGAN (release v0.2.5.0); checked against its SHA-256 before use | the first *AI upscale* | about 47 MB |
+| Real-ESRGAN (realesrgan-ncnn-vulkan v0.2.5.0, BSD-3-Clause) and its licence | `github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip`, checked against its SHA-256 before use; the licence from `raw.githubusercontent.com/xinntao/Real-ESRGAN/master/LICENSE` | the first *AI upscale* | about 47 MB |
 | Map data for *Site context*: places, buildings, roads | nominatim.openstreetmap.org, api.openstreetmap.org (ODbL) | when you bring in a neighbourhood by address | a few MB, into the project |
 | Ground heights and aerial photographs | elevation-tiles-prod on AWS; USGS The National Map; EOX Sentinel-2 cloudless | the same, when those boxes are ticked | a few MB, into the project |
 
@@ -36,7 +37,7 @@ Nothing else goes out: no updates, no usage statistics, no accounts.
 
 ### What it uses from your PC
 
-- **Graphics**: your Vulkan driver (with an NVIDIA card, NVIDIA's own driver). Genesis needs Vulkan 1.2.
+- **Graphics**: your Vulkan driver (with an NVIDIA card, NVIDIA's own driver). Genesis needs Vulkan 1.2. The driver keeps a shader cache of its own (NVIDIA's in `~/.cache/nvidia/`), as it does for every program that draws in 3D.
 - **FUSE**, to open the AppImage: `fusermount3`, from the `fuse3` package, which Kubuntu 24.04 has. Without it, run the AppImage with `--appimage-extract-and-run`.
 - **Your desktop's file dialogs** (KDE's, through xdg-desktop-portal-kde, part of Plasma). Preferences can switch to Genesis's own.
 - **Programs it uses if they are installed** (none is needed; *Tools > Other Programs…* shows which are found): FFmpeg (films and live video), Blender (`.blend` files), Poppler's `pdftoppm` (PDF plans), the ODA File Converter (DWG drawings). Install them yourself if you want them:
@@ -58,7 +59,20 @@ Your projects are yours and are not touched.
 
 ## 2. Inside the AppImage
 
-APPIMAGE_CONTENTS
+One file of about 210.5 MB; its exact size and SHA-256 are in the `.sha256` file that comes with it (a file cannot hold its own checksum). It opens as a read-only folder of 281.0 MB in 91 files:
+
+| Path inside the AppImage | Size | What it is |
+|---|---|---|
+| `AppRun` | 1 KB | starts the program; `--install-shortcut` and `--remove-shortcut` |
+| `genesis-community.desktop`, `genesis-community.png`, `.DirIcon` | small | the desktop entry and the icon |
+| `usr/lib/genesis-community/Genesis.x86_64` | 73.5 MB | the program: Godot 4.7.2's runtime |
+| `usr/lib/genesis-community/Genesis.pck` | 184.5 MB | everything else of the program: its scripts, the theme, the fonts, the icons, the model library and the material presets |
+| `usr/lib/genesis-community/docs/` | 6.8 MB | the manual (HTML and PDF), the guides and their pictures, for *Help > Documentation* |
+| `usr/lib/genesis-community/demos/` | 16.0 MB | the two demo projects; *Try a demo* copies one into your projects folder |
+| `usr/share/applications/`, `usr/share/icons/`, `usr/share/metainfo/` | small | the desktop entry, the icon (PNG and SVG) and the AppStream description, for software centres |
+| `usr/share/doc/genesis-community/` | 0.1 MB | README, LICENSE, THIRD_PARTY_NOTICES, CHANGELOG, this inventory and the font's licence (OFL.txt) |
+
+What each part is, its version and its licence:
 
 | Part | Version | Licence |
 |---|---|---|
