@@ -86,6 +86,9 @@ func tail(count := 200) -> String:
 
 
 class Hook extends Logger:
+	## Engine messages that are not the user's concern (see _log_error).
+	const HARMLESS := ["Attempt to disconnect a nonexistent connection"]
+
 	var _log: WeakRef
 
 	func _init(owner: RefCounted) -> void:
@@ -99,5 +102,13 @@ class Hook extends Logger:
 	func _log_error(function: String, file: String, line: int, code: String, rationale: String, _editor_notify: bool, error_type: int, _backtraces: Array[ScriptBacktrace]) -> void:
 		var owner = _log.get_ref()
 		if owner:
+			var text := rationale if rationale != "" else code
+			var where := "%s:%d in %s" % [file.get_file(), line, function]
+			# The engine's own bookkeeping of menus and popups sometimes reports
+			# letting go of a link it no longer has. Nothing is wrong for the
+			# user, so it is kept in the log as a note, not counted as an error.
+			if HARMLESS.any(func(h): return text.contains(h)):
+				owner._record(0, "Engine note: " + text, where)
+				return
 			# error_type 1 is a warning; errors, script errors and shader errors all count as errors.
-			owner._record(1 if error_type == 1 else 2, rationale if rationale != "" else code, "%s:%d in %s" % [file.get_file(), line, function])
+			owner._record(1 if error_type == 1 else 2, text, where)

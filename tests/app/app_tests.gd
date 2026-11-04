@@ -147,6 +147,11 @@ func _logging() -> void:
 	print("second line")
 	await process_frame
 	check(seen.size() >= 1, "log: listeners are told about new lines")
+	push_error("Attempt to disconnect a nonexistent connection from a test popup")
+	await process_frame
+	var note: Array = log.lines.filter(func(e): return "nonexistent connection from a test popup" in e.text)
+	check(not note.is_empty() and note.all(func(e): return e.level == LogService.Level.INFO),
+		"log: the engine's harmless popup bookkeeping message is a note, not an error the status bar counts")
 	log.shutdown()
 	var before := log.lines.size()
 	print("after shutdown")
