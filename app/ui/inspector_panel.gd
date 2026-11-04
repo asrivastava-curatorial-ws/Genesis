@@ -38,10 +38,10 @@ const LABELS := {
 ## means something else on another kind of object.
 const SCRIPT_LABELS := {
 	"shape": ["Shape", ""], "size": ["Size (m)", "Width and height of the panel (a disc uses the width)"],
-	"colour": ["Colour", ""], "kelvin": ["Colour temperature (K)", "0 uses the colour above"],
+	"colour": ["Colour", ""], "kelvin": ["Colour temp (K)", "Colour temperature in kelvin; 0 uses the colour above"],
 	"lumens": ["Output (lumens)", "A 60 × 60 cm office panel is about 3,600"],
 	"dimmer": ["Dimmer", "0 is out, 1 is full: what a show's cues fade"],
-	"two_sided": ["Lit on both faces", ""], "show_panel": ["Show the panel", ""],
+	"two_sided": ["Both faces lit", "Light both ways, as a hanging panel lit on both faces"], "show_panel": ["Show the panel", ""],
 	"casts_shadows": ["Casts shadows", ""], "reach": ["Reach (m)", "How far the light carries"],
 	"mood": ["Mood", ""], "width": ["Width (m)", ""], "depth": ["Depth (m)", "Front to back"],
 	"density": ["People per m²", "Seated rows ignore this"],
@@ -54,19 +54,19 @@ const SCRIPT_LABELS := {
 	"long_line": ["Long line (m)", "Hook to the bridle ring"],
 	"heading_degrees": ["Heading (°)", "Which way the helicopter points; 90 flies it side-on to the wall"],
 	"swing_degrees": ["Swing (°)", "How far the load swings either side in a film; 0 hangs still"],
-	"panel": ["Cabinet", "The LED cabinet type"], "columns": ["Columns (cabinets)", ""], "rows": ["Rows (cabinets)", ""],
+	"panel": ["Cabinet", "The LED cabinet type"], "columns": ["Columns", "Cabinets across"], "rows": ["Rows", "Cabinets high"],
 	"content": ["Shows", "An image or a video (a video loops); empty shows the pixel map"],
 	"live_source": ["Live video", "What a playback app, media server or camera sends; see the Show page"],
 	"brightness": ["Brightness", "Relative to a typical indoor setting"],
 	"curve_degrees": ["Curve (°)", "Total bend across the wall; positive curves toward the audience"],
 	"bottom": ["Bottom edge (m)", "Height of the wall's bottom edge above the floor"],
 	"custom_size_m": ["Cabinet size (m)", ""], "custom_pixels": ["Cabinet pixels", ""],
-	"custom_kg": ["Cabinet weight (kg)", ""], "custom_watts": ["Cabinet power (W)", ""],
+	"custom_kg": ["Weight (kg)", "Weight of one cabinet"], "custom_watts": ["Power (W)", "Power of one cabinet"],
 	"beam_degrees": ["Beam angle (°)", ""], "pan": ["Pan (°)", ""], "tilt": ["Tilt (°)", ""],
 	"beam_in_haze": ["Beam in haze", "How strongly the beam shows in haze"],
 	"model": ["Fixture model", "A model from the library to show instead of the simple shape"],
 	"hung": ["Hung from truss", "Base up, rather than standing on the deck"],
-	"ies": ["IES photometry file", "A manufacturer's file: its beam shape, cone and lumens replace the settings above"],
+	"ies": ["IES file", "A manufacturer's file: its beam shape, cone and lumens replace the settings above"],
 	"element": ["Element", "The box, from the library's line array elements"], "boxes": ["Boxes", ""],
 	"frame_tilt": ["Frame tilt (°)", "Downward tilt of the whole array"],
 	"top_splay": ["Top splay (°)", "Between the top two boxes"], "bottom_splay": ["Bottom splay (°)", "Between the bottom two boxes"],
@@ -261,12 +261,14 @@ func _section(text: String) -> void:
 	_headings.append(text)
 
 
-func _row(label: String, editor: Control) -> void:
+## `label_width`: 136 holds the longest plain label ("Bottom splay (°)");
+## rows of two or three numbers have short labels and need the room.
+func _row(label: String, editor: Control, label_width := 136) -> void:
 	var row := HBoxContainer.new()
 	var l := Label.new()
 	l.text = label
 	l.theme_type_variation = &"NoteLabel"
-	l.custom_minimum_size = Vector2(112, 0)
+	l.custom_minimum_size = Vector2(label_width, 0)
 	l.clip_text = true
 	l.tooltip_text = label
 	row.add_child(l)
@@ -488,7 +490,7 @@ func _vector(prop: String, label: String) -> void:
 		for i in n:
 			spins[i].set_value_no_signal(float(v[i]))
 	_editors[prop].call()
-	_row(label, row)
+	_row(label, row, 100)
 
 
 func _readonly(prop: String, label: String) -> void:

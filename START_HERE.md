@@ -75,7 +75,7 @@ This delivery has no Windows program. One can be built from the source (section 
 
 1. Press *Draw a path*, click points across the site in the 3D view, and press **Enter**. Drag a point to reshape it; Ctrl+click the line to add a point; right-click a point to remove it.
 2. On *Assets*, show *People* and place a few walkers (the *Walker* figures) and, if you like, a car on a road path.
-3. Select them and the path, and on *Movie* press *Put selection on it*. Set the *Speed* under Properties (1.4 m/s is a walking pace).
+3. Select them and the path, and on *Movie* press *Put selection on it*. Set its *Speed (m/s)* under Properties (1.4 is a walking pace).
 4. Save a camera or two on *Cameras*, add a shot on *Movie*, press *Play*, then *Render the movie*.
 
 The people walk, stepping in time with the ground they cover. At the end of the path they start again from the beginning. [docs/SECTION_GUIDE.md](docs/SECTION_GUIDE.md) has every detail.

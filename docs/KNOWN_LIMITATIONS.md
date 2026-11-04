@@ -19,7 +19,7 @@ Honest list of what does not work, is not included, or was not tested.
 
 ## Not tested in this release
 
-- **The interface on a real desktop**: the new look was checked in screenshots of every page and dialog taken on a virtual screen (Xvfb, 1500 × 900, at 100 % interface size), not on a KDE desktop or at other interface sizes.
+- **The interface on a real desktop**: the new look was checked in screenshots of every page and dialog taken on a virtual screen (Xvfb, a 1500 × 900 window, at 100 % interface size), from the built program, not on a KDE desktop or at other interface sizes.
 - **The desktop's own file dialogs**: on Kubuntu, Genesis asks the desktop portal (xdg-desktop-portal-kde, installed with Plasma) for KDE's dialog. The build machine has no desktop portal, so there Genesis's own dialog was used and tested. If the portal is missing or its dialog misbehaves, switch it off in Preferences (*Use this computer's own file dialogs*).
 - **Dropping files from a file manager**: dropping a model on the 3D view and a file on a dialog's path field were tested by calling the program's drop handling directly, not by dragging from Dolphin.
 
@@ -38,7 +38,7 @@ Honest list of what does not work, is not included, or was not tested.
 - The material browser has no user material library across projects yet; custom looks are per project. (Models and skies do have a library of your own.)
 - Render queue with cancel and resume is not implemented; renders run one at a time from the Render page.
 - No code signing; Windows SmartScreen warns.
-- Thumbnails need a GPU; without one, lists show names.
+- Thumbnails are drawn by Genesis the first time a page shows them, then kept. With software rendering (no graphics driver), the first fill of the asset grid takes a minute or two; names show until then.
 - UDP ports are opened shared, so a port taken by another program is not detected.
 - If Genesis is closed (or stopped) while an AI upscale is running, the upscaler carries on in the background until that picture is done.
 - `.blend` files need Blender. Ubuntu's own Blender package (4.0) also needs `python3-numpy` for its glTF exporter; Genesis says so when it is missing.

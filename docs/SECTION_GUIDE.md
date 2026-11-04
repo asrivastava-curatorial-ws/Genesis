@@ -259,7 +259,7 @@ A film is a list of **shots**. *Play* previews it; *Move up* and *Remove* arrang
    - right-click a point to remove it;
    - *Add points to it* carries on drawing from its end.
 4. Select what should travel along it (a car, a boat, a walker from *Assets > People*), select the path too (or have just one), and press *Put selection on it*. Several things on one path are spaced evenly along it. They keep going: at the end of the path each starts again from the beginning, so make a path long enough for the film.
-5. In the Properties panel, with the path selected: *Speed* (metres per second; 1.4 is a walking pace), *Reverse*, and *Smooth* (curves; untick it for straight lines and sharp corners).
+5. In the Properties panel, with the path selected: *Speed (m/s)* (1.4 is a walking pace), *Reverse*, and *Round corners* (curves; untick it for straight lines and sharp corners).
 
 The walkers walk as they go: their stride follows the distance they cover, so feet do not slide at any speed. Play the film, or scrub it, to watch them; the rendered film shows them the same way. People of your own walk too, if their model has a walk animation: one called *walk*, one with *walk* in its name, or the only animation it has (as a character downloaded from Mixamo with one walk comes; choose *In Place* there, so the figure walks on the spot and the path moves it). Bring them in as GLB or FBX with the animation included.
 
