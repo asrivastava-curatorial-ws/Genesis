@@ -374,7 +374,8 @@ func _show_shortcuts() -> void:
 		for row in section[1]:
 			var what := Label.new()
 			what.text = row[0]
-			what.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			# One width for every section, so the keys line up down the card.
+			what.custom_minimum_size.x = 300
 			grid.add_child(what)
 			grid.add_child(_keys(str(row[1])))
 	d.visibility_changed.connect(func(): if not d.visible: d.queue_free())

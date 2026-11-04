@@ -72,6 +72,7 @@ static func run(main: Node, project: String, out: String, only_docs := false) ->
 	await _settle(main, 15)
 	await shot(main, out, "menu_file")
 	file_menu.hide()
+	await _settle(main, 10)
 	# The keyboard and mouse card (Help, F1).
 	App.actions.run("help.shortcuts")
 	await _settle(main, 20)

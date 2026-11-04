@@ -33,6 +33,57 @@ const LABELS := {
 	"far": "Far clip (m)", "projection": "Projection", "size": "View width (m)",
 	"cast_shadow": "Shadows", "transparency": "Transparency",
 }
+## Genesis's own settings (LED walls, lights, truss, crowds...) in plain words,
+## with their units, and what each does. "script:setting" is for a name that
+## means something else on another kind of object.
+const SCRIPT_LABELS := {
+	"shape": ["Shape", ""], "size": ["Size (m)", "Width and height of the panel (a disc uses the width)"],
+	"colour": ["Colour", ""], "kelvin": ["Colour temperature (K)", "0 uses the colour above"],
+	"lumens": ["Output (lumens)", "A 60 × 60 cm office panel is about 3,600"],
+	"dimmer": ["Dimmer", "0 is out, 1 is full: what a show's cues fade"],
+	"two_sided": ["Lit on both faces", ""], "show_panel": ["Show the panel", ""],
+	"casts_shadows": ["Casts shadows", ""], "reach": ["Reach (m)", "How far the light carries"],
+	"mood": ["Mood", ""], "width": ["Width (m)", ""], "depth": ["Depth (m)", "Front to back"],
+	"density": ["People per m²", "Seated rows ignore this"],
+	"turn_spread": ["Turn spread (°)", "How far each person may turn from the crowd's forward"],
+	"seat_width": ["Seat width (m)", ""], "row_spacing": ["Row spacing (m)", ""],
+	"variation": ["Variation", "Change for a different arrangement of the same crowd"],
+	"start": ["Start", ""], "end": ["End", ""], "text_size": ["Text height (m)", "0 scales it with the length"],
+	"kind": ["Kind", ""], "amount": ["Amount (×)", ""],
+	"helicopter": ["Helicopter", "One of the library's heavy lifters with a cargo hook"],
+	"long_line": ["Long line (m)", "Hook to the bridle ring"],
+	"heading_degrees": ["Heading (°)", "Which way the helicopter points; 90 flies it side-on to the wall"],
+	"swing_degrees": ["Swing (°)", "How far the load swings either side in a film; 0 hangs still"],
+	"panel": ["Cabinet", "The LED cabinet type"], "columns": ["Columns (cabinets)", ""], "rows": ["Rows (cabinets)", ""],
+	"content": ["Shows", "An image or a video (a video loops); empty shows the pixel map"],
+	"live_source": ["Live video", "What a playback app, media server or camera sends; see the Show page"],
+	"brightness": ["Brightness", "Relative to a typical indoor setting"],
+	"curve_degrees": ["Curve (°)", "Total bend across the wall; positive curves toward the audience"],
+	"bottom": ["Bottom edge (m)", "Height of the wall's bottom edge above the floor"],
+	"custom_size_m": ["Cabinet size (m)", ""], "custom_pixels": ["Cabinet pixels", ""],
+	"custom_kg": ["Cabinet weight (kg)", ""], "custom_watts": ["Cabinet power (W)", ""],
+	"beam_degrees": ["Beam angle (°)", ""], "pan": ["Pan (°)", ""], "tilt": ["Tilt (°)", ""],
+	"beam_in_haze": ["Beam in haze", "How strongly the beam shows in haze"],
+	"model": ["Fixture model", "A model from the library to show instead of the simple shape"],
+	"hung": ["Hung from truss", "Base up, rather than standing on the deck"],
+	"ies": ["IES photometry file", "A manufacturer's file: its beam shape, cone and lumens replace the settings above"],
+	"element": ["Element", "The box, from the library's line array elements"], "boxes": ["Boxes", ""],
+	"frame_tilt": ["Frame tilt (°)", "Downward tilt of the whole array"],
+	"top_splay": ["Top splay (°)", "Between the top two boxes"], "bottom_splay": ["Bottom splay (°)", "Between the bottom two boxes"],
+	"speed": ["Speed (m/s)", "Walking 1.4, city traffic 8 to 13"], "reverse": ["Reverse", "Start at the end and travel back"],
+	"smooth": ["Round corners", "The route curves smoothly through its points"],
+	"height": ["Height (m)", ""], "skirt": ["Skirt", ""], "skirt_colour": ["Skirt colour", ""],
+	"cells": ["Grid cells", "Along each side; 128 is smooth enough for landscape"],
+	"section": ["Section", ""], "length": ["Length (m)", ""],
+	"radius": ["Radius (m)", "0 is straight; otherwise the arc's radius"],
+	"waves": ["Waves", ""],
+	"gn_effect:size": ["Size (×)", "1 is the natural size: a campfire, a 3 m fountain, a 4 m CO2 jet"],
+	"gn_effect:colour": ["Colour", "Confetti colours, water tint, spark colour; fire and smoke ignore it"],
+	"gn_terrain:size": ["Size (m)", ""],
+	"gn_flying_screen:brightness": ["Brightness", ""],
+}
+
+
 ## Sections folded by the user stay folded from one object to the next.
 static var _folded := {}
 
@@ -229,7 +280,14 @@ func _apply(prop: String, value: Variant) -> void:
 		return
 	if target.get(prop) == value:
 		return
-	GnScene.set_props("Change %s of %s" % [prop.capitalize().to_lower(), target.name], [[target, prop, value]])
+	GnScene.set_props("Change %s of %s" % [_undo_words(prop), target.name], [[target, prop, value]])
+
+
+## A setting's name as an undo step says it: "Change brightness of Spot 1".
+func _undo_words(prop: String) -> String:
+	var label: String = LABELS[prop] if LABELS.has(prop) else str(_script_label(prop)[0])
+	label = label.split(" (")[0]
+	return label.to_lower() if label.length() > 1 and not label.substr(1, 1).to_upper() == label.substr(1, 1) else label
 
 
 func _info_for(prop: String) -> Dictionary:
@@ -274,7 +332,26 @@ func _script_properties() -> void:
 		if pending != "":
 			_section(pending)
 			pending = ""
-		_editor_for(p, str(p.name).capitalize())
+		var words: Array = _script_label(str(p.name))
+		_editor_for(p, words[0])
+		var holder: Control = _current if _current else _box
+		if words[1] != "" and holder.get_child_count() > 0:
+			_tip(holder.get_child(holder.get_child_count() - 1), words[1])
+
+
+## The words for one of Genesis's own settings, and what it does.
+func _script_label(prop: String) -> Array:
+	var script_name := str(target.get_script().resource_path).get_file().get_basename() if target.get_script() else ""
+	var words: Array = SCRIPT_LABELS.get("%s:%s" % [script_name, prop], SCRIPT_LABELS.get(prop, [prop.capitalize(), ""]))
+	return words
+
+
+## What a setting does, as the tooltip of its row: its label and its editor.
+static func _tip(row: Node, text: String) -> void:
+	if row is Control:
+		(row as Control).tooltip_text = text
+	for c in row.find_children("*", "Control", true, false):
+		(c as Control).tooltip_text = text
 
 
 # One editor for one property, chosen by its type and hint.
@@ -337,6 +414,11 @@ func _number(prop: String, label: String, hint: int, hint_string: String, intege
 
 func _enum(prop: String, label: String, hint_string: String, as_text := false) -> void:
 	var ob := OptionButton.new()
+	# A long choice ("2.6 mm indoor (500 × 500)") is cut short with an
+	# ellipsis rather than widening the whole column.
+	ob.fit_to_longest_item = false
+	ob.clip_text = true
+	ob.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var values: Array = []
 	var next := 0
 	for part in hint_string.split(","):

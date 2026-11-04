@@ -146,7 +146,7 @@ func refresh() -> void:
 		if n.get_path() in picked or (picked.is_empty() and GnHost.selected_nodes().has(n)):
 			_screens.select(i, false)
 	if _screens.item_count == 0:
-		_empty_hint(_screens, "No screens here yet: add an LED wall on the Set page.")
+		_empty_hint(_screens, "No screens yet: add one on Set")
 	# Cameras.
 	var chosen := _camera.get_item_text(_camera.selected) if _camera.selected >= 0 else ""
 	_camera.clear()
@@ -325,7 +325,7 @@ func _fill_cues() -> void:
 	var keep := _cues.get_selected_items()
 	_cues.clear()
 	if cl == null or cl.cues.is_empty():
-		_empty_hint(_cues, "No cues yet: set the look, then Record new cue.")
+		_empty_hint(_cues, "No cues yet: press Record new cue")
 		return
 	for i in cl.cues.size():
 		var c: Dictionary = cl.cues[i]

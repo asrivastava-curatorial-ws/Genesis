@@ -94,7 +94,7 @@ func refresh() -> void:
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		head.add_child(name)
 		var state := Label.new()
-		state.text = ("Found  %s" % (r.version if r.version != "" else "")).strip_edges() if r.found else "Not found"
+		state.text = ("Found  %s" % Dependencies.short_version(r.version)).strip_edges() if r.found else "Not found"
 		state.theme_type_variation = &"SuccessLabel" if r.found else &"WarningLabel"
 		state.tooltip_text = r.path
 		head.add_child(state)

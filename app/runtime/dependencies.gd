@@ -48,6 +48,14 @@ static func _version(program: String, args: Array) -> String:
 	return text.get_slice("\n", 0).strip_edges().left(120)
 
 
+## Just the version number from a program's version line ("ffmpeg version
+## 6.1.1-3ubuntu5 Copyright (c)..." gives "6.1.1"), or the line if it has none.
+static func short_version(line: String) -> String:
+	var rx := RegEx.create_from_string("\\d+\\.\\d+(\\.\\d+)?")
+	var m := rx.search(line)
+	return m.get_string() if m else line
+
+
 ## The table as text, for the log and bug reports.
 static func report() -> String:
 	var lines := PackedStringArray()
