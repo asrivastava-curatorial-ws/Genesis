@@ -1,6 +1,6 @@
 # End-to-end test, phase: build
 
-Genesis Community 1.0.0-rc2 on Linux, 2026-11-01T13:09:12
+Genesis Community 1.0.0-rc3 on Linux, 2026-11-04T07:18:47
 
 | Step | What | Result |
 |---|---|---|
@@ -19,7 +19,7 @@ Genesis Community 1.0.0-rc2 on Linux, 2026-11-01T13:09:12
 | 7 | Add furniture from the library | passed |
 | 8 | Add human figures | passed |
 | 8b | Add a model of your own to your library (an OBJ made in centimetres, with its licence) and place it; the project gets its own copy  | passed |
-| 9 | Paint vegetation with the brush (47 trees) | passed |
+| 9 | Paint vegetation with the brush (49 trees) | passed |
 | 10 | Configure sunlight (real sun, Bangalore, 16:30) | passed |
 | 11 | Configure an HDRI sky: your own HDR panorama, added to your skies; the sun goes where the photo's sun is (0.999)  | passed |
 | 12 | Add artificial lighting | passed |

@@ -1,6 +1,6 @@
 # End-to-end test, phase: views
 
-Genesis Community 1.0.0-rc2 on Linux, 2026-11-01T13:40:18
+Genesis Community 1.0.0-rc3 on Linux, 2026-11-04T07:46:49
 
 | Step | What | Result |
 |---|---|---|

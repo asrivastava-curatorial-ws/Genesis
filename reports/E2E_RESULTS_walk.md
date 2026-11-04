@@ -1,6 +1,6 @@
 # End-to-end test, phase: walk
 
-Genesis Community 1.0.0-rc2 on Linux, 2026-11-01T14:00:53
+Genesis Community 1.0.0-rc3 on Linux, 2026-11-04T08:05:41
 
 | Step | What | Result |
 |---|---|---|
