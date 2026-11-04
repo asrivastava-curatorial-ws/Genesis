@@ -101,6 +101,18 @@ static func apply(tree: SceneTree) -> void:
 		tree.node_added.connect(_on_node_added)
 
 
+## Lets go of the fonts and the theme while the renderer and the text server
+## are still running (the program calls this as it closes). Held in static
+## variables, they would otherwise be let go after both have shut down, which
+## crashes the program on its way out.
+static func release(tree: SceneTree) -> void:
+	if tree and tree.node_added.is_connected(_on_node_added):
+		tree.node_added.disconnect(_on_node_added)
+	ThemeDB.fallback_font = null
+	_fonts.clear()
+	_theme = null
+
+
 # Every dialog's main button is the green one, and a button that removes or
 # throws something away is red, without each dialog having to say so.
 static func _on_node_added(node: Node) -> void:

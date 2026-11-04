@@ -437,6 +437,7 @@ func _quit_now() -> void:
 
 func _exit_tree() -> void:
 	App.shutdown()
+	GenesisTheme.release(get_tree())
 
 
 func _notification(what: int) -> void:

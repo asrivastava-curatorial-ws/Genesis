@@ -98,8 +98,13 @@ func _draw_now(size: int) -> Image:
 	# only there once a frame has gone by, and a material seen for the first
 	# time may need another while its shader is made.
 	_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	for i in FRAMES:
-		await RenderingServer.frame_post_draw
+	# The program's frames, counted by the scene tree rather than the renderer:
+	# a picture still waiting when the program closes is then let go with the
+	# tree, instead of holding the model it was drawing (and the program's
+	# undo history, through the callers waiting on it) past the end. A frame
+	# is drawn after its process step, so one more step than frames.
+	for i in FRAMES + 1:
+		await get_tree().process_frame
 	var img := _vp.get_texture().get_image()
 	_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	return img
@@ -142,10 +147,13 @@ func model(path: String, size: int) -> Texture2D:
 	var packed := load(path) as PackedScene
 	if packed == null:
 		return null
+	# Made only once it is this picture's turn: a model made while waiting
+	# would be left over if the program closed in the meantime.
+	await _begin()
 	var inst := packed.instantiate() as Node3D
 	if inst == null:
+		_busy = false
 		return null
-	await _begin()
 	_subject.add_child(inst)
 	var box := AABB()
 	var first := true

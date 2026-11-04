@@ -16,8 +16,18 @@ var _ur := UndoRedo.new()
 
 func _notification(what: int) -> void:
 	# UndoRedo is a plain Object, not reference counted, so it must be freed by hand.
-	if what == NOTIFICATION_PREDELETE:
+	if what == NOTIFICATION_PREDELETE and _ur:
 		_ur.free()
+
+
+## Frees the history now, as the program closes: something still waiting
+## then (a thumbnail being drawn, say) may hold on to this object until after
+## the end, and the history must not go with it.
+func dispose() -> void:
+	if _ur:
+		_ur.clear_history()
+		_ur.free()
+		_ur = null
 
 
 func create_action(action: String, merge_mode := UndoRedo.MERGE_DISABLE, _context: Object = null, backward_undo_ops := false) -> void:

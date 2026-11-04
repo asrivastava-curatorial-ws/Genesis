@@ -35,6 +35,8 @@ static func shutdown() -> void:
 		scenes.dispose()
 	if host:
 		host.undo_redo().clear_history()
+		if host.undo_redo().has_method("dispose"):
+			host.undo_redo().dispose()
 		host.selection().clear()
 		# The host and the scene service hold each other; break the ring.
 		host.scenes = null

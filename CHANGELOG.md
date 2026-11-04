@@ -41,6 +41,7 @@ A professional interface. Every feature of rc2 is kept; what changed is how the 
 - Pages no longer widen the side panel as you switch between them: long button labels are shorter (the detail is in their tooltips) and rows of buttons wrap.
 - The Show page's empty lists say what goes in them, instead of showing blank boxes.
 - Warnings about files missing from a scene name the file, not its internal path.
+- Closing Genesis could crash on the way out (with a real renderer): the theme's fonts and the icons were let go after the renderer had shut down. A thumbnail still being drawn as the program closed also held its model and the undo history past the end. Both are released in time now, and every end-to-end launch is checked for a clean exit.
 
 ## 1.0.0-rc2 (Genesis Community)
 

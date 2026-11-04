@@ -46,6 +46,7 @@ Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limit
 - Genesis's file picker was never shown by its own code: its method had the name of FileDialog's own (`popup_file_dialog`), and the engine's method is the one that runs. It now opens where each kind of file was last picked, with favourites. Tests check its folders, and that no Genesis method is hidden by an engine method of the same name.
 - Labels that wrap had no width to be measured at, so some dialogs grew to the height of the screen with their buttons out of sight, and a hint in the Properties panel widened the left column past the smallest window.
 - *Frame Everything* on a scene with no design yet framed the sun's position from 3 m away.
+- rc3's theme fonts and icon textures were held in static variables and let go after the renderer had shut down: the program crashed on closing with a real renderer (heap corruption). They are released at shutdown with the other caches. A thumbnail coroutine waiting on the renderer's frame signal as the program closed was never resumed, holding its model and, through its callers, the undo history past the end; thumbnails now count the scene tree's frames, and the undo history is freed explicitly at shutdown.
 
 ## Findings about the original
 
