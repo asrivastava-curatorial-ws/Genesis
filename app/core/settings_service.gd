@@ -25,6 +25,12 @@ static func defaults() -> Dictionary:
 		"recent_projects": [],
 		"projects_dir": "",
 		"blender_path": "",
+		# Eevee and Cycles: which renderer the Render and Movie pages use, the
+		# quality per engine, and the device Cycles renders on.
+		"renderer": "godot",
+		"render_quality": {"eevee": "Good", "cycles": "Good"},
+		"render_device": "auto",
+		"render_engine_path": "",
 		"view_quality": "balanced",
 		"osc_listen": false,
 		"osc_port": 9000,

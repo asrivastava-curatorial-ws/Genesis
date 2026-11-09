@@ -20,22 +20,27 @@ const JPEG_QUALITY := 0.86
 
 ## Renders the tour and saves it; returns the file's path, or "". `progress`
 ## is called with (done, total) as each view finishes.
+## `panoramas`, when given, are the views already rendered (by Eevee or
+## Cycles), one per camera, and are used instead of rendering them here.
 static func export_tour(cams: Array, title: String, stereo: bool, width: int, host: Node,
-		progress := Callable()) -> String:
+		progress := Callable(), panoramas: Array = []) -> String:
 	if cams.is_empty():
 		return ""
 	var stops: Array = []
 	for i in cams.size():
 		var cam: Camera3D = cams[i]
 		var path := ""
-		if stereo:
+		if i < panoramas.size():
+			path = panoramas[i]
+		elif stereo:
 			path = await GnPanorama.render_stereo(cam, width, host)
 		else:
 			path = await GnPanorama.render(cam, width, host)
 		if path == "":
 			return ""
 		var img := Image.load_from_file(ProjectSettings.globalize_path(path))
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+		if i >= panoramas.size():
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 		img.convert(Image.FORMAT_RGB8)
 		stops.append({
 			"name": str(cam.name),

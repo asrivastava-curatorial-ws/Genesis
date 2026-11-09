@@ -14,10 +14,15 @@ const GnTour := preload("res://addons/genesis/core/gn_tour.gd")
 const GnUpscale := preload("res://addons/genesis/core/gn_upscale.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
+const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
+const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
 
+var _renderer: OptionButton
+var _engine_note: Label
 var _camera: OptionButton
 var _size: OptionButton
 var _quality: OptionButton
+var _stop: Button
 var _button: Button
 var _all_button: Button
 var _study_button: Button
@@ -33,16 +38,49 @@ var _last_path := ""
 # -1 is the fast preview: the final-render quality settings stay off.
 const QUALITY := {"Preview (fast)": -1, "Standard": 0, "High quality (16 samples)": 16, "Maximum quality (64 samples)": 64}
 
+# The renderers, in the words the page uses.
+const RENDERERS := {
+	"Real-time (instant)": "godot",
+	"Eevee (fast, photoreal)": "eevee",
+	"Cycles (path traced, most real)": "cycles",
+}
+const PHOTOREAL_QUALITY := {
+	"Draft": "Draft: a quick look",
+	"Good": "Good: for sharing",
+	"High": "High: for print",
+	"Best": "Best: for the finest detail",
+}
+
 
 func _init() -> void:
 	name = "Render"
+	# Real-time is the editor's own renderer; Eevee and Cycles are Blender's,
+	# built into the program and run in the background.
+	_renderer = GnUi.option(self, "Renderer", RENDERERS.keys(), func(t):
+		GnHost.set_setting("renderer", RENDERERS.get(t, "godot"))
+		_fill_quality())
+	_renderer.tooltip_text = "Real-time: what the 3D view shows, in seconds.\nEevee: Blender's fast photoreal engine; soft light, reflections, in a minute or so.\nCycles: Blender's path tracer; light bounces as it really does, the most realistic, slower."
+	for label in RENDERERS:
+		if RENDERERS[label] == GnPhotoreal.renderer():
+			GnUi.select_text(_renderer, label)
+	_engine_note = GnUi.note(self, "")
 	_camera = GnUi.option(self, "Camera", [], func(_t): pass)
 	_size = GnUi.option(self, "Size", GnRender.SIZES.keys(), func(_t): pass)
 	# Photoreal averages many renders: true lens blur, soft sun shadows and
 	# clean edges, for about twice the time at 16 samples.
-	_quality = GnUi.option(self, "Quality", QUALITY.keys(), func(_t): pass)
-	GnUi.select_text(_quality, "High quality (16 samples)")
+	_quality = GnUi.option(self, "Quality", QUALITY.keys(), func(t):
+		var eng := _engine()
+		if GnPhotoreal.is_photoreal(eng):
+			var q = GnHost.get_setting("render_quality", {})
+			q = q.duplicate() if q is Dictionary else {}
+			for k in PHOTOREAL_QUALITY:
+				if PHOTOREAL_QUALITY[k] == t:
+					q[eng] = k
+			GnHost.set_setting("render_quality", q))
+	_fill_quality()
 	_button = GnUi.primary(self, "Render still", _render, "image")
+	_stop = GnUi.button(self, "Stop rendering", func(): GnPhotoreal.stop(), "stop")
+	_stop.visible = false
 	_all_button = GnUi.button(self, "Render every camera", _render_all, "layers")
 	_study_button = GnUi.button(self, "Sun study: 9:00, 12:00, 15:00", _sun_study, "sun")
 	_pano_button = GnUi.button(self, "360° panorama from this camera", _panorama, "orbit")
@@ -81,6 +119,61 @@ func refresh() -> void:
 	_passes_button.disabled = _camera.item_count == 0
 	if _camera.item_count == 0:
 		_result.text = "Save a view on the Cameras tab first."
+	_fill_quality()
+
+
+func _engine() -> String:
+	return RENDERERS.get(_renderer.get_item_text(maxi(_renderer.selected, 0)), "godot")
+
+
+# The quality choices suit the renderer: samples for real-time, plain words
+# for Eevee and Cycles.
+func _fill_quality() -> void:
+	var eng := _engine()
+	var keep := _quality.get_item_text(_quality.selected) if _quality.selected >= 0 else ""
+	_quality.clear()
+	if GnPhotoreal.is_photoreal(eng):
+		for k in PHOTOREAL_QUALITY:
+			_quality.add_item(PHOTOREAL_QUALITY[k])
+		GnUi.select_text(_quality, PHOTOREAL_QUALITY.get(GnPhotoreal.quality_of(eng), PHOTOREAL_QUALITY.Good))
+		var e := GnBlender.engine()
+		_engine_note.text = e.label if e.kind != "" else "The Eevee and Cycles engines were not found. They come with the program; see Help > Other Programs."
+		_engine_note.visible = true
+	else:
+		for k in QUALITY:
+			_quality.add_item(k)
+		GnUi.select_text(_quality, keep if keep in QUALITY else "High quality (16 samples)")
+		_engine_note.visible = false
+
+
+func _photoreal() -> bool:
+	return GnPhotoreal.is_photoreal(_engine()) and GnBlender.available()
+
+
+func _busy(on: bool) -> void:
+	for b in [_button, _all_button, _study_button, _pano_button, _tour_button, _passes_button]:
+		b.disabled = on or _camera.item_count == 0
+	_all_button.disabled = on or _camera.item_count < 2
+	_stop.visible = on and _photoreal()
+
+
+func _say(text: String) -> void:
+	_result.text = text
+
+
+# Eevee and Cycles: the result in the page's words.
+func _report(r: Dictionary, what: String) -> void:
+	if r.state == "stopped":
+		_result.text = "Stopped. Nothing was saved."
+	elif r.paths.is_empty():
+		_result.text = "The %s failed: %s See the %s panel." % [what, str(r.error), GnHost.log_panel()]
+	else:
+		_last_path = r.paths[0]
+		var extra := ""
+		if not (r.warnings as Array).is_empty():
+			extra = " Note: " + " ".join(r.warnings)
+		_result.text = ("Saved %s" % GnUi.shown(r.paths[0]) if r.paths.size() == 1 else
+			"Saved %d pictures in %s" % [r.paths.size(), GnUi.shown(GnPaths.at(GnRender.OUTPUT_DIR))]) + extra
 
 
 # A 360 image from where the camera stands: 8192 wide for a full-size
@@ -91,6 +184,15 @@ func _panorama() -> void:
 	if cam == null:
 		return
 	var size: Vector2i = GnRender.SIZES[_size.get_item_text(_size.selected)]
+	if _photoreal() and GnPhotoreal.unsupported(cam) == "":
+		_busy(true)
+		# A stereo 360 needs Cycles' panoramic camera.
+		var eng := "cycles" if _stereo.button_pressed else _engine()
+		var r: Dictionary = await GnPhotoreal.render_panoramas([cam], 8192 if size.x >= 3840 else 4096, _stereo.button_pressed,
+			eng, GnPhotoreal.quality_of(eng), self, _say)
+		_busy(false)
+		_report(r, "panorama")
+		return
 	_pano_button.disabled = true
 	var path := ""
 	if _stereo.button_pressed:
@@ -116,8 +218,20 @@ func _tour() -> void:
 	var title := root.name if root else "Virtual tour"
 	_tour_button.disabled = true
 	_result.text = "Rendering the tour: 0 of %d views…" % cams.size()
-	var path: String = await GnTour.export_tour(cams, title, _stereo.button_pressed, 8192 if size.x >= 3840 else 4096, self,
-		func(done, total): _result.text = "Rendering the tour: %d of %d views…" % [done, total])
+	var width := 8192 if size.x >= 3840 else 4096
+	var panos: Array = []
+	if _photoreal():
+		_busy(true)
+		var eng := "cycles" if _stereo.button_pressed else _engine()
+		var r: Dictionary = await GnPhotoreal.render_panoramas(cams, width, _stereo.button_pressed, eng, GnPhotoreal.quality_of(eng), self, _say)
+		_busy(false)
+		if r.state != "done" or r.paths.size() != cams.size():
+			_report(r, "tour")
+			_tour_button.disabled = false
+			return
+		panos = r.paths
+	var path: String = await GnTour.export_tour(cams, title, _stereo.button_pressed, width, self,
+		func(done, total): _result.text = "Rendering the tour: %d of %d views…" % [done, total], panos)
 	_tour_button.disabled = false
 	if path == "":
 		_result.text = "The tour failed. See the %s panel." % GnHost.log_panel()
@@ -161,6 +275,15 @@ func _passes() -> void:
 	if cam == null:
 		return
 	var size: Vector2i = GnRender.SIZES[_size.get_item_text(_size.selected)]
+	if _photoreal() and GnPhotoreal.unsupported(cam) == "":
+		_busy(true)
+		var r: Dictionary = await GnPhotoreal.render_stills([cam], size, _engine(), GnPhotoreal.quality_of(_engine()), self, _say,
+			{"passes": GnPasses.PASSES})
+		_busy(false)
+		_report(r, "passes")
+		if r.state == "done":
+			_result.text = "Saved the picture and %d passes in %s." % [r.paths.size() - 1, GnUi.shown(GnPaths.at(GnRender.OUTPUT_DIR))]
+		return
 	_passes_button.disabled = true
 	_result.text = "Rendering passes…"
 	var out: Dictionary = await GnPasses.render(cam, size, self)
@@ -176,6 +299,15 @@ func _sun_study() -> void:
 	if cam == null or not GnEnvironment.is_set_up():
 		return
 	var size: Vector2i = GnRender.SIZES[_size.get_item_text(_size.selected)]
+	if _photoreal() and GnPhotoreal.unsupported(cam) == "":
+		_busy(true)
+		var r: Dictionary = await GnPhotoreal.render_stills([cam], size, _engine(), GnPhotoreal.quality_of(_engine()), self, _say,
+			{"hours": [9.0, 12.0, 15.0]})
+		_busy(false)
+		_report(r, "sun study")
+		if r.state == "done":
+			_result.text = "Sun study saved: 9:00, 12:00 and 15:00 in %s." % GnUi.shown(GnPaths.at(GnRender.OUTPUT_DIR))
+		return
 	var keep: float = GnEnvironment.value("time_of_day")
 	_study_button.disabled = true
 	for hour in [9.0, 12.0, 15.0]:
@@ -195,6 +327,15 @@ func _sun_study() -> void:
 func _render_all() -> void:
 	var cams := GnCameras.cameras()
 	var size: Vector2i = GnRender.SIZES[_size.get_item_text(_size.selected)]
+	if _photoreal():
+		var ok := cams.filter(func(c): return GnPhotoreal.unsupported(c) == "")
+		_busy(true)
+		var r: Dictionary = await GnPhotoreal.render_stills(ok, size, _engine(), GnPhotoreal.quality_of(_engine()), self, _say)
+		_busy(false)
+		_report(r, "render")
+		if ok.size() < cams.size() and r.state == "done":
+			_result.text += " Photo-matched cameras were left out; render them in real time."
+		return
 	_button.disabled = true
 	_all_button.disabled = true
 	var done := 0
@@ -214,6 +355,16 @@ func _render() -> void:
 	var cam := cams[_camera.selected] if _camera.selected >= 0 and _camera.selected < cams.size() else null
 	if cam == null:
 		return
+	if _photoreal() and GnPhotoreal.unsupported(cam) == "":
+		var size: Vector2i = GnRender.SIZES[_size.get_item_text(_size.selected)]
+		_busy(true)
+		var r: Dictionary = await GnPhotoreal.render_stills([cam], size, _engine(), GnPhotoreal.quality_of(_engine()), self, _say)
+		_busy(false)
+		_report(r, "render")
+		return
+	if _photoreal():
+		_result.text = GnPhotoreal.unsupported(cam) + " Rendering it in real time."
+		await get_tree().create_timer(1.5).timeout
 	_button.disabled = true
 	_result.text = "Rendering…"
 	var size: Vector2i = GnRender.SIZES[_size.get_item_text(_size.selected)]
