@@ -20,6 +20,7 @@ const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 
 const SCRIPT := "res://addons/genesis/blender/oriel_render.py"
+const CONVERT := "res://addons/genesis/blender/oriel_convert.py"
 const ENGINES := ["eevee", "cycles"]
 const LABELS := {"godot": "Real-time", "eevee": "Eevee", "cycles": "Cycles"}
 
@@ -235,3 +236,31 @@ static func status_line(st: Dictionary, label := "") -> String:
 		if eta > 0:
 			parts.append("about %s left" % duration_text(eta))
 	return " · ".join(parts)
+
+
+## A conversion by the built-in engine (see oriel_convert.py): an EXR sky to
+## .hdr, or a Blender material to pictures. Returns the result dictionary,
+## with "error" set when it failed.
+static func convert(host: Node, params: Dictionary) -> Dictionary:
+	var eng := engine()
+	if eng.kind == "":
+		return {"error": "This needs the built-in Blender engine, which was not found."}
+	var dir := new_job_dir("convert")
+	var script := dir.path_join("oriel_convert.py")
+	var f := FileAccess.open(script, FileAccess.WRITE)
+	f.store_string(FileAccess.get_file_as_string(CONVERT))
+	f.close()
+	params = params.duplicate()
+	params["result"] = dir.path_join("result.json")
+	var pf := FileAccess.open(dir.path_join("params.json"), FileAccess.WRITE)
+	pf.store_string(JSON.stringify(params))
+	pf.close()
+	var args := PackedStringArray(["-I", "-u", script, "--", dir.path_join("params.json")]) if eng.kind == "module" \
+		else PackedStringArray(["-b", "--factory-startup", "--python", script, "--", dir.path_join("params.json")])
+	var pid := OS.create_process(eng.path, args)
+	if pid <= 0:
+		return {"error": "The engine would not start."}
+	while OS.is_process_running(pid):
+		await host.get_tree().create_timer(0.3).timeout
+	var d = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join("result.json"))) if FileAccess.file_exists(dir.path_join("result.json")) else null
+	return d if d is Dictionary else {"error": "The conversion stopped without a result."}

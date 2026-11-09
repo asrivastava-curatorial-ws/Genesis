@@ -32,6 +32,15 @@ static func presets() -> Array[String]:
 		if f.get_extension() == "tres":
 			out.append("%s/%s" % [PRESET_DIR, f])
 	out.sort()
+	# Then the user's own, from the online library (Assets > Online).
+	var mine := GnHost.user_library_dir().path_join("materials")
+	if GnHost.user_library_dir() != "" and DirAccess.dir_exists_absolute(mine):
+		var own: Array[String] = []
+		for f in DirAccess.get_files_at(mine):
+			if f.get_extension() == "tres":
+				own.append(mine.path_join(f))
+		own.sort()
+		out.append_array(own)
 	return out
 
 

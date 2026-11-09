@@ -21,6 +21,7 @@ const PageMovie := preload("res://addons/genesis/ui/page_movie.gd")
 const PageSet := preload("res://addons/genesis/ui/page_set.gd")
 const PagePlans := preload("res://addons/genesis/ui/page_plans.gd")
 const PageShow := preload("res://addons/genesis/ui/page_show.gd")
+const PageOnline := preload("res://addons/genesis/ui/page_online.gd")
 const GnBrush := preload("res://addons/genesis/core/gn_brush.gd")
 const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
 
@@ -29,6 +30,7 @@ const ABOUT := {
 	"Scene": ["page_scene", "Bring in the building, its site and its surroundings."],
 	"Plans": ["page_plans", "Build on the real drawings: floor plans and CAD at true size."],
 	"Assets": ["page_assets", "People, trees, furniture, vehicles. Pick one, then click where it goes."],
+	"Online": ["page_online", "Models, materials and skies from BlendKit, Poly Haven and ambientCG, kept in your library."],
 	"Environment": ["page_environment", "Sun, sky, clouds, weather and haze."],
 	"Landscape": ["page_landscape", "Paint plants onto the ground, and shape and paint the ground."],
 	"Set": ["page_set", "Stage, screens, truss, sound and lights at real sizes."],
@@ -109,7 +111,7 @@ func _init() -> void:
 	_scene = PageScene.new()
 	_plans = PagePlans.new()
 	# In the order a user works: model in, surroundings, look, then output.
-	for page in [_scene, _plans, _assets, PageEnvironment.new(),
+	for page in [_scene, _plans, _assets, PageOnline.new(), PageEnvironment.new(),
 			_landscape, PageSet.new(),
 			PageMaterials.new(),
 			PageCameras.new(), PageLook.new(), PageRender.new(), PageMovie.new(), PageShow.new()]:

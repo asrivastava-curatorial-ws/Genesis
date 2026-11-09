@@ -32,6 +32,11 @@ class H(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
         name = path.split("/")[-1]
+        # A stand-in for Poly Haven's API: /ph/assets?t=hdris, /ph/files/<id>
+        if path == "/ph/assets":
+            name = "ph_assets_%s.json" % self.path.split("t=")[-1].split("&")[0]
+        elif path.startswith("/ph/files/"):
+            name = "ph_files_%s.json" % name
         f = os.path.join(ROOT, "files", name)
         if not os.path.exists(f):
             self.send_response(404)

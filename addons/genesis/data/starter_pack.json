@@ -1,0 +1,46 @@
+{
+  "about": "Oriel's starter pack: the most useful free skies, materials and models, chosen by what architects and event designers reach for first, topped up with each source's most downloaded assets. Used by Assets > Online > Starter pack and by tools/oriel_assets.py. Sizes: small about 150 MB, standard about 700 MB, large about 2.5 GB.",
+  "groups": [
+    {
+      "source": "polyhaven", "kind": "skies",
+      "count": {"small": 6, "standard": 16, "large": 32},
+      "resolution": {"small": "2k", "standard": "2k", "large": "4k"},
+      "prefer": ["kloofendal_48d_partly_cloudy_puresky", "autumn_field_puresky", "overcast_soil_puresky",
+                 "belfast_sunset_puresky", "kloofendal_48d_partly_cloudy", "venice_sunset", "spruit_sunrise",
+                 "rooitou_park", "studio_small_09", "qwantani_puresky", "sunflowers_puresky"],
+      "categories": ["skies", "outdoor", "urban", "sunrise-sunset", "night", "indoor", "studio"]
+    },
+    {
+      "source": "ambientcg", "kind": "materials",
+      "count": {"small": 6, "standard": 17, "large": 40},
+      "resolution": {"small": "1k", "standard": "2k", "large": "2k"},
+      "prefer": ["Bricks097", "Concrete034", "PaintedPlaster017", "Planks037A", "PavingStones130", "Asphalt031",
+                 "Metal049A", "Grass004", "Ground103", "Gravel043", "Ground080", "Rock051", "Ground078",
+                 "Snow010A", "Ground109", "Tiles107", "WoodFloor051"]
+    },
+    {
+      "source": "polyhaven", "kind": "materials",
+      "count": {"small": 6, "standard": 24, "large": 48},
+      "resolution": {"small": "1k", "standard": "2k", "large": "2k"},
+      "categories": ["brick", "concrete", "floor", "wall", "wood", "plaster", "roofing", "terrain", "rock", "metal", "tiles", "road", "man made"]
+    },
+    {
+      "source": "polyhaven", "kind": "models",
+      "count": {"small": 6, "standard": 20, "large": 50},
+      "resolution": {"small": "1k", "standard": "1k", "large": "2k"},
+      "categories": ["furniture", "seating", "table", "plants", "nature", "decorative", "lighting", "props"]
+    },
+    {
+      "source": "blendkit", "kind": "models", "requires": "login",
+      "count": {"small": 0, "standard": 24, "large": 60},
+      "per_query": {"small": 0, "standard": 3, "large": 6},
+      "queries": ["sofa", "chair", "table", "bed", "office desk", "kitchen", "potted plant", "tree", "lamp", "car"]
+    },
+    {
+      "source": "blendkit", "kind": "materials", "requires": "login",
+      "count": {"small": 0, "standard": 12, "large": 30},
+      "per_query": {"small": 0, "standard": 2, "large": 5},
+      "queries": ["brick", "concrete", "marble", "wood floor", "plaster", "tiles"]
+    }
+  ]
+}
