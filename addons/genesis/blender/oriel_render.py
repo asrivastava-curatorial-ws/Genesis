@@ -2114,6 +2114,14 @@ def _look_matrix(pos, fwd, up):
     return [x[0], y[0], z[0], pos[0], x[1], y[1], z[1], pos[1], x[2], y[2], z[2], pos[2]]
 
 
+def _pano_forward(m):
+    """Where the editor's panoramas look at their centre: the camera's own
+    heading, levelled (Godot axes)."""
+    f = np.array([-m[2], 0.0, -m[10]])
+    n = np.linalg.norm(f)
+    return f / n if n > 1e-3 else np.array([0.0, 0.0, -1.0])
+
+
 def do_panorama(r, idx):
     ov = _apply_overrides(r)
     width = int(r.get("width", 4096))
@@ -2121,11 +2129,14 @@ def do_panorama(r, idx):
     cam_spec = dict(r["camera"])
     m = cam_spec["matrix"]
     pos = (m[3], m[7], m[11])
+    fwd = _pano_forward(m)
+    global PANO_FWD
+    PANO_FWD = fwd
     post = dict(SCENE.get("post", {}))
     post.update(r.get("post", {}))
     fog = ov.get("fog", SCENE.get("fog"))
     if ENGINE == "cycles":
-        spec = {"matrix": _look_matrix(pos, (0, 0, -1), (0, 1, 0)), "projection": "pano",
+        spec = {"matrix": _look_matrix(pos, tuple(fwd), (0, 1, 0)), "projection": "pano",
                 "near": cam_spec.get("near", 0.05), "far": cam_spec.get("far", 4000.0)}
         cam = make_camera(spec, (width, width // 2))
         if stereo:
@@ -2144,19 +2155,24 @@ def do_panorama(r, idx):
     _restore_overrides(ov)
 
 
+PANO_FWD = np.array([0.0, 0.0, -1.0])
+
+
 def _equirect_dirs(w, h):
-    """Directions (Blender axes) through each pixel of a Blender equirect image
-    from a camera looking along Godot's -Z (Blender +Y)."""
+    """Directions (Blender axes) through each pixel of an equirect image whose
+    centre looks along the panorama's heading (PANO_FWD, Godot axes)."""
     u = (np.arange(w) + 0.5) / w
     v = (np.arange(h) + 0.5) / h
     uu, vv = np.meshgrid(u, v)
     lon = (uu - 0.5) * 2 * math.pi        # 0 at the centre, + to the right
     lat = (0.5 - vv) * math.pi
-    # Centre looks at +Y (Godot -Z); right is +X.
+    # Centred on +Y (Godot -Z), right is +X; then turned to the heading.
     x = np.cos(lat) * np.sin(lon)
     y = np.cos(lat) * np.cos(lon)
     z = np.sin(lat)
-    return np.stack([x, y, z], axis=-1)
+    bx, by = float(PANO_FWD[0]), float(-PANO_FWD[2])
+    c, s_ = by, -bx        # cos and sin of the turn from +Y to the heading
+    return np.stack([x * c - y * s_, x * s_ + y * c, z], axis=-1)
 
 
 def _stereo_pano(cam, width, post, fog, idx):
