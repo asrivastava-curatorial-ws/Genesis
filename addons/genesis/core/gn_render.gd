@@ -109,20 +109,29 @@ static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 	sub.queue_free()
 	if image == null or image.is_empty():
 		return ""
+	var path := output_path(camera)
+	if image.save_png(path) != OK:
+		return ""
+	return path
+
+
+## Where a render of `camera` goes: <renders>/<scene>_<camera>_<time><suffix>.png.
+static func output_path(camera: Camera3D, suffix := "") -> String:
+	ensure_output_dir()
+	var scene := GnHost.edited_scene_root()
+	var stem := "%s_%s_%s" % [
+		scene.name if scene else "scene",
+		str(camera.name).replace(" ", ""),
+		Time.get_datetime_string_from_system().replace(":", "").replace("-", "").replace("T", "_"),
+	]
+	return "%s/%s%s.png" % [GnPaths.at(OUTPUT_DIR), stem, suffix]
+
+
+static func ensure_output_dir() -> void:
 	DirAccess.make_dir_recursive_absolute(GnPaths.at(OUTPUT_DIR))
 	# Renders are output, not assets: keep Godot from importing every PNG.
 	if not FileAccess.file_exists(GnPaths.at(OUTPUT_DIR) + "/.gdignore"):
 		FileAccess.open(GnPaths.at(OUTPUT_DIR) + "/.gdignore", FileAccess.WRITE).close()
-	var scene := GnHost.edited_scene_root()
-	var stem := "%s_%s_%s" % [
-		scene.name if scene else "scene",
-		camera.name.replace(" ", ""),
-		Time.get_datetime_string_from_system().replace(":", "").replace("-", "").replace("T", "_"),
-	]
-	var path := "%s/%s.png" % [GnPaths.at(OUTPUT_DIR), stem]
-	if image.save_png(path) != OK:
-		return ""
-	return path
 
 
 static func _capture(sub: SubViewport, frames: int) -> Image:

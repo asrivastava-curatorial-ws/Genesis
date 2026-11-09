@@ -452,6 +452,14 @@ def apply_object_flags():
                 pass
         if spec.get("hidden", False):
             o.hide_render = True
+        if spec.get("shadow_only", False):
+            try:
+                o.visible_camera = False
+            except Exception:
+                pass
+        if "id_color" in spec:
+            c = spec["id_color"]
+            o.color = (float(c[0]), float(c[1]), float(c[2]), 1.0)
         if spec.get("camera_only", False):
             # Seen, but lights nothing (an area light's glowing panel).
             for attr in ("visible_diffuse", "visible_glossy", "visible_transmission", "visible_volume_scatter", "visible_shadow"):
@@ -728,6 +736,11 @@ def _terrain(mat, spec):
             rgb = nt.nodes.new("ShaderNodeRGB")
             rgb.outputs[0].default_value = (*tint, 1.0)
             return rgb.outputs[0], None
+        if L.get("photo"):
+            t = nt.nodes.new("ShaderNodeTexImage")
+            t.image = img
+            _use_uv(mat, 1, [t])
+            return t.outputs["Color"], t
         mp = nt.nodes.new("ShaderNodeMapping")
         s = 1.0 / max(float(L.get("scale", 2.0)), 0.01)
         mp.inputs["Scale"].default_value = (s, s, s)
@@ -758,6 +771,8 @@ def _terrain(mat, spec):
     nt.links.new(attr.outputs["Color"], sep.inputs[0])
     weights = [sep.outputs[0], sep.outputs[1], sep.outputs[2], attr.outputs["Alpha"]]
     for k, L in enumerate(layers[1:5]):
+        if not L.get("used", True):
+            continue
         c, _ = layer_colour(L)
         mix = nt.nodes.new("ShaderNodeMix")
         mix.data_type = "RGBA"
@@ -768,6 +783,65 @@ def _terrain(mat, spec):
     nt.links.new(colour, sock(bsdf, "Base Color"))
     set_input(bsdf, "Roughness", float(layers[0].get("roughness", 0.95)))
     nt.links.new(bsdf.outputs[0], outn.inputs["Surface"])
+
+
+def _uv_name(mat, index):
+    """The name of a mesh's UV map number `index` among meshes using `mat`."""
+    for o in bpy.data.objects:
+        if o.type == "MESH" and any(sl.material == mat for sl in o.material_slots):
+            uvs = o.data.uv_layers
+            if len(uvs) > index:
+                return uvs[index].name
+    return ""
+
+
+def _use_uv(mat, index, image_nodes):
+    name = _uv_name(mat, index)
+    if not name:
+        return
+    nt = mat.node_tree
+    uv = nt.nodes.new("ShaderNodeUVMap")
+    uv.uv_map = name
+    for img in image_nodes:
+        v = img.inputs["Vector"]
+        for l in list(v.links):
+            nt.links.remove(l)
+        nt.links.new(uv.outputs["UV"], v)
+
+
+def _detail(mat, d):
+    """Godot's detail map: a second picture over the colour, usually on the
+    second UV map (the editor's lawn uses it to break up its repeat)."""
+    img = _load_image(d.get("image"))
+    bsdf = principled(mat)
+    if img is None or bsdf is None:
+        return
+    nt = mat.node_tree
+    base = sock(bsdf, "Base Color")
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = img
+    mp = nt.nodes.new("ShaderNodeMapping")
+    sc = d.get("scale", [1, 1])
+    mp.inputs["Scale"].default_value = (float(sc[0]), float(sc[1]), 1.0)
+    name = _uv_name(mat, int(d.get("uv", 0)))
+    uv = nt.nodes.new("ShaderNodeUVMap")
+    if name:
+        uv.uv_map = name
+    nt.links.new(uv.outputs["UV"], mp.inputs["Vector"])
+    nt.links.new(mp.outputs["Vector"], tex.inputs["Vector"])
+    mix = nt.nodes.new("ShaderNodeMix")
+    mix.data_type = "RGBA"
+    mix.blend_type = {"add": "ADD", "sub": "SUBTRACT", "mul": "MULTIPLY"}.get(d.get("blend", "mix"), "MIX")
+    if base.is_linked:
+        nt.links.new(base.links[0].from_socket, mix.inputs[6])
+    else:
+        mix.inputs[6].default_value = base.default_value
+    nt.links.new(tex.outputs["Color"], mix.inputs[7])
+    if mix.blend_type == "MIX":
+        nt.links.new(tex.outputs["Alpha"], mix.inputs[0])
+    else:
+        mix.inputs[0].default_value = 1.0
+    nt.links.new(mix.outputs[2], base)
 
 
 _IMAGES = {}
@@ -822,6 +896,10 @@ def fix_materials():
                 continue
             if spec.get("triplanar"):
                 _triplanar(mat, spec["triplanar"])
+            if int(spec.get("uv", 0)) == 1:
+                _use_uv(mat, 1, _image_nodes(mat))
+            if spec.get("detail"):
+                _detail(mat, spec["detail"])
             if bsdf is not None:
                 if "ior" in spec:
                     set_input(bsdf, "IOR", float(spec["ior"]))
@@ -901,6 +979,7 @@ def build_instancers():
             at.data.foreach_set("vector", data.astype(np.float32).ravel())
         mesh.update()
         obj = bpy.data.objects.new("oriel_copies_%d" % k, mesh)
+        obj.color = base.color      # the ID pass colour of the model
         bpy.context.scene.collection.objects.link(obj)
         mod = obj.modifiers.new("copies", "NODES")
         mod.node_group = _instancer_group(base)
@@ -1804,7 +1883,14 @@ def finish(layers, cam, post, fog, keep_alpha=False):
         lo = ((16 * rgb - 12) * rgb + 4) * rgb
         hi = np.sqrt(np.clip(rgb, 0, None))
         rgb = np.where(rgb > 1.0, rgb, rgb + g * (np.where(rgb <= 0.25, lo, hi) - rgb))
-    rgb = to_srgb(rgb)
+    bcs = post.get("bcs")
+    if bcs:
+        rgb = to_srgb(rgb * float(bcs[0]))
+        rgb = 0.5 + (rgb - 0.5) * float(bcs[1])
+        grey = rgb.mean(axis=-1, keepdims=True)
+        rgb = grey + (rgb - grey) * float(bcs[2])
+    else:
+        rgb = to_srgb(rgb)
     if post.get("dither", True):
         yy, xx = np.mgrid[0:h, 0:w]
         d = np.mod(171.0 * xx + 231.0 * yy, np.array([103.0, 71.0, 97.0])[:, None, None])
@@ -1866,10 +1952,15 @@ def _write_pass(name, layers, cam, r, idx):
     path = "%s_%s.png" % (base, name)
     h, w = layers["rgba"].shape[:2]
     if name == "depth" and layers.get("depth") is not None:
+        # As the editor's depth pass: distance to the camera, white near,
+        # black at 150 m and beyond.
         d = layers["depth"].copy()
         valid = d < 1e9
-        far = float(np.percentile(d[valid], 99.5)) if valid.any() else 1.0
-        g = np.where(valid, 1.0 - np.clip(d / max(far, 1e-3), 0, 1), 0.0)
+        if cam.data.type == "PERSP":
+            dirs = view_directions(cam, w, h)
+            fwd = np.array(cam.matrix_world.to_3x3() @ Vector((0, 0, -1)))
+            d = d / np.clip(dirs @ fwd, 1e-3, 1.0)
+        g = np.where(valid, 1.0 - np.clip(d / 150.0, 0, 1), 0.0)
         img = np.repeat((np.clip(g, 0, 1) * 65535).astype(np.uint16)[..., None], 3, axis=-1)
         write_png(path, img)
     elif name == "normal" and layers.get("normal") is not None:
@@ -1905,17 +1996,11 @@ def _override_material(kind):
         b.inputs["Color"].default_value = (0.8, 0.8, 0.8, 1)
         nt.links.new(b.outputs[0], outn.inputs["Surface"])
     elif kind == "id":
+        # Each object in the flat colour the editor gives it (set as the
+        # object's colour when the scene was built).
         info = nt.nodes.new("ShaderNodeObjectInfo")
-        hsv = nt.nodes.new("ShaderNodeCombineColor")
-        try:
-            hsv.mode = "HSV"
-        except Exception:
-            pass
-        nt.links.new(out(info, "Random"), hsv.inputs[0])
-        hsv.inputs[1].default_value = 0.75
-        hsv.inputs[2].default_value = 0.95
         em = nt.nodes.new("ShaderNodeEmission")
-        nt.links.new(hsv.outputs[0], em.inputs["Color"])
+        nt.links.new(out(info, "Color"), em.inputs["Color"])
         nt.links.new(em.outputs[0], outn.inputs["Surface"])
     else:  # mask
         em = nt.nodes.new("ShaderNodeEmission")
@@ -1976,8 +2061,10 @@ def _override_pass(kind, r, idx):
         a = np.clip(rgba[..., 3], 0, 1)
         return np.repeat((a * 255).astype(np.uint8)[..., None], 3, axis=-1)
     if kind == "id":
+        # The colours were given in sRGB by the editor and rendered as linear
+        # light: written back as they were given.
         rgb = np.clip(rgba[..., :3], 0, 1) * np.clip(rgba[..., 3:4], 0, 1)
-        return (to_srgb(rgb) * 255).astype(np.uint8)
+        return np.round(rgb * 255).astype(np.uint8)
     post = SCENE.get("post", {})
     cam = sc.camera
     return finish(layers, cam, post, SCENE.get("fog"))

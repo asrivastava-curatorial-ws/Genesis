@@ -30,6 +30,7 @@ const DependenciesDialog := preload("res://app/ui/dependencies_dialog.gd")
 const Dependencies := preload("res://app/runtime/dependencies.gd")
 const GenesisTheme := preload("res://app/ui/genesis_theme.gd")
 const UiTour := preload("res://app/ui_tour.gd")
+const PhotorealTest := preload("res://app/photoreal_test.gd")
 const GnFileDialog := preload("res://addons/genesis/core/gn_file_dialog.gd")
 const GnPathField := preload("res://addons/genesis/ui/gn_path_field.gd")
 const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
@@ -544,6 +545,12 @@ func _command_line() -> void:
 	if e >= 0 and e + 2 < args.size():
 		var failures: int = await E2E.run(self, args[e + 1], args[e + 2])
 		print("GENESIS_E2E RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
+		get_tree().quit(failures)
+		return
+	var pr := args.find("--photoreal")
+	if pr >= 0 and pr + 2 < args.size():
+		var failures: int = await PhotorealTest.run(self, args[pr + 1], args[pr + 2], args)
+		print("PHOTOREAL RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return
 	var u := args.find("--ui-tour")
