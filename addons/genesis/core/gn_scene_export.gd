@@ -532,9 +532,12 @@ static func _light(ctx: Ctx, l: Light3D) -> void:
 ## below it), within its range. The editor's lights fall off in their own way;
 ## Blender's fall off physically, so their brightness is matched there.
 static func _reach(ctx: Ctx, from: Vector3, dir: Vector3, rng: float) -> float:
-	var hit := ctx.probe.cast(from, dir.normalized())
-	var d := from.distance_to(hit.position) if not hit.is_empty() else rng * 0.3
-	return clampf(d, 0.3, maxf(rng * 0.9, 0.5))
+	# Start a little way out, past the fixture's own body.
+	var n := dir.normalized()
+	var start := from + n * 0.6
+	var hit := ctx.probe.cast(start, n)
+	var d := 0.6 + start.distance_to(hit.position) if not hit.is_empty() else rng * 0.3
+	return clampf(d, 0.6, maxf(rng * 0.9, 1.0))
 
 
 static func _area_light(ctx: Ctx, a: Node3D) -> void:
@@ -616,7 +619,10 @@ static func environment_spec(ctx: Ctx = null) -> Dictionary:
 			"height": env.fog_height, "height_density": env.fog_height_density, "sun": sun_spec}
 	if env.volumetric_fog_enabled and env.volumetric_fog_density > 0.0:
 		var box: AABB = ctx.bounds if ctx and ctx.has_bounds else AABB(Vector3(-20, 0, -20), Vector3(40, 15, 40))
-		box = box.grow(3.0)
+		# The editor's haze fills the air around the camera; here, the air
+		# around the design, with room above it for beams aimed upwards.
+		box = box.grow(8.0)
+		box.size.y += 20.0
 		out["haze"] = {"density": env.volumetric_fog_density, "anisotropy": env.volumetric_fog_anisotropy,
 			"albedo": _lin(env.volumetric_fog_albedo), "bounds": _aabb_list(box)}
 	var post := {"exposure": env.tonemap_exposure, "tonemap": TONEMAPS[clampi(env.tonemap_mode, 0, 4)],

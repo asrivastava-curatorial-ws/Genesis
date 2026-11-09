@@ -1125,6 +1125,23 @@ def build_lights(lights):
         o.matrix_world = view_matrix(L["matrix"])
         bpy.context.scene.collection.objects.link(o)
         _LIGHTS.append(o)
+        # The editor lets a light show stronger in haze than it lights things
+        # (its volumetric fog energy). Eevee has the same factor; for Cycles a
+        # twin light makes up the difference, seen by the haze only.
+        vf = float(L.get("volume", 1.0))
+        if ENGINE == "cycles" and vf > 1.01 and t in ("spot", "point", "area"):
+            twin = data.copy()
+            twin.name = data.name + "_haze"
+            twin.energy = data.energy * (vf - 1.0)
+            to = bpy.data.objects.new(twin.name, twin)
+            to.matrix_world = o.matrix_world
+            for attr in ("visible_camera", "visible_diffuse", "visible_glossy", "visible_transmission"):
+                try:
+                    setattr(to, attr, False)
+                except Exception:
+                    pass
+            bpy.context.scene.collection.objects.link(to)
+            _LIGHTS.append(to)
     log("lights: %d" % len(_LIGHTS))
 
 
@@ -1167,6 +1184,12 @@ def build_world(w):
     fac.inputs["From Max"].default_value = 1.0
     fac.inputs["To Min"].default_value = amb
     fac.inputs["To Max"].default_value = 1.0
+    # Like the editor's volumetric fog (no ambient light put into it), the
+    # haze is lit by the lights, not by the sky.
+    try:
+        world.cycles_visibility.scatter = False
+    except Exception:
+        pass
     bg = nt.nodes.new("ShaderNodeBackground")
     nt.links.new(colour, bg.inputs["Color"])
     nt.links.new(fac.outputs[0], bg.inputs["Strength"])
