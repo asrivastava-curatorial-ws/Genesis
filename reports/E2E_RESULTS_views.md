@@ -1,11 +1,11 @@
 # End-to-end test, phase: views
 
-Genesis Community 1.0.0-rc3 on Linux, 2026-11-04T07:46:49
+Oriel 1.0.0-rc4 on Linux, 2026-11-10T04:26:48
 
 | Step | What | Result |
 |---|---|---|
-| 1 | Launch Genesis directly, without the Godot editor (renderer: forward_plus, llvmpipe (LLVM 20.1.2, 256 bits)) | passed |
-| 17d | Launch Genesis again and reopen the project  | passed |
+| 1 | Launch Oriel directly, without the Godot editor (renderer: forward_plus, llvmpipe (LLVM 20.1.2, 256 bits)) | passed |
+| 17d | Launch Oriel again and reopen the project  | passed |
 | 22 | Produce a 360° panorama (Camera01_360.png) | passed |
 | 22b | Photo match: the design is rendered into a site photo (camera 1.6 m up, horizon matched at 2.7°; the photo shows through at the edges, the design covers 17% of it)  | passed |
 | 22c | Sun study from the Render page: 9:00, 12:00 and 15:00 at 1920×1080 (5% of the picture changes from morning to afternoon); the time of day is put back | passed |

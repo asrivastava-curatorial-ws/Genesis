@@ -1,10 +1,10 @@
 # End-to-end test, phase: build
 
-Genesis Community 1.0.0-rc3 on Linux, 2026-11-04T07:18:47
+Oriel 1.0.0-rc4 on Linux, 2026-11-10T03:56:28
 
 | Step | What | Result |
 |---|---|---|
-| 1 | Launch Genesis directly, without the Godot editor (renderer: forward_plus, llvmpipe (LLVM 20.1.2, 256 bits)) | passed |
+| 1 | Launch Oriel directly, without the Godot editor (renderer: forward_plus, llvmpipe (LLVM 20.1.2, 256 bits)) | passed |
 | 2 | Create a new project  | passed |
 | 3 | Import an architectural model (GLB from an outside exporter)  | passed |
 | 3b | Import a .blend through Blender (blender; the 2 m bench is 2.00 m wide)  | passed |
@@ -19,7 +19,7 @@ Genesis Community 1.0.0-rc3 on Linux, 2026-11-04T07:18:47
 | 7 | Add furniture from the library | passed |
 | 8 | Add human figures | passed |
 | 8b | Add a model of your own to your library (an OBJ made in centimetres, with its licence) and place it; the project gets its own copy  | passed |
-| 9 | Paint vegetation with the brush (49 trees) | passed |
+| 9 | Paint vegetation with the brush (45 trees) | passed |
 | 10 | Configure sunlight (real sun, Bangalore, 16:30) | passed |
 | 11 | Configure an HDRI sky: your own HDR panorama, added to your skies; the sun goes where the photo's sun is (0.999)  | passed |
 | 12 | Add artificial lighting | passed |
@@ -28,4 +28,4 @@ Genesis Community 1.0.0-rc3 on Linux, 2026-11-04T07:18:47
 | E1 | SET: stage, LED wall (84 cabinets, 2304×1344 px), truss, line array, moving heads, crowd, effect | passed |
 | E2 | SHOW: record two cues, GO between them (the lights follow) | passed |
 | 15 | Save the project  | passed |
-| 16 | Close Genesis (this launch ends here) | passed |
+| 16 | Close Oriel (this launch ends here) | passed |
