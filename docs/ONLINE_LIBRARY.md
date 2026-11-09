@@ -8,6 +8,8 @@ The **Online** page brings models, materials and skies from three free libraries
 | **Poly Haven** (polyhaven.com) | skies (HDRIs), scanned materials, models | CC0 (public domain); powered by Poly Haven | none |
 | **ambientCG** (ambientcg.com) | materials, skies | CC0 | none |
 
+![The Online page: where from, what, search, the results, and the starter pack below](screenshots/04_online_page.png)
+
 Choose where from and what, search (or leave the search empty to see the most popular), pick one, choose a size (1k, 2k, 4k) and **Download to my library**. Then:
 
 - a **model** is on the Assets page under *Your own*, in its category, ready to place;

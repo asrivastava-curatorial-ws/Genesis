@@ -232,8 +232,8 @@ A look belongs to a camera, so choose the *Camera* first.
 ## RENDER
 
 1. Choose the *Renderer*:
-   - *Real-time (instant)*: what the 3D view shows, in seconds.
-   - *Eevee (fast, photoreal)* and *Cycles (path traced, most real)*: Blender's engines, built into Oriel, rendering in the background. The note under the choice says which engine is in use. See [RENDERING.md](RENDERING.md).
+   - *Real-time*: what the 3D view shows, in seconds.
+   - *Eevee* (fast, photoreal) and *Cycles* (path traced, the most real): Blender's engines, built into Oriel, rendering in the background. The note under the choice says which engine is in use. See [RENDERING.md](RENDERING.md).
 2. Choose the *Camera* and the *Size*: HD, QHD, 4K, portrait 4:5, square or 8K.
 3. Choose the *Quality*:
    - Real-time: *Preview (fast)* for checks, *Standard* for most stills, *High quality (16 samples)* and *Maximum quality (64 samples)*, which average many renders for clean edges, soft shadows and true lens blur.

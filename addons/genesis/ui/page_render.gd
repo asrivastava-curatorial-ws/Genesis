@@ -40,9 +40,9 @@ const QUALITY := {"Preview (fast)": -1, "Standard": 0, "High quality (16 samples
 
 # The renderers, in the words the page uses.
 const RENDERERS := {
-	"Real-time (instant)": "godot",
-	"Eevee (fast, photoreal)": "eevee",
-	"Cycles (path traced, most real)": "cycles",
+	"Real-time": "godot",
+	"Eevee": "eevee",
+	"Cycles": "cycles",
 }
 const PHOTOREAL_QUALITY := {
 	"Draft": "Draft: a quick look",

@@ -4,6 +4,8 @@ The **Render** page makes stills, every camera at once, sun studies, render pass
 
 ## Three renderers, one scene
 
+![The Render page: the renderer, camera, size and quality, then what to render](screenshots/05_render_page.png)
+
 | Renderer | What it is | Time for a 1920 × 1080 still | Best for |
 |---|---|---|---|
 | **Real-time** | Godot's renderer: what the 3D view shows | seconds | working, checking, quick sharing |
