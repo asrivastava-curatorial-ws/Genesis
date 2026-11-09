@@ -166,42 +166,56 @@ static func find_blender() -> String:
 			return c
 	var out := []
 	var finder := "where" if OS.get_name() == "Windows" else "which"
-	if OS.execute(finder, ["blender"], out) == 0 and not out.is_empty():
+	if GnPaths.run(finder, ["blender"], out) == 0 and not out.is_empty():
 		var first := str(out[0]).strip_edges().get_slice("\n", 0).strip_edges()
 		if first != "" and FileAccess.file_exists(first):
 			return first
 	return ""
 
 
-## Runs Blender in the background to write `source` (.blend) as a .glb.
+## Writes `source` (.blend) as a .glb, with an installed Blender if there is
+## one, otherwise (or if that Blender fails) with the program's own Blender
+## engine, the module that renders Eevee and Cycles.
 ## Returns {"path": the .glb, "error": ""}.
 static func blend_to_glb(source: String) -> Dictionary:
 	var blender := find_blender()
 	var out := GnPaths.cache_dir("blend").path_join("%s_%d.glb" % [source.get_file().get_basename().validate_filename(), Time.get_ticks_msec()])
-	if blender == "":
-		# The program's own Blender engine (Eevee and Cycles' module) reads
-		# .blend files too.
-		var GnBlender = load("res://addons/genesis/core/gn_blender.gd")
-		var eng: Dictionary = GnBlender.engine()
-		if eng.kind != "module":
-			return _fail("A .blend file needs Blender (free, blender.org). Install it, or set where it is in Tools > Dependencies.")
-		var code := "import bpy\nbpy.ops.wm.open_mainfile(filepath=%s)\nbpy.ops.export_scene.gltf(filepath=%s, export_format='GLB', export_apply=True)\n" % [
-			JSON.stringify(source), JSON.stringify(out)]
-		var said := []
-		var c := OS.execute(str(eng.path), PackedStringArray(["-I", "-c", code]), said, true)
-		if c != 0 or not FileAccess.file_exists(out):
-			return _fail("The built-in Blender engine could not read %s (exit %d). %s" % [source.get_file(), c, "\n".join(said).right(400)])
-		return {"path": out, "error": ""}
-	var script := "import bpy; bpy.ops.export_scene.gltf(filepath=r'%s', export_format='GLB', export_apply=True)" % out
-	var output := []
-	var code := OS.execute(blender, ["-b", source, "--python-expr", script], output, true)
-	if code != 0 or not FileAccess.file_exists(out):
+	# One small script does the work for either; the paths travel inside it,
+	# as Python strings, rather than on a command line.
+	var script := out.get_basename() + ".py"
+	var f := FileAccess.open(script, FileAccess.WRITE)
+	if f == null:
+		return _fail("Could not write to %s." % script.get_base_dir())
+	f.store_string("import bpy\nbpy.ops.wm.open_mainfile(filepath=%s)\nbpy.ops.export_scene.gltf(filepath=%s, export_format='GLB', export_apply=True)\n" % [
+		JSON.stringify(source), JSON.stringify(out)])
+	f.close()
+	var problem := ""
+	if blender != "":
+		var output := []
+		var code := GnPaths.run(blender, ["-b", "--factory-startup", "--python-exit-code", "1", "--python", script], output, true)
+		if code == 0 and FileAccess.file_exists(out):
+			DirAccess.remove_absolute(script)
+			return {"path": out, "error": ""}
 		var said := "\n".join(output)
 		# Ubuntu's own Blender package leaves out numpy, which Blender's glTF
 		# exporter needs; say so rather than show a Python traceback.
 		if said.contains("No module named 'numpy'"):
-			return _fail("Blender could not export %s: it is missing numpy, as Ubuntu's own Blender package is. Install it (sudo apt install python3-numpy) or use Blender from blender.org." % source.get_file())
-		return _fail("Blender could not export %s (exit %d). %s" % [source.get_file(), code, said.right(400)])
+			problem = "Blender could not export %s: it is missing numpy, as Ubuntu's own Blender package is. Install it (sudo apt install python3-numpy) or use Blender from blender.org." % source.get_file()
+		else:
+			problem = "Blender could not export %s (exit %d). %s" % [source.get_file(), code, said.right(400)]
+	# The program's own Blender engine reads .blend files too.
+	var GnBlender = load("res://addons/genesis/core/gn_blender.gd")
+	var eng: Dictionary = GnBlender.engine()
+	if eng.kind != "module":
+		DirAccess.remove_absolute(script)
+		return _fail(problem if problem != "" else "A .blend file needs Blender (free, blender.org). Install it, or set where it is in Tools > Dependencies.")
+	if problem != "":
+		push_warning(problem + " Trying the built-in engine.")
+	var heard := []
+	var c := GnPaths.run(str(eng.path), ["-I", script], heard, true)
+	DirAccess.remove_absolute(script)
+	if c != 0 or not FileAccess.file_exists(out):
+		return _fail("The built-in Blender engine could not read %s (exit %d). %s" % [source.get_file(), c, "\n".join(heard).right(400)])
 	return {"path": out, "error": ""}
 
 

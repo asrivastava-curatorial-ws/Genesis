@@ -45,14 +45,14 @@ Honest list of what does not work, is not included, or was not tested.
 
 - **Things on a path keep going round**: at the end of a path a walker or a car starts again from the beginning. There is no "walk once and stop", no waiting, and walkers do not avoid each other or obstacles. Paths are drawn by clicking points; they follow the surfaces you click on, but the path between two points is a curve through the air, not draped over the ground.
 - Site context has no offline cache of the fetched OpenStreetMap data beyond the imagery kept in the project.
-- The material browser has no user material library across projects yet; custom looks are per project. (Models and skies do have a library of your own.)
-- Render queue with cancel and resume is not implemented; renders run one at a time from the Render page.
+- Materials you make or change in a project stay in that project. Materials downloaded from the Online page go into your library and every project can use them, as do your own models and skies.
+- There is no render queue: renders run one at a time from the Render page. An Eevee or Cycles render can be stopped, and a stopped photoreal film carries on from its last finished frame when it is started again.
 - No code signing; Windows SmartScreen warns.
 - Thumbnails are drawn by Oriel the first time a page shows them, then kept. With software rendering (no graphics driver), the first fill of the asset grid takes a minute or two; names show until then.
 - UDP ports are opened shared, so a port taken by another program is not detected.
 - If Oriel is closed (or stopped) while an AI upscale is running, the upscaler carries on in the background until that picture is done.
-- `.blend` files need Blender. Ubuntu's own Blender package (4.0) also needs `python3-numpy` for its glTF exporter; Oriel says so when it is missing.
+- `.blend` files are read by an installed Blender if there is one, and otherwise (or if it fails, as Ubuntu's own Blender 4.0 does without `python3-numpy`) by the built-in engine. A file saved by a newer Blender than 5.2 may not open in the built-in engine.
 
 ## Engine limits
 
-No path tracer: reflections and bounce light are screen-space. The largest render or upscale is 16384 pixels on a side.
+The real-time renderer has no path tracer: its reflections and bounce light are screen-space. Cycles traces them; choose it on the Render page. The largest real-time render or upscale is 16384 pixels on a side.

@@ -397,6 +397,11 @@ func _paths_and_format() -> void:
 	check(GnPaths.at("res://assets") == dir + "/assets", "paths: brought-in models go into assets")
 	check(GnPaths.at("res://genesis_assets/trees") == "res://genesis_assets/trees" and GnPaths.at("res://genesis_data/materials/brick.tres") == "res://genesis_data/materials/brick.tres", "paths: the bundled library is read where it ships")
 	check(GnPaths.tool_dir("realesrgan") == ProjectSettings.globalize_path("user://tools/realesrgan"), "paths: the AI upscaler installs per user, outside the program")
+	if OS.get_name() != "Windows":
+		var heard := []
+		GnPaths.run("printf", ["%s|", 'a "quoted" name', "Tower $5M $HOME", "back`echo x`quote", "back\\slash", "it's"], heard)
+		check("".join(heard) == 'a "quoted" name|Tower $5M $HOME|back`echo x`quote|back\\slash|it\'s|',
+			"programs: names with quotes, $, backquotes and backslashes reach a program as written (%s)" % "".join(heard))
 	check(GnHost.log_panel() == "Console", "host: messages point to the Console panel, not the editor's Output panel")
 	check(GnHost.properties_panel() == "Properties panel", "host: settings are in the Properties panel, not the editor's Inspector")
 	check(GnUpscale.exe().begins_with(ProjectSettings.globalize_path("user://tools/realesrgan")), "paths: and the upscaler looks for itself there")
@@ -543,6 +548,26 @@ func _models() -> void:
 				w = _box_of(n).size.x
 				n.free()
 			check(rr.error == "" and absf(w - 2.0) < 0.05, "%s: a 2 m bench made in Blender comes in 2 m wide (%.2f) %s" % [pair[1], w, rr.error])
+		# A file whose name the shell would read ($, quotes).
+		var odd := src + '/bench $1 "copy".blend'
+		DirAccess.copy_absolute(src + "/bench.blend", odd)
+		var ob := GnModelImport.convert_file(odd, dir + "/assets", {"name": "bench_odd"})
+		check(ob.error == "", "blend: a file called 'bench $1 \"copy\".blend' comes in %s" % ob.error)
+		# A Blender that fails (Ubuntu's, say, without numpy): the built-in
+		# engine reads the file instead.
+		var GnBlender = load("res://addons/genesis/core/gn_blender.gd")
+		if GnBlender.engine(true).kind != "module":
+			print("PROJECT_TEST note: the built-in engine is not here, so falling back to it is not checked")
+		else:
+			GnHost.set_setting("blender_path", "/bin/false")
+			var fb := GnModelImport.convert_file(src + "/bench.blend", dir + "/assets", {"name": "bench_builtin"})
+			var fw := -1.0
+			if fb.error == "":
+				var fn := (load(fb.path) as PackedScene).instantiate() as Node3D
+				fw = _box_of(fn).size.x
+				fn.free()
+			check(fb.error == "" and absf(fw - 2.0) < 0.05, "blend: when Blender fails, the built-in engine reads the file (%.2f m) %s" % [fw, fb.error])
+			GnHost.set_setting("blender_path", "")
 	# glTF with a texture, made here with the engine's own glTF writer.
 	var scene := Node3D.new()
 	var cube := MeshInstance3D.new()

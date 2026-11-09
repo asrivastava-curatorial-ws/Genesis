@@ -9,6 +9,7 @@ const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 const GnUpscale := preload("res://addons/genesis/core/gn_upscale.gd")
 const GnCadImport := preload("res://addons/genesis/cad/gn_cad_import.gd")
 const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 
 ## One row per tool: name, what it is for, where it was found ("" if not),
@@ -46,7 +47,7 @@ static func _version(program: String, args: Array) -> String:
 	if program == "":
 		return ""
 	var out := []
-	if OS.execute(program, PackedStringArray(args), out, true) != 0 and out.is_empty():
+	if GnPaths.run(program, args, out, true) != 0 and out.is_empty():
 		return ""
 	var text := "\n".join(out).strip_edges()
 	return text.get_slice("\n", 0).strip_edges().left(120)

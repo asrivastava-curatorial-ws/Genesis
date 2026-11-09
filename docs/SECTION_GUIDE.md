@@ -15,7 +15,7 @@ Button and option names below are as they appear in the program.
 **Building.**
 
 - *Bring in a building…* does the same as *File > Bring In a Model…* (Ctrl+I).
-- GLB, glTF, FBX and OBJ come in directly. `.blend` files go through Blender; *Find Blender…* tells Oriel where Blender is.
+- GLB, glTF, FBX and OBJ come in directly. `.blend` files go through Blender: your own if it is installed (*Find Blender…* tells Oriel where it is), otherwise Oriel's built-in engine.
 - With *Live link* ticked, Oriel watches the source file. When you export again from SketchUp, Revit, Rhino, Archicad or Blender, it brings the new version into the same place. It keeps the model's position, the materials you changed in Oriel, and anything you put inside it.
 
 **Site context.** This brings in the real neighbourhood from OpenStreetMap: buildings, roads, parks and water, on the real ground.
@@ -68,7 +68,7 @@ Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENS
 
 **Your own models.** Add models of your own to a library that every project can use: furniture, people, plants, vehicles, anything.
 
-1. Press *Add a model…* and choose a GLB, glTF, FBX or OBJ file (a `.blend` file works when Blender is installed).
+1. Press *Add a model…* and choose a GLB, glTF, FBX, OBJ or `.blend` file.
 2. Give it a *Name* and a *Category*, and say what unit it was *Made in* (metres, centimetres, millimetres, inches or feet). GLB, glTF and FBX files carry their own size, so leave those at *Metres*; an OBJ file does not, so choose the unit it was modelled in.
 3. Say which way is up (*Y* for glTF and Blender exports, *Z* for CAD, SketchUp and 3ds Max), and under *May be used under* choose *My own work*, *CC0 1.0*, *CC BY 4.0*, *CC BY-SA 4.0* or *Other* (then describe it under *Licence*). Add the *Author*, *Where it came from* and a *Credit line* if the licence asks for one. A model without a licence is not added.
 4. Press *Add*. It appears in its category, and under *Show: Your own*.

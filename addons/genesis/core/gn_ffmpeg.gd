@@ -36,7 +36,7 @@ static func has_filter(name: String) -> bool:
 		var out: Array = []
 		var ffmpeg := find()
 		if ffmpeg != "":
-			OS.execute(ffmpeg, PackedStringArray(["-hide_banner", "-filters"]), out, true)
+			load("res://addons/genesis/core/gn_paths.gd").run(ffmpeg, ["-hide_banner", "-filters"], out, true)
 		_filters[name] = " %s " % name in "\n".join(out).replace("\t", " ")
 	return _filters[name]
 

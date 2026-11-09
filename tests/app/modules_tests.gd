@@ -339,7 +339,7 @@ func _run() -> void:
 	await _site_file(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
-	check(deps.size() == 5 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: five tools, each with how to get it")
+	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")
 	check(deps.filter(func(d): return d.name == "FFmpeg")[0].found == (OS.execute("which", ["ffmpeg"]) == 0) or OS.get_name() == "Windows", "dependencies: FFmpeg is found when it is installed")
 	check(Dependencies.report().contains("Real-ESRGAN"), "dependencies: the report lists the AI upscaler")
 	check(PageRender.QUALITY.has("Preview (fast)") and PageRender.QUALITY.has("High quality (16 samples)") and PageRender.QUALITY.has("Maximum quality (64 samples)"), "render: Preview, High and Maximum quality are offered")

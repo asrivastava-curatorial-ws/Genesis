@@ -14,7 +14,7 @@
 
 **A model looks too big, too small, or lying down.** Bring it in again with the right unit and *Up is Z* (CAD and SketchUp exports).
 
-**A .blend will not come in.** Blender must be installed; set its place in Preferences > Other programs, or in Tools > Other Programs…. With Ubuntu's Blender package, the message may say its glTF exporter needs numpy: `sudo apt install python3-numpy`, or use Blender from blender.org.
+**A .blend will not come in.** Oriel's built-in engine reads `.blend` files saved by Blender 5.2 or older; a file from a newer Blender may need that Blender installed (set its place in Preferences > Other programs, or in Tools > Other Programs…). With Ubuntu's Blender package, the message may say its glTF exporter needs numpy: `sudo apt install python3-numpy`, or use Blender from blender.org.
 
 **A scene opened with "things this scene uses are not on this computer".** Usually the downloaded library (photographed skies, scanned materials, the plant library), which this build does not include. The scene opens with stand-ins where it can (bundled trees and shrubs, Oriel's own sky, drawn material textures) and empty markers for other models. The Console lists every missing file. Saving keeps the references, so nothing is lost: install the library (`tools/setup.py`, then build again) or put the missing files back, and they return. For files of the project's own, use File > Find Missing Files….
 

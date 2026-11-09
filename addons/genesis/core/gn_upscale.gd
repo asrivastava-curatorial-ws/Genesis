@@ -81,7 +81,7 @@ static func install(host: Node, progress := Callable()) -> String:
 	reader.close()
 	DirAccess.remove_absolute(zip)
 	if _os() != "Windows":
-		OS.execute("chmod", PackedStringArray(["+x", ProjectSettings.globalize_path(exe())]))
+		GnPaths.run("chmod", ["+x", ProjectSettings.globalize_path(exe())])
 	# Its licence travels with it.
 	await _download(LICENSE_URL, _dir().path_join("LICENSE.txt"), host, Callable(), 0)
 	return "" if installed() else "The upscaler was downloaded but isn't complete."

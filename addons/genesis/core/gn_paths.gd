@@ -61,6 +61,24 @@ static func remove_tree(dir: String) -> void:
 
 
 ## A folder for things that can always be made again (measurements, previews).
+## OS.execute, with the program and its arguments arriving exactly as given.
+## On Linux and macOS Godot runs OS.execute through the shell, each argument
+## in double quotes, so a `"`, `$`, backquote or backslash in a path (a project
+## called "Tower $5M", say) or in a piece of code would be read by the shell.
+## They are escaped here first. (Windows passes arguments without a shell.)
+static func run(program: String, args, output: Array = [], read_stderr := false) -> int:
+	var safe := PackedStringArray()
+	for a in args:
+		safe.append(_shell_safe(str(a)))
+	return OS.execute(_shell_safe(program), safe, output, read_stderr)
+
+
+static func _shell_safe(text: String) -> String:
+	if OS.get_name() == "Windows":
+		return text
+	return text.replace("\\", "\\\\").replace("\"", "\\\"").replace("$", "\\$").replace("`", "\\`")
+
+
 static func cache_dir(what: String) -> String:
 	var dir := ProjectSettings.globalize_path("user://cache").path_join(what)
 	DirAccess.make_dir_recursive_absolute(dir)

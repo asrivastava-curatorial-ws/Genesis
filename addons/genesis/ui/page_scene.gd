@@ -121,9 +121,18 @@ func refresh() -> void:
 	# The editor uses its own setting; the program finds Blender itself (the
 	# place set with Find Blender..., then the PATH and the usual places).
 	var blender := str(GnHost.get_setting("blender_path")) if GnHost.supports("editor_import") else GnModelImport.find_blender()
-	_blender.text = "Blender is ready for .blend files." if blender != "" \
-		else "Blender isn't found, so .blend files can't be brought in directly. GLB, FBX and OBJ work without it; install Blender, or tell Oriel where it is with Find Blender…"
-	_blender.tooltip_text = blender
+	# The program's own engine (Eevee and Cycles) reads .blend files too; only
+	# whether it is there is checked here, which is quick.
+	var builtin := ""
+	if blender == "" and not GnHost.supports("editor_import"):
+		builtin = load("res://addons/genesis/core/gn_blender.gd").bundled_python()
+	if blender != "":
+		_blender.text = "Blender is ready for .blend files."
+	elif builtin != "":
+		_blender.text = "The built-in Blender engine reads .blend files. To use a Blender of your own instead, tell Oriel where it is with Find Blender…"
+	else:
+		_blender.text = "Blender isn't found, so .blend files can't be brought in directly. GLB, FBX and OBJ work without it; install Blender, or tell Oriel where it is with Find Blender…"
+	_blender.tooltip_text = blender if blender != "" else builtin
 
 
 # A new scene with the world already in it: the scene a user wants in 95% of

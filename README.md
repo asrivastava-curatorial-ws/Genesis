@@ -38,7 +38,7 @@ Rendered by the program itself, from its two demo projects (Standard quality, so
 
 | Section | What it does |
 |---|---|
-| **SCENE** | New scenes; bring in a building (GLB, glTF, FBX, OBJ, .blend via Blender) with **live link** for re-exports; real neighbourhoods from OpenStreetMap, by address or from a saved map file; measuring; layers. |
+| **SCENE** | New scenes; bring in a building (GLB, glTF, FBX, OBJ, .blend through the built-in Blender engine) with **live link** for re-exports; real neighbourhoods from OpenStreetMap, by address or from a saved map file; measuring; layers. |
 | **PLANS** | Floor plans from images and PDF pages at true scale; CAD drawings (DXF, CAD-plotted PDF, DWG via ODA) in their layers and colours; walls from lines; snapping to the millimetre. |
 | **ASSETS** | 295 CC0 models (people, animals, vehicles, boats, aircraft, furniture, a full production kit), each with its licence; plants; **your own library** of models for every project, each with the licence you give it. |
 | **ENVIRONMENT** | Time of day, real sun for any place and date (NOAA), skies (procedural, or **your own HDRI panoramas** with the sun found in them), haze and stage haze, exposure, weather and seasons. |

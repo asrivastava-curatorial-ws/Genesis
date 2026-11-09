@@ -8,7 +8,7 @@ A model without a licence record is never listed. See [ASSET_LICENSING.md](ASSET
 
 ## Your own models
 
-*Add a model…* on the Assets page puts a model of your own (GLB, glTF, FBX, OBJ; `.blend` with Blender) into a library every project can use. You give it a name, a category, the unit it was made in (GLB, glTF and FBX carry their own size: leave them at metres), which way is up, and the licence it may be used under (your own work, CC0 1.0, CC BY 4.0, CC BY-SA 4.0, or another you describe), with the author, the source and a credit line where the licence asks for one. A model is not added without a licence.
+*Add a model…* on the Assets page puts a model of your own (GLB, glTF, FBX, OBJ or `.blend`) into a library every project can use. You give it a name, a category, the unit it was made in (GLB, glTF and FBX carry their own size: leave them at metres), which way is up, and the licence it may be used under (your own work, CC0 1.0, CC BY 4.0, CC BY-SA 4.0, or another you describe), with the author, the source and a credit line where the licence asks for one. A model is not added without a licence.
 
 - It is converted once, into a `.scn` file, with its licence record beside it as `.license.json`, in `~/.local/share/Oriel/library/<category>/` on Linux or `%APPDATA%\Oriel\library\<category>\` on Windows (*Open your library folder*).
 - It is listed in its category marked *(yours)*, and under the *Your own* filter.

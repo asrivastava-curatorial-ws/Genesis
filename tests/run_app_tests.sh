@@ -6,6 +6,8 @@ set -u
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 [ -f "$HERE/tests/local.env" ] && . "$HERE/tests/local.env"
 GODOT="${GODOT:-godot}"
+# The built Eevee and Cycles engine, when it has been built (tools/build_engine.sh).
+[ -x "$HERE/build/engine/python/bin/python3" ] && export ORIEL_ENGINE="${ORIEL_ENGINE:-$HERE/build/engine/python/bin/python3}"
 TMP="$(mktemp -d)"
 cp -r "$HERE/project.godot" "$HERE/addons" "$HERE/app" "$TMP/"
 [ -f "$HERE/LICENSE" ] && cp "$HERE/LICENSE" "$TMP/"

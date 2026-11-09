@@ -142,10 +142,10 @@ static func pdf_page(pdf: String, png: String, page: int, dpi: int) -> String:
 	var code := -1
 	if tool.get_file().get_basename().to_lower() == "pdftoppm":
 		# -singlefile writes <base>.png
-		code = OS.execute(tool, PackedStringArray(["-png", "-r", str(dpi), "-f", str(page), "-l", str(page), "-singlefile",
+		code = GnPaths.run(tool, PackedStringArray(["-png", "-r", str(dpi), "-f", str(page), "-l", str(page), "-singlefile",
 			pdf, png.get_basename()]), out, true)
 	else:
-		code = OS.execute(tool, PackedStringArray(["draw", "-r", str(dpi), "-o", png, pdf, str(page)]), out, true)
+		code = GnPaths.run(tool, PackedStringArray(["draw", "-r", str(dpi), "-o", png, pdf, str(page)]), out, true)
 	if code != 0 or not FileAccess.file_exists(png):
 		return "Couldn't draw page %d of %s: %s" % [page, pdf.get_file(), "\n".join(out).strip_edges().left(300)]
 	return ""
@@ -164,7 +164,7 @@ static func dwg_to_dxf(dwg: String, dxf: String) -> String:
 	DirAccess.make_dir_recursive_absolute(outof)
 	DirAccess.copy_absolute(dwg, into.path_join(dwg.get_file()))
 	var said: Array = []
-	var code := OS.execute(oda, PackedStringArray([into, outof, "ACAD2018", "DXF", "0", "1", "*.DWG"]), said, true)
+	var code := GnPaths.run(oda, PackedStringArray([into, outof, "ACAD2018", "DXF", "0", "1", "*.DWG"]), said, true)
 	var made := outof.path_join(dwg.get_file().get_basename() + ".dxf")
 	if not FileAccess.file_exists(made):
 		# Some versions keep the extension's case.

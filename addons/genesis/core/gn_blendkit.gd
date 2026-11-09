@@ -98,7 +98,7 @@ static func install(host: Node, progress := Callable()) -> String:
 		DirAccess.remove_absolute(client_exe())
 		return "BlendKit's Client did not match its fingerprint, so it was not used."
 	if OS.get_name() != "Windows":
-		OS.execute("chmod", PackedStringArray(["u+x", client_exe()]))
+		GnPaths.run("chmod", ["u+x", client_exe()])
 	DirAccess.remove_absolute(zip)
 	return ""
 

@@ -79,7 +79,7 @@ static func _probe(program: String) -> Dictionary:
 	var out := []
 	var name := program.get_file().to_lower()
 	if name.begins_with("python"):
-		var code := OS.execute(program, PackedStringArray(["-I", "-c",
+		var code := GnPaths.run(program, PackedStringArray(["-I", "-c",
 			"import bpy, sys; sys.stdout.write('BPY ' + bpy.app.version_string)"]), out, true)
 		var text := "\n".join(out)
 		var at := text.find("BPY ")
@@ -88,7 +88,7 @@ static func _probe(program: String) -> Dictionary:
 			return {"kind": "module", "path": program, "version": v.get_slice(" ", 0),
 				"label": "Built-in engines (Blender %s)" % v}
 		return {"kind": "", "path": "", "version": "", "label": ""}
-	var code := OS.execute(program, PackedStringArray(["--version"]), out, true)
+	var code := GnPaths.run(program, PackedStringArray(["--version"]), out, true)
 	var text := "\n".join(out)
 	var rx := RegEx.create_from_string("Blender (\\d+\\.\\d+(\\.\\d+)?)")
 	var m := rx.search(text)

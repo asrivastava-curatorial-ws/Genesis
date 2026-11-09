@@ -14,6 +14,7 @@ Photoreal rendering built in, an online library, and a new name. Every feature o
 - **Graded like the editor**: the engine's picture is finished with Godot's own tone curves (ACES, AgX, Filmic, Reinhard), exposure, glow and adjustments, then the camera's look (grading, styles, titles, logos) goes on as on every render. On the architecture demo the three renderers match in brightness to within a few per cent.
 - **Stills, every camera, sun studies, passes, 360° panoramas (stereo too), virtual tours and films** all go through the chosen renderer. Passes: depth, normals, object ID, mask and clay. Eevee's 360° is stitched from six views; Cycles uses its panoramic camera.
 - **Films resume**: frames rendered are kept when a film is stopped, and a re-run carries on from the first missing frame (a changed film starts again). Moving objects, flying screens, build-up phasing and a time-lapse sun move in the photoreal film as in the real-time one.
+- **`.blend` files without Blender**: the built-in engine reads them when no Blender is installed, or when the installed one fails (as Ubuntu's Blender 4.0 does without numpy).
 - Quality in plain words: Draft, Good, High, Best (Eevee 16 to 256 samples, with baked indirect light for High and Best; Cycles 32 to 1536 samples with adaptive sampling and the OpenImageDenoise denoiser). Cycles uses the graphics card (OptiX/CUDA, HIP, oneAPI) when there is one.
 
 ### The online library
@@ -21,6 +22,9 @@ Photoreal rendering built in, an online library, and a new name. Every feature o
 - **Starter pack**: the most useful free skies, materials and models in one go (small, standard or large), stoppable and resumable. With BlendKit logged in, its best free models and materials come too.
 - **`oriel_assets.py`**: the same starter pack from a terminal (`--get-assets` from the AppImage, using Oriel's own Python); standard library only, for Linux, Windows and macOS.
 - **Safe downloads**: `.part` files that become real only when whole and matching the published checksum; resume after a stop or a dropped connection; servers' "too many requests" waited out; nothing downloaded twice; a manifest of every asset written atomically with a backup.
+
+### Fixes
+- Names with `$`, quotes, backquotes or backslashes (a project called "Tower $5M", say) now reach FFmpeg, Blender, the PDF tools and the DWG converter exactly as written. On Linux, Godot starts outside programs through the shell, and the shell read those characters, so a film could be written to the wrong file.
 
 ### Tests
 - `online_tests.gd`: the online library against a local stand-in for Poly Haven (22 checks); `--photoreal` test mode; a new end-to-end phase (`--e2e photoreal`): Eevee and Cycles stills, a sun study, passes, 360°s, stopping a render, stopping and resuming a film, from the built program with its own engines.

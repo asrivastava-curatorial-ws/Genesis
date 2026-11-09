@@ -68,18 +68,19 @@ Your projects are yours and are not touched.
 
 ## 2. Inside the AppImage
 
-One file of about 210.5 MB; its exact size and SHA-256 are in the `.sha256` file that comes with it (a file cannot hold its own checksum). It opens as a read-only folder of 281.0 MB in 91 files:
+One file of about 644.9 MB; its exact size and SHA-256 are in the `.sha256` file that comes with it (a file cannot hold its own checksum). It opens as a read-only folder of 1368.6 MB in 5,667 files:
 
 | Path inside the AppImage | Size | What it is |
 |---|---|---|
-| `AppRun` | 1 KB | starts the program; `--install-shortcut` and `--remove-shortcut` |
+| `AppRun` | 2 KB | starts the program; `--install-shortcut`, `--remove-shortcut` and `--get-assets` (the starter-pack script, run by the engines' Python) |
 | `oriel.desktop`, `oriel.png`, `.DirIcon` | small | the desktop entry and the icon |
 | `usr/lib/oriel/Oriel.x86_64` | 73.5 MB | the program: Godot 4.7.2's runtime |
-| `usr/lib/oriel/Oriel.pck` | 184.5 MB | everything else of the program: its scripts, the theme, the fonts, the icons, the model library and the material presets |
-| `usr/lib/oriel/docs/` | 6.8 MB | the manual (HTML and PDF), the guides and their pictures, for *Help > Documentation* |
+| `usr/lib/oriel/Oriel.pck` | 184.7 MB | everything else of the program: its scripts (and the Blender-side scripts), the theme, the fonts, the icons, the model library and the material presets |
+| `usr/lib/oriel/engine/` | 1083.8 MB | Eevee and Cycles: Blender 5.2.3 as a Python module with its own CPython 3.13.14, and their licences (`engine/LICENSES/`) |
+| `usr/lib/oriel/docs/` | 10.3 MB | the manual (HTML and PDF), the guides and their pictures, for *Help > Documentation* |
 | `usr/lib/oriel/demos/` | 16.0 MB | the two demo projects; *Try a demo* copies one into your projects folder |
 | `usr/share/applications/`, `usr/share/icons/`, `usr/share/metainfo/` | small | the desktop entry, the icon (PNG and SVG) and the AppStream description, for software centres |
-| `usr/share/doc/oriel/` | 0.1 MB | README, LICENSE, THIRD_PARTY_NOTICES, CHANGELOG, this inventory and the font's licence (OFL.txt) |
+| `usr/share/doc/oriel/` | 0.2 MB | README, LICENSE, THIRD_PARTY_NOTICES, CHANGELOG, this inventory, the font's licence (OFL.txt), `oriel_assets.py` and `starter_pack.json` |
 
 What each part is, its version and its licence:
 

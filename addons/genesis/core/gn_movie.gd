@@ -260,7 +260,7 @@ static func render(list: Array, size: Vector2i, host: Node, movie_name: String,
 	var args := ["-y", "-framerate", str(fps), "-i", ProjectSettings.globalize_path(dir) + "/frame_%05d.png",
 		"-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow", out]
 	var ffmpeg := GnFfmpeg.find()
-	var code := OS.execute(ffmpeg, PackedStringArray(args), [], true) if ffmpeg != "" else -1
+	var code := GnPaths.run(ffmpeg, args, [], true) if ffmpeg != "" else -1
 	return out if code == 0 and FileAccess.file_exists(out) else ProjectSettings.globalize_path(dir)
 
 
@@ -356,5 +356,5 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 	var args := ["-y", "-framerate", str(fps), "-i", base + "/frame_%05d.png",
 		"-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow", out]
 	var ffmpeg := GnFfmpeg.find()
-	var code := OS.execute(ffmpeg, PackedStringArray(args), [], true) if ffmpeg != "" else -1
+	var code := GnPaths.run(ffmpeg, args, [], true) if ffmpeg != "" else -1
 	return out if code == 0 and FileAccess.file_exists(out) else base

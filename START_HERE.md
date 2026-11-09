@@ -81,7 +81,7 @@ This delivery has no Windows program. One can be built from the source (section 
 
 The people walk, stepping in time with the ground they cover. At the end of the path they start again from the beginning. [docs/SECTION_GUIDE.md](docs/SECTION_GUIDE.md) has every detail.
 
-**Your own models and skies.** On *Assets*, *Add a model…* puts a model of yours (GLB, glTF, FBX, OBJ, or `.blend` with Blender) into a library that every project can use: people, trees, plants, furniture, vehicles. You say what licence it may be used under, and that stays with it. On *Environment*, *Add a sky image…* adds a 360° HDR, JPG or PNG panorama as a sky. On *Materials*, *Use an image…* turns any photo or texture (with its normal and roughness maps beside it) into a material at its real size. Free CC0 skies, models and textures: polyhaven.com and ambientcg.com.
+**Your own models and skies.** On *Assets*, *Add a model…* puts a model of yours (GLB, glTF, FBX, OBJ or `.blend`) into a library that every project can use: people, trees, plants, furniture, vehicles. You say what licence it may be used under, and that stays with it. On *Environment*, *Add a sky image…* adds a 360° HDR, JPG or PNG panorama as a sky. On *Materials*, *Use an image…* turns any photo or texture (with its normal and roughness maps beside it) into a material at its real size. Free CC0 skies, models and textures: polyhaven.com and ambientcg.com.
 
 What the demos' cameras give at *Standard* quality:
 
@@ -113,7 +113,7 @@ Ubuntu 24.04:
 ```bash
 sudo apt install ffmpeg            # MP4 films; live video on LED walls and screens
 sudo apt install poppler-utils     # PDF pages as plans
-sudo apt install blender python3-numpy   # .blend files (Ubuntu's Blender needs numpy for its glTF exporter); or Blender from blender.org, set in Preferences or Tools > Other Programs…
+sudo apt install blender python3-numpy   # only if you want your own Blender for .blend files (the built-in engine reads them too)
 ```
 
 Windows:
