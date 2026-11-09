@@ -56,7 +56,9 @@ static func fetch(url: String, dest: String, host: Node, opts := {}) -> Dictiona
 				return {"ok": false, "error": "Stopped while waiting for the server.", "path": dest, "bytes": 0, "skipped": false}
 			continue
 		tries += 1
-		if tries > MAX_RETRIES or r.get("fatal", false):
+		# A host that cannot be reached at all is not retried for long.
+		var unreachable := str(r.get("error", "")).begins_with("Could not") and not FileAccess.file_exists(part)
+		if tries > MAX_RETRIES or r.get("fatal", false) or (unreachable and tries >= 3):
 			return {"ok": false, "error": str(r.get("error", "The download failed.")), "path": dest, "bytes": 0, "skipped": false}
 		if not await _sleep(host, mini(int(pow(2, tries)), 60), opts, "%s; trying again in" % str(r.get("error", "Connection lost")).trim_suffix(".")):
 			return {"ok": false, "error": "Stopped.", "path": dest, "bytes": 0, "skipped": false}

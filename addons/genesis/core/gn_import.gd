@@ -22,7 +22,7 @@ static func import_building(source: String) -> String:
 	if not GnHost.supports("editor_import"):
 		return import_runtime(source)
 	if ext not in EXTENSIONS:
-		return "Genesis can bring in %s files." % ", ".join(EXTENSIONS)
+		return "Oriel can bring in %s files." % ", ".join(EXTENSIONS)
 	if ext == "blend":
 		if str(GnHost.get_setting("blender_path")) == "":
 			return "To use .blend files directly, tell Godot where Blender is: Editor Settings → FileSystem → Import → Blender → Blender Path."

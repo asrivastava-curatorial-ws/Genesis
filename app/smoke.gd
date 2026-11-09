@@ -57,7 +57,7 @@ static func run(main: Node) -> int:
 	_check(GnHost.viewport_3d() == view and view.get_camera_3d() == ws.viewport_panel.camera, "the 3D view is the host's view, with its own camera")
 	var root := GnHost.edited_scene_root()
 	_check(root != null and root.get_parent() == view, "the open scene is shown in the 3D view")
-	_check(ws.genesis_panel != null and ws.genesis_panel.is_inside_tree(), "the Genesis panel is in the window")
+	_check(ws.genesis_panel != null and ws.genesis_panel.is_inside_tree(), "the side panel is in the window")
 	_check(App.actions.run("view.frame"), "frame-the-scene runs")
 	_check(ws.viewport_panel.camera.position.is_finite() and ws.viewport_panel.camera.position != Vector3.ZERO, "the camera is placed")
 	_check(ws.viewport_panel.get_node("Overlay").clip_contents, "markers and handles are drawn only inside the 3D view")

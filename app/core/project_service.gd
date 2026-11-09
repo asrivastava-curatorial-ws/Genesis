@@ -159,9 +159,9 @@ func open(dir: String) -> String:
 	dir = dir.simplify_path()
 	var m := manifest_of(dir)
 	if m.is_empty():
-		return "%s is not a Genesis project (it has no %s)." % [dir, MANIFEST]
+		return "%s is not an Oriel project (it has no %s)." % [dir, MANIFEST]
 	if int(m.get("format", -1)) > FORMAT:
-		return "This project was made by a newer version of Genesis (format %d)." % int(m.get("format"))
+		return "This project was made by a newer version of Oriel (format %d)." % int(m.get("format"))
 	var main_file := dir.path_join(str(m.get("main_scene", MAIN_SCENE)))
 	if not FileAccess.file_exists(main_file):
 		return "The project's main scene is missing: %s" % main_file
@@ -182,7 +182,7 @@ func open(dir: String) -> String:
 		var changed := remap_paths(_scenes.root, old_place, dir)
 		if changed > 0:
 			_scenes.save()
-			print("Genesis: the project moved from %s; %d stored paths now point to its new place." % [old_place, changed])
+			print("Oriel: the project moved from %s; %d stored paths now point to its new place." % [old_place, changed])
 	_write_manifest(dir, manifest)
 	missing = find_missing(_scenes.root)
 	_settings.push_recent(dir)
@@ -507,13 +507,13 @@ static func _rewrite_scene(text: String, source: String, dir: String, models: Di
 	return out
 
 
-## Where new projects go unless the user has said: "Genesis Projects" in the
+## Where new projects go unless the user has said: "Oriel Projects" in the
 ## documents folder (or in the home folder, where there is no documents folder).
 static func default_projects_dir() -> String:
 	var docs := OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
 	if docs == "" or not DirAccess.dir_exists_absolute(docs):
 		docs = OS.get_environment("HOME") if OS.get_name() != "Windows" else OS.get_environment("USERPROFILE")
-	return docs.path_join("Genesis Projects") if docs != "" else OS.get_user_data_dir().path_join("Projects")
+	return docs.path_join("Oriel Projects") if docs != "" else OS.get_user_data_dir().path_join("Projects")
 
 
 ## The demo projects that came with the program, {name: folder}: beside the

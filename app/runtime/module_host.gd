@@ -58,7 +58,7 @@ func on_scene_opened(root: Node) -> void:
 func _process(_delta: float) -> void:
 	if osc.listening():
 		for cmd in osc.poll():
-			print("Genesis: cue command from outside: %s" % osc.last)
+			print("Oriel: cue command from outside: %s" % osc.last)
 
 
 func _exit_tree() -> void:

@@ -361,7 +361,7 @@ static func unsupported_text(spec: String) -> String:
 		return "Capturing one window works on Windows; here, capture its screen instead (screen:<n>)."
 	if kind == "file":
 		return "The video file isn't there: %s" % spec.substr(5)
-	return "Not a source Genesis knows: \"%s\"." % spec
+	return "Not a source Oriel knows: \"%s\"." % spec
 
 
 static func waiting_text(spec: String) -> String:

@@ -16,7 +16,7 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnGeo := preload("res://addons/genesis/core/gn_geo.gd")
 const Terrain := preload("res://addons/genesis/set/gn_terrain.gd")
 
-const UA := "Genesis site context (Utopian Academy; https://github.com/Utopian-Academy)"
+const UA := "Oriel site context (open-source visualisation, based on Genesis by Utopian Academy; https://github.com/Utopian-Academy/Genesis)"
 const ATTRIBUTION := "Map data © OpenStreetMap contributors (ODbL)"
 const METRES_PER_DEG_LAT := 110540.0
 const METRES_PER_DEG_LON := 111320.0

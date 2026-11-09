@@ -179,7 +179,7 @@ func _register_actions() -> void:
 	_add("view.look_through", "Look Through Selected Camera", _look_through, [K.key(KEY_KP_0)], _camera_selected)
 	_add("view.grid", "Grid", _toggle_grid, [K.key(KEY_NUMBERSIGN, true)])
 	_add("view.outliner", "Scene and Properties", toggle_left, [K.key(KEY_K, true)])
-	_add("view.panel", "Genesis Panel", toggle_panel, [K.key(KEY_B, true)])
+	_add("view.panel", "Side Panel", toggle_panel, [K.key(KEY_B, true)])
 	_add("view.console", "Console", toggle_console, [K.key(KEY_J, true)])
 	_add("help.shortcuts", "Keyboard and Mouse", _show_shortcuts, [K.key(KEY_F1)])
 

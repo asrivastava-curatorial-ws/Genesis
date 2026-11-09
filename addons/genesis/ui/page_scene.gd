@@ -114,7 +114,7 @@ func refresh() -> void:
 		_status.text = "Name a scene above and press New scene, or open one from the FileSystem dock." if GnHost.supports("editor") \
 			else "Name a scene above and press New scene."
 	elif not root is Node3D:
-		_status.text = "This scene isn't 3D. Genesis works in 3D scenes."
+		_status.text = "This scene isn't 3D. Oriel works in 3D scenes."
 	else:
 		_status.text = "Sun, sky and ground are in." if GnEnvironment.is_set_up() else ""
 	_setup_button.disabled = root == null or not root is Node3D or GnEnvironment.is_set_up()
@@ -122,7 +122,7 @@ func refresh() -> void:
 	# place set with Find Blender..., then the PATH and the usual places).
 	var blender := str(GnHost.get_setting("blender_path")) if GnHost.supports("editor_import") else GnModelImport.find_blender()
 	_blender.text = "Blender is ready for .blend files." if blender != "" \
-		else "Blender isn't found, so .blend files can't be brought in directly. GLB, FBX and OBJ work without it; install Blender, or tell Genesis where it is with Find Blender…"
+		else "Blender isn't found, so .blend files can't be brought in directly. GLB, FBX and OBJ work without it; install Blender, or tell Oriel where it is with Find Blender…"
 	_blender.tooltip_text = blender
 
 

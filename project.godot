@@ -4,7 +4,7 @@ config_version=5
 
 [application]
 
-config/name="Genesis Community"
+config/name="Oriel"
 run/main_scene="res://app/main.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://app/assets/icon.svg"
@@ -13,7 +13,7 @@ boot_splash/image="res://app/assets/splash.png"
 boot_splash/fullsize=false
 boot_splash/use_filter=true
 config/use_custom_user_dir=true
-config/custom_user_dir_name="Genesis"
+config/custom_user_dir_name="Oriel"
 
 [display]
 

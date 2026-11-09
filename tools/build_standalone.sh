@@ -42,8 +42,8 @@ echo "Importing resources (the first time, every model in the library)..."
 
 for t in "${TARGETS[@]}"; do
 	case "$t" in
-		linux)   preset=Linux;   file="$OUT/linux/Genesis.x86_64" ;;
-		windows) preset=Windows; file="$OUT/windows/Genesis.exe" ;;
+		linux)   preset=Linux;   file="$OUT/linux/Oriel.x86_64" ;;
+		windows) preset=Windows; file="$OUT/windows/Oriel.exe" ;;
 		*) echo "unknown target $t"; exit 2 ;;
 	esac
 	rm -rf "$(dirname "$file")"
@@ -56,7 +56,7 @@ done
 if [[ " ${TARGETS[*]} " == *" linux "* ]]; then
 	echo "Running the Linux build's smoke tour..."
 	expect=""; [ "${NO_ASSETS:-0}" != 1 ] && expect="--expect-library"
-	"$OUT/linux/Genesis.x86_64" --headless -- --smoke $expect > "$OUT/smoke_linux.txt" 2>&1 || true
+	"$OUT/linux/Oriel.x86_64" --headless -- --smoke $expect > "$OUT/smoke_linux.txt" 2>&1 || true
 	grep -E "GENESIS_SMOKE (FAIL|RESULT)|SCRIPT ERROR|Parse Error" "$OUT/smoke_linux.txt" || true
 	grep -q "GENESIS_SMOKE RESULT PASS" "$OUT/smoke_linux.txt"
 fi

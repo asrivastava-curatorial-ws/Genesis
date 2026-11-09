@@ -34,7 +34,7 @@ static func convert_file(source: String, dest_dir: String, options := {}) -> Dic
 	opts.merge(options, true)
 	var ext := source.get_extension().to_lower()
 	if not ext in EXTENSIONS:
-		return _fail("Genesis can bring in %s files." % ", ".join(EXTENSIONS))
+		return _fail("Oriel can bring in %s files." % ", ".join(EXTENSIONS))
 	if not FileAccess.file_exists(source):
 		return _fail("%s does not exist." % source)
 	var root: Node3D
@@ -46,7 +46,7 @@ static func convert_file(source: String, dest_dir: String, options := {}) -> Dic
 			err = r.error
 		"fbx":
 			if not ClassDB.class_exists("FBXDocument"):
-				return _fail("This build of Genesis cannot read FBX files. Export the model as GLB instead.")
+				return _fail("This build of Oriel cannot read FBX files. Export the model as GLB instead.")
 			var r := _read_gltf(source, ClassDB.instantiate("FBXDocument"), ClassDB.instantiate("FBXState"))
 			root = r.node
 			err = r.error

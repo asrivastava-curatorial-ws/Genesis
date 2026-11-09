@@ -153,7 +153,7 @@ func _add_line_array() -> void:
 		_message.text = "Open or make a scene first."
 		return
 	if LineArray.elements().is_empty():
-		_message.text = "No line array boxes in the library: run Genesis's setup."
+		_message.text = "No line array boxes in the library: run the program's setup (tools/setup.py)."
 		return
 	var a := LineArray.new()
 	a.name = "Line array"
@@ -183,7 +183,7 @@ func _add_flying_screen() -> void:
 		_message.text = "Open or make a scene first."
 		return
 	if FlyingScreen.lifters().is_empty():
-		_message.text = "No heavy-lift helicopter in the library: run Genesis's setup."
+		_message.text = "No heavy-lift helicopter in the library: run the program's setup (tools/setup.py)."
 		return
 	var f := FlyingScreen.new()
 	f.name = "Flying screen"

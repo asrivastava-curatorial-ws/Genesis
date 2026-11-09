@@ -609,10 +609,14 @@ static func get_starter_pack(size: String, host: Node, progress := Callable(), c
 			plan.append([it, res])
 	var done := 0
 	var failed: Array = []
+	var down := {}      # sources that could not be reached this time
 	for i in plan.size():
 		if cancelled.is_valid() and cancelled.call():
 			return {"done": done, "failed": failed, "stopped": true, "total": plan.size()}
 		var it: Dictionary = plan[i][0]
+		if down.has(it.source):
+			failed.append("%s: %s could not be reached" % [it.name, SOURCES.get(it.source, it.source)])
+			continue
 		if progress.is_valid():
 			progress.call(i, plan.size(), "%s (%s, %s)" % [it.name, SOURCES.get(it.source, it.source), it.kind])
 		var r: Dictionary = await get_asset(it, plan[i][1], host,
@@ -621,4 +625,39 @@ static func get_starter_pack(size: String, host: Node, progress := Callable(), c
 			done += 1
 		else:
 			failed.append("%s: %s" % [it.name, r.error])
+			var e := str(r.error)
+			if e.contains("Could not reach") or e.contains("Could not connect") or e.contains("did not answer") or e.contains("No answer"):
+				down[it.source] = true
 	return {"done": done, "failed": failed, "stopped": false, "total": plan.size()}
+
+
+## Assets the starter-pack script (tools/oriel_assets.py) downloaded while
+## Oriel was closed: their materials become presets and their models library
+## items. Returns how many were added.
+static func import_pending(host: Node) -> int:
+	var m := manifest()
+	var added := 0
+	for k in m.assets:
+		var e: Dictionary = m.assets[k]
+		if str(e.get("state", "")) != "downloaded" or not e.get("pending") is Dictionary:
+			continue
+		var p: Dictionary = e.pending
+		var item := {"source": e.source, "id": e.id, "name": e.get("name", e.id), "kind": e.kind,
+			"license": e.get("license", "CC0-1.0"), "author": e.get("author", "")}
+		var result := ""
+		if str(e.kind) == "materials" and p.get("maps") is Dictionary:
+			result = make_material(str(e.id), p.maps, float(p.get("tile", 2.0)), item)
+		elif str(e.kind) == "models" and str(p.get("model", "")) != "":
+			var add := GnAssets.add_to_user_library(str(p.model), str(p.get("category", "props")), str(item.name), _licence_record(item))
+			if str(add.error) == "" or str(add.error).contains("already has"):
+				result = str(add.path)
+		if result != "":
+			e["state"] = "complete"
+			e["result"] = result
+			e.erase("pending")
+			m.assets[k] = e
+			added += 1
+		await host.get_tree().process_frame
+	if added > 0:
+		_save_manifest(m)
+	return added

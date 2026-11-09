@@ -89,12 +89,12 @@ func open(file: String) -> String:
 	if load_from != file:
 		DirAccess.remove_absolute(load_from)
 	if packed == null:
-		return "%s is not a scene Genesis can read." % file.get_file()
+		return "%s is not a scene Oriel can read." % file.get_file()
 	var scene := packed.instantiate()
 	if not scene is Node3D:
 		if scene:
 			scene.free()
-		return "This scene isn't 3D. Genesis works in 3D scenes."
+		return "This scene isn't 3D. Oriel works in 3D scenes."
 	var swapped := _add_stand_ins(scene, records) if not gone.is_empty() else []
 	_replace(scene, file, gone, records, swapped)
 	return ""

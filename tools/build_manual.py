@@ -5,8 +5,8 @@ with Playwright is at hand.
 
     python3 tools/build_manual.py [--no-pdf] [OUT_DIR]   (default: build/manual)
 
-writes OUT_DIR/Genesis-Community-Manual.html (pictures embedded) and, if it
-can, OUT_DIR/Genesis-Community-Manual.pdf. Needs pandoc (sudo apt install
+writes OUT_DIR/Oriel-Manual.html (pictures embedded) and, if it
+can, OUT_DIR/Oriel-Manual.pdf. Needs pandoc (sudo apt install
 pandoc; winget install JohnMacFarlane.Pandoc). Links between pages become
 links within the manual; links to files outside docs/ are kept relative to
 docs/, where the release puts the manual.
@@ -15,7 +15,7 @@ import os, re, shutil, subprocess, sys, tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DOCS = os.path.join(ROOT, "docs")
-TITLE = "Genesis Community: User Manual"
+TITLE = "Oriel: User Manual"
 
 # Reading order: getting going, the program, each section, then reference.
 ORDER = [
@@ -119,7 +119,7 @@ def main():
     if not shutil.which("pandoc"):
         sys.exit("pandoc is needed: sudo apt install pandoc")
     version = re.search(r'const VERSION := "([^"]+)"', open(os.path.join(ROOT, "app/core/app.gd")).read()).group(1)
-    html = os.path.join(out, "Genesis-Community-Manual.html")
+    html = os.path.join(out, "Oriel-Manual.html")
     with tempfile.TemporaryDirectory() as tmp:
         md = os.path.join(tmp, "manual.md")
         open(md, "w", encoding="utf-8").write(build_markdown())
@@ -130,7 +130,7 @@ def main():
                         "-c", css, "--metadata", "title=%s" % TITLE,
                         "--metadata", "subtitle=Version %s" % version, "-o", html], check=True)
     print("Wrote %s (%.1f MB)" % (html, os.path.getsize(html) / 1e6))
-    pdf = os.path.join(out, "Genesis-Community-Manual.pdf")
+    pdf = os.path.join(out, "Oriel-Manual.pdf")
     if "--no-pdf" in sys.argv:
         return
     try:
@@ -146,7 +146,7 @@ def main():
         page.pdf(path=pdf, format="A4", print_background=True, display_header_footer=True,
                  header_template="<span></span>",
                  footer_template='<div style="font-size:8px;width:100%%;text-align:center;color:#777">'
-                                 'Genesis Community %s &middot; <span class="pageNumber"></span> / '
+                                 'Oriel %s &middot; <span class="pageNumber"></span> / '
                                  '<span class="totalPages"></span></div>' % version,
                  margin={"top": "16mm", "bottom": "16mm", "left": "15mm", "right": "15mm"})
         browser.close()

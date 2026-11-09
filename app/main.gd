@@ -68,11 +68,40 @@ func _ready() -> void:
 	_command_line()
 
 
+## Oriel was called Genesis Community up to 1.0.0-rc3, and kept its things
+## in a "Genesis" folder beside this one. The first time Oriel starts, it
+## copies the settings, the user's own library and the downloaded tools from
+## there (the old folder is left as it was).
+func _carry_over_from_genesis() -> void:
+	var mine := OS.get_user_data_dir()
+	var old := mine.get_base_dir().path_join("Genesis")
+	if FileAccess.file_exists(mine.path_join("settings.json")) or not DirAccess.dir_exists_absolute(old):
+		return
+	DirAccess.make_dir_recursive_absolute(mine)
+	if FileAccess.file_exists(old.path_join("settings.json")):
+		DirAccess.copy_absolute(old.path_join("settings.json"), mine.path_join("settings.json"))
+	for sub in ["library", "tools"]:
+		if DirAccess.dir_exists_absolute(old.path_join(sub)):
+			_copy_tree(old.path_join(sub), mine.path_join(sub))
+	print("Oriel: settings, library and tools carried over from %s" % old)
+
+
+static func _copy_tree(from: String, to: String) -> void:
+	DirAccess.make_dir_recursive_absolute(to)
+	for f in DirAccess.get_files_at(from):
+		if not FileAccess.file_exists(to.path_join(f)):
+			DirAccess.copy_absolute(from.path_join(f), to.path_join(f))
+	for d in DirAccess.get_directories_at(from):
+		_copy_tree(from.path_join(d), to.path_join(d))
+
+
 func _start_services() -> void:
 	App.main = self
 	# The smoke tour works on settings of its own and deletes them; the user's
 	# layout and recent projects are never touched by it.
 	var smoke := "--smoke" in OS.get_cmdline_user_args()
+	if not smoke:
+		_carry_over_from_genesis()
 	App.settings = SettingsService.new("user://smoke_settings.json" if smoke else "user://settings.json")
 	var settings_note: String = App.settings.load_from_disk()
 	App.logger = LogService.new()
@@ -209,7 +238,7 @@ func _open_docs() -> void:
 	# The release's manual (one page for any browser), then the plain pages.
 	var tried := []
 	for d in [here.path_join("docs"), here.path_join("../../docs")]:
-		tried.append_array([d.path_join("Genesis-Community-Manual.html"), d.path_join("USER_MANUAL.md")])
+		tried.append_array([d.path_join("Oriel-Manual.html"), d.path_join("USER_MANUAL.md")])
 	for p in tried:
 		if FileAccess.file_exists(p):
 			OS.shell_open(p.simplify_path())
@@ -259,7 +288,7 @@ func open_project() -> void:
 
 
 func _open_project_now() -> void:
-	pick_folder("Open a Genesis project folder", "project", open_project_at)
+	pick_folder("Open a project folder", "project", open_project_at)
 
 
 ## Asks for a folder with the file picker, then calls `chosen` with it.
@@ -295,7 +324,7 @@ func _on_project_opened() -> void:
 func _offer_recovery() -> void:
 	var d := ConfirmationDialog.new()
 	d.title = "Unsaved work found"
-	d.dialog_text = "Genesis kept unsaved changes to %s from last time.\nOpen them? (The saved version is kept until you save.)" % App.scenes.path.get_file()
+	d.dialog_text = "Oriel kept unsaved changes to %s from last time.\nOpen them? (The saved version is kept until you save.)" % App.scenes.path.get_file()
 	d.ok_button_text = "Open unsaved work"
 	d.cancel_button_text = "Keep the saved version"
 	d.confirmed.connect(func():
@@ -316,7 +345,7 @@ func _autosave_tick() -> void:
 	if _autosave_minutes >= maxi(every, 1):
 		_autosave_minutes = 0
 		if App.projects.autosave():
-			print("Genesis: unsaved work kept.")
+			print("Oriel: unsaved work kept.")
 
 
 func import_model() -> void:
@@ -372,7 +401,7 @@ func import_plugin_project_at(source: String) -> void:
 	if parent == "":
 		parent = ProjectService.default_projects_dir()
 	DirAccess.make_dir_recursive_absolute(parent)
-	var new_name := source.get_file() + " (Genesis Community)"
+	var new_name := source.get_file() + " (Oriel)"
 	var r: Dictionary = App.projects.import_plugin_project(source, parent, new_name)
 	if r.error != "":
 		App.notify.error("The old project could not be brought in.", r.error)
@@ -498,7 +527,7 @@ func _on_scene_opened(_root: Node) -> void:
 	var gone: Array = App.scenes.missing_resources
 	if not gone.is_empty():
 		for m in gone:
-			print("Genesis: not on this computer, left out of the scene: %s (%s)" % [m.path, m.type])
+			print("Oriel: not on this computer, left out of the scene: %s (%s)" % [m.path, m.type])
 		var library := gone.filter(func(m): return SceneService.from_downloaded_library(str(m.path)))
 		App.notify.warning("%d things this scene uses are not on this computer; it opened without them." % gone.size(),
 			("%d are from the downloaded library (photo skies, scanned materials, plants), which this program was built without. " % library.size() if not library.is_empty() else "")

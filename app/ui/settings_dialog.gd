@@ -68,7 +68,7 @@ func _init() -> void:
 	_field(files, "New projects in", _projects)
 	_system_dialogs = CheckButton.new()
 	_system_dialogs.text = "Use this computer's own file dialogs"
-	_system_dialogs.tooltip_text = "On: your desktop's file and folder dialogs (with its bookmarks).\nOff: Genesis's own, with favourites and recent folders."
+	_system_dialogs.tooltip_text = "On: your desktop's file and folder dialogs (with its bookmarks).\nOff: Oriel's own, with favourites and recent folders."
 	_system_dialogs.toggled.connect(func(on):
 		App.settings.set_value("system_file_dialogs", on)
 		App.settings.save())

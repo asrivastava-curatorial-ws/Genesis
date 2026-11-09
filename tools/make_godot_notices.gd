@@ -1,7 +1,7 @@
 extends SceneTree
 func _initialize() -> void:
 	var out := PackedStringArray()
-	out.append("## Godot Engine\n\nGenesis Community runs on the Godot Engine %s, which is free software under the MIT licence:\n\n```\n%s\n```\n" % [Engine.get_version_info().string, Engine.get_license_text()])
+	out.append("## Godot Engine\n\nOriel runs on the Godot Engine %s, which is free software under the MIT licence:\n\n```\n%s\n```\n" % [Engine.get_version_info().string, Engine.get_license_text()])
 	out.append("## Components inside the Godot Engine\n\nThe engine includes the following third-party components, each under the licence named. The full licence texts follow the table.\n\n| Component | Parts | Copyright | Licence |\n|---|---|---|---|")
 	for c in Engine.get_copyright_info():
 		for p in c.parts:

@@ -86,6 +86,13 @@ func _init() -> void:
 
 func refresh() -> void:
 	_update_blendkit()
+	# What the starter-pack script downloaded while the program was closed.
+	if not _busy:
+		_busy = true
+		var n: int = await GnOnline.import_pending(self)
+		_busy = false
+		if n > 0:
+			_status.text = "%d downloaded asset(s) added to your library." % n
 
 
 func _src() -> String:

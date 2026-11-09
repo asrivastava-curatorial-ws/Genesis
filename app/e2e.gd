@@ -93,7 +93,7 @@ static func run(main: Node, phase: String, out_dir: String) -> int:
 	# What the test adds to "your own library" stays in the test's folder.
 	App.host.library_dir = out_dir.path_join("library")
 	_step("1", DisplayServer.get_name() != "headless" and (OS.has_feature("template") or not Engine.has_singleton("EditorInterface")) if OS.has_feature("template") else "run from source, not a built program",
-		"Launch Genesis directly, without the Godot editor (renderer: %s, %s)" % [RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name()])
+		"Launch Oriel directly, without the Godot editor (renderer: %s, %s)" % [RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name()])
 	match phase:
 		"build":
 			await _build(main, out_dir)
@@ -342,7 +342,7 @@ static func _build(main: Node, out_dir: String) -> void:
 	_write(out_dir.path_join("expect.json"), JSON.stringify({
 		"planted": planted, "cameras": 2, "children": root.get_child_count(),
 		"time_of_day": 16.5, "project": parent.path_join(PROJECT)}))
-	_step("16", true, "Close Genesis (this launch ends here)")
+	_step("16", true, "Close Oriel (this launch ends here)")
 	App.settings.remove_recent(parent.path_join(PROJECT))
 	App.settings.save()
 
@@ -420,7 +420,7 @@ static func _verify(main: Node, out_dir: String) -> void:
 	var expect: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(out_dir.path_join("expect.json")))
 	var err: String = App.projects.open(expect.project)
 	await _frames(main, 3)
-	_step("17-18", err == "" and main.screen is Workspace, "Launch Genesis again and reopen the same project %s" % err)
+	_step("17-18", err == "" and main.screen is Workspace, "Launch Oriel again and reopen the same project %s" % err)
 	var root := GnHost.edited_scene_root()
 	var group := GnScatter.find_group(GnAssets.find("trees", "tree_round"))
 	var pav := root.get_node_or_null("Pavilion")
@@ -457,7 +457,7 @@ static func _views(main: Node, out_dir: String) -> void:
 	var expect: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(out_dir.path_join("expect.json")))
 	var err: String = App.projects.open(expect.project)
 	await _frames(main, 3)
-	_step("17d", err == "", "Launch Genesis again and reopen the project %s" % err)
+	_step("17d", err == "", "Launch Oriel again and reopen the project %s" % err)
 	var cams := GnCameras.cameras()
 	var cam: Camera3D = cams[0] if not cams.is_empty() else null
 	var pano: String = await GnPanorama.render(cam, 2048, main) if cam else ""
@@ -542,7 +542,7 @@ static func _media(main: Node, out_dir: String) -> void:
 	var expect: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(out_dir.path_join("expect.json")))
 	var err: String = App.projects.open(expect.project)
 	await _frames(main, 3)
-	_step("17b", err == "", "Launch Genesis a third time and reopen the project %s" % err)
+	_step("17b", err == "", "Launch Oriel a third time and reopen the project %s" % err)
 	var cams := GnCameras.cameras()
 	var cam: Camera3D = cams[0] if not cams.is_empty() else null
 	# 23. AI upscaling with Real-ESRGAN, installed the way the Render page does it.
@@ -587,7 +587,7 @@ static func _walk(main: Node, out_dir: String) -> void:
 	var expect: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(out_dir.path_join("expect.json")))
 	var err: String = App.projects.open(expect.project)
 	await _frames(main, 3)
-	_step("17c", err == "", "Launch Genesis again and reopen the project %s" % err)
+	_step("17c", err == "", "Launch Oriel again and reopen the project %s" % err)
 	var ws: Control = main.screen
 	var vpp: Control = ws.viewport_panel
 	vpp.set_view("top")

@@ -21,7 +21,7 @@ func _init() -> void:
 	col.add_theme_constant_override("separation", 10)
 	add_child(col)
 	var intro := Label.new()
-	intro.text = "Genesis works without these. Each one adds one thing; none of them needs administrator rights."
+	intro.text = "Oriel works without these. Each one adds one thing; none of them needs administrator rights."
 	intro.theme_type_variation = &"NoteLabel"
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	# Wrapping labels are measured at their minimum width (see below).

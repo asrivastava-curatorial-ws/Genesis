@@ -17,7 +17,7 @@ var _last_camera: Camera3D
 
 
 func _init() -> void:
-	title = "Genesis show"
+	title = "Oriel show"
 	size = Vector2i(1280, 720)
 	wrap_controls = false
 	transient = false
