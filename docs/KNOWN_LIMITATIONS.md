@@ -25,7 +25,7 @@ Honest list of what does not work, is not included, or was not tested.
 - **Light brightness**: lamps in the editor fade with distance in their own way, Blender's physically; the brightness is matched where each lamp's light lands (found along its beam), so very near or very far from a lamp it can differ from the editor.
 - **BlendKit, Poly Haven and ambientCG were not reached from the build machine** (its network allows only a few sites). The BlendKit Client was downloaded from its GitHub release, started, and answered Oriel; its search reached BlendKit's server and was refused by the build machine's network. Poly Haven was tested against a local stand-in made from its published API; ambientCG's newer API (v3) was written from its documentation and not tried. The first real searches, logins and downloads will be yours.
 - **BlendKit materials and skies** arrive as Blender files and are converted by the built-in engine; procedural BlendKit materials (no pictures) become their flat colour.
-- **Size**: the engines make the AppImage about 650 MB (Blender's engines are about 870 MB unpacked).
+- **Size**: the engines make the AppImage about 640 MB (Blender's engines are about 870 MB unpacked).
 
 ## Not tested in this release
 

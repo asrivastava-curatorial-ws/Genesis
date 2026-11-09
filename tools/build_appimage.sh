@@ -38,6 +38,9 @@ cp "$HERE/build/linux/Oriel.x86_64" "$HERE/build/linux/Oriel.pck" "$LIB/"
 chmod +x "$LIB/Oriel.x86_64"
 # Eevee and Cycles, beside the program (gn_blender.gd looks for engine/ there).
 cp -a "$HERE/build/engine" "$LIB/engine"
+# Bytecode its Python wrote while it was tested here; inside the AppImage
+# it is made again in memory, so the package is the same whatever ran before.
+find "$LIB/engine" -name __pycache__ -type d -prune -exec rm -rf {} +
 
 # The guides and the manual, for Help > Documentation.
 cp "$HERE"/docs/*.md "$LIB/docs/"
