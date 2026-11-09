@@ -10,7 +10,7 @@ The look is GitHub's Dark Default colour theme, as VSCodium shows it, set in Jet
 - **Tool bar**: Select, Move, Turn and Resize; Local (handles follow the object) and Snap; Frame, Ortho and the grid; Add; and Undo, Redo and Save on the right. Hover over any button to see its keys.
 - **Scene and Properties** (left): every object in the scene, with an icon for its kind and an eye (show or hide) and a padlock (lock) at the end of its row; under it, the settings of the selected one, in sections that fold. Ctrl+K hides them.
 - **3D view** (centre). The **Console** (everything the program logs) opens under it with Ctrl+J, View > Console or the message counts in the status bar.
-- **Oriel panel** (right, Ctrl+B): the twelve working pages. The strip of icons on the right edge switches between them; hover an icon for its name. The page's name and what it is for are at the top.
+- **Side panel** (right, Ctrl+B): the thirteen working pages. The strip of icons on the right edge switches between them; hover an icon for its name. The page's name and what it is for are at the top.
 - **Status bar** (bottom): the scene; whether it is saved (click to save); the tool (click for the next); what is selected (click to frame it); perspective or orthographic (click to switch); warnings and errors (click for the console).
 
 The layout is remembered; Preferences > Reset the window layout puts it back.
@@ -21,7 +21,7 @@ The layout is remembered; Preferences > Reset the window layout puts it back.
 
 | Chapter | What it covers |
 |---|---|
-| [The Oriel panel, section by section](SECTION_GUIDE.md) | what every button in the twelve sections does, with short recipes |
+| [The side panel, section by section](SECTION_GUIDE.md) | what every button in the thirteen sections does, with short recipes |
 | [Projects](PROJECT_MANAGEMENT.md) | making, opening, saving, backups, recovery, moving a project, old Genesis projects |
 | [The scene editor](SCENE_EDITOR.md) | the 3D view, selecting, moving, the scene tree, properties, undo |
 | [Importing models](IMPORTING_MODELS.md) | GLB, glTF, FBX, OBJ, Blender; live link |

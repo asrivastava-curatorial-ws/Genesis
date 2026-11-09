@@ -1,4 +1,4 @@
-# The Oriel panel, section by section
+# The side panel, section by section
 
 The Oriel panel sits on the right of the window. **Ctrl+B** shows or hides it. Its twelve sections run in working order: model in, surroundings, staging, materials, then shots and output.
 
@@ -84,6 +84,16 @@ Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENS
 2. Set the spacing with *Every* (0.3 to 30 m).
 3. Choose how they face under *Facing*: along the line, across it, or at random.
 4. Press *Start placing along a line*, then click the start and the end of the line in the 3D view.
+
+## ONLINE: models, materials and skies from the internet
+
+1. Choose *From*: *BlendKit*, *Poly Haven (CC0)* or *ambientCG (CC0)*, and *What*: models, materials or skies.
+2. For BlendKit, press *Connect to BlendKit* (the first time it downloads BlendKit's Client, about 25 MB) and *Log in* (a free account; the login page opens in your browser). *Free only* shows the free assets.
+3. Type what you want (or nothing, for the most popular) and press *Search*. Pick one: its source, author and licence show under the list.
+4. Choose a *Size* (1k, 2k, 4k) and press *Download to my library*. Models then appear on the Assets page (*Your own*), materials on the Materials page, skies in the Environment page's skies.
+5. *Download the starter pack* (small, standard or large) gets the most useful free ones in one go. *Stop* stops a download; pressing again carries on where it stopped.
+
+See [ONLINE_LIBRARY.md](ONLINE_LIBRARY.md), also for the terminal script (`--get-assets`).
 
 ## ENVIRONMENT: sun, sky and weather
 
@@ -221,12 +231,14 @@ A look belongs to a camera, so choose the *Camera* first.
 
 ## RENDER
 
-1. Choose the *Camera* and the *Size*: HD, QHD, 4K, portrait 4:5, square or 8K.
-2. Choose the *Quality*:
-   - *Preview (fast)* for checks
-   - *Standard* for most stills
-   - *High quality (16 samples)* and *Maximum quality (64 samples)*, which average many renders for clean edges, soft shadows and true lens blur
-3. Press *Render still*.
+1. Choose the *Renderer*:
+   - *Real-time (instant)*: what the 3D view shows, in seconds.
+   - *Eevee (fast, photoreal)* and *Cycles (path traced, most real)*: Blender's engines, built into Oriel, rendering in the background. The note under the choice says which engine is in use. See [RENDERING.md](RENDERING.md).
+2. Choose the *Camera* and the *Size*: HD, QHD, 4K, portrait 4:5, square or 8K.
+3. Choose the *Quality*:
+   - Real-time: *Preview (fast)* for checks, *Standard* for most stills, *High quality (16 samples)* and *Maximum quality (64 samples)*, which average many renders for clean edges, soft shadows and true lens blur.
+   - Eevee and Cycles: *Draft* (a quick look), *Good* (for sharing), *High* (for print), *Best* (the finest detail). Each engine remembers its own.
+4. Press *Render still*. With Eevee or Cycles the line under the buttons shows how far it is and the time left; *Stop rendering* stops it (nothing half-made is saved).
 
 Pictures are saved as PNG in the project's `renders/` folder. *Show renders folder* opens it.
 
@@ -248,6 +260,8 @@ A film is a list of **shots**. *Play* previews it; *Move up* and *Remove* arrang
 **Add an orbit.** Select the building, set *Turn* (degrees), *Height* and *Length*, and press *Add orbit*.
 
 **Time-lapse.** Tick *The sun moves through the film* and set *From* and *To*.
+
+**Renderer.** The film is rendered by the renderer chosen on the Render page (the note at the bottom of the Movie page says which). With Eevee or Cycles, *Stop rendering* stops it and keeps the frames made so far; *Render the movie* again carries on from the first missing frame.
 
 **Moving objects** adds traffic, people walking, boats: things that travel along a path you draw.
 

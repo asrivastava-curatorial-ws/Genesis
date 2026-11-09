@@ -282,6 +282,7 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 	if str(ex.error) != "":
 		say.call(str(ex.error))
 		return ""
+	ex["dir"] = dir
 	# What moves: the objects on a moving-objects path, flying screens, and
 	# whatever the build-up phasing raises.
 	var moving: Array = []

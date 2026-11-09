@@ -340,7 +340,7 @@ func _modules_and_panel() -> void:
 		panel.show_section(section)
 		await process_frame
 		panel.refresh()
-	check(errors.call() == base_errors, "panel: all twelve pages build and refresh with a scene open (%d errors)" % (errors.call() - base_errors))
+	check(errors.call() == base_errors, "panel: all thirteen pages build and refresh with a scene open (%d errors)" % (errors.call() - base_errors))
 	host.select(saved)
 	await process_frame
 	await process_frame

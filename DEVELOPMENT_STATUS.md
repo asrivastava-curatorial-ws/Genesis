@@ -1,4 +1,4 @@
-# Development status: Oriel 1.0.0-rc3
+# Development status: Oriel 1.0.0-rc4
 
 ## Stages
 
@@ -15,6 +15,8 @@
 | 9 | AI, panorama, MOVIE | Real-ESRGAN per-user install; panorama and MP4 from the built program (E2E); a path tool for moving objects; walkers walking in the rendered film (E2E *walk*). |
 | 10 | SET and SHOW | Set pieces, cues, GO; OSC/UDP cue input added; outgoing OSC/text/TCP and live video (file, UDP, SRT) tested; planning-estimate labels. |
 | 11 | UI polish and performance | Layout fits the smallest window; view quality setting; crashes on exit fixed. **rc3:** GitHub Dark Default theme (VSCodium's) with JetBrains Mono and Lucide icons; activity bar for the pages; VS Code-style status bar; foldable properties in plain words; developer leftovers removed; placing models with the mouse; one file picker with remembered folders and path fields; whole-model thumbnails. |
+| 13 | Photoreal rendering (rc4) | Done: Eevee and Cycles built in (Blender 5.2.3 LTS's `bpy` with its own Python, `tools/build_engine.sh`); scene export to glTF plus a job (`gn_scene_export.gd`), the Blender side (`addons/genesis/blender/oriel_render.py`), jobs with progress and stop (`gn_blender.gd`), stills, sun studies, passes, 360° (stereo with Cycles), tours and resumable films (`gn_photoreal.gd`, `gn_movie.gd`). Grading with Godot's own tone curves; brightness matched to the real-time renderer within a few per cent on the architecture demo. Tested with Blender 4.0.2, 4.5.15 LTS and 5.2.3 LTS, on the processor only. |
+| 14 | Online library (rc4) | Done: BlendKit through its Client, Poly Haven, ambientCG (`gn_online.gd`, `gn_blendkit.gd`, Online page), resumable checked downloads (`gn_download.gd`), the starter pack and `tools/oriel_assets.py`. Tested against a local stand-in for Poly Haven and BlendKit's real Client; the real services were not reachable from the build machine. |
 | 12 | Testing, documentation, packaging | Four headless suites (394 checks) and a smoke tour, the built program's own smoke tour, five-launch E2E with real rendering, a screenshot tour of every page and dialog (`--ui-tour`); 33 pages in docs/ (with INVENTORY.md), START_HERE.md and the manual as one HTML/PDF file; launchers; one AppImage for Linux (rc3). |
 
 Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limitations: `docs/KNOWN_LIMITATIONS.md`.

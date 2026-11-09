@@ -11,7 +11,7 @@ const App := preload("res://app/core/app.gd")
 const GnFileDialog := preload("res://addons/genesis/core/gn_file_dialog.gd")
 const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
-const PAGES := ["Scene", "Plans", "Assets", "Environment", "Landscape", "Set", "Materials",
+const PAGES := ["Scene", "Plans", "Assets", "Online", "Environment", "Landscape", "Set", "Materials",
 	"Cameras", "Look", "Render", "Movie", "Show"]
 
 

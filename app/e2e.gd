@@ -893,8 +893,13 @@ static func _photoreal(main: Node, out_dir: String) -> void:
 			DirAccess.copy_absolute(ProjectSettings.globalize_path(r.paths[0]), shots.path_join("photoreal_%s.png" % e))
 		_step("P2" if e == "eevee" else "P3", ok, "Render a 1280 × 720 still with %s, graded like the editor's view (%s, %d s) %s" % [
 			GnBlender.LABELS[e], str(r.paths[0]).get_file() if ok else r.error, (Time.get_ticks_msec() - t0) / 1000, r.warnings])
+	# A photographed sky fixes the sun where the photo has it; the study
+	# moves the sun of Oriel's own sky.
+	var sky_before = GnEnvironment.value("sky")
+	GnEnvironment.apply("sky", "Clear", false)
 	var study: Dictionary = await GnPhotoreal.render_stills([cam], Vector2i(480, 270), "cycles", "Draft", main, func(_t): pass,
 		{"hours": [9.0, 12.0, 15.0]})
+	GnEnvironment.apply("sky", sky_before, false)
 	var study_ok: bool = study.state == "done" and study.paths.size() == 3
 	if study_ok:
 		var a := Image.load_from_file(ProjectSettings.globalize_path(study.paths[0]))

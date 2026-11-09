@@ -60,7 +60,7 @@ This delivery has no Windows program. One can be built from the source (section 
    - Drag the arrows to move it. **E** switches to the rings (turn) and **R** to the boxes (resize). Hold **Ctrl** to snap.
    - Every change can be undone with **Ctrl+Z**.
 4. **Change it under Properties.** Every setting of the selected object is there, in sections that fold, down to an LED wall's panel size and pixel pitch.
-5. **Use the Oriel panel on the right.** The strip of icons on the right edge switches between its twelve pages, in working order: Scene, Plans, Assets, Environment, Landscape, Set, Materials, Cameras, Look, Render, Movie and Show. Hover an icon for its name.
+5. **Use the side panel on the right.** The strip of icons on the right edge switches between its thirteen pages, in working order: Scene, Plans, Assets, Online, Environment, Landscape, Set, Materials, Cameras, Look, Render, Movie and Show. Hover an icon for its name.
    - Try *Environment*: change the time of day and watch the sun move.
    - [docs/SECTION_GUIDE.md](docs/SECTION_GUIDE.md) explains every button on every page.
 6. **Place things.** On *Assets*, click a model in the grid, press *Place …*, and click where it goes: a see-through copy follows the mouse and stands on whatever is under it. **R** turns it, **Shift+click** places another, **Esc** stops. Or drag a model from the grid straight into the 3D view.
