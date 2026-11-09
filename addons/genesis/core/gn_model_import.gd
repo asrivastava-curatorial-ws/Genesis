@@ -177,9 +177,21 @@ static func find_blender() -> String:
 ## Returns {"path": the .glb, "error": ""}.
 static func blend_to_glb(source: String) -> Dictionary:
 	var blender := find_blender()
-	if blender == "":
-		return _fail("A .blend file needs Blender (free, blender.org). Install it, or set where it is in Tools > Dependencies.")
 	var out := GnPaths.cache_dir("blend").path_join("%s_%d.glb" % [source.get_file().get_basename().validate_filename(), Time.get_ticks_msec()])
+	if blender == "":
+		# The program's own Blender engine (Eevee and Cycles' module) reads
+		# .blend files too.
+		var GnBlender = load("res://addons/genesis/core/gn_blender.gd")
+		var eng: Dictionary = GnBlender.engine()
+		if eng.kind != "module":
+			return _fail("A .blend file needs Blender (free, blender.org). Install it, or set where it is in Tools > Dependencies.")
+		var code := "import bpy\nbpy.ops.wm.open_mainfile(filepath=%s)\nbpy.ops.export_scene.gltf(filepath=%s, export_format='GLB', export_apply=True)\n" % [
+			JSON.stringify(source), JSON.stringify(out)]
+		var said := []
+		var c := OS.execute(str(eng.path), PackedStringArray(["-I", "-c", code]), said, true)
+		if c != 0 or not FileAccess.file_exists(out):
+			return _fail("The built-in Blender engine could not read %s (exit %d). %s" % [source.get_file(), c, "\n".join(said).right(400)])
+		return {"path": out, "error": ""}
 	var script := "import bpy; bpy.ops.export_scene.gltf(filepath=r'%s', export_format='GLB', export_apply=True)" % out
 	var output := []
 	var code := OS.execute(blender, ["-b", source, "--python-expr", script], output, true)

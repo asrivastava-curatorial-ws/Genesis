@@ -1,6 +1,6 @@
-# The Genesis panel, section by section
+# The Oriel panel, section by section
 
-The Genesis panel sits on the right of the window. **Ctrl+B** shows or hides it. Its twelve sections run in working order: model in, surroundings, staging, materials, then shots and output.
+The Oriel panel sits on the right of the window. **Ctrl+B** shows or hides it. Its twelve sections run in working order: model in, surroundings, staging, materials, then shots and output.
 
 - A section acts on the open scene. Most act on what is selected.
 - Everything they do can be undone with **Ctrl+Z**.
@@ -15,8 +15,8 @@ Button and option names below are as they appear in the program.
 **Building.**
 
 - *Bring in a building…* does the same as *File > Bring In a Model…* (Ctrl+I).
-- GLB, glTF, FBX and OBJ come in directly. `.blend` files go through Blender; *Find Blender…* tells Genesis where Blender is.
-- With *Live link* ticked, Genesis watches the source file. When you export again from SketchUp, Revit, Rhino, Archicad or Blender, it brings the new version into the same place. It keeps the model's position, the materials you changed in Genesis, and anything you put inside it.
+- GLB, glTF, FBX and OBJ come in directly. `.blend` files go through Blender; *Find Blender…* tells Oriel where Blender is.
+- With *Live link* ticked, Oriel watches the source file. When you export again from SketchUp, Revit, Rhino, Archicad or Blender, it brings the new version into the same place. It keeps the model's position, the materials you changed in Oriel, and anything you put inside it.
 
 **Site context.** This brings in the real neighbourhood from OpenStreetMap: buildings, roads, parks and water, on the real ground.
 
@@ -74,7 +74,7 @@ Every one of the 295 models is CC0 and keeps its licence file (see [ASSET_LICENS
 4. Press *Add*. It appears in its category, and under *Show: Your own*.
 
 - Models in the *Trees*, *Plants* and *Grass* categories can also be painted on the Landscape page.
-- The library is a folder of your own (*Open your library folder*): `~/.local/share/Genesis/library/` on Linux, `%APPDATA%\Genesis\library\` on Windows. Each model is a `.scn` file with its `.license.json` beside it.
+- The library is a folder of your own (*Open your library folder*): `~/.local/share/Oriel/library/` on Linux, `%APPDATA%\Oriel\library\` on Windows. Each model is a `.scn` file with its `.license.json` beside it.
 - A project that uses one of your models gets its own copy in `assets/library/`, so it still opens on another computer or after you remove the model.
 - *Remove it* takes the selected model out of your library. The bundled models cannot be removed.
 
@@ -169,7 +169,7 @@ Select a piece to change it in the Properties panel. For an LED wall, that means
 1. Select an object.
 2. Pick one of its *Surface*s (a model usually has several).
 3. Give it a material in one of three ways:
-   - **Presets**: asphalt, brick, concrete, glass, grass, metal, stone and wood, drawn by Genesis itself (CC0). Each is mapped at its real size in world space, so it fits any model whatever its texture coordinates. With the downloaded library installed (`tools/setup.py`), photographed versions replace them and more are added.
+   - **Presets**: asphalt, brick, concrete, glass, grass, metal, stone and wood, drawn by Oriel itself (CC0). Each is mapped at its real size in world space, so it fits any model whatever its texture coordinates. With the downloaded library installed (`tools/setup.py`), photographed versions replace them and more are added.
    - **Your own image**: *Use an image…* takes a photo or a texture map. *One tile is* sets its real size in metres. Normal and roughness maps saved next to the image under the usual names come in too.
    - **Tiles and grout**: choose the *Layout*, tile width and height, grout joint and colour, *Tile finish* and *Shade variation*, then press *Tile this surface*. The tiles are real size and laid in world space.
 

@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.0.0-rc4 (Oriel)
+
+Photoreal rendering built in, an online library, and a new name. Every feature of rc3 is kept.
+
+### The name
+- **Oriel** (an oriel is a bay window that lets light in from three sides): a free, open alternative to Lumion, D5 and V-Ray. It was called Genesis Community up to rc3 and is built on Genesis by Utopian Academy.
+- New icon, window title, desktop entry and AppImage name (`Oriel-1.0.0-rc4-x86_64.AppImage`). The user's folder is now `~/.local/share/Oriel`; the first start copies the settings, the own library and the downloaded tools from the old `Genesis` folder (which is left as it was). New projects go to `~/Documents/Oriel Projects`. Projects keep their format, so rc3 projects open unchanged.
+
+### Eevee and Cycles, built in
+- **Three renderers on the Render page**: Real-time (as before), **Eevee** and **Cycles**, Blender 5.2 LTS's render engines. They come inside the AppImage (Blender as a Python module, with its own Python): nothing to install, Blender is never shown, and renders run in the background with progress, time left and **Stop**.
+- **Everything carries over**: models and materials (with Oriel's world-space mapping, normal maps, glass that lets the sun in, emission), water, painted ground, aerial imagery, copies (as instances), lights at the brightness the editor shows, area lights as true area lights, stage haze with beams, the cloud sky or the photo sky, fog with aerial perspective, the camera (2-point perspective, depth of field, exposure) and texts.
+- **Graded like the editor**: the engine's picture is finished with Godot's own tone curves (ACES, AgX, Filmic, Reinhard), exposure, glow and adjustments, then the camera's look (grading, styles, titles, logos) goes on as on every render. On the architecture demo the three renderers match in brightness to within a few per cent.
+- **Stills, every camera, sun studies, passes, 360° panoramas (stereo too), virtual tours and films** all go through the chosen renderer. Passes: depth, normals, object ID, mask and clay. Eevee's 360° is stitched from six views; Cycles uses its panoramic camera.
+- **Films resume**: frames rendered are kept when a film is stopped, and a re-run carries on from the first missing frame (a changed film starts again). Moving objects, flying screens, build-up phasing and a time-lapse sun move in the photoreal film as in the real-time one.
+- Quality in plain words: Draft, Good, High, Best (Eevee 16 to 256 samples, with baked indirect light for High and Best; Cycles 32 to 1536 samples with adaptive sampling and the OpenImageDenoise denoiser). Cycles uses the graphics card (OptiX/CUDA, HIP, oneAPI) when there is one.
+
+### The online library
+- **Online page**: search **BlendKit** (through BlendKit's own Client, downloaded on first use and checked against its fingerprint; login in the browser; free only, or more with a subscription), **Poly Haven** and **ambientCG**, with thumbnails; download models (into the library, in their category), materials (presets in world space at their real size) and skies, each with its licence record.
+- **Starter pack**: the most useful free skies, materials and models in one go (small, standard or large), stoppable and resumable. With BlendKit logged in, its best free models and materials come too.
+- **`oriel_assets.py`**: the same starter pack from a terminal (`--get-assets` from the AppImage, using Oriel's own Python); standard library only, for Linux, Windows and macOS.
+- **Safe downloads**: `.part` files that become real only when whole and matching the published checksum; resume after a stop or a dropped connection; servers' "too many requests" waited out; nothing downloaded twice; a manifest of every asset written atomically with a backup.
+
+### Tests
+- `online_tests.gd`: the online library against a local stand-in for Poly Haven (22 checks); `--photoreal` test mode; a new end-to-end phase (`--e2e photoreal`): Eevee and Cycles stills, a sun study, passes, 360°s, stopping a render, stopping and resuming a film, from the built program with its own engines.
+
 ## 1.0.0-rc3 (Genesis Community)
 
 A professional interface. Every feature of rc2 is kept; what changed is how the program looks and how it is used.
@@ -18,17 +43,17 @@ A professional interface. Every feature of rc2 is kept; what changed is how the 
 ### Easier to use
 - **Placing models with the mouse.** On *Assets*, click a model and press *Place …* (or double-click it), then click where it goes: a see-through copy follows the mouse and stands on whatever is under it (ground, floor, terrace, table). **R** turns it (Shift+R the other way, or Ctrl+wheel), **Shift+click** places another, **Esc** or a right click stops. Or drag the model from the grid into the 3D view. A model file dropped from the file manager onto the 3D view lands where it is dropped.
 - **The asset grid** shows pictures of whole models (a tree with its leaves, not just its trunk), with the name under each and the licence of the one picked.
-- **Choosing files and folders**: one picker everywhere. It is your desktop's own dialog (KDE's on Kubuntu) where there is one, else Genesis's, with favourites (home, documents, desktop, downloads, pictures, videos, the project, your library) and recent folders. Each kind of file opens where the last one of that kind was picked. Fields that hold a path have *Browse…*, a button to show the file in the file manager, a warning when nothing is there, and take a file dropped on the window. Preferences can switch to Genesis's own dialog.
+- **Choosing files and folders**: one picker everywhere. It is your desktop's own dialog (KDE's on Kubuntu) where there is one, else Oriel's, with favourites (home, documents, desktop, downloads, pictures, videos, the project, your library) and recent folders. Each kind of file opens where the last one of that kind was picked. Fields that hold a path have *Browse…*, a button to show the file in the file manager, a warning when nothing is there, and take a file dropped on the window. Preferences can switch to Oriel's own dialog.
 - **Scene tree**: an icon for each kind of thing, and an eye (show or hide) and a padlock (lock) at the end of each row instead of two columns of tick boxes; the number of objects at the top.
-- **Properties**: the selected object's name and kind at the top, settings in sections that fold (and stay folded from one object to the next), in plain words (*Brightness*, *Reach*, *Beam angle*, *Field of view*... not the engine's names). Genesis's own objects too, with units and a tooltip saying what each setting does: an LED wall's *Curve (°)*, a light's *Output (lumens)*, a path's *Speed (m/s)* and *Round corners*.
+- **Properties**: the selected object's name and kind at the top, settings in sections that fold (and stay folded from one object to the next), in plain words (*Brightness*, *Reach*, *Beam angle*, *Field of view*... not the engine's names). Oriel's own objects too, with units and a tooltip saying what each setting does: an LED wall's *Curve (°)*, a light's *Output (lumens)*, a path's *Speed (m/s)* and *Round corners*.
 - **Paths read as paths**: messages and pages show files relative to the project (`renders/Main_Exterior.png`) or the home folder (`~/…`), not as full system paths.
 - **Keyboard and Mouse** (Help, or F1) is a reference card: every mouse action and every command with its keys, the keys drawn as keys.
 - **Frame Everything** (View, or Home) frames the design, not the 400 m lawn it stands on.
 
 ### Developer leftovers removed
-- Properties no longer list Genesis's own bookkeeping (import options, file times, file hashes); an *About* section says which library a model is from, the file it was brought in from and its licence.
+- Properties no longer list Oriel's own bookkeeping (import options, file times, file hashes); an *About* section says which library a model is from, the file it was brought in from and its licence.
 - The console is out of the way until it is wanted (Ctrl+J, View > Console, or the counts in the status bar).
-- Engine class names are gone from tooltips and properties; undo steps read "Undo: Place Bench", not "Undo: Genesis: place Bench".
+- Engine class names are gone from tooltips and properties; undo steps read "Undo: Place Bench", not "Undo: Oriel: place Bench".
 
 ### Packaging
 - **One AppImage for Linux**, with the manual and the two demo projects inside. `--install-shortcut` adds it to the applications menu; `--remove-shortcut` takes it off. [docs/INVENTORY.md](docs/INVENTORY.md) lists everything it contains and everything it writes on the computer.
@@ -36,12 +61,12 @@ A professional interface. Every feature of rc2 is kept; what changed is how the 
 ### Fixed
 - The Movie page's *Show the renders folder* opened the program's own folder, not the project's renders.
 - Tree thumbnails lost their leaves (the level of detail for a small picture dropped them).
-- Genesis's own file picker always opened in the program's folder and showed no favourites: a method of Godot's with the same name was called instead of Genesis's. It now opens where that kind of file was last picked, else in the open project, with the usual places as favourites. A test checks it, and another that no Genesis method is hidden by one of Godot's.
+- Oriel's own file picker always opened in the program's folder and showed no favourites: a method of Godot's with the same name was called instead of Oriel's. It now opens where that kind of file was last picked, else in the open project, with the usual places as favourites. A test checks it, and another that no Oriel method is hidden by one of Godot's.
 - The *New project* and *Bring in a model* dialogs could grow to the height of the screen, with their buttons out of sight.
 - Pages no longer widen the side panel as you switch between them: long button labels are shorter (the detail is in their tooltips) and rows of buttons wrap.
 - The Show page's empty lists say what goes in them, instead of showing blank boxes.
 - Warnings about files missing from a scene name the file, not its internal path.
-- Closing Genesis could crash on the way out (with a real renderer): the theme's fonts and the icons were let go after the renderer had shut down. A thumbnail still being drawn as the program closed also held its model and the undo history past the end. Both are released in time now, and every end-to-end launch is checked for a clean exit.
+- Closing Oriel could crash on the way out (with a real renderer): the theme's fonts and the icons were let go after the renderer had shut down. A thumbnail still being drawn as the program closed also held its model and the undo history past the end. Both are released in time now, and every end-to-end launch is checked for a clean exit.
 
 ## 1.0.0-rc2 (Genesis Community)
 
@@ -53,7 +78,7 @@ A professional interface. Every feature of rc2 is kept; what changed is how the 
 - **Your own library of models**: *Assets > Add a model…* (GLB, glTF, FBX, OBJ; .blend with Blender) with its name, category, unit, up axis and licence (your own work, CC0, CC BY, CC BY-SA or another), kept in your user data folder for every project. Your plants, trees and grass can be painted on the Landscape page. A project that uses one gets its own copy. *Remove it* and *Open your library folder*.
 - **Your own skies**: *Environment > Add a sky image…* takes a 360° panorama (HDR, JPG, PNG, WebP), finds the sun in it and lights the scene from there.
 - **Material presets in the build**: asphalt, brick, concrete, glass, grass, metal, stone and wood, drawn by `tools/make_materials.gd` (CC0, no internet needed). The build draws them when they are missing.
-- **Scenes that use files not on this computer open anyway.** A missing model is an empty marker in its place; missing plants, a photographed sky and scanned textures from the downloaded library show stand-ins (bundled trees and shrubs, Genesis's own sky, the drawn preset textures). Saving and autosave keep every reference, and stand-ins are never saved, so the files come back when they are installed. Importing an old plugin project reports what its scenes use that is not here.
+- **Scenes that use files not on this computer open anyway.** A missing model is an empty marker in its place; missing plants, a photographed sky and scanned textures from the downloaded library show stand-ins (bundled trees and shrubs, Oriel's own sky, the drawn preset textures). Saving and autosave keep every reference, and stand-ins are never saved, so the files come back when they are installed. Importing an old plugin project reports what its scenes use that is not here.
 - The demo pavilion has a plaza path with three walkers, a plaza camera and a sample film (`renders/samples/main_film.mp4`).
 - **Site context from a saved map file**: *Scene > Bring in an OpenStreetMap file…* takes a `map.osm` exported from openstreetmap.org (or any extract), for computers that cannot reach the map services.
 
@@ -66,7 +91,7 @@ A professional interface. Every feature of rc2 is kept; what changed is how the 
 - Bringing in the original Genesis repository as an old plugin project: its three scenes open, render and save without losing a reference.
 
 ### Fixed
-- A scene referring to any file that was not on the computer could not be opened ("not a scene Genesis can read").
+- A scene referring to any file that was not on the computer could not be opened ("not a scene Oriel can read").
 - Blender's glTF exporter failing for want of numpy (Ubuntu's Blender package) gave an unhelpful error; it now says what to install.
 - A photographed sky whose file was missing turned the scene's sky empty when the time of day changed; the sky is now left as it is.
 - The Scene page said Blender was not set up when the program had found it on its own.
@@ -81,7 +106,7 @@ The Genesis editor plugin as a standalone desktop application.
 - 3D view: orbit, pan, zoom, fly; frame selection or everything; views from above, the front and the side; orthographic; look through a saved camera; grid; axis indicator.
 - Selecting by clicking, Ctrl+click and box; move, turn and resize handles with axis and plane constraints, local or world, snapping; whole drags undoable.
 - Scene tree: rename, duplicate, delete, group, ungroup, drag to reorder and reparent, show/hide, lock, search.
-- Properties for every object, including every setting of Genesis set pieces.
+- Properties for every object, including every setting of Oriel set pieces.
 - Undo and redo for everything, named in the Edit menu.
 - Projects as portable folders: manifest (format 1), backups of the last five saves, autosave and recovery, moved projects keep working, finding missing files, importing old plugin projects.
 - Importing models without the editor: glTF/GLB, FBX, OBJ (+MTL), .blend via Blender; unit and up-axis settings; live link that keeps the user's changes.
@@ -92,12 +117,12 @@ The Genesis editor plugin as a standalone desktop application.
 - Dependency manager (FFmpeg, Blender, Real-ESRGAN, Poppler, ODA File Converter).
 - Launchers for Linux and Windows, desktop shortcuts.
 - Two demonstration projects, built and rendered by the program itself (`--make-demos`, `--render-samples`): a museum pavilion with daylight, golden-hour and night scenes, and a concert stage with four show cues.
-- Documentation: START_HERE.md, a section-by-section guide to the Genesis panel, 30 topic pages, and the whole manual as one HTML page and PDF (`tools/build_manual.py`, Help > Documentation); third-party notices; asset licensing table.
+- Documentation: START_HERE.md, a section-by-section guide to the Oriel panel, 30 topic pages, and the whole manual as one HTML page and PDF (`tools/build_manual.py`, Help > Documentation); third-party notices; asset licensing table.
 - Automated tests: 283 headless checks, a smoke tour of the built program (it runs on throwaway settings and leaves nothing behind), and a three-launch end-to-end test with real rendering.
 
 ### Changed
-- Genesis code reaches its surroundings through one host layer (`GnHost`); the editor plugin keeps working through the same layer.
-- Files Genesis writes go to the project folder (standalone) or `res://` (plugin), through `GnPaths`.
+- Oriel code reaches its surroundings through one host layer (`GnHost`); the editor plugin keeps working through the same layer.
+- Files Oriel writes go to the project folder (standalone) or `res://` (plugin), through `GnPaths`.
 - LED wall reports say their figures are planning estimates.
 - The real-ESRGAN upscaler installs per user, not inside the project.
 

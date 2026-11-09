@@ -37,13 +37,13 @@ The Linux AppImage (the program, the manual and the two demos in one file):
 wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
 wget https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
 chmod +x appimagetool-x86_64.AppImage
-build/linux/Genesis.x86_64 -- --make-demos ~/genesis-demos
+build/linux/Oriel.x86_64 -- --make-demos ~/genesis-demos
 python3 tools/build_manual.py
 bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genesis-demos
 ```
 
-It writes `build/Genesis-Community-<version>-x86_64.AppImage` and its `.sha256`. It needs `rsvg-convert` (`sudo apt install librsvg2-bin`) for the icon.
+It writes `build/Oriel-<version>-x86_64.AppImage` and its `.sha256`. It needs `rsvg-convert` (`sudo apt install librsvg2-bin`) for the icon.
 
-The interface icons are generated from Lucide's SVGs (`npm pack lucide-static@1.67.0`, unpacked) with `python3 tools/make_icons.py package`. A picture of every page and dialog, for checking the look: `Genesis -- --ui-tour "<project folder>" <out folder>` (needs a display).
+The interface icons are generated from Lucide's SVGs (`npm pack lucide-static@1.67.0`, unpacked) with `python3 tools/make_icons.py package`. A picture of every page and dialog, for checking the look: `Oriel -- --ui-tour "<project folder>" <out folder>` (needs a display).
 
-The editor plugin still works: open the folder in the Godot 4.7.2 editor and Genesis appears as a dock, as before. Its own tests: `bash tests/run_all.sh` (needs a GPU).
+The editor plugin still works: open the folder in the Godot 4.7.2 editor and Oriel appears as a dock, as before. Its own tests: `bash tests/run_all.sh` (needs a GPU).

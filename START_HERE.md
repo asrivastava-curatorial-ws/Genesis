@@ -1,11 +1,12 @@
-# Start here: Genesis Community 1.0.0-rc3
+# Start here: Oriel 1.0.0-rc4
 
-Genesis Community is free architectural and event visualisation that runs as its own program, with no Godot editor. This page covers getting it running, finding your way around, and checking that it works on your computer.
+Oriel (called Genesis Community up to rc3) is free architectural and event visualisation that runs as its own program, with no Godot editor, and renders in real time or photoreal with the built-in Eevee and Cycles engines. This page covers getting it running, finding your way around, and checking that it works on your computer.
 
 > **This is a release candidate, not 1.0.0.**
 >
-> - **What is new in rc3:** a professional interface. GitHub's Dark Default theme (as VSCodium shows it) in JetBrains Mono, icons throughout, a strip of icons for the twelve pages, models placed by clicking or dragging where they go, and one way of choosing files and folders everywhere. Every feature of rc2 is still there. See [CHANGELOG.md](CHANGELOG.md).
-> - **Linux:** one AppImage, tested on Ubuntu 24.04 (the base of Kubuntu 24.04) with software rendering: every automated suite, the smoke tour and the end-to-end test in five launches, run from the AppImage itself.
+> - **What is new in rc4:** Eevee and Cycles built in (choose the renderer on the Render page; nothing to install), the *Online* page with BlendKit, Poly Haven and ambientCG, a starter pack of free assets (also from a terminal with `--get-assets`), and the new name. See [CHANGELOG.md](CHANGELOG.md), [docs/RENDERING.md](docs/RENDERING.md) and [docs/ONLINE_LIBRARY.md](docs/ONLINE_LIBRARY.md).
+> - **What was new in rc3:** a professional interface. GitHub's Dark Default theme (as VSCodium shows it) in JetBrains Mono, icons throughout, a strip of icons for the twelve pages, models placed by clicking or dragging where they go, and one way of choosing files and folders everywhere. Every feature of rc2 is still there. See [CHANGELOG.md](CHANGELOG.md).
+> - **Linux:** one AppImage (about 650 MB, with the engines), tested on Ubuntu 24.04 (the base of Kubuntu 24.04) with software rendering and no graphics card: every automated suite, the smoke tour and the end-to-end test, run from the AppImage itself.
 > - **Windows:** not part of this delivery. The Windows program is built from the same source, but has **not** been run on Windows yet.
 >
 > What is still open is listed in [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md). Everything the AppImage contains, and everything it writes on your computer, is in [docs/INVENTORY.md](docs/INVENTORY.md).
@@ -13,24 +14,24 @@ Genesis Community is free architectural and event visualisation that runs as its
 ## 1. Check the download (optional)
 
 ```bash
-sha256sum -c Genesis-Community-1.0.0-rc3-x86_64.AppImage.sha256
+sha256sum -c Oriel-1.0.0-rc4-x86_64.AppImage.sha256
 ```
 
 ## 2. Run it on Linux (Ubuntu or Kubuntu 24.04)
 
 ```bash
-mkdir -p ~/Applications && mv Genesis-Community-1.0.0-rc3-x86_64.AppImage ~/Applications/
+mkdir -p ~/Applications && mv Oriel-1.0.0-rc4-x86_64.AppImage ~/Applications/
 cd ~/Applications
-chmod +x Genesis-Community-1.0.0-rc3-x86_64.AppImage
-./Genesis-Community-1.0.0-rc3-x86_64.AppImage                      # start Genesis
-./Genesis-Community-1.0.0-rc3-x86_64.AppImage --install-shortcut   # optional: add it to the applications menu
+chmod +x Oriel-1.0.0-rc4-x86_64.AppImage
+./Oriel-1.0.0-rc4-x86_64.AppImage                      # start Oriel
+./Oriel-1.0.0-rc4-x86_64.AppImage --install-shortcut   # optional: add it to the applications menu
 ```
 
 - Nothing is installed system-wide, and no administrator rights are needed.
 - To start with a project already open, put its folder after the file name.
 - If it says FUSE is missing: `sudo apt install fuse3`, or add `--appimage-extract-and-run`.
 
-**Graphics.** Genesis uses Vulkan 1.2. Check what it will run on:
+**Graphics.** Oriel uses Vulkan 1.2. Check what it will run on:
 
 ```bash
 sudo apt install vulkan-tools
@@ -38,7 +39,7 @@ vulkaninfo --summary | grep -E "deviceName|driverName"
 ```
 
 - With an NVIDIA card, the list should name it; `nvidia-smi` confirms the driver.
-- If the list shows only `llvmpipe`, Vulkan is running in software. Genesis still works that way, but slowly; it is how this release was tested. To use the card, install its driver (`sudo ubuntu-drivers install`) and restart.
+- If the list shows only `llvmpipe`, Vulkan is running in software. Oriel still works that way, but slowly; it is how this release was tested. To use the card, install its driver (`sudo ubuntu-drivers install`) and restart.
 
 ## 3. Windows
 
@@ -48,7 +49,7 @@ This delivery has no Windows program. One can be built from the source (section 
 
 ![The start screen](docs/screenshots/01_project_manager.png)
 
-1. **Open a demo.** On the start screen, under *Try a demo*, choose *Architecture demo*. Genesis copies it into your projects folder (`~/Documents/Genesis Projects/`) and opens the copy, so the demo itself stays as it was.
+1. **Open a demo.** On the start screen, under *Try a demo*, choose *Architecture demo*. Oriel copies it into your projects folder (`~/Documents/Oriel Projects/`) and opens the copy, so the demo itself stays as it was.
 2. **Look around.**
    - Middle-drag orbits, Shift + middle-drag pans and the wheel zooms.
    - On a laptop, Alt + left-drag orbits.
@@ -59,7 +60,7 @@ This delivery has no Windows program. One can be built from the source (section 
    - Drag the arrows to move it. **E** switches to the rings (turn) and **R** to the boxes (resize). Hold **Ctrl** to snap.
    - Every change can be undone with **Ctrl+Z**.
 4. **Change it under Properties.** Every setting of the selected object is there, in sections that fold, down to an LED wall's panel size and pixel pitch.
-5. **Use the Genesis panel on the right.** The strip of icons on the right edge switches between its twelve pages, in working order: Scene, Plans, Assets, Environment, Landscape, Set, Materials, Cameras, Look, Render, Movie and Show. Hover an icon for its name.
+5. **Use the Oriel panel on the right.** The strip of icons on the right edge switches between its twelve pages, in working order: Scene, Plans, Assets, Environment, Landscape, Set, Materials, Cameras, Look, Render, Movie and Show. Hover an icon for its name.
    - Try *Environment*: change the time of day and watch the sun move.
    - [docs/SECTION_GUIDE.md](docs/SECTION_GUIDE.md) explains every button on every page.
 6. **Place things.** On *Assets*, click a model in the grid, press *Place …*, and click where it goes: a see-through copy follows the mouse and stands on whatever is under it. **R** turns it, **Shift+click** places another, **Esc** stops. Or drag a model from the grid straight into the 3D view.
@@ -69,7 +70,7 @@ This delivery has no Windows program. One can be built from the source (section 
    - After a still, *AI upscale the last render* sharpens it with Real-ESRGAN. The first time, it downloads the upscaler (about 47 MB).
 8. **Make a film.** *Movie* moves between saved cameras and writes an MP4. This needs FFmpeg (section 5). The pavilion demo already has a film with three people walking across the plaza: press *Play* on the Movie page.
 9. **Run a show.** Open the *Event production demo* from the start screen, go to *Show*, and press **GO** to step through the four cues.
-10. **Save.** Press **Ctrl+S** (or click *Unsaved changes* in the status bar). Genesis also keeps unsaved work every few minutes, and keeps the last five saved versions in `backups/`.
+10. **Save.** Press **Ctrl+S** (or click *Unsaved changes* in the status bar). Oriel also keeps unsaved work every few minutes, and keeps the last five saved versions in `backups/`.
 
 **A walkthrough with people walking** (like Lumion): bring in your model, paint plants on *Landscape*, set the sun on *Environment*, then on *Movie*:
 
@@ -90,18 +91,22 @@ What the demos' cameras give at *Standard* quality:
 | ![Interior](docs/screenshots/demo_architecture_interior.jpg) | ![Concert, photo pit](docs/screenshots/demo_event_photo_pit.jpg) |
 | ![A frame of the demo film: people walking across the plaza](docs/screenshots/demo_architecture_walk.jpg) | ![The plaza camera](docs/screenshots/demo_architecture_plaza.jpg) |
 
+**Render it photoreal.** On the Render page, set *Renderer* to *Eevee* or *Cycles*, pick a quality (*Draft* for a first look) and choose *Render still*. The engines are inside Oriel; the render runs in the background, with the time left, and *Stop rendering* stops it. The picture lands in the project's `renders/` folder next to the real-time ones. The Movie page renders films with the same renderer (a stopped film carries on where it stopped). See [docs/RENDERING.md](docs/RENDERING.md).
+
+**Fill your library.** On the *Online* page (the cloud icon), search Poly Haven, ambientCG or BlendKit (*Connect to BlendKit*, then *Log in*: a free account) and download models, materials and skies into your own library; or press *Download the starter pack* for the most useful ones in one go. Everything is kept, and a stopped download carries on later. From a terminal: `./Oriel-1.0.0-rc4-x86_64.AppImage --get-assets --size standard`. See [docs/ONLINE_LIBRARY.md](docs/ONLINE_LIBRARY.md).
+
 Then start your own project:
 
 1. Choose *New Project…*. The new project already has a sun, a sky and ground.
-2. Choose *File > Bring In a Model…* (**Ctrl+I**), or drop a model file on the 3D view: it lands where you drop it. GLB, glTF, FBX and OBJ work directly; `.blend` files need Blender.
+2. Choose *File > Bring In a Model…* (**Ctrl+I**), or drop a model file on the 3D view: it lands where you drop it. GLB, glTF, FBX, OBJ and `.blend` work directly (Oriel's built-in Blender engine reads `.blend`).
 3. Say what unit the model was made in and which way is up.
-4. With *Live link* on, re-exporting from your modelling program updates the model in Genesis.
+4. With *Live link* on, re-exporting from your modelling program updates the model in Oriel.
 
 ![The workspace with the Assets page open: the scene and its properties on the left, the 3D view, and the library on the right, where you pick a model and then click where it goes](docs/screenshots/02_workspace_architecture.png)
 
 ## 5. Optional tools
 
-Genesis runs without any of these. Each one adds a single feature. *Tools > Other Programs…* shows which ones Genesis has found.
+Oriel runs without any of these. Each one adds a single feature. *Tools > Other Programs…* shows which ones Oriel has found.
 
 Ubuntu 24.04:
 
@@ -120,12 +125,12 @@ winget install BlenderFoundation.Blender
 
 **DWG drawings** need the ODA File Converter from opendesign.com. It is free to download but not open source. DXF works without it: export DXF from your CAD program.
 
-**Real-ESRGAN by hand.** Use this only if the in-app download is blocked, for example by a proxy. It installs the same files to the same place, and Genesis finds them there.
+**Real-ESRGAN by hand.** Use this only if the in-app download is blocked, for example by a proxy. It installs the same files to the same place, and Oriel finds them there.
 
 Linux:
 
 ```bash
-D=~/.local/share/Genesis/tools/realesrgan
+D=~/.local/share/Oriel/tools/realesrgan
 mkdir -p "$D" && cd "$D"
 wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip
 echo "e5aa6eb131234b87c0c51f82b89390f5e3e642b7b70f2b9bbe95b6a285a40c96  realesrgan-ncnn-vulkan-20220424-ubuntu.zip" | sha256sum -c
@@ -137,7 +142,7 @@ curl -L -o LICENSE.txt https://raw.githubusercontent.com/xinntao/Real-ESRGAN/mas
 Windows (PowerShell):
 
 ```powershell
-$D = "$env:APPDATA\Genesis\tools\realesrgan"
+$D = "$env:APPDATA\Oriel\tools\realesrgan"
 New-Item -ItemType Directory -Force $D | Out-Null; Set-Location $D
 curl.exe -L -o rg.zip https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-windows.zip
 (Get-FileHash rg.zip -Algorithm SHA256).Hash   # must be ABC02804E17982A3BE33675E4D471E91EA374E65B70167ABC09E31ACB412802D
@@ -150,7 +155,7 @@ curl.exe -L -o LICENSE.txt https://raw.githubusercontent.com/xinntao/Real-ESRGAN
 **Self-test.** This takes about 20 seconds. It makes a project in a temporary folder, fills it, saves it, reopens it and deletes it. Your own projects and settings are not touched.
 
 ```bash
-./Genesis-Community-1.0.0-rc3-x86_64.AppImage --headless -- --smoke --expect-library     # ends with: GENESIS_SMOKE RESULT PASS
+./Oriel-1.0.0-rc4-x86_64.AppImage --headless -- --smoke --expect-library     # ends with: GENESIS_SMOKE RESULT PASS
 ```
 
 **End-to-end test.** This is the full test from the brief, in five launches, with real rendering. On a computer with a GPU it takes a few minutes; in software it takes about an hour.
@@ -164,24 +169,29 @@ curl.exe -L -o LICENSE.txt https://raw.githubusercontent.com/xinntao/Real-ESRGAN
 Each launch starts the program afresh. With software rendering all graphics memory is the computer's own, and one launch doing every kind of picture needed more than the 6 GB of the build machine.
 
 ```bash
-for phase in build verify views media walk; do ./Genesis-Community-1.0.0-rc3-x86_64.AppImage -- --e2e $phase ~/genesis-e2e; done
+for phase in build verify views media walk; do ./Oriel-1.0.0-rc4-x86_64.AppImage -- --e2e $phase ~/genesis-e2e; done
 cat ~/genesis-e2e/E2E_RESULTS_*.md
 ```
 
 Steps that need a tool that is not installed (Blender, FFmpeg, Poppler) say so and are skipped, not failed. The results of the run made for this release are in `reports/E2E_RESULTS_*.md` in the source.
 
-## 7. Where Genesis keeps things
+## 7. Where Oriel keeps things
 
 | What | Linux | Windows |
 |---|---|---|
-| Settings and the recent-projects list | `~/.local/share/Genesis/settings.json` | `%APPDATA%\Genesis\settings.json` |
-| Logs (*Help > Show the Log Folder*) | `~/.local/share/Genesis/logs/` | `%APPDATA%\Genesis\logs\` |
-| Downloaded tools (Real-ESRGAN) | `~/.local/share/Genesis/tools/` | `%APPDATA%\Genesis\tools\` |
-| Your own models and skies | `~/.local/share/Genesis/library/` | `%APPDATA%\Genesis\library\` |
-| Caches (safe to delete) | `~/.local/share/Genesis/cache/` | `%APPDATA%\Genesis\cache\` |
+| Settings and the recent-projects list | `~/.local/share/Oriel/settings.json` | `%APPDATA%\Oriel\settings.json` |
+| Logs (*Help > Show the Log Folder*) | `~/.local/share/Oriel/logs/` | `%APPDATA%\Oriel\logs\` |
+| Downloaded tools (Real-ESRGAN, BlendKit's Client) | `~/.local/share/Oriel/tools/` | `%APPDATA%\Oriel\tools\` |
+| Your own models and skies | `~/.local/share/Oriel/library/` | `%APPDATA%\Oriel\library\` |
+| Downloaded assets and their record (`online/manifest.json`) | `~/.local/share/Oriel/library/online/` | `%APPDATA%\Oriel\library\online\` |
+| Photoreal render jobs (scene, progress, engine log; the last six) | `~/.local/share/Oriel/cache/render_jobs/` | `%APPDATA%\Oriel\cache\render_jobs\` |
+| BlendKit's Client and your BlendKit login | `~/.local/share/Oriel/tools/blendkit/` | `%APPDATA%\Oriel\tools\blendkit\` |
+| Caches (safe to delete) | `~/.local/share/Oriel/cache/` | `%APPDATA%\Oriel\cache\` |
 | Your projects | wherever you make them | wherever you make them |
 
-**Projects.** A project is a folder: `genesis.project.json`, `scenes/`, `assets/`, `data/`, `renders/` and `backups/`.
+Coming from rc3: the first start copies your settings, own library and tools from `~/.local/share/Genesis/` (left as it was), and your projects open as they are.
+
+**Projects.** A project is a folder: `genesis.project.json` (the name is kept so older projects open), `scenes/`, `assets/`, `data/`, `renders/` and `backups/`.
 
 - You can copy or move it to another computer, including between Linux and Windows.
 - If files it uses are elsewhere, *File > Find Missing Files…* finds them.
@@ -191,16 +201,16 @@ See [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) for the full format.
 
 **To uninstall:**
 
-1. Run `./Genesis-Community-1.0.0-rc3-x86_64.AppImage --remove-shortcut` if you added the menu entry.
+1. Run `./Oriel-1.0.0-rc4-x86_64.AppImage --remove-shortcut` if you added the menu entry.
 2. Delete the AppImage.
-3. Optionally, delete the data folder in the table above (`rm -rf ~/.local/share/Genesis`). Your projects are yours; they stay.
+3. Optionally, delete the data folder in the table above (`rm -rf ~/.local/share/Oriel`). Your projects are yours; they stay.
 
 ## 8. Source code, tests and building it yourself
 
-The git repository with its full history comes as `genesis-repo.bundle`:
+The git repository with its full history comes as `oriel-repo-rc4.bundle`:
 
 ```bash
-git clone -b standalone genesis-repo.bundle genesis && cd genesis && git log --oneline | head
+git clone -b oriel oriel-repo-rc4.bundle oriel && cd oriel && git log --oneline | head
 ```
 
 You need Godot 4.7.2 and its export templates to run the tests or build the programs:
@@ -215,16 +225,18 @@ echo "GODOT=$HOME/tools/godot/Godot_v4.7.2-stable_linux.x86_64" | tee tests/loca
 
 bash tests/run_app_tests.sh                       # headless suites and the smoke tour, about 2 minutes
 bash tools/build_standalone.sh linux              # build/linux, smoke-tested; add "windows" for build/windows
-build/linux/Genesis.x86_64 -- --make-demos ~/genesis-demos                       # the two demo projects
-build/linux/Genesis.x86_64 -- --render-samples ~/genesis-demos/"Architecture demo" --quality preview   # or standard, high, max
-python3 tools/build_release.py --skip-build --demos ~/genesis-demos --platforms linux   # release/Genesis-Community-<version>-linux-x86_64.zip
+bash tools/build_engine.sh                        # build/engine: Eevee and Cycles (needs uv, https://docs.astral.sh/uv/)
+build/linux/Oriel.x86_64 -- --make-demos ~/genesis-demos                       # the two demo projects
+build/linux/Oriel.x86_64 -- --render-samples ~/genesis-demos/"Architecture demo" --quality preview   # or standard, high, max
+python3 tools/build_release.py --skip-build --demos ~/genesis-demos --platforms linux   # release/Oriel-<version>-linux-x86_64.zip
 wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
 wget https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
-bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genesis-demos   # build/Genesis-Community-<version>-x86_64.AppImage
+bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genesis-demos   # build/Oriel-<version>-x86_64.AppImage
 ```
 
+- Running from the source (`godot --path .`), the photoreal renderers use `build/engine` if you put it beside Godot as `engine/`, or a Blender 4+ on the computer, or the one named by `ORIEL_ENGINE=/path/to/blender-or-python`.
 - The build draws the eight material presets itself when they are missing (no internet needed). For the downloaded library (photographed skies, scanned materials, 54 plant species), run `python3 tools/setup.py` on a computer with internet access before building.
-- The original editor plugin still works. Open the folder in the Godot 4.7.2 editor and Genesis appears as a dock.
+- The original Genesis editor plugin still works: open the folder in the Godot 4.7.2 editor and it appears as a dock (photoreal rendering there needs a Blender 4 or newer on the computer).
 - The plugin's own suites run with `bash tests/run_all.sh`. They need a GPU.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains how the program is put together.
 
@@ -262,7 +274,7 @@ If you try any of these, the result is what turns this release candidate into 1.
 
 ## Licence
 
-- Genesis Community's code is under the MIT licence, the same as the original Genesis by Utopian Academy.
-- The 295 bundled models are CC0, and each keeps its licence file. The eight material presets are drawn by Genesis and are CC0 too.
+- Oriel's code is under the MIT licence, the same as the original Genesis by Utopian Academy.
+- The 295 bundled models are CC0, and each keeps its licence file. The eight material presets are drawn by Oriel and are CC0 too.
 - Godot is MIT.
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) lists every component and its licence.

@@ -1,17 +1,15 @@
-# Genesis architecture
+# Oriel architecture
 
 ## The one rule
 
-**Godot is the renderer.** Genesis is a Godot 4.7.2 editor plugin written in GDScript. It
-adds an architectural-visualization workflow on top of the Godot editor. It does not replace
-anything the editor already does well.
+**Godot is the editor and the real-time renderer; Blender's engines are the photoreal ones.** The scene lives in Godot. For Eevee and Cycles it is written out (glTF plus a job file, `addons/genesis/core/gn_scene_export.gd`) and rendered by Blender's engines, which the program carries as a Python module and runs as a separate process (`gn_blender.gd`, `addons/genesis/blender/oriel_render.py`). The Blender side rebuilds only what glTF cannot say, and grades the picture with Godot's own formulas, so the editor stays the one place where a scene is made.
 
 ## Layers
 
 ```
-Genesis UX            dock panels that speak in SUN / SKY / FOG, not DirectionalLight3D
+Oriel UX            dock panels that speak in SUN / SKY / FOG, not DirectionalLight3D
       |
-Genesis systems       small scripts, one job each (below)
+Oriel systems       small scripts, one job each (below)
       |
 Editor integration       plugin.gd: registers the dock, forwards 3D input, owns undo/redo
       |
@@ -24,11 +22,11 @@ boundary we enforce. There's no engine-independence layer.
 
 ## What Godot gives us, and what we build
 
-| Need | Godot provides | Genesis adds |
+| Need | Godot provides | Oriel adds |
 |---|---|---|
 | Viewport, orbit, gizmos, selection | Editor 3D viewport, `EditorSelection` | nothing |
 | Hierarchy, properties | Scene dock, Inspector | nothing |
-| Undo/redo | `EditorUndoRedoManager` | every Genesis action goes through it |
+| Undo/redo | `EditorUndoRedoManager` | every Oriel action goes through it |
 | Model import | glTF/GLB importer; `.blend` direct import once Blender's path is set | a "drop your building in" action |
 | Sun, sky, fog, exposure | `DirectionalLight3D`, `WorldEnvironment`, `Environment`, `ProceduralSkyMaterial` | one Environment panel; time-of-day maps to a sun angle |
 | Materials | `StandardMaterial3D` | presets (Concrete, Brick, Glass...) as `.tres` files |
@@ -42,7 +40,7 @@ boundary we enforce. There's no engine-independence layer.
 | Script | Job |
 |---|---|
 | `plugin.gd` | Registers and unregisters everything. It holds no feature logic. |
-| `gn_scene.gd` | Finds Genesis nodes by role and adds nodes or properties through undo/redo. |
+| `gn_scene.gd` | Finds Oriel nodes by role and adds nodes or properties through undo/redo. |
 | `gn_environment.gd` | Sun, sky, fog, exposure, time of day. |
 | `gn_asset_library.gd` | Scans `res://genesis_assets/`, reads each asset's licence metadata. |
 | `gn_placement.gd` | Adds an asset to the scene. After that, Godot's own gizmos handle it. |
@@ -67,7 +65,7 @@ Systems get added when a milestone needs them, not before.
 
 ## Project layout
 
-A Genesis project is a normal Godot project:
+A Oriel project is a normal Godot project:
 
 ```
 project.godot
@@ -83,9 +81,9 @@ There's no custom file format. Scenes are `.tscn` and presets are `.tres`.
 ## Decisions taken at recon
 
 - **Dock, not main screen.** A Godot main-screen plugin *replaces* the 3D viewport while its tab
-  is showing. Because the viewport is the product, Genesis is a dock beside it. It uses 4.7's
+  is showing. Because the viewport is the product, Oriel is a dock beside it. It uses 4.7's
   `EditorDock` class, which replaces the older `add_control_to_dock`.
-- **Genesis nodes are ordinary nodes** in the user's scene, tagged with metadata
+- **Oriel nodes are ordinary nodes** in the user's scene, tagged with metadata
   (`genesis_role`). If the plugin is disabled, the scene still opens and renders.
 - **Asset licensing goes in a sidecar file.** Each asset has a `<name>.license.json` next to
   it with source, author, licence and attribution. The library won't list an asset without

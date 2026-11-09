@@ -23,11 +23,11 @@ My Project/
 
 - **Save** (Ctrl+S). The window title shows `*` while there are unsaved changes; closing or opening another project asks first (Save / Don't save / Cancel).
 - Each save keeps the previous version in `backups/` (the last five).
-- Every few minutes unsaved work is copied to `.genesis/autosave/` (never over your scene). If Genesis stops unexpectedly, the next time the project opens it offers the unsaved work; the saved version is kept until you save again.
+- Every few minutes unsaved work is copied to `.genesis/autosave/` (never over your scene). If Oriel stops unexpectedly, the next time the project opens it offers the unsaved work; the saved version is kept until you save again.
 
 ## Moving a project
 
-Paths inside a project are kept relative to it, and paths stored as text inside scenes are updated when a moved project is opened. If files a scene uses are missing, Genesis says so when the project opens; **File > Find Missing Files…** searches a folder you choose for them by name.
+Paths inside a project are kept relative to it, and paths stored as text inside scenes are updated when a moved project is opened. If files a scene uses are missing, Oriel says so when the project opens; **File > Find Missing Files…** searches a folder you choose for them by name.
 
 ## Projects from the Genesis editor plugin
 
@@ -37,4 +37,4 @@ Scenes made with the plugin often use its downloaded library (photographed skies
 
 ## Scenes that use files not on this computer
 
-Any scene that refers to a file that is not here opens without it, and Genesis says how many and which (the Console lists them all). A missing model is an empty marker with the same name and place; a missing plant, sky or scanned texture from the downloaded library shows a stand-in. You can work on and save the scene as usual: the saved file still refers to everything that was missing, and the stand-ins are never saved. When the files are back, the scene is whole again.
+Any scene that refers to a file that is not here opens without it, and Oriel says how many and which (the Console lists them all). A missing model is an empty marker with the same name and place; a missing plant, sky or scanned texture from the downloaded library shows a stand-in. You can work on and save the scene as usual: the saved file still refers to everything that was missing, and the stand-ins are never saved. When the files are back, the scene is whole again.

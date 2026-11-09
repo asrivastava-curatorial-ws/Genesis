@@ -1976,3 +1976,14 @@ TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
+
+## The render engines (Eevee and Cycles), in the AppImage's `engine/` folder
+
+- **Blender 5.2.3 as a Python module** (`bpy`, by the Blender Foundation, from PyPI, unmodified): GNU General Public Licence, version 3 or later. Its full text is `engine/LICENSES/Blender-GPL-3.0.txt`. Blender's source code for this version: <https://download.blender.org/source/blender-5.2.3.tar.xz> and <https://projects.blender.org/blender/blender> (tag v5.2.3); the libraries Blender uses and their licences are listed in that source under `release/license`. Oriel runs Blender's engines as a separate program and does not link to them; Oriel's own code stays under the MIT licence.
+- **CPython 3.13.14** (python-build-standalone): Python Software Foundation Licence 2.0 (`engine/LICENSES/Python-PSF-2.0.txt`).
+- **numpy, zstandard, requests, urllib3, idna, certifi, charset-normalizer, attrs, cattrs, typing_extensions, pip**: their licences (BSD-3-Clause, Apache-2.0, MIT, MPL-2.0, PSF-2.0) are in `engine/LICENSES/`.
+
+## Downloaded on your computer only when you ask
+
+- **BlendKit's Client** (from BlendKit for Godot 0.7.2's release): GNU GPL version 2, by BlendKit; kept with its licence in `~/.local/share/Oriel/tools/blendkit/`. Oriel talks to it over its local web interface and contains none of its code.
+- Assets from **Poly Haven** and **ambientCG** are CC0; assets from **BlendKit** carry BlendKit's licence (royalty-free or CC0), recorded beside each one.

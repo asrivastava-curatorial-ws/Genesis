@@ -1,4 +1,4 @@
-# What was downloaded and installed: Genesis Community 1.0.0-rc3
+# What was downloaded and installed: Oriel 1.0.0-rc4
 
 This page lists everything that was downloaded or installed to make this release, everything the AppImage contains, and everything it reads, writes or downloads on your computer. Nothing is left out on purpose; if you find something that is not here, it is a mistake in this page.
 
@@ -6,7 +6,7 @@ This page lists everything that was downloaded or installed to make this release
 
 **Nothing was downloaded or installed on your PC to make this release.** Your PC was never connected to the build: all the building and every test ran on the cloud build machine (section 4).
 
-What you put on your PC yourself is one file, `Genesis-Community-1.0.0-rc3-x86_64.AppImage`, wherever you save it (`~/Applications/` is suggested).
+What you put on your PC yourself is one file, `Oriel-1.0.0-rc4-x86_64.AppImage`, wherever you save it (`~/Applications/` is suggested).
 
 ### What the AppImage does when you run it
 
@@ -14,45 +14,54 @@ It installs nothing: no system packages, no services, nothing that needs adminis
 
 | What | Where | When |
 |---|---|---|
-| Settings and the recent-projects list | `~/.local/share/Genesis/settings.json` | always |
-| Logs | `~/.local/share/Genesis/logs/` | always |
-| Compiled shaders: the engine's shader and pipeline caches, which make the second start faster | `~/.local/share/Genesis/shader_cache/` and `~/.local/share/Genesis/vulkan/` (safe to delete) | always |
-| Thumbnails of models and materials | `~/.local/share/Genesis/cache/` (safe to delete) | when the Assets or Materials page is shown |
-| A scratch folder for work with no project open | `~/.local/share/Genesis/scratch/` | rarely |
-| Your own library of models and skies | `~/.local/share/Genesis/library/` | only when you add your own models or skies |
-| The Real-ESRGAN upscaler | `~/.local/share/Genesis/tools/realesrgan/` | only when you choose *AI upscale* the first time (see below) |
-| Your projects | `~/Documents/Genesis Projects/` unless you choose another folder | when you make or open a project |
+| Settings and the recent-projects list | `~/.local/share/Oriel/settings.json` | always |
+| Logs | `~/.local/share/Oriel/logs/` | always |
+| Compiled shaders: the engine's shader and pipeline caches, which make the second start faster | `~/.local/share/Oriel/shader_cache/` and `~/.local/share/Oriel/vulkan/` (safe to delete) | always |
+| Thumbnails of models and materials | `~/.local/share/Oriel/cache/` (safe to delete) | when the Assets or Materials page is shown |
+| A scratch folder for work with no project open | `~/.local/share/Oriel/scratch/` | rarely |
+| Your own library of models and skies | `~/.local/share/Oriel/library/` | only when you add your own models or skies |
+| Assets from the Online page and the starter pack: the originals, and the record of every asset (`online/manifest.json`, with `manifest.json.bak`) | `~/.local/share/Oriel/library/online/`, with the models, materials and skies made of them in `library/<category>/`, `library/materials/` and `library/skies/` | only when you download assets |
+| Photoreal render jobs: the scene written for Eevee or Cycles, the job, its progress and the engine's log; the last six are kept | `~/.local/share/Oriel/cache/render_jobs/` (safe to delete) | when you render with Eevee or Cycles |
+| BlendKit's Client, its licence, its log, your BlendKit login (the access token, in `account.json`) and its own settings (`bk_client-settings.json`, beside it) | `~/.local/share/Oriel/tools/blendkit/` | only when you press *Connect to BlendKit* |
+| Thumbnails and search results of the online sources | `~/.local/share/Oriel/cache/thumbs_online/`, `cache/polyhaven/`, `cache/blendkit_search/` (safe to delete) | when you use the Online page |
+| Settings, library and tools copied once from the rc3 folder `~/.local/share/Genesis/` (left as it was) | `~/.local/share/Oriel/` | the first start, if that folder is there |
+| The Real-ESRGAN upscaler | `~/.local/share/Oriel/tools/realesrgan/` | only when you choose *AI upscale* the first time (see below) |
+| Your projects | `~/Documents/Oriel Projects/` unless you choose another folder | when you make or open a project |
 | Copies of the demo projects | your projects folder | only when you choose *Try a demo* |
-| A menu entry and its icon | `~/.local/share/applications/genesis-community.desktop` and `~/.local/share/icons/hicolor/256x256/apps/genesis-community.png` | only if you run the AppImage with `--install-shortcut` |
+| A menu entry and its icon | `~/.local/share/applications/oriel.desktop` and `~/.local/share/icons/hicolor/256x256/apps/oriel.png` | only if you run the AppImage with `--install-shortcut` |
 
 ### What it downloads, and only when you ask
 
 | What | From | When | Size |
 |---|---|---|---|
 | Real-ESRGAN (realesrgan-ncnn-vulkan v0.2.5.0, BSD-3-Clause) and its licence | `github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip`, checked against its SHA-256 before use; the licence from `raw.githubusercontent.com/xinntao/Real-ESRGAN/master/LICENSE` | the first *AI upscale* | about 47 MB |
+| BlendKit's Client 1.13.6 (GPL, BlendKit's), from its Godot add-on's release, checked against its SHA-256 and the Client's own fingerprint | `github.com/BlenderKit/bk_godot/releases/download/v0.7.2/blendkit-godot_v0.7.2.zip` (SHA-256 `294d74c76bc60455013c097dafb9896e5db4c9f0b58853f8ea61d3d914ce6390`); only the Client for this computer and the licence are kept | the first *Connect to BlendKit* | 25 MB |
+| BlendKit searches, thumbnails, logins and assets, through its Client | blendkit.com and its storage | when you use BlendKit on the Online page | as you choose |
+| Poly Haven lists, thumbnails and assets (CC0) | api.polyhaven.com, dl.polyhaven.org, cdn.polyhaven.com | when you use Poly Haven on the Online page or the starter pack | as you choose: the standard starter pack is about 700 MB |
+| ambientCG lists and assets (CC0) | ambientcg.com | the same | as you choose |
 | Map data for *Site context*: places, buildings, roads | nominatim.openstreetmap.org, api.openstreetmap.org (ODbL) | when you bring in a neighbourhood by address | a few MB, into the project |
 | Ground heights and aerial photographs | elevation-tiles-prod on AWS; USGS The National Map; EOX Sentinel-2 cloudless | the same, when those boxes are ticked | a few MB, into the project |
 
-Nothing else goes out: no updates, no usage statistics, no accounts.
+Nothing else goes out: no updates, no usage statistics, and no account except the BlendKit one you log in to yourself.
 
 ### What it uses from your PC
 
-- **Graphics**: your Vulkan driver (with an NVIDIA card, NVIDIA's own driver). Genesis needs Vulkan 1.2. The driver keeps a shader cache of its own (NVIDIA's in `~/.cache/nvidia/`), as it does for every program that draws in 3D.
+- **Graphics**: your Vulkan driver (with an NVIDIA card, NVIDIA's own driver). Oriel needs Vulkan 1.2. The driver keeps a shader cache of its own (NVIDIA's in `~/.cache/nvidia/`), as it does for every program that draws in 3D.
 - **FUSE**, to open the AppImage: `fusermount3`, from the `fuse3` package, which Kubuntu 24.04 has. Without it, run the AppImage with `--appimage-extract-and-run`.
-- **Your desktop's file dialogs** (KDE's, through xdg-desktop-portal-kde, part of Plasma). Preferences can switch to Genesis's own.
-- **Programs it uses if they are installed** (none is needed; *Tools > Other Programs…* shows which are found): FFmpeg (films and live video), Blender (`.blend` files), Poppler's `pdftoppm` (PDF plans), the ODA File Converter (DWG drawings). Install them yourself if you want them:
+- **Your desktop's file dialogs** (KDE's, through xdg-desktop-portal-kde, part of Plasma). Preferences can switch to Oriel's own.
+- **Programs it uses if they are installed** (none is needed; *Tools > Other Programs…* shows which are found): FFmpeg (films and live video), Blender (optional: the built-in engine reads `.blend` files), Poppler's `pdftoppm` (PDF plans), the ODA File Converter (DWG drawings). Install them yourself if you want them:
 
 ```bash
 sudo apt install ffmpeg poppler-utils
-sudo snap install blender --classic
 ```
 
 ### Removing everything
 
 ```bash
-./Genesis-Community-1.0.0-rc3-x86_64.AppImage --remove-shortcut   # if you added the menu entry
-rm Genesis-Community-1.0.0-rc3-x86_64.AppImage
-rm -rf ~/.local/share/Genesis                                     # settings, logs, your library, tools, caches
+./Oriel-1.0.0-rc4-x86_64.AppImage --remove-shortcut   # if you added the menu entry
+rm Oriel-1.0.0-rc4-x86_64.AppImage
+rm -rf ~/.local/share/Oriel                     # settings, logs, your library (and downloaded assets), tools, caches
+rm -rf ~/.local/share/Genesis                   # the rc3 folder, if you no longer need it
 ```
 
 Your projects are yours and are not touched.
@@ -64,33 +73,49 @@ One file of about 210.5 MB; its exact size and SHA-256 are in the `.sha256` file
 | Path inside the AppImage | Size | What it is |
 |---|---|---|
 | `AppRun` | 1 KB | starts the program; `--install-shortcut` and `--remove-shortcut` |
-| `genesis-community.desktop`, `genesis-community.png`, `.DirIcon` | small | the desktop entry and the icon |
-| `usr/lib/genesis-community/Genesis.x86_64` | 73.5 MB | the program: Godot 4.7.2's runtime |
-| `usr/lib/genesis-community/Genesis.pck` | 184.5 MB | everything else of the program: its scripts, the theme, the fonts, the icons, the model library and the material presets |
-| `usr/lib/genesis-community/docs/` | 6.8 MB | the manual (HTML and PDF), the guides and their pictures, for *Help > Documentation* |
-| `usr/lib/genesis-community/demos/` | 16.0 MB | the two demo projects; *Try a demo* copies one into your projects folder |
+| `oriel.desktop`, `oriel.png`, `.DirIcon` | small | the desktop entry and the icon |
+| `usr/lib/oriel/Oriel.x86_64` | 73.5 MB | the program: Godot 4.7.2's runtime |
+| `usr/lib/oriel/Oriel.pck` | 184.5 MB | everything else of the program: its scripts, the theme, the fonts, the icons, the model library and the material presets |
+| `usr/lib/oriel/docs/` | 6.8 MB | the manual (HTML and PDF), the guides and their pictures, for *Help > Documentation* |
+| `usr/lib/oriel/demos/` | 16.0 MB | the two demo projects; *Try a demo* copies one into your projects folder |
 | `usr/share/applications/`, `usr/share/icons/`, `usr/share/metainfo/` | small | the desktop entry, the icon (PNG and SVG) and the AppStream description, for software centres |
-| `usr/share/doc/genesis-community/` | 0.1 MB | README, LICENSE, THIRD_PARTY_NOTICES, CHANGELOG, this inventory and the font's licence (OFL.txt) |
+| `usr/share/doc/oriel/` | 0.1 MB | README, LICENSE, THIRD_PARTY_NOTICES, CHANGELOG, this inventory and the font's licence (OFL.txt) |
 
 What each part is, its version and its licence:
 
 | Part | Version | Licence |
 |---|---|---|
-| Genesis Community (the program, its scripts and shaders) | 1.0.0-rc3 | MIT |
-| Godot Engine runtime (the `Genesis.x86_64` executable) | 4.7.2-stable, official export template | MIT, with the licences of its components (see THIRD_PARTY_NOTICES.md) |
+| Oriel (the program, its scripts and shaders, and the Blender-side scripts `oriel_render.py` and `oriel_convert.py`) | 1.0.0-rc4 | MIT |
+| Godot Engine runtime (the `Oriel.x86_64` executable) | 4.7.2-stable, official export template | MIT, with the licences of its components (see THIRD_PARTY_NOTICES.md) |
 | The model library: 295 models, each with its licence record | as in rc2 | CC0-1.0 |
 | The eight material presets and their textures | drawn when the program is built | CC0-1.0 |
 | JetBrains Mono (Regular, Medium, SemiBold, Bold, Italic) | 2.304 | SIL Open Font Licence 1.1 |
 | 148 Lucide icons, as SVG text inside the program | 1.67.0 | ISC (some derived from Feather: MIT) |
 | GitHub Dark Default colour values | GitHub VS Code theme 6.3.5 / Primer primitives 7.10.0 | MIT |
-| The two demo projects (Architecture demo, Event production demo) | as in rc2 | MIT (Genesis's own); their models CC0 |
-| The manual (HTML and PDF) and the guides | 1.0.0-rc3 | MIT |
+| The two demo projects (Architecture demo, Event production demo) | as in rc2 | MIT (Oriel's own); their models CC0 |
+| The manual (HTML and PDF) and the guides | 1.0.0-rc4 | MIT |
+| Blender's render engines (Eevee, Cycles) and its glTF importer: `bpy`, Blender as a Python module, by the Blender Foundation | 5.2.3 LTS | GPL-3.0-or-later (Blender), with the licences of the libraries it carries (in `engine/python/lib/python3.13/site-packages/bpy/5.2/license/`) |
+| CPython, the Python that runs the engines (python-build-standalone build) | 3.13.14 | PSF-2.0 |
+| The engines' Python packages: numpy 2.5.4, zstandard 0.25.0, requests 2.34.2, urllib3 2.8.0, idna 3.20, certifi 2026.10.23, charset-normalizer 3.5.2, attrs 26.1.0, cattrs 26.2.1, typing_extensions 4.16.0, pip 26.1.2 | as listed | BSD-3-Clause, BSD-3-Clause, Apache-2.0, MIT, BSD-3-Clause, MPL-2.0, MIT, MIT, MIT, PSF-2.0, MIT |
+| `oriel_assets.py` (the starter-pack script) and `starter_pack.json` | 1.0.0-rc4 | MIT |
 | AppImage type2 runtime (the start of the AppImage file, which mounts the rest) | continuous build | MIT |
 | `AppRun`, the desktop file, the icon and the AppStream metadata | written for this release | MIT |
 
-No other program is inside: FFmpeg, Blender, Real-ESRGAN, Poppler and the ODA File Converter are not bundled.
+No other program is inside: FFmpeg, Blender's own application (its interface), Real-ESRGAN, BlendKit's Client, Poppler and the ODA File Converter are not bundled. The engines are Blender's rendering and file code without its interface; they run only when Oriel asks them to, as a separate process.
 
 ## 3. Downloaded to make this release (on the build machine)
+
+Downloaded on the cloud build machine for rc4:
+
+| What | From | Size | SHA-256 | Licence | Shipped |
+|---|---|---|---|---|---|
+| `bpy` 5.2.3, Blender as a Python module (Linux x86_64, CPython 3.13) | `files.pythonhosted.org/packages/66/e7/810fe7b89d36b98e28a0774b38bf227e926e0c8e01f5bfc6933986f2c5bf/bpy-5.2.3-cp313-cp313-manylinux_2_28_x86_64.whl` (PyPI) | 402.8 MB | `8ef4a335930d647233c661ae21be1abf81207af33e1440fc5a4fc2f2f2d44db7` | GPL-3.0-or-later | Yes: unpacked into `engine/` (874 MB) |
+| Its dependencies: numpy, zstandard, requests, urllib3, idna, certifi, charset-normalizer, attrs, cattrs, typing_extensions, Cython | PyPI, by `uv pip install bpy==5.2.3` | about 90 MB | PyPI's | as in section 2; Cython Apache-2.0 | Yes, except Cython (only needed to build) |
+| CPython 3.13.14, relocatable build (python-build-standalone, x86_64-unknown-linux-gnu, install-only) | `github.com/astral-sh/python-build-standalone` releases, by `uv python install 3.13` (uv 0.11.32) | about 75 MB unpacked | not recorded (uv checks its downloads itself) | PSF-2.0; the build scripts MIT and Apache-2.0 | Yes: `engine/python/`, without its tests, IDE, Tk, headers and static library |
+| `bpy` 4.5.15 (CPython 3.11) | PyPI | 372.8 MB | `19203fb7825b005d2024b2e724d600fc82550a6deea71fbcc4447244df9ea737` | GPL-3.0-or-later | No: to test the render script with Blender 4.5 LTS |
+| BlendKit for Godot 0.7.2, source (`git clone`) | `github.com/BlenderKit/blenderkit-godot` (commit 2ff902e) | 1 MB | git's | GPL-2.0 | No: read to learn how its Client is spoken to; none of its code is in Oriel |
+| BlendKit for Godot 0.7.2, release (with BlendKit's Client 1.13.6) | `github.com/BlenderKit/bk_godot/releases/download/v0.7.2/blendkit-godot_v0.7.2.zip` | 25.0 MB | `294d74c76bc60455013c097dafb9896e5db4c9f0b58853f8ea61d3d914ce6390` | GPL-2.0 | No: Oriel downloads it the same way on your computer; on the build machine its Client was started for the tests |
+| Godot 4.7.2's tone-mapping, light, fog and sky shader sources (`tonemap.glsl`, `scene_forward_lights_inc.glsl`, `scene_forward_clustered.glsl`, `sky.glsl`, `tone_mapper.cpp`, `environment_storage.cpp`, `light_storage.cpp`, `environment.cpp`) | `raw.githubusercontent.com/godotengine/godot/4.7.2-stable/` | 400 KB | not recorded | MIT | No: read so the photoreal pictures are graded with exactly Godot's formulas |
 
 These were downloaded on the cloud build machine for rc3. "Shipped" says whether any of it is in the AppImage.
 
@@ -108,7 +133,7 @@ The colour values were computed by running the theme's own source (`src/theme.js
 
 ## 4. The build machine
 
-A cloud workspace: Ubuntu 24.04.5 LTS, 2 CPU cores, about 7 GB of memory, no GPU (Vulkan in software through Mesa's lavapipe). **Nothing was installed on it for rc3** beyond the downloads in section 3.
+A cloud workspace: Ubuntu 24.04.5 LTS, 2 CPU cores, about 7 GB of memory, no GPU (Vulkan in software through Mesa's lavapipe; OpenGL in software through Mesa's llvmpipe). For rc4, the downloads in section 3 were installed into folders of their own (`uv` virtual environments for `bpy` 5.2.3 and 4.5.15, and `uv`'s managed CPython 3.13.14); nothing was installed system-wide. `uv` 0.11.32 was already there.
 
 Installed on it earlier for this project (for rc1 and rc2), and used again for rc3:
 
@@ -116,9 +141,9 @@ Installed on it earlier for this project (for rc1 and rc2), and used again for r
 |---|---|---|---|
 | Godot Engine editor and export templates | 4.7.2-stable, official | `github.com/godotengine/godot-builds/releases/download/4.7.2-stable/` (`Godot_v4.7.2-stable_linux.x86_64.zip`, `Godot_v4.7.2-stable_export_templates.tpz`) | building the program, running every test |
 | Mesa Vulkan drivers (lavapipe) and vulkan-tools | 25.2.8 / 1.3.275 | `apt install mesa-vulkan-drivers vulkan-tools` | software Vulkan for the tests and the screenshots |
-| Blender, with python3-numpy | 4.0.2 / 1.26.4 | `apt install blender python3-numpy` | the `.blend` import tests |
+| Blender, with python3-numpy | 4.0.2 / 1.26.4 | `apt install blender python3-numpy` | the `.blend` import tests; for rc4 also testing the render script with Blender 4.0 (Ubuntu's build, which has no denoiser) |
 | xdotool | 3.20160805 | `apt install xdotool` | an earlier window test; not used for rc3 |
 | Wine | 9.0 | `apt install wine64` | rc1's Windows start test; not used for rc3 |
-| Real-ESRGAN ncnn-vulkan | 0.2.5.0 | downloaded by Genesis itself, as for a user (`github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/`) | the AI upscale tests |
+| Real-ESRGAN ncnn-vulkan | 0.2.5.0 | downloaded by Oriel itself, as for a user (`github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/`) | the AI upscale tests |
 
 Already part of the cloud workspace, not installed for this project: FFmpeg 6.1.1, Xvfb 21.1.12, Poppler 24.02 (`pdftoppm`), ImageMagick 6.9.12, librsvg 2.58 (`rsvg-convert`, for the AppImage's icon), pandoc 3.1.3 and Chromium through Playwright 1.63 (the manual as HTML and PDF), fuse3 3.14 (to open the AppImage in its test), Python 3.13, Node.js 22 and git 2.43.

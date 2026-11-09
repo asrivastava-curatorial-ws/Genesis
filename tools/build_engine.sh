@@ -29,5 +29,32 @@ rm -rf "$LIB/test" "$LIB/idlelib" "$LIB/tkinter" "$LIB/turtledemo" "$LIB/ensurep
 	"$OUT/python/lib/itcl"* "$OUT/python/lib/thread"*
 find "$OUT/python/lib" -name "libpython*.a" -delete
 find "$OUT" -name __pycache__ -type d -prune -exec rm -rf {} +
+# The licences travel with the engines, and where their source is.
+mkdir -p "$OUT/LICENSES"
+cp /usr/share/common-licenses/GPL-3 "$OUT/LICENSES/Blender-GPL-3.0.txt"
+cp "$LIB/LICENSE.txt" "$OUT/LICENSES/Python-PSF-2.0.txt"
+for d in "$LIB"/site-packages/*.dist-info; do
+	for f in "$d"/licenses/* "$d"/LICENSE*; do
+		[ -f "$f" ] && cp "$f" "$OUT/LICENSES/$(basename "$d" .dist-info)-$(basename "$f").txt"
+	done
+done
+cat > "$OUT/LICENSES/README.txt" <<TXT
+Oriel's render engines
+======================
+
+python/                    CPython $("$PY" -I -c 'import sys; print(sys.version.split()[0])') (python-build-standalone), PSF-2.0 licence
+python/lib/python$PY_VERSION/site-packages/bpy/
+                           Blender $BPY_VERSION as a Python module ("bpy", by the Blender Foundation,
+                           from PyPI, unmodified), GNU GPL version 3 or later: Blender-GPL-3.0.txt.
+                           Blender's source code for this version:
+                             https://download.blender.org/source/blender-$BPY_VERSION.tar.xz
+                             https://projects.blender.org/blender/blender (tag v$BPY_VERSION)
+                           and the libraries it uses, with their licences, are listed at
+                             https://projects.blender.org/blender/blender/src/tag/v$BPY_VERSION/release/license
+python/lib/python$PY_VERSION/site-packages/*
+                           the Python packages bpy needs, each with its licence here.
+
+Oriel runs these as a separate program; Oriel's own code is under the MIT licence.
+TXT
 "$PY" -I -c "import bpy, sys; print('Engine ready: Blender', bpy.app.version_string, 'on Python', sys.version.split()[0])"
 du -sh "$OUT"

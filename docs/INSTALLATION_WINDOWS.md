@@ -4,9 +4,9 @@
 
 ## 1. Unpack
 
-Unzip `Genesis-Community-<version>-windows-x86_64.zip` anywhere you can write (Documents, a USB drive). Open `applications\windows-x86_64` and double-click **Genesis.bat** (or `Genesis.exe`).
+Unzip `Oriel-<version>-windows-x86_64.zip` anywhere you can write (Documents, a USB drive). Open `applications\windows-x86_64` and double-click **Genesis.bat** (or `Oriel.exe`).
 
-Nothing is installed and no administrator rights are needed. Settings, logs and downloaded tools go in `%APPDATA%\Genesis\`.
+Nothing is installed and no administrator rights are needed. Settings, logs and downloaded tools go in `%APPDATA%\Oriel\`.
 
 Windows SmartScreen may warn that the program is unrecognised (it is not code-signed). Choose *More info > Run anyway*.
 
@@ -20,8 +20,8 @@ powershell -ExecutionPolicy Bypass -File Genesis.ps1 -InstallShortcut   # Start 
 To check that the program works on this computer, run its self-test (about 20 seconds; it makes and deletes a project of its own):
 
 ```powershell
-Start-Process -Wait .\Genesis.exe -ArgumentList '--headless','--','--smoke','--expect-library'
-Select-String -Path "$env:APPDATA\Genesis\logs\godot.log" -Pattern 'GENESIS_SMOKE (RESULT|FAIL)'
+Start-Process -Wait .\Oriel.exe -ArgumentList '--headless','--','--smoke','--expect-library'
+Select-String -Path "$env:APPDATA\Oriel\logs\godot.log" -Pattern 'GENESIS_SMOKE (RESULT|FAIL)'
 ```
 
 ## 3. Graphics

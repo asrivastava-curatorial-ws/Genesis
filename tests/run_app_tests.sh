@@ -32,6 +32,19 @@ mod=$?
 grep -E "MODULE_TEST|SCRIPT ERROR|Parse Error" "$TMP/mod.txt"
 echo "module tests exit $mod"
 [ $mod -ne 0 ] && tail -25 "$TMP/mod.txt"
+# The online library, against a local stand-in for Poly Haven.
+PORT=$((20000 + RANDOM % 20000))
+python3 "$HERE/tests/make_online_fixtures.py" "$TMP/mock" $PORT > /dev/null
+python3 "$HERE/tests/mock_server.py" "$TMP/mock" $PORT > /dev/null 2>&1 &
+MOCK=$!
+sleep 1
+ORIEL_POLYHAVEN_API=http://127.0.0.1:$PORT/ph ORIEL_POLYHAVEN_THUMBS=http://127.0.0.1:$PORT/files \
+	timeout 240 "$GODOT" --headless --path "$TMP" -s res://tests/app/online_tests.gd > "$TMP/online.txt" 2>&1
+online=$?
+kill $MOCK 2>/dev/null
+grep -E "ONLINE_TEST|SCRIPT ERROR|Parse Error" "$TMP/online.txt"
+echo "online tests exit $online"
+[ $online -ne 0 ] && tail -25 "$TMP/online.txt"
 timeout 200 "$GODOT" --headless --path "$TMP" -- --smoke > "$TMP/smoke.txt" 2>&1
 smoke=$?
 grep -E "GENESIS_SMOKE|SCRIPT ERROR|Parse Error" "$TMP/smoke.txt"
@@ -39,4 +52,4 @@ echo "smoke exit $smoke"
 [ $smoke -ne 0 ] && tail -25 "$TMP/smoke.txt"
 [ $code -ne 0 ] && tail -25 "$TMP/log.txt"
 rm -rf "$TMP"
-[ $code -eq 0 ] && [ $edit -eq 0 ] && [ $proj -eq 0 ] && [ $mod -eq 0 ] && [ $smoke -eq 0 ]
+[ $code -eq 0 ] && [ $edit -eq 0 ] && [ $proj -eq 0 ] && [ $mod -eq 0 ] && [ $online -eq 0 ] && [ $smoke -eq 0 ]

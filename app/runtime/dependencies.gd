@@ -8,6 +8,7 @@ const GnFfmpeg := preload("res://addons/genesis/core/gn_ffmpeg.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 const GnUpscale := preload("res://addons/genesis/core/gn_upscale.gd")
 const GnCadImport := preload("res://addons/genesis/cad/gn_cad_import.gd")
+const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
 
 
 ## One row per tool: name, what it is for, where it was found ("" if not),
@@ -17,9 +18,12 @@ static func check() -> Array[Dictionary]:
 	var ff := GnFfmpeg.find()
 	out.append(_row("FFmpeg", "Films (MP4) and live video on screens", ff, _version(ff, ["-version"]),
 		"Linux: sudo apt install ffmpeg   Windows: winget install Gyan.FFmpeg (or ffmpeg.org)"))
+	var eng: Dictionary = GnBlender.engine()
+	out.append(_row("Eevee and Cycles", "Photoreal rendering (Render and Movie pages) and .blend files", str(eng.path),
+		str(eng.label), "They come with the program (engine/ beside it). To use another Blender 4 or newer, set render_engine_path in settings.json."))
 	var bl := GnModelImport.find_blender()
-	out.append(_row("Blender", "Bringing in .blend files", bl, _version(bl, ["--version"]),
-		"blender.org/download (portable zip is fine); then set its path here"))
+	out.append(_row("Blender (optional)", "Your own Blender for .blend files, instead of the built-in engine", bl, _version(bl, ["--version"]),
+		"Not needed: the built-in engine reads .blend files. blender.org/download if you want your own."))
 	var esr := GnUpscale.exe() if GnUpscale.installed() else ""
 	out.append(_row("Real-ESRGAN", "AI upscaling of renders (runs on this computer, offline once installed)", esr,
 		"realesrgan-ncnn-vulkan %s, model %s" % [GnUpscale.VERSION, GnUpscale.MODEL] if esr != "" else "",

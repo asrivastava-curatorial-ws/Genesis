@@ -289,7 +289,7 @@ func _scenes_and_projects() -> void:
 	var children := scenes.root.get_child_count()
 	projects.close()
 	check(not projects.is_open() and scenes.root == null, "project: closing closes the scene")
-	check(projects.open(_tmp + "/scenes_none") != "" and projects.open(_tmp).contains("not a Genesis project"), "project: a folder that is not a project is refused")
+	check(projects.open(_tmp + "/scenes_none") != "" and projects.open(_tmp).contains("not an Oriel project"), "project: a folder that is not a project is refused")
 	check(projects.open(dir) == "" and scenes.root.get_child_count() == children, "project: an existing project opens as it was saved")
 	var new_path: String = host.new_scene("hall_two")
 	check(new_path == dir + "/scenes/hall_two.tscn" and scenes.root.name == "HallTwo", "host: a new scene goes beside the project's others")

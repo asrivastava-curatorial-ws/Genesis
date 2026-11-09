@@ -11,6 +11,9 @@ extends RefCounted
 #                                      virtual tour, stereo 360
 #   Genesis -- --e2e media  <folder>   AI upscale, film (MP4), concert render
 #   Genesis -- --e2e walk   <folder>   people walking a curved path, in a film
+#   Oriel -- --e2e photoreal <folder>  the same project through the built-in
+#                                      Eevee and Cycles: stills, sun study,
+#                                      passes, 360°, a film, stop and resume
 #
 # A step that cannot run on this computer (no Blender, no internet for the
 # site) is written down as "not tested" with the reason; it is never passed.
@@ -52,6 +55,9 @@ const GnPhotomatch := preload("res://addons/genesis/core/gn_photomatch.gd")
 const GnPasses := preload("res://addons/genesis/core/gn_passes.gd")
 const GnTour := preload("res://addons/genesis/core/gn_tour.gd")
 const EditOps := preload("res://app/runtime/edit_ops.gd")
+const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
+const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
+const GnOnline := preload("res://addons/genesis/core/gn_online.gd")
 
 const PROJECT := "E2E Museum Pavilion"
 
@@ -103,6 +109,8 @@ static func run(main: Node, phase: String, out_dir: String) -> int:
 			await _views(main, out_dir)
 		"walk":
 			await _walk(main, out_dir)
+		"photoreal":
+			await _photoreal(main, out_dir)
 		_:
 			await _media(main, out_dir)
 	var report := FileAccess.open(out_dir.path_join("E2E_RESULTS_%s.md" % phase), FileAccess.WRITE)
@@ -855,3 +863,89 @@ static func _dxf() -> String:
 	line.call(0, -4, 0, 1, "PARTITIONS")
 	ents.append("0\nARC\n8\nDOORS\n10\n0\n20\n1\n30\n0\n40\n0.9\n50\n0\n51\n90")
 	return "0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n6\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n%s\n0\nENDSEC\n0\nEOF\n" % "\n".join(ents)
+
+
+
+# ------------------------------------------------------------------ photoreal
+## Eevee and Cycles, built into the program, on the project the build phase
+## made. Small sizes and the Draft quality keep it to minutes on a computer
+## without a graphics card (the engines then draw on the processor).
+static func _photoreal(main: Node, out_dir: String) -> void:
+	var expect: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(out_dir.path_join("expect.json")))
+	var err: String = App.projects.open(expect.project)
+	await _frames(main, 3)
+	_step("P0", err == "", "Launch Oriel again and reopen the project %s" % err)
+	var eng := GnBlender.engine(true)
+	var bundled: bool = GnBlender.bundled_python() != "" and str(eng.kind) == "module" and str(eng.path) == GnBlender.bundled_python()
+	_step("P1", bundled if OS.has_feature("template") else eng.kind != "", "The Eevee and Cycles engines are the program's own, not an installed Blender (%s)" % eng.get("label", "none"))
+	var cams := GnCameras.cameras()
+	var cam: Camera3D = cams[0] if not cams.is_empty() else null
+	if cam == null or eng.kind == "":
+		_step("P2", false, "A camera and the engines are needed for the rest")
+		return
+	var shots := out_dir.path_join("screenshots")
+	DirAccess.make_dir_recursive_absolute(shots)
+	for e in ["eevee", "cycles"]:
+		var t0 := Time.get_ticks_msec()
+		var r: Dictionary = await GnPhotoreal.render_stills([cam], Vector2i(1280, 720), e, "Draft", main, func(_t): pass)
+		var ok: bool = r.state == "done" and r.paths.size() == 1 and _image_ok(ProjectSettings.globalize_path(r.paths[0]), Vector2i(1280, 720))
+		if ok:
+			DirAccess.copy_absolute(ProjectSettings.globalize_path(r.paths[0]), shots.path_join("photoreal_%s.png" % e))
+		_step("P2" if e == "eevee" else "P3", ok, "Render a 1280 × 720 still with %s, graded like the editor's view (%s, %d s) %s" % [
+			GnBlender.LABELS[e], str(r.paths[0]).get_file() if ok else r.error, (Time.get_ticks_msec() - t0) / 1000, r.warnings])
+	var study: Dictionary = await GnPhotoreal.render_stills([cam], Vector2i(480, 270), "cycles", "Draft", main, func(_t): pass,
+		{"hours": [9.0, 12.0, 15.0]})
+	var study_ok: bool = study.state == "done" and study.paths.size() == 3
+	if study_ok:
+		var a := Image.load_from_file(ProjectSettings.globalize_path(study.paths[0]))
+		var b := Image.load_from_file(ProjectSettings.globalize_path(study.paths[1]))
+		study_ok = a != null and b != null and a.get_data() != b.get_data()
+	_step("P4", study_ok, "A Cycles sun study, 9:00, 12:00 and 15:00, each lit by its own sun")
+	var passes: Dictionary = await GnPhotoreal.render_stills([cam], Vector2i(640, 360), "cycles", "Draft", main, func(_t): pass,
+		{"passes": GnPasses.PASSES})
+	var pass_names: Array = []
+	for p in passes.paths.slice(1):
+		pass_names.append(str(p).get_file().get_basename().get_slice("_", str(p).get_file().get_basename().get_slice_count("_") - 1))
+	_step("P5", passes.state == "done" and passes.paths.size() == 1 + GnPasses.PASSES.size(), "Cycles render passes: %s" % ", ".join(pass_names))
+	var pano: Dictionary = await GnPhotoreal.render_panoramas([cam], 2048, false, "cycles", "Draft", main, func(_t): pass)
+	var pano_ok: bool = pano.state == "done" and _image_ok(ProjectSettings.globalize_path(pano.paths[0]) if not pano.paths.is_empty() else "", Vector2i(2048, 1024))
+	if pano_ok:
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(pano.paths[0]), shots.path_join("photoreal_360.png"))
+	_step("P6", pano_ok, "A Cycles 360° panorama, 2048 × 1024")
+	var epano: Dictionary = await GnPhotoreal.render_panoramas([cam], 1024, false, "eevee", "Draft", main, func(_t): pass)
+	_step("P7", epano.state == "done" and _image_ok(ProjectSettings.globalize_path(epano.paths[0]) if not epano.paths.is_empty() else "", Vector2i(1024, 512)),
+		"An Eevee 360° panorama, stitched from six views")
+	# Stop a render: nothing half-made is saved.
+	var stopper := func():
+		await main.get_tree().create_timer(4.0).timeout
+		GnPhotoreal.stop()
+	stopper.call()
+	var stopped: Dictionary = await GnPhotoreal.render_stills([cam], Vector2i(1920, 1080), "cycles", "Best", main, func(_t): pass)
+	_step("P8", stopped.state == "stopped" and stopped.paths.is_empty(), "Stop a Cycles render part-way: it stops, and nothing half-made is saved (%s)" % stopped.state)
+	# A short film, stopped part-way, then carried on.
+	var list := [GnMovie.orbit_shot(Vector3.ZERO, 14.0, 4.0, 30.0, 0.5)]
+	var folder := ProjectSettings.globalize_path("%s/e2e_film_cycles/raw" % GnPaths.at(GnRender.OUTPUT_DIR))
+	var halt := func():
+		while _count_frames(folder) < 4:
+			await main.get_tree().create_timer(0.5).timeout
+		GnPhotoreal.stop()
+	halt.call()
+	var first: String = await GnMovie.render_photoreal(list, Vector2i(320, 180), main, "e2e_film", "cycles", "Draft", func(_t): pass)
+	var kept := _count_frames(folder)
+	var film: String = await GnMovie.render_photoreal(list, Vector2i(320, 180), main, "e2e_film", "cycles", "Draft", func(_t): pass)
+	_step("P9", first == "" and kept >= 4 and _count_frames(folder) == 15, "A film stopped part-way keeps its %d frames and carries on to all 15" % kept)
+	_step("P10", film.ends_with(".mp4") and FileAccess.file_exists(film) or (film != "" and GnFfmpeg.find() == ""),
+		"The Cycles film is joined into a video (%s)" % film.get_file())
+	# The online library's record survives a restart and the asset script's
+	# downloads are turned into library items.
+	_step("P11", GnOnline.manifest().has("assets"), "The online library's record can be read")
+
+
+static func _count_frames(folder: String) -> int:
+	if not DirAccess.dir_exists_absolute(folder):
+		return 0
+	var n := 0
+	for f in DirAccess.get_files_at(folder):
+		if f.begins_with("frame_") and f.ends_with(".png"):
+			n += 1
+	return n

@@ -1,4 +1,4 @@
-# Development status: Genesis Community 1.0.0-rc3
+# Development status: Oriel 1.0.0-rc3
 
 ## Stages
 
@@ -37,13 +37,13 @@ Acceptance against the 34 release blockers: `reports/ACCEPTANCE.md`. Known limit
 - The smoke tour reset the user's panel layout; it now runs on throwaway settings.
 - Live link re-imported linked models whenever their file times changed, so a copied or unzipped project re-imported everything on opening; it now keeps an MD5 fingerprint of each source.
 - The recent-projects list was lost if the program was killed; it is written as soon as it changes.
-- The Properties panel showed every engine property group as an empty heading for Genesis set pieces; headings now appear only above settings.
+- The Properties panel showed every engine property group as an empty heading for Oriel set pieces; headings now appear only above settings.
 - The architecture demo's downlights were made with the fixture defaults (an 8° beam tilted 60°) instead of the Set page's downlight settings, so the night scene rendered nearly black.
 - A scene that referred to any file not on the computer could not be opened at all; the original repository's own three scenes failed this way without the downloaded library. They now open (with stand-ins), and saving keeps every reference.
 - Ubuntu's Blender package cannot export glTF without numpy; the error now says so.
 - A photographed sky whose file was missing emptied the sky when the time of day changed.
 - Stopping a live video source could log an error from the reader thread asking about the FFmpeg process just reaped (a flaky module test).
-- Genesis's file picker was never shown by its own code: its method had the name of FileDialog's own (`popup_file_dialog`), and the engine's method is the one that runs. It now opens where each kind of file was last picked, with favourites. Tests check its folders, and that no Genesis method is hidden by an engine method of the same name.
+- Oriel's file picker was never shown by its own code: its method had the name of FileDialog's own (`popup_file_dialog`), and the engine's method is the one that runs. It now opens where each kind of file was last picked, with favourites. Tests check its folders, and that no Oriel method is hidden by an engine method of the same name.
 - Labels that wrap had no width to be measured at, so some dialogs grew to the height of the screen with their buttons out of sight, and a hint in the Properties panel widened the left column past the smallest window.
 - *Frame Everything* on a scene with no design yet framed the sun's position from 3 m away.
 - rc3's theme fonts and icon textures were held in static variables and let go after the renderer had shut down: the program crashed on closing with a real renderer (heap corruption). They are released at shutdown with the other caches. A thumbnail coroutine waiting on the renderer's frame signal as the program closed was never resumed, holding its model and, through its callers, the undo history past the end; thumbnails now count the scene tree's frames, and the undo history is freed explicitly at shutdown.

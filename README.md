@@ -1,20 +1,27 @@
-# Genesis Community
+# Oriel
 
-**Import your building. Make it beautiful.** Now as a program of its own.
+**Import your building. Make it beautiful.** A free, open alternative to Lumion, D5 and V-Ray for architects and event designers.
 
-Genesis Community is free, open architectural and event visualisation, built on the Godot engine. Bring in a building, put it in its surroundings, light it with the real sun, dress it with materials, plants, people and furniture, stage it with LED walls, truss and moving lights, and make stills, 360° panoramas, fly-throughs and live show run-throughs.
+Oriel is free, open architectural and event visualisation. Bring in a building, put it in its surroundings, light it with the real sun, dress it with materials, plants, people and furniture, stage it with LED walls, truss and moving lights, and make stills, 360° panoramas, virtual tours, fly-throughs and live show run-throughs.
 
-It is the [Genesis](https://github.com/Utopian-Academy/Genesis) editor plugin by Utopian Academy, turned into a standalone desktop application: **no Godot editor is needed**. Every Genesis feature is kept; the plugin itself still works for those who prefer it.
+Two kinds of rendering, from the same scene and cameras:
 
-> **Release candidate 1.0.0-rc3.** Built and tested on Linux with software rendering, and delivered as one AppImage. New in rc3: a professional interface in GitHub's Dark Default theme with JetBrains Mono, models placed by clicking where they go, and one way of choosing files everywhere ([CHANGELOG.md](CHANGELOG.md)). The Windows build is made from the same source but has not yet been run on Windows. See [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) before relying on it.
+- **Real-time** (Godot): what the 3D view shows, in seconds.
+- **Photoreal: Eevee and Cycles**, Blender's render engines, **built into the program**. Nothing else to install: the AppImage carries them and runs them in the background. Eevee is fast and photoreal; Cycles traces light as it really bounces. Pictures come back graded like the editor's view, with each camera's look on top.
+
+And a library to fill the scene: models, materials and skies from **BlendKit**, **Poly Haven** and **ambientCG**, searched from the *Online* page and kept in your own library, plus a starter pack of the most useful ones (in the program, or from a terminal with `--get-assets`).
+
+Oriel is built on the [Genesis](https://github.com/Utopian-Academy/Genesis) editor plugin by Utopian Academy (MIT), turned into a standalone desktop application on the Godot engine: **no Godot editor is needed**. It was called Genesis Community up to 1.0.0-rc3.
+
+> **Release candidate 1.0.0-rc4.** Built and tested on Linux with software rendering (no graphics card on the build machine), and delivered as one AppImage. New in rc4: Eevee and Cycles built in, the Online library with BlendKit, Poly Haven and ambientCG, the starter pack and its script, and the new name ([CHANGELOG.md](CHANGELOG.md)). The Windows build is made from the same source but has not yet been run on Windows. See [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) before relying on it.
 
 ## Get started
 
-**Read [START_HERE.md](START_HERE.md) first**: running it, the first ten minutes, a self-test for your computer, and where everything is kept. The whole manual is also one page, `Genesis-Community-Manual.html` (and `.pdf`), which *Help > Documentation* opens from inside the AppImage.
+**Read [START_HERE.md](START_HERE.md) first**: running it, the first ten minutes, a self-test for your computer, and where everything is kept. The whole manual is also one page, `Oriel-Manual.html` (and `.pdf`), which *Help > Documentation* opens from inside the AppImage.
 
-- Linux: `Genesis-Community-1.0.0-rc3-x86_64.AppImage` ([installation](docs/INSTALLATION_LINUX.md))
+- Linux: `Oriel-1.0.0-rc4-x86_64.AppImage` ([installation](docs/INSTALLATION_LINUX.md))
 - Windows: not in this delivery; it is built from the same source ([installation](docs/INSTALLATION_WINDOWS.md))
-- Then the [quick start](docs/QUICK_START.md), and the [user manual](docs/USER_MANUAL.md).
+- Then the [quick start](docs/QUICK_START.md), [photoreal rendering](docs/RENDERING.md), the [online library](docs/ONLINE_LIBRARY.md) and the [user manual](docs/USER_MANUAL.md).
 - Two demo projects come with it: choose one under *Try a demo* on the start screen.
 
 ## What the demos look like
@@ -37,7 +44,7 @@ Rendered by the program itself, from its two demo projects (Standard quality, so
 | **ENVIRONMENT** | Time of day, real sun for any place and date (NOAA), skies (procedural, or **your own HDRI panoramas** with the sun found in them), haze and stage haze, exposure, weather and seasons. |
 | **LANDSCAPE** | Paint plants onto ground, roofs and terrain; sculpt terrain. |
 | **SET** | LED walls from panel specs with planning reports, truss, stage decks, flown line arrays, moving heads, crowds of thousands, effects. |
-| **MATERIALS** | Presets (eight drawn by Genesis; scanned ones with the downloaded library), images as materials at real size, tiles and grout, weathering. |
+| **MATERIALS** | Presets (eight drawn by Oriel; scanned ones with the downloaded library), images as materials at real size, tiles and grout, weathering. |
 | **CAMERAS** | Saved views (the main view really moves to them), plans, sections, elevations, photo matching. |
 | **LOOK** | Per-camera finish and 14 built-in looks. |
 | **RENDER** | Stills to 4K at Preview, Standard, High and Maximum quality; all cameras; sun studies; passes; 360° panoramas and VR tours; local AI upscaling with Real-ESRGAN. |
@@ -56,4 +63,4 @@ Everything. The code is MIT. The models are CC0. OpenStreetMap data is ODbL ("©
 
 ## Credits
 
-Genesis was created by Utopian Academy. Genesis Community is the standalone edition of that work, under the same MIT licence.
+Oriel was created by Utopian Academy. Oriel is the standalone edition of that work, under the same MIT licence.

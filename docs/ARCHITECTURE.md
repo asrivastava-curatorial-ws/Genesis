@@ -1,6 +1,6 @@
-# Architecture of Genesis Community
+# Architecture of Oriel
 
-Genesis began as a Godot editor plugin: the editor provided the viewport, selection, undo, inspector, importer and scene tabs, and Genesis added an architectural workflow in a dock. Genesis Community keeps every Genesis system and replaces the editor with a program of its own.
+Oriel began as a Godot editor plugin: the editor provided the viewport, selection, undo, inspector, importer and scene tabs, and Oriel added an architectural workflow in a dock. Oriel keeps every Oriel system and replaces the editor with a program of its own.
 
 ```
 app/                     the standalone program
@@ -12,7 +12,7 @@ app/                     the standalone program
   ui/                    project manager, workspace, 3D view, scene tree,
                          properties, console, toasts, dialogs
   smoke.gd, e2e.gd       scripted tours of the running program (tests)
-addons/genesis/          the Genesis systems, shared with the editor plugin
+addons/genesis/          the Oriel systems, shared with the editor plugin
   core/gn_host.gd        the one door to the surrounding application
   core/gn_paths.gd       where project files are written
   core/gn_model_import.gd  runtime model import
@@ -23,7 +23,7 @@ addons/genesis/          the Genesis systems, shared with the editor plugin
 
 ## The host
 
-Genesis code never names an `Editor*` class. It asks `GnHost` for the edited scene, the undo history, the selection, the 3D view, settings, dialogs and previews. Two backends answer: `app/runtime/runtime_host.gd` (standalone) and `addons/genesis/editor_host.gd` (the plugin). A test fails if any runtime script names an editor class, because a built program has none and could not even load it.
+Oriel code never names an `Editor*` class. It asks `GnHost` for the edited scene, the undo history, the selection, the 3D view, settings, dialogs and previews. Two backends answer: `app/runtime/runtime_host.gd` (standalone) and `addons/genesis/editor_host.gd` (the plugin). A test fails if any runtime script names an editor class, because a built program has none and could not even load it.
 
 Most of the original coupling went through `GnScene` (194 calls in 33 files), so replacing its backend migrated most of the plugin at once.
 
