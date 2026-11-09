@@ -21,6 +21,9 @@ const FlyingScreen := preload("res://addons/genesis/set/gn_flying_screen.gd")
 const GnPhasing := preload("res://addons/genesis/core/gn_phasing.gd")
 const GnFfmpeg := preload("res://addons/genesis/core/gn_ffmpeg.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
+const GnSceneExport := preload("res://addons/genesis/core/gn_scene_export.gd")
+const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
+const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
 
 const META := &"gn_shots"
 # {"from": hour, "to": hour} when the sun moves through the film, else absent.
@@ -259,3 +262,98 @@ static func render(list: Array, size: Vector2i, host: Node, movie_name: String,
 	var ffmpeg := GnFfmpeg.find()
 	var code := OS.execute(ffmpeg, PackedStringArray(args), [], true) if ffmpeg != "" else -1
 	return out if code == 0 and FileAccess.file_exists(out) else ProjectSettings.globalize_path(dir)
+
+
+## The film through Eevee or Cycles: the scene is written once, then every
+## frame's camera, sun (in a time-lapse) and moving objects are sent along,
+## and the engine renders the frames one by one. A stopped film resumes at
+## the first missing frame. Returns the video, the frames folder (no FFmpeg),
+## or "" (with the reason in `progress`).
+static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name: String, engine: String,
+		quality: String, progress := Callable(), fps: int = FPS) -> String:
+	var total := int(ceil(duration(list) * fps))
+	var root := GnScene.root()
+	if total <= 0 or root == null:
+		return ""
+	var say := func(t: String): if progress.is_valid(): progress.call(t)
+	say.call("%s: writing the scene…" % GnBlender.LABELS.get(engine, engine))
+	var dir := GnBlender.new_job_dir(engine + "_film")
+	var ex := GnSceneExport.export_scene(root, dir)
+	if str(ex.error) != "":
+		say.call(str(ex.error))
+		return ""
+	# What moves: the objects on a moving-objects path, flying screens, and
+	# whatever the build-up phasing raises.
+	var moving: Array = []
+	moving.append_array(root.get_tree().get_nodes_in_group(Mover.GROUP))
+	moving.append_array(root.get_tree().get_nodes_in_group(FlyingScreen.GROUP))
+	moving.append_array(GnPhasing.phased(root))
+	var follow := {}
+	for name in ex.scene.objects:
+		var src := root.get_node_or_null(NodePath(str(ex.scene.objects[name].path)))
+		if src == null:
+			continue
+		for m in moving:
+			if m == src or (m as Node).is_ancestor_of(src):
+				follow[name] = src
+				break
+	var lapse := not timelapse().is_empty()
+	var hour_before = GnEnvironment.value("time_of_day")
+	var env_exposure := float((ex.scene.post as Dictionary).get("exposure", 1.0))
+	var frames: Array = []
+	var looks: Array = []
+	for f in total:
+		var t := float(f) / fps
+		var at := sample(list, t)
+		if at.is_empty():
+			continue
+		show_time(t, list)
+		var look: Dictionary = GnLook.DEFAULTS.duplicate()
+		look.merge(at.look, true)
+		var fr := {"number": f,
+			"camera": GnSceneExport.camera_spec_from(at.transform, at.fov, 0.05, 4000.0, look, 10.0),
+			"post": {"exposure": env_exposure * pow(2.0, float(look.get("exposure", 0.0)))}}
+		if lapse:
+			fr["lights"] = GnSceneExport.lights_spec(root)
+			fr["world"] = GnSceneExport.environment_spec().world
+		if not follow.is_empty():
+			var nodes := {}
+			var vis := {}
+			for name in follow:
+				var src: Node3D = follow[name]
+				nodes[name] = GnSceneExport._xform(src.global_transform)
+				vis[name] = src.is_visible_in_tree()
+			fr["nodes"] = nodes
+			fr["visible"] = vis
+		frames.append(fr)
+		looks.append(look)
+	show_time(0.0, list)
+	GnPhasing.finish(root)
+	GnEnvironment.apply("time_of_day", hour_before, false)
+	var base := ProjectSettings.globalize_path("%s/%s_%s" % [GnPaths.at(GnRender.OUTPUT_DIR), movie_name, engine])
+	var raw := base.path_join("raw")
+	var st: Dictionary = await GnPhotoreal.render_frames(frames, size, raw, engine, quality, host, ex, progress)
+	if str(st.state) != "done":
+		say.call("The film stopped: %s" % str(st.get("error", "stopped")) if str(st.state) != "stopped"
+			else "Stopped. The frames so far are kept; render again to carry on.")
+		return ""
+	# Each frame's look on top, as the real-time film has it.
+	for i in frames.size():
+		var n := int(frames[i].number)
+		var src := raw.path_join("frame_%05d.png" % n)
+		var dest := base.path_join("frame_%05d.png" % n)
+		if FileAccess.file_exists(dest) and FileAccess.get_modified_time(dest) >= FileAccess.get_modified_time(src):
+			continue
+		var img := Image.load_from_file(src)
+		if img == null or img.is_empty():
+			continue
+		img = await GnRender.finish(img, looks[i], host)
+		img.save_png(dest)
+		if i % 10 == 0:
+			say.call("Finishing the frames: %d of %d…" % [i + 1, frames.size()])
+	var out := ProjectSettings.globalize_path("%s/%s_%s.mp4" % [GnPaths.at(GnRender.OUTPUT_DIR), movie_name, engine])
+	var args := ["-y", "-framerate", str(fps), "-i", base + "/frame_%05d.png",
+		"-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow", out]
+	var ffmpeg := GnFfmpeg.find()
+	var code := OS.execute(ffmpeg, PackedStringArray(args), [], true) if ffmpeg != "" else -1
+	return out if code == 0 and FileAccess.file_exists(out) else base

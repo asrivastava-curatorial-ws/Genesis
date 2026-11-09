@@ -17,6 +17,8 @@ const ShotPreview := preload("res://addons/genesis/ui/gn_shot_preview.gd")
 const GnPhasing := preload("res://addons/genesis/core/gn_phasing.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
+const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
+const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
 
 const SIZES := {"1920 × 1080 (HD)": Vector2i(1920, 1080), "2560 × 1440": Vector2i(2560, 1440),
 	"3840 × 2160 (4K)": Vector2i(3840, 2160), "1280 × 720 (quick)": Vector2i(1280, 720)}
@@ -35,6 +37,8 @@ var _playing := false
 var _time := 0.0
 var _size: OptionButton
 var _render_button: Button
+var _stop_button: Button
+var _renderer_note: Label
 var _status: Label
 var _last := ""
 var _lapse: CheckBox
@@ -131,12 +135,18 @@ func _init() -> void:
 	GnUi.heading(self, "Render")
 	_size = GnUi.option(self, "Size", SIZES.keys(), func(_t): pass)
 	_render_button = GnUi.primary(self, "Render the movie", _render, "film")
+	_stop_button = GnUi.button(self, "Stop rendering", func(): GnPhotoreal.stop(), "stop")
+	_stop_button.visible = false
+	_renderer_note = GnUi.note(self, "")
 	_status = GnUi.note(self, "")
 	GnUi.button(self, "Show the renders folder", func():
 		OS.shell_show_in_file_manager(ProjectSettings.globalize_path(GnPaths.at(GnRender.OUTPUT_DIR)) if _last == "" else _last), "folder_open")
 
 
 func refresh() -> void:
+	var eng := GnPhotoreal.renderer()
+	_renderer_note.text = "Renderer: %s (choose it on the Render page)." % (
+		"%s, %s quality" % [GnBlender.LABELS.get(eng, eng), GnPhotoreal.quality_of(eng)] if GnPhotoreal.is_photoreal(eng) else "Real-time")
 	var list := GnMovie.shots()
 	var lapse := GnMovie.timelapse()
 	_lapse.set_pressed_no_signal(not lapse.is_empty())
@@ -291,6 +301,19 @@ func _render() -> void:
 	_render_button.disabled = true
 	_playing = false
 	var size: Vector2i = SIZES[_size.get_item_text(_size.selected)]
+	# The renderer chosen on the Render page renders the film too.
+	var eng := GnPhotoreal.renderer()
+	if GnPhotoreal.is_photoreal(eng) and GnBlender.available():
+		_stop_button.visible = true
+		var film: String = await GnMovie.render_photoreal(list, size, self, movie_name, eng, GnPhotoreal.quality_of(eng),
+			func(t): _status.text = t)
+		_stop_button.visible = false
+		_render_button.disabled = false
+		if film != "":
+			_last = film
+			_status.text = "Saved %s" % GnUi.shown(film) if film.ends_with(".mp4") \
+				else "Frames saved in %s (FFmpeg wasn't found to make a video)." % GnUi.shown(film)
+		return
 	var out: String = await GnMovie.render(list, size, self, movie_name,
 		func(f, total): _status.text = "Rendering frame %d of %d…" % [f, total])
 	_render_button.disabled = false

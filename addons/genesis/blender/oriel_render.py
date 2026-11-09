@@ -1407,7 +1407,7 @@ def build_haze(h):
             sc.eevee.volumetric_tile_size = "4"
         except Exception:
             pass
-    log("haze box %s" % tuple(round(x, 1) for x in o.scale))
+    log("haze box %s" % (tuple(round(x, 1) for x in o.scale),))
 
 
 # ----------------------------------------------------------------- texts

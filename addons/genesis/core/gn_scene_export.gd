@@ -687,20 +687,29 @@ static func _sky_file(ctx: Ctx, p: PanoramaSkyMaterial) -> String:
 ## depth of field.
 static func camera_spec(camera: Camera3D, focus_auto: float) -> Dictionary:
 	var look := GnLook.get_look(camera)
-	var xf := camera.global_transform
-	var spec := {"fov": camera.fov, "near": camera.near, "far": camera.far,
-		"keep": "height" if camera.keep_aspect == Camera3D.KEEP_HEIGHT else "width", "projection": "persp"}
+	var spec := camera_spec_from(camera.global_transform, camera.fov, camera.near, camera.far, look, focus_auto,
+		camera.keep_aspect == Camera3D.KEEP_HEIGHT)
 	if camera.projection == Camera3D.PROJECTION_ORTHOGONAL:
 		spec["projection"] = "ortho"
 		spec["size"] = camera.size
-	elif look.get("two_point", false):
+		spec["matrix"] = _xform(camera.global_transform)
+		spec.erase("shift")
+	return spec
+
+
+## A camera given by its place and lens (a film's frame has no Camera3D).
+static func camera_spec_from(xform: Transform3D, fov: float, near: float, far: float, look: Dictionary,
+		focus_auto: float, keep_height := true) -> Dictionary:
+	var xf := xform
+	var spec := {"fov": fov, "near": near, "far": far, "keep": "height" if keep_height else "width", "projection": "persp"}
+	if look.get("two_point", false):
 		# As GnLook.apply_lens: levelled, and shifted to keep the framing.
 		var fwd := -xf.basis.z
 		var pitch := asin(clampf(fwd.y, -0.99, 0.99))
 		var flat := Vector3(fwd.x, 0.0, fwd.z)
 		if flat.length() >= 0.01:
 			xf = Transform3D(Basis.looking_at(flat.normalized(), Vector3.UP), xf.origin)
-			spec["shift"] = [0.0, tan(pitch) / (2.0 * tan(deg_to_rad(camera.fov) * 0.5))]
+			spec["shift"] = [0.0, tan(pitch) / (2.0 * tan(deg_to_rad(fov) * 0.5))]
 	spec["matrix"] = _xform(xf)
 	var dof := float(look.get("dof", 0.0))
 	if dof > 0.0:
