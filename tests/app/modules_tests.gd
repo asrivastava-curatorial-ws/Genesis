@@ -290,6 +290,65 @@ func _weather_and_wind(root: Node) -> void:
 	GnWind.advance(0.5)
 	check(is_equal_approx(GnWind.time(), 3.5), "wind: and the view moves them on")
 	GnWeather.set_value("wind", 0.25)
+	# Twins of one kind share a shader; a twin goes when its material does.
+	GnWind.release()
+	var bark := StandardMaterial3D.new()
+	var bark2 := StandardMaterial3D.new()
+	bark2.albedo_color = Color(0.4, 0.3, 0.2)
+	var t1: RID = GnWind.twin_of(bark)
+	var t2: RID = GnWind.twin_of(bark2)
+	var t3: RID = GnWind.twin_of(leaf)
+	var held: Dictionary = GnWind.held()
+	check(t1.is_valid() and t2.is_valid() and t3.is_valid() and t1 != t2 and GnWind.twin_of(bark) == t1 and held.twins == 3 and held.shaders == 2,
+		"wind: each material has its own twin, and twins of one kind share a shader (%d twins, %d shaders)" % [held.twins, held.shaders])
+	bark2.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	var t2_again: RID = GnWind.twin_of(bark2)
+	held = GnWind.held()
+	check(t2_again == t2 and held.twins == 3 and held.shaders == 3, "wind: a material that changes its kind keeps its twin, with another shader (%d shaders)" % held.shaders)
+	# A tree placed from the library and a scatter of them: dressed, then cleared away with their scene.
+	var tree := MeshInstance3D.new()
+	tree.name = "Tree"
+	tree.set_meta(&"gn_category", "trees")
+	var crown := SphereMesh.new()
+	crown.material = bark
+	tree.mesh = crown
+	root.add_child(tree)
+	var wood := MultiMeshInstance3D.new()
+	wood.name = "Wood"
+	wood.set_meta(&"gn_category", "trees")
+	var many := MultiMesh.new()
+	many.transform_format = MultiMesh.TRANSFORM_3D
+	var trunk := CylinderMesh.new()
+	trunk.material = bark2
+	many.mesh = trunk
+	many.instance_count = 3
+	wood.multimesh = many
+	root.add_child(wood)
+	var dressed: int = GnWind.dress(root)
+	held = GnWind.held()
+	check(dressed == 2 and held.twins == 3 and held.meshes == 1, "wind: a tree and a scatter of trees are dressed (%d surfaces, %d twins, %d mesh copy)" % [dressed, held.twins, held.meshes])
+	bark.uv1_triplanar = true
+	dressed = GnWind.dress(root)
+	held = GnWind.held()
+	check(not GnWind.twin_of(bark).is_valid() and held.twins == 2 and dressed == 1, "wind: a material that comes to do what the twin cannot loses its twin, and its tree stands still (%d twins, %d surface dressed)" % [held.twins, dressed])
+	bark.uv1_triplanar = false
+	check(GnWind.dress(root) == 2 and GnWind.held().twins == 3, "wind: and has one again when it can")
+	root.remove_child(tree)
+	tree.free()
+	root.remove_child(wood)
+	wood.free()
+	crown = null
+	trunk = null
+	many = null
+	bark = null
+	bark2 = null
+	var gone: int = GnWind.tidy()
+	held = GnWind.held()
+	check(gone == 3 and held.twins == 1 and held.meshes == 0 and held.shaders >= 2,
+		"wind: when their scene goes, the twins and the mesh copy go with it; the few shaders stay for the next (%d let go, %d twin left, %d shaders)" % [gone, held.twins, held.shaders])
+	GnWind.release()
+	held = GnWind.held()
+	check(held.twins == 0 and held.shaders == 0 and held.meshes == 0, "wind: and all of it when the program closes")
 	GnScene.root().remove_child(tower)
 	tower.free()
 

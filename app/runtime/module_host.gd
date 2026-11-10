@@ -107,6 +107,7 @@ func _carry_clouds(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	GnWind.advance(delta)
+	GnWind.tidy_now_and_then(delta)
 	_carry_clouds(delta)
 	if _dress_in >= 0.0:
 		_dress_in -= delta

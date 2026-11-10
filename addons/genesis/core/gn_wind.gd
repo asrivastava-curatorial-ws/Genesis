@@ -10,6 +10,12 @@ extends RefCounted
 # alone, so nothing of it is ever saved. A material that does something the
 # twin cannot (a rare thing on a plant) keeps still rather than look wrong.
 #
+# Twins of the same kind share one shader (as Godot's own materials do): a
+# wood of thirty kinds of tree costs the drawing server two or three shaders,
+# not sixty. A twin goes when its material does, and so does the copy of a
+# mesh that a scatter is drawn from: opening scene after scene leaves nothing
+# behind.
+#
 # How hard and which way comes from the weather (gn_weather.gd). Time is
 # the program's own clock, not the shader's: the view runs it, a still
 # freezes it, and a film sets it from the frame, so trees move the same way
@@ -46,7 +52,9 @@ vec3 oriel_sway(vec3 v, mat4 model) {
 }
 "
 
-static var _twins := {}        # material instance id -> {"shader": RID, "material": RID, "source": Material, "code": hash}
+static var _twins := {}        # material instance id -> {"material": RID, "source": WeakRef, "code": the twin's shader code}
+static var _shaders := {}      # shader code -> its shader on the drawing server, shared by every twin of that kind
+static var _tidy_in := 0.0
 static var _registered := false
 static var _time := 0.0
 static var _elapsed := 0.0     # the same clock, never wrapped: how long the clouds have drifted
@@ -123,9 +131,43 @@ static func heading() -> float:
 static func release() -> void:
 	for key in _twins:
 		RenderingServer.free_rid(_twins[key].material)
-		RenderingServer.free_rid(_twins[key].shader)
+	for code in _shaders:
+		RenderingServer.free_rid(_shaders[code])
 	_twins.clear()
+	_shaders.clear()
 	_display.clear()
+
+
+## Lets go of the twins of materials that are no more, and of the copies of
+## meshes that are no more (a scene was closed, a tree was given another
+## material). The shaders stay: there are only ever a few, and the next
+## scene's plants are of the same kinds.
+static func tidy() -> int:
+	var gone := 0
+	# The copies first: a copy holds on to its mesh's materials.
+	for key in _display.keys():
+		if (_display[key].source as WeakRef).get_ref() == null:
+			_display.erase(key)
+			gone += 1
+	for key in _twins.keys():
+		if (_twins[key].source as WeakRef).get_ref() == null:
+			RenderingServer.free_rid(_twins[key].material)
+			_twins.erase(key)
+			gone += 1
+	return gone
+
+
+## The same, every few seconds: called every frame by the 3D view.
+static func tidy_now_and_then(delta: float) -> void:
+	_tidy_in -= delta
+	if _tidy_in <= 0.0:
+		_tidy_in = 5.0
+		tidy()
+
+
+## How many twins, shaders and mesh copies are held (for the tests).
+static func held() -> Dictionary:
+	return {"twins": _twins.size(), "shaders": _shaders.size(), "meshes": _display.size()}
 
 
 ## Gives every tree, plant and patch of grass under `root` its swaying twin.
@@ -140,6 +182,7 @@ static func dress(root: Node) -> int:
 		parts.append_array(holder.find_children("*", "GeometryInstance3D", true, false))
 		for gi in parts:
 			n += _dress_instance(gi)
+	tidy()
 	return n
 
 
@@ -195,6 +238,9 @@ static func _dress_instance(gi: GeometryInstance3D) -> int:
 		if shown != null:
 			RenderingServer.multimesh_set_mesh((gi as MultiMeshInstance3D).multimesh.get_rid(), shown.get_rid())
 			done = mesh.get_surface_count()
+		else:
+			# Nothing of it can sway (any more): drawn from its own mesh.
+			RenderingServer.multimesh_set_mesh((gi as MultiMeshInstance3D).multimesh.get_rid(), mesh.get_rid())
 		return done
 	for i in mesh.get_surface_count():
 		var mat: Material = gi.material_override
@@ -204,6 +250,10 @@ static func _dress_instance(gi: GeometryInstance3D) -> int:
 		if twin.is_valid():
 			RenderingServer.instance_set_surface_override_material(gi.get_instance(), i, twin)
 			done += 1
+		else:
+			# It cannot sway (any more): drawn with what the node itself says.
+			var own := (gi as MeshInstance3D).get_surface_override_material(i)
+			RenderingServer.instance_set_surface_override_material(gi.get_instance(), i, own.get_rid() if own else RID())
 	return done
 
 
@@ -215,6 +265,8 @@ static var _display := {}      # mesh instance id -> {"mesh": the copy, "source"
 static func _display_mesh(mesh: Mesh, override: Material) -> Mesh:
 	var key := mesh.get_instance_id()
 	var entry: Dictionary = _display.get(key, {})
+	if not entry.is_empty() and (entry.source as WeakRef).get_ref() != mesh:
+		entry = {}
 	var copy: Mesh = entry.get("mesh")
 	if copy == null:
 		copy = mesh.duplicate() as Mesh
@@ -228,6 +280,8 @@ static func _display_mesh(mesh: Mesh, override: Material) -> Mesh:
 		if twin.is_valid():
 			RenderingServer.mesh_surface_set_material(copy.get_rid(), i, twin)
 			any = true
+		else:
+			RenderingServer.mesh_surface_set_material(copy.get_rid(), i, mat.get_rid() if mat else RID())
 	return copy if any else null
 
 
@@ -238,25 +292,41 @@ static func twin_of(mat: Material) -> RID:
 		return RID()
 	var m := mat as BaseMaterial3D
 	var key := mat.get_instance_id()
+	var entry: Dictionary = _twins.get(key, {})
+	if not entry.is_empty() and (entry.source as WeakRef).get_ref() != mat:
+		# Left by a material that is no more.
+		RenderingServer.free_rid(entry.material)
+		_twins.erase(key)
+		entry = {}
 	var code := shader_for(m)
 	if code == "":
-		return RID()
-	var entry: Dictionary = _twins.get(key, {})
-	if entry.is_empty() or int(entry.code) != code.hash():
+		# It has come to do something the twin cannot: drawn as itself from now on.
 		if not entry.is_empty():
 			RenderingServer.free_rid(entry.material)
-			RenderingServer.free_rid(entry.shader)
-		var shader := RenderingServer.shader_create()
-		RenderingServer.shader_set_code(shader, code)
-		var twin := RenderingServer.material_create()
-		RenderingServer.material_set_shader(twin, shader)
-		entry = {"shader": shader, "material": twin, "source": weakref(mat), "code": code.hash()}
+			_twins.erase(key)
+		return RID()
+	if entry.is_empty():
+		entry = {"material": RenderingServer.material_create(), "source": weakref(mat), "code": ""}
 		_twins[key] = entry
 		# The seasons recolour leaves, a user repaints a tree: the twin follows.
 		if not mat.changed.is_connected(_on_changed.bind(key)):
 			mat.changed.connect(_on_changed.bind(key))
+	if str(entry.code) != code:
+		# A new twin, or a change of kind (cut-out to solid, a filter): another shader.
+		RenderingServer.material_set_shader(entry.material, _shader(code))
+		entry.code = code
 	_copy_settings(m, entry.material)
 	return entry.material
+
+
+## The shader for a twin's code: one for all the twins of that kind.
+static func _shader(code: String) -> RID:
+	var shader: RID = _shaders.get(code, RID())
+	if not shader.is_valid():
+		shader = RenderingServer.shader_create()
+		RenderingServer.shader_set_code(shader, code)
+		_shaders[code] = shader
+	return shader
 
 
 static func _on_changed(key: int) -> void:
@@ -264,13 +334,8 @@ static func _on_changed(key: int) -> void:
 	if entry.is_empty():
 		return
 	var mat: BaseMaterial3D = (entry.source as WeakRef).get_ref()
-	if mat == null:
-		return
-	# A change of kind (cut-out to solid, a filter) is a new shader.
-	if shader_for(mat).hash() != int(entry.code):
+	if mat != null:
 		twin_of(mat)
-	else:
-		_copy_settings(mat, entry.material)
 
 
 ## Whether the twin can do everything this material does.
