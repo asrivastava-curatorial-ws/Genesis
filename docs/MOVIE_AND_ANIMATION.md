@@ -16,6 +16,8 @@ With *Eevee* or *Cycles* chosen on the Render page, the Movie page renders the f
 
 ## Keys and the timeline
 
+![The timeline under the 3D view: the demo film's two shots, the second coming in with a dissolve, and its title](screenshots/06_timeline.png)
+
 *View > Timeline* (Ctrl+T) opens the timeline under the 3D view. It shows the film's length, its shots, its titles and a row for everything that has keys. Drag in the ruler (or press Left and Right) to move through the film; Space plays.
 
 - **Key the selection** (K): records how the selected objects are at this moment of the film: place, turn and size; a light's brightness and colour; a camera's lens. Move to another moment, change them, key again: in between they move from one to the other. A camera with keys can be used in a shot like any other.

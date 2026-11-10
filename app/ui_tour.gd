@@ -153,16 +153,26 @@ static func _new_in_rc5(main: Node, ws: Node, out: String, picked: Node) -> void
 		await shot(main, out, spot[2])
 		if scroll:
 			scroll.scroll_vertical = 0
-	# A heavy thing shown as a box while working around it.
+	# A heavy thing shown as a box while working around it: a vehicle, if the scene has one.
 	var GnBig = load("res://addons/genesis/core/gn_big.gd")
 	panel.show_section("Scene")
-	if picked and is_instance_valid(picked):
-		App.host.selection().set_nodes([picked])
-		GnBig.set_stand_in([picked], true)
+	var heavy: Node = picked
+	for n in App.scenes.root.get_children():
+		var called := str(n.name).to_lower()
+		if n is Node3D and n.scene_file_path != "" and (called.contains("coach") or called.contains("bus") or called.contains("car")):
+			heavy = n
+			break
+	if heavy and is_instance_valid(heavy):
+		App.host.selection().set_nodes([heavy])
+		ws.viewport_panel.frame_selection()
+		GnBig.set_stand_in([heavy], true)
 		await _settle(main, 25)
 		await shot(main, out, "shown_as_box")
 		App.host.undo_redo().undo()
 		await _settle(main, 10)
+		var cams: Array = GnCameras.cameras()
+		if not cams.is_empty():
+			ws.viewport_panel.look_through(cams[0])
 	App.host.selection().clear()
 	# Cycles in the 3D view: its picture of the view, once it has had time to refine.
 	var GnLiveRender = load("res://addons/genesis/core/gn_live_render.gd")

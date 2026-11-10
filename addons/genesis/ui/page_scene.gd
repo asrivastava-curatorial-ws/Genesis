@@ -94,13 +94,12 @@ func _init() -> void:
 	# A large scene: how big it is, and ways of carrying it.
 	GnUi.heading(self, "A large scene")
 	_big_note = GnUi.note(self, "How many triangles, objects and pictures the scene holds, and what is heaviest.")
-	var brow := HFlowContainer.new()
-	GnUi.button(brow, "Count the scene", _count_scene, "gauge")
-	GnUi.button(brow, "Show selection as boxes", func(): _stand_in(true), "kind_model").tooltip_text = "Heavy things as plain boxes in the 3D view while you work around them; every render shows them in full"
-	GnUi.button(brow, "…in full again", func(): _stand_in(false))
-	var lods := GnUi.button(brow, "Lighten the project's models", _lighten, "layers_2")
+	# (One under another: a row would have to break the longer names.)
+	GnUi.button(self, "Count the scene", _count_scene, "gauge")
+	GnUi.button(self, "Show selection as boxes", func(): _stand_in(true), "kind_model").tooltip_text = "Heavy things as plain boxes in the 3D view while you work around them; every render shows them in full"
+	GnUi.button(self, "…in full again", func(): _stand_in(false))
+	var lods := GnUi.button(self, "Lighten the project's models", _lighten, "layers_2")
 	lods.tooltip_text = "Gives the heavy models this project keeps lighter versions of themselves, which the 3D view draws when they are small on the screen. Models brought in from now on get them by themselves."
-	add_child(brow)
 
 	GnUi.heading(self, "Layers")
 	GnUi.note(self, "Put things on a layer to show or hide them together: landscaping, furniture, option A.")

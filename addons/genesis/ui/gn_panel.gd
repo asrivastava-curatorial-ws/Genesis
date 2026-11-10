@@ -213,5 +213,7 @@ static func _tame(node: Node) -> void:
 		if c is OptionButton:
 			(c as OptionButton).clip_text = true
 			(c as OptionButton).fit_to_longest_item = false
-		elif c is Button and (c as Button).text.length() > 22 and (c as Button).autowrap_mode == TextServer.AUTOWRAP_OFF:
+		elif c is Button and (c as Button).text.length() > 22 and (c as Button).autowrap_mode == TextServer.AUTOWRAP_OFF \
+				and not c.get_parent() is FlowContainer:
+			# (Not in a row that flows: there a button that may break its words is given no width at all.)
 			(c as Button).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

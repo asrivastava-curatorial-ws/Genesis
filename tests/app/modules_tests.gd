@@ -799,6 +799,8 @@ func _large_scenes(root: Node) -> void:
 	check(box != null and box.layers == view_bit and ball.layers == render_bit and absf((box.mesh as BoxMesh).size.x - 1.0) < 0.05,
 		"big: a box its size shows in the 3D view only; the dome itself in renders only")
 	check(not GnSceneExport._view_only(ball) and GnSceneExport._view_only(box), "big: Eevee and Cycles get the dome, not the box")
+	var boxed: Dictionary = GnBig.count(yard)
+	check(int(boxed.objects) == 2 and int(boxed.triangles) == before + 12, "big: counted, the scene is what it was (the box is not one of its things)")
 	GnHost.undo_redo().undo()
 	check(not GnBig.is_stand_in(ball) and not ball.has_meta(GnBig.AS_BOX) and ball.get_node_or_null("AsBox") == null and ball.layers == 1, "big: one undo step shows it in full again, with no mark left behind")
 	GnHost.undo_redo().redo()

@@ -70,6 +70,8 @@ With Cycles chosen: *Render for the light mixer*, then *Open the light mixer*. T
 
 ## Cycles in the 3D view
 
+![Cycles in the 3D view: the engine's picture of the view, at its third step of four](screenshots/07_cycles_in_the_view.png)
+
 *View > Cycles in the View* (F10, or the *Cycles* switch on the tool bar; *Eevee in the View* is Shift+F10) lays the engine's picture of the view over it. The scene is handed to the engine once (a few seconds for a small scene, longer for a large one); then, whenever the view is left alone, a first coarse picture comes quickly and three finer ones follow, the last at the view's full size. Turn the view and the 3D view itself shows at once, until the engine has caught up. Change the scene (move a thing, change a material, the sun) and it is handed over again. Switched off, the engine stops.
 
 It shows the scene as a render would: with shown-as-boxes things in full, without the grid, the handles and the outlines of what is selected. Work in the 3D view; look in the live view.

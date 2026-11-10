@@ -114,7 +114,7 @@ func _init() -> void:
 
 	if GnAssets.user_library_dir() != "":
 		GnUi.heading(self, "Your own models")
-		GnUi.note(self, "Add models of your own (GLB, glTF, FBX, OBJ or .blend) to a library every project can use: furniture, people, plants (they can be painted in Landscape), vehicles. Say what each may be used under; the licence travels with it. A project gets its own copy of what it uses.")
+		GnUi.note(self, "Add models of your own (GLB, glTF, FBX, OBJ, .blend, IFC, USD, Collada, 3DS and more) to a library every project can use: furniture, people, plants (they can be painted in Landscape), vehicles. Say what each may be used under; the licence travels with it. A project gets its own copy of what it uses.")
 		var own := GnUi.row(self)
 		GnUi.fill(GnUi.button(own, "Add a model…", _add_own, "add"))
 		GnUi.fill(GnUi.button(own, "Remove it", _remove_own, "trash"))

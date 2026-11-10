@@ -78,7 +78,8 @@ static func count(root: Node) -> Dictionary:
 			mesh = mm.mesh
 			times = mm.instance_count if mm.visible_instance_count < 0 else mm.visible_instance_count
 			out.copies += times
-		if mesh == null or not (n as Node3D).is_visible_in_tree():
+		# (The box a thing is shown as is not a thing of the scene's.)
+		if mesh == null or not (n as Node3D).is_visible_in_tree() or (n.name == BOX_NAME and n.has_meta(NEVER_SAVED)):
 			continue
 		out.objects += 1
 		var tris := triangles(mesh) * times

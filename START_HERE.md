@@ -7,7 +7,7 @@ Oriel (called Genesis Community up to rc3) is free architectural and event visua
 > - **What is new in rc5:** what Lumion, D5 and V-Ray users would miss. IFC, USD, Collada and 3DS models; lights in lumens and kelvin with IES files; a light mixer, more passes and EXR; wind, wet surfaces, puddles and snow; relief (true displacement), caustics, light inside and volumetric clouds; layered materials; keyframes, a timeline, transitions, titles and sound; rows, fills and traffic; Cycles in the 3D view; walking through the project on the screen or a VR headset; and tools for large scenes. Section 4 has a table of where each is. See [CHANGELOG.md](CHANGELOG.md).
 > - **What was new in rc4:** Eevee and Cycles built in (choose the renderer on the Render page; nothing to install), the *Online* page with BlendKit, Poly Haven and ambientCG, a starter pack of free assets (also from a terminal with `--get-assets`), and the new name. See [docs/RENDERING.md](docs/RENDERING.md) and [docs/ONLINE_LIBRARY.md](docs/ONLINE_LIBRARY.md).
 > - **What was new in rc3:** a professional interface. GitHub's Dark Default theme (as VSCodium shows it) in JetBrains Mono, icons throughout, a strip of icons for the twelve pages, models placed by clicking or dragging where they go, and one way of choosing files and folders everywhere. Every feature of rc2 is still there. See [CHANGELOG.md](CHANGELOG.md).
-> - **Linux:** one AppImage (about 640 MB, with the engines), tested on Ubuntu 24.04 (the base of Kubuntu 24.04) with software rendering and no graphics card: every automated suite, the smoke tour and the end-to-end test, run from the AppImage itself.
+> - **Linux:** one AppImage (about 700 MB, with the engines), tested on Ubuntu 24.04 (the base of Kubuntu 24.04) with software rendering and no graphics card: every automated suite, the smoke tour and the end-to-end test, run from the AppImage itself.
 > - **Windows:** not part of this delivery. The Windows program is built from the same source, but has **not** been run on Windows yet.
 >
 > What is still open is listed in [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md). Everything the AppImage contains, and everything it writes on your computer, is in [docs/INVENTORY.md](docs/INVENTORY.md).
@@ -266,7 +266,7 @@ bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genes
 
 **Tested** on Ubuntu 24.04 with software Vulkan (lavapipe):
 
-- 564 headless checks in five suites, and a smoke tour of the whole program.
+- 565 headless checks in five suites, and a smoke tour of the whole program.
 - The built program's own smoke tour, with the bundled library and the material presets.
 - The end-to-end test in five launches with real renders: 1080p, 4K, 360° (mono, stereo and a virtual tour), photo match, a sun study, render passes, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
 - Importing glTF, OBJ, FBX and `.blend` (with Ubuntu's Blender 4.0.2), DXF, and PDF plans (as lines and as pictures).

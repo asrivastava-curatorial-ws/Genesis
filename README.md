@@ -34,6 +34,12 @@ Rendered by the program itself, from its two demo projects (Standard quality, so
 | ![Architecture demo, golden hour](docs/screenshots/demo_architecture_golden_hour.jpg) | ![Event production demo, photo pit](docs/screenshots/demo_event_photo_pit.jpg) |
 | ![A frame of the demo film: people walking across the plaza on a drawn path, under the film's title](docs/screenshots/demo_architecture_walk.jpg) | ![Architecture demo, the plaza camera](docs/screenshots/demo_architecture_plaza.jpg) |
 
+New in rc5, among much else: a timeline with keys, transitions and titles, and Cycles in the 3D view while you work.
+
+| | |
+|---|---|
+| ![The timeline under the 3D view](docs/screenshots/06_timeline.png) | ![Cycles in the 3D view](docs/screenshots/07_cycles_in_the_view.png) |
+
 ## What it does
 
 | Section | What it does |

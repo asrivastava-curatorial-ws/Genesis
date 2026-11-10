@@ -8,6 +8,8 @@
 
 ## Large scenes
 
+![Two vehicles shown as boxes in the 3D view, and the scene counted on the Scene page](screenshots/08_large_scene.png)
+
 *Scene > A large scene*:
 
 - **Count the scene** says how large it is: triangles, objects, different shapes, scattered copies, lights, materials, megabytes of pictures; what the 3D view is drawing at the moment and how many times a second; and the heaviest things in it. Start there: one over-detailed sofa is a commoner cause of a slow view than the size of the building.
