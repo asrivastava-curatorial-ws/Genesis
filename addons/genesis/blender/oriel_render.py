@@ -1141,11 +1141,12 @@ def build_lights(lights):
             data.spot_blend = max(0.0, min(1.0, float(L.get("spot_blend", 0.3))))
             if ies:
                 # No light nodes in Eevee: a cone from the file's own angles,
-                # full to where the beam is at half its peak, out at its edge.
+                # out at the beam's edge and fading so that it is at about
+                # half where the file says the beam is at half its peak.
                 edge = max(float(ies.get("edge", 45.0)), 1.0)
                 half = min(float(ies.get("half", edge * 0.6)), edge)
                 data.spot_size = min(edge * 2.0, 180.0) * math.pi / 180.0
-                data.spot_blend = max(0.05, min(1.0, 1.0 - half / edge))
+                data.spot_blend = max(0.05, min(1.0, 2.0 * (1.0 - half / edge)))
             try:
                 data.show_cone = False
             except Exception:

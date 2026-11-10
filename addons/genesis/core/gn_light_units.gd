@@ -24,7 +24,9 @@ static func energy_for(lumens: float) -> float:
 
 ## The kelvin a plain light was set to, or 0 when it has a colour of its own.
 static func kelvin_of(light: Light3D) -> float:
-	return float(light.get_meta(KELVIN_META, 0.0))
+	# Undoing the first change leaves the entry there with nothing in it.
+	var v: Variant = light.get_meta(KELVIN_META, 0.0)
+	return float(v) if v is float or v is int else 0.0
 
 
 ## An approximation of a black body's colour (Tanner Helland's fit).

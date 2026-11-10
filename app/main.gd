@@ -581,6 +581,21 @@ func _command_line() -> void:
 		print("PHOTOREAL RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return
+	# Automation: a script of your own, run once the program is up.
+	#   Oriel -- --script file.gd [words for it]
+	# The file is GDScript with `static func run(main: Node, args: PackedStringArray) -> int`
+	# (the number of failures); the program closes when it returns.
+	var sc := args.find("--script")
+	if sc >= 0 and sc + 1 < args.size():
+		var script: Variant = load(args[sc + 1])
+		if not script is GDScript or not script.has_method("run"):
+			push_error("--script: %s is not a GDScript with a static run(main, args)." % args[sc + 1])
+			get_tree().quit(1)
+			return
+		var failures: int = await script.run(self, args.slice(sc + 2))
+		print("ORIEL_SCRIPT RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
+		get_tree().quit(failures)
+		return
 	var u := args.find("--ui-tour")
 	if u >= 0 and u + 2 < args.size():
 		var failures: int = await UiTour.run(self, args[u + 1], args[u + 2], "docs" in args)

@@ -1,0 +1,11 @@
+IESNA:LM-63-2002
+[TEST] Oriel test file
+[MANUFAC] Oriel
+[LUMCAT] narrow downlight, 30 degree beam
+[LUMINAIRE] A made-up downlight for the tests: 1000 cd on its axis, half at 15 degrees, out by 40
+TILT=NONE
+1 -1 1 10 1 1 2 0.1 0.1 0
+1 1 12
+0 5 10 15 20 25 30 40 60 90
+0
+1000 950 780 500 260 120 50 0 0 0

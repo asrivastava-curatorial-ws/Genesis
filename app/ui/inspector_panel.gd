@@ -505,7 +505,7 @@ func _light_units() -> void:
 	k.value_changed.connect(func(v):
 		if _building or not is_instance_valid(target):
 			return
-		var changes: Array = [[target, "metadata/" + GnLightUnits.KELVIN_META, v if v > 0.0 else null]]
+		var changes: Array = [[target, "metadata/" + GnLightUnits.KELVIN_META, v]]
 		if v > 0.0:
 			changes.append([target, "light_color", GnLightUnits.kelvin_colour(v)])
 		GnScene.set_props("Change colour temperature of %s" % target.name, changes))

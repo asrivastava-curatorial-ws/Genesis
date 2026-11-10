@@ -201,7 +201,8 @@ func _rebuild() -> void:
 	_yoke = yoke
 	_head = head
 	light.light_color = lit
-	light.shadow_enabled = casts_shadows
+	# A light's projector (the IES beam) is drawn only when it casts shadows.
+	light.shadow_enabled = casts_shadows or _ies_lumens > 0.0
 	# Godot's volumetric fog needs a strong push to show a narrow beam: 30
 	# was the value where an 8-degree beam read clearly in tests.
 	light.light_volumetric_fog_energy = beam_in_haze * 30.0

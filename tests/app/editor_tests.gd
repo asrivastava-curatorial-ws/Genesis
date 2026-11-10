@@ -17,6 +17,7 @@ const EditOps := preload("res://app/runtime/edit_ops.gd")
 const TransformGizmo := preload("res://app/runtime/transform_gizmo.gd")
 const SceneTreePanel := preload("res://app/ui/scene_tree_panel.gd")
 const InspectorPanel := preload("res://app/ui/inspector_panel.gd")
+const GnLightUnits := preload("res://addons/genesis/core/gn_light_units.gd")
 const LedWall := preload("res://addons/genesis/set/gn_led_wall.gd")
 const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
 const Mover := preload("res://addons/genesis/set/gn_mover.gd")
@@ -342,6 +343,30 @@ func _run() -> void:
 	GnHost.selection().set_nodes([light])
 	await process_frame
 	check("light_energy" in insp._editors and "omni_range" in insp._editors, "inspector: a light shows its light settings")
+	# The same light in a lighting designer's units.
+	check("gn_lumens" in insp._editors and "gn_kelvin" in insp._editors, "inspector: a light also reads in lumens and kelvin")
+	var spins := insp.find_children("*", "SpinBox", true, false)
+	var lm_box: SpinBox = null
+	var k_box: SpinBox = null
+	for sb in spins:
+		var row: Node = sb.get_parent()
+		var label: Label = row.get_child(0) as Label if row.get_child_count() > 0 else null
+		if label and label.text == "Output (lumens)":
+			lm_box = sb
+		elif label and label.text == "Colour temp (K)":
+			k_box = sb
+	if lm_box and k_box:
+		lm_box.value = 3000.0
+		await process_frame
+		check(is_equal_approx(light.light_energy, 2.0), "inspector: 3,000 lumens is the brightness the set's fixtures give it (%.2f)" % light.light_energy)
+		k_box.value = 2700.0
+		await process_frame
+		check(light.light_color.r > light.light_color.b * 1.5 and GnLightUnits.kelvin_of(light) == 2700.0, "inspector: 2700 K makes the light warm, and is remembered")
+		ur.undo()
+		await process_frame
+		check(GnLightUnits.kelvin_of(light) == 0.0 and is_equal_approx(light.light_color.b, 1.0), "inspector: the colour temperature is undoable")
+	else:
+		check(false, "inspector: the lumens and kelvin rows are there")
 	insp.queue_free()
 	await process_frame
 	await _paths()
