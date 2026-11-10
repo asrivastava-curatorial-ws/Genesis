@@ -72,7 +72,7 @@ Your projects are yours and are not touched.
 
 ## 2. Inside the AppImage
 
-One file of about 700 MB; its exact size and SHA-256 are in the `.sha256` file that comes with it (a file cannot hold its own checksum). It opens as a read-only folder of 1569.8 MB in 5,779 files:
+One file of about 700 MB; its exact size and SHA-256 are in the `.sha256` file that comes with it (a file cannot hold its own checksum). It opens as a read-only folder of 1576.7 MB in 5,782 files:
 
 | Path inside the AppImage | Size | What it is |
 |---|---|---|
@@ -81,7 +81,7 @@ One file of about 700 MB; its exact size and SHA-256 are in the `.sha256` file t
 | `usr/lib/oriel/Oriel.x86_64` | 73.5 MB | the program: Godot 4.7.2's runtime |
 | `usr/lib/oriel/Oriel.pck` | 187.4 MB | everything else of the program: its scripts (and the Blender-side scripts), the theme, the fonts, the icons, the model library and the material presets |
 | `usr/lib/oriel/engine/` | 1279.8 MB | Eevee and Cycles: Blender 5.2.3 as a Python module with its own CPython 3.13.14; IfcOpenShell and Assimp, for reading IFC, Collada and 3DS models; and their licences (`engine/LICENSES/`) |
-| `usr/lib/oriel/docs/` | 11.0 MB | the manual (HTML and PDF), the guides and their pictures, for *Help > Documentation* |
+| `usr/lib/oriel/docs/` | 17.9 MB | the manual (HTML and PDF), the guides and their pictures, for *Help > Documentation* |
 | `usr/lib/oriel/demos/` | 17.8 MB | the two demo projects; *Try a demo* copies one into your projects folder |
 | `usr/share/applications/`, `usr/share/icons/`, `usr/share/metainfo/` | small | the desktop entry, the icon (PNG and SVG) and the AppStream description, for software centres |
 | `usr/share/doc/oriel/` | 0.2 MB | README, LICENSE, THIRD_PARTY_NOTICES, CHANGELOG, this inventory, the font's licence (OFL.txt), `oriel_assets.py` and `starter_pack.json` |
