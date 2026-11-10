@@ -948,6 +948,169 @@ def fix_materials():
             warn_once("mat:" + mat.name, "material %s kept as imported (%s)" % (mat.name, e))
 
 
+# ----------------------------------------------------------------- weather on the surfaces
+
+_WEATHER_GROUP = None
+
+
+def _weather_group(W):
+    """One node group every material passes its colour, roughness and normal
+    through: wet darkens and glosses what faces the sky, puddles lie glassy
+    on what is flat, snow whitens what faces up. The numbers and the puddle
+    and snow patterns are the editor's own (gn_weather.gd), so the three
+    renderers agree."""
+    global _WEATHER_GROUP
+    if _WEATHER_GROUP is not None:
+        return _WEATHER_GROUP
+    g = bpy.data.node_groups.new("oriel_weather", "ShaderNodeTree")
+    for name, kind in (("Base Color", "NodeSocketColor"), ("Roughness", "NodeSocketFloat"), ("Normal", "NodeSocketVector")):
+        g.interface.new_socket(name, in_out="INPUT", socket_type=kind)
+        g.interface.new_socket(name, in_out="OUTPUT", socket_type=kind)
+    nodes, links = g.nodes, g.links
+    gi = nodes.new("NodeGroupInput")
+    go = nodes.new("NodeGroupOutput")
+    geo = nodes.new("ShaderNodeNewGeometry")
+
+    def math(op, a, b=None, c=None, clamp=False):
+        m = nodes.new("ShaderNodeMath")
+        m.operation = op
+        m.use_clamp = clamp
+        for idx, x in enumerate((a, b, c)):
+            if x is None:
+                continue
+            if isinstance(x, (int, float)):
+                m.inputs[idx].default_value = x
+            else:
+                links.new(x, m.inputs[idx])
+        return m.outputs[0]
+
+    def smooth(x, lo, hi):
+        mr = nodes.new("ShaderNodeMapRange")
+        mr.interpolation_type = "SMOOTHSTEP"
+        links.new(x, mr.inputs["Value"])
+        mr.inputs["From Min"].default_value = lo
+        mr.inputs["From Max"].default_value = hi
+        return mr.outputs[0]
+
+    def mix_colour(fac, a, b):
+        m = nodes.new("ShaderNodeMix")
+        m.data_type = "RGBA"
+        links.new(fac, m.inputs[0])
+        for idx, x in ((6, a), (7, b)):
+            if isinstance(x, tuple):
+                m.inputs[idx].default_value = (*x, 1.0)
+            else:
+                links.new(x, m.inputs[idx])
+        return m.outputs[2]
+
+    def mix_value(fac, a, b):
+        m = nodes.new("ShaderNodeMix")
+        m.data_type = "FLOAT"
+        links.new(fac, m.inputs[0])
+        for idx, x in ((2, a), (3, b)):
+            if isinstance(x, (int, float)):
+                m.inputs[idx].default_value = x
+            else:
+                links.new(x, m.inputs[idx])
+        return m.outputs[0]
+
+    def mask(key):
+        """The pattern at this point of the ground: the picture covers the
+        weather's box, north at its top (Godot's -Z is Blender's +Y)."""
+        img = _load_image(W.get(key), non_color=True)
+        if img is None:
+            return None
+        x0, z0, sx, sz = [float(v) for v in W.get("box", [-60, -60, 120, 120])]
+        mp = nodes.new("ShaderNodeMapping")
+        mp.vector_type = "POINT"
+        mp.inputs["Scale"].default_value = (1.0 / sx, 1.0 / sz, 1.0)
+        mp.inputs["Location"].default_value = (-x0 / sx, z0 / sz + 1.0, 0.0)
+        links.new(out(geo, "Position"), mp.inputs["Vector"])
+        tex = nodes.new("ShaderNodeTexImage")
+        tex.image = img
+        tex.extension = "CLIP"
+        tex.interpolation = "Linear"
+        links.new(mp.outputs["Vector"], tex.inputs["Vector"])
+        return tex.outputs["Alpha"]
+
+    # How far the surface faces the sky, as the editor's decals count it:
+    # 1 flat, 0.5 a wall, 0 a ceiling.
+    sep = nodes.new("ShaderNodeSeparateXYZ")
+    links.new(out(geo, "Normal"), sep.inputs[0])
+    facing = math("MULTIPLY_ADD", sep.outputs[2], 0.5, 0.5)
+    colour = gi.outputs["Base Color"]
+    rough = gi.outputs["Roughness"]
+    normal = gi.outputs["Normal"]
+    wet = float(W.get("wet", 0.0))
+    if wet > 0.0:
+        a = math("MULTIPLY", smooth(facing, float(W.get("wet_facing", 0.25)), 1.0), 0.9 * wet)
+        colour = mix_colour(math("MULTIPLY", a, float(W.get("wet_darken", 0.5))), colour, col3(W.get("wet_colour"), (0.0, 0.0, 0.0)))
+        rough = mix_value(a, rough, float(W.get("wet_roughness", 0.08)))
+    puddles = float(W.get("puddles", 0.0))
+    pm = mask("puddle_mask") if puddles > 0.0 else None
+    if pm is not None:
+        a = math("MULTIPLY", smooth(facing, float(W.get("puddle_facing", 0.93)), 1.0), pm)
+        colour = mix_colour(a, colour, col3(W.get("puddle_colour"), (0.0, 0.0, 0.0)))
+        rough = mix_value(a, rough, float(W.get("puddle_roughness", 0.02)))
+        flat = nodes.new("ShaderNodeMix")
+        flat.data_type = "VECTOR"
+        links.new(a, flat.inputs[0])
+        links.new(normal, flat.inputs[4])
+        links.new(out(geo, "True Normal"), flat.inputs[5])
+        normal = flat.outputs[1]
+    snow = float(W.get("snow", 0.0))
+    if snow > 0.0:
+        sm = mask("snow_mask")
+        a = smooth(facing, float(W.get("snow_facing", 0.62)), 1.0)
+        a = math("MULTIPLY", a, sm if sm is not None else snow)
+        colour = mix_colour(a, colour, col3(W.get("snow_colour"), (0.9, 0.9, 0.95)))
+        rough = mix_value(a, rough, float(W.get("snow_roughness", 0.85)))
+    links.new(colour, go.inputs["Base Color"])
+    links.new(rough, go.inputs["Roughness"])
+    links.new(normal, go.inputs["Normal"])
+    _WEATHER_GROUP = g
+    return g
+
+
+def apply_weather():
+    """Wet, puddles and snow on every lit surface."""
+    W = SCENE.get("weather") or {}
+    if max(float(W.get("wet", 0.0)), float(W.get("puddles", 0.0)), float(W.get("snow", 0.0))) <= 0.0:
+        return
+    specs = SCENE.get("materials", {})
+    done = 0
+    for mat in bpy.data.materials:
+        spec = specs.get(mat.name) or {}
+        if mat.node_tree is None or spec.get("kind") == "water" or spec.get("unshaded") or mat.name.startswith("oriel_"):
+            continue
+        bsdf = principled(mat)
+        if bsdf is None:
+            continue
+        try:
+            nt = mat.node_tree
+            node = nt.nodes.new("ShaderNodeGroup")
+            node.node_tree = _weather_group(W)
+            geo = None
+            for name in ("Base Color", "Roughness", "Normal"):
+                target = sock(bsdf, name)
+                if target is None:
+                    continue
+                if target.is_linked:
+                    nt.links.new(target.links[0].from_socket, node.inputs[name])
+                elif name == "Normal":
+                    # An unlinked normal input means the surface's own normal.
+                    geo = geo or nt.nodes.new("ShaderNodeNewGeometry")
+                    nt.links.new(out(geo, "Normal"), node.inputs[name])
+                else:
+                    node.inputs[name].default_value = target.default_value
+                nt.links.new(node.outputs[name], target)
+            done += 1
+        except Exception as e:
+            warn_once("weather:" + mat.name, "the weather could not be put on material %s (%s)" % (mat.name, e))
+    log("weather on %d materials (wet %.2f, puddles %.2f, snow %.2f)" % (
+        done, float(W.get("wet", 0.0)), float(W.get("puddles", 0.0)), float(W.get("snow", 0.0))))
+
+
 # ----------------------------------------------------------------- instancers
 
 
@@ -2769,6 +2932,7 @@ def main():
     import_glb(_abs(JOB["glb"]))
     apply_object_flags()
     fix_materials()
+    apply_weather()
     build_instancers()
     build_texts()
     build_haze(SCENE.get("haze"))

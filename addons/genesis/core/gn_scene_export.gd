@@ -27,6 +27,7 @@ const WATER := preload("res://addons/genesis/set/gn_water.gdshader")
 const AreaLight := preload("res://addons/genesis/set/gn_area_light.gd")
 const LightFixture := preload("res://addons/genesis/set/gn_light_fixture.gd")
 const GnIes := preload("res://addons/genesis/core/gn_ies.gd")
+const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
 const Terrain := preload("res://addons/genesis/set/gn_terrain.gd")
 
 const TONEMAPS := ["linear", "reinhard", "filmic", "aces", "agx"]
@@ -82,6 +83,9 @@ static func export_scene(root: Node, dir: String) -> Dictionary:
 		"bounds": _aabb_list(ctx.bounds) if ctx.has_bounds else [],
 	}
 	scene.merge(environment_spec(ctx), true)
+	var weather := _weather(ctx)
+	if not weather.is_empty():
+		scene["weather"] = weather
 	var glb := dir.path_join("scene.glb")
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
@@ -146,7 +150,9 @@ static func _walk(ctx: Ctx, n: Node) -> void:
 		if (n as GeometryInstance3D).visible:
 			ctx.warn("Particles (rain, snow, sparks, confetti) are drawn by the real-time renderer only.")
 	elif n is Decal:
-		ctx.warn("Decals are drawn by the real-time renderer only.")
+		# The weather's own decals (wet, puddles, snow) go as nodes in every material.
+		if not n.get_parent().has_meta(&"gn_weather_surfaces"):
+			ctx.warn("Decals are drawn by the real-time renderer only.")
 	for c in n.get_children():
 		_walk(ctx, c)
 
@@ -625,6 +631,39 @@ static func _area_light(ctx: Ctx, a: Node3D) -> void:
 
 
 # ------------------------------------------------------------------ the world
+
+## What lies on the surfaces (wet, puddles, snow), with the puddle and snow
+## patterns as pictures in the job folder, so Eevee and Cycles lay them
+## exactly where the editor shows them.
+static func _weather(ctx: Ctx) -> Dictionary:
+	var spec := GnWeather.surface_spec()
+	if spec.is_empty():
+		return {}
+	var out := {"wet": spec.wet, "puddles": spec.puddles, "snow": spec.snow, "box": spec.box,
+		"wet_colour": _lin(GnWeather.WET_COLOUR), "wet_darken": GnWeather.WET_DARKEN, "wet_roughness": GnWeather.WET_ROUGHNESS,
+		"puddle_colour": _lin(GnWeather.PUDDLE_COLOUR), "puddle_opacity": GnWeather.PUDDLE_OPACITY,
+		"puddle_roughness": GnWeather.PUDDLE_ROUGHNESS, "snow_colour": _lin(GnWeather.SNOW_COLOUR),
+		"snow_roughness": GnWeather.SNOW_ROUGHNESS, "wet_facing": GnWeather.WET_FACING,
+		"puddle_facing": GnWeather.PUDDLE_FACING, "snow_facing": GnWeather.SNOW_FACING}
+	for key in ["puddle_mask", "snow_mask"]:
+		var img: Image = spec.get(key)
+		if img == null or img.is_empty():
+			if float(out.get("puddles" if key == "puddle_mask" else "snow", 0.0)) > 0.0 and key == "puddle_mask":
+				ctx.warn("The puddles' pattern was still being drawn, so Eevee and Cycles show none; render again in a moment.")
+				out["puddles"] = 0.0
+			continue
+		# The pattern is the picture's opacity. The patterns are soft: half
+		# the size is plenty and reads quickly.
+		var src := img.duplicate() as Image
+		if src.is_compressed():
+			src.decompress()
+		src.convert(Image.FORMAT_RGBA8)
+		src.resize(src.get_width() / 2, src.get_height() / 2, Image.INTERPOLATE_BILINEAR)
+		var file := "weather_%s.png" % key
+		if src.save_png(ctx.dir.path_join(file)) == OK:
+			out[key] = file
+	return out
+
 
 static func environment_spec(ctx: Ctx = null) -> Dictionary:
 	var we := GnEnvironment.world()

@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix, haze. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze, weather, wind. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -44,6 +44,10 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _mix(main)
 		"haze":
 			await _haze(main)
+		"weather":
+			await _weather(main)
+		"wind":
+			await _wind(main)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -351,3 +355,138 @@ static func _haze(main: Node) -> void:
 		for e in ["eevee", "cycles"]:
 			if levels.has(e):
 				print("LAB note haze: the beam in %s is %.0f %% of the editor's at this spot" % [e, 100.0 * levels[e] / maxf(levels.godot, 0.001)])
+
+
+# ------------------------------------------------------------------ weather on the surfaces
+# A paved yard with a brick-red block and a wall in daylight, three ways:
+# dry; wet with puddles; snowed on (with the wet still set, to see that snow
+# lies on top). In every renderer the wet paving must be darker than the dry,
+# puddles must show, snow must whiten what faces up and leave the walls.
+static func _weather(main: Node) -> void:
+	var GnWeather = load("res://addons/genesis/core/gn_weather.gd")
+	var root := await _studio(main, "Weather check", false)
+	if root == null:
+		return
+	GnEnvironment.apply("time_of_day", 11.0, false)
+	_box(root, "Paving", Vector3(30, 0.2, 30), Vector3(0, 0.1, 0), Color(0.55, 0.55, 0.55))
+	_box(root, "Block", Vector3(3, 2, 3), Vector3(0, 1.2, 0), Color(0.6, 0.25, 0.2))
+	_box(root, "Wall", Vector3(10, 3, 0.3), Vector3(0, 1.7, -6), Color(0.7, 0.68, 0.6))
+	await _frames(main, 4)
+	var cam := _camera("Yard", Vector3(7, 5.5, 9), Vector3(0, 0.8, -1), 55.0)
+	await _frames(main, 4)
+	var size := Vector2i(480, 270)
+	# Where things are in the picture (found once by eye, then fixed).
+	var paving := Rect2(0.62, 0.70, 0.10, 0.08)      # open paving in the foreground
+	var block_top := Rect2(0.36, 0.385, 0.06, 0.03)  # the top of the block
+	var block_side := Rect2(0.44, 0.55, 0.05, 0.08)  # its sunlit side
+	var states := [["dry", {"wet": 0.0, "puddles": 0.0, "snow": 0.0}], ["wet", {"wet": 0.9, "puddles": 0.8, "snow": 0.0}],
+		["snow", {"wet": 0.9, "puddles": 0.0, "snow": 1.0}]]
+	var seen := {}
+	for st in states:
+		for key in st[1]:
+			GnWeather.set_value(key, st[1][key])
+		# The patterns are drawn by the engine in the background.
+		await main.get_tree().create_timer(2.0).timeout
+		await _frames(main, 6)
+		seen[st[0]] = await _render(main, cam, "weather_" + st[0], size)
+	for e in _engines:
+		if not (seen.dry.get(e) is Image and seen.wet.get(e) is Image and seen.snow.get(e) is Image):
+			check(false, "weather %s: all three pictures were rendered" % e)
+			continue
+		var dry: Image = seen.dry[e]
+		var wet: Image = seen.wet[e]
+		var snow: Image = seen.snow[e]
+		var d := _mean(dry, paving)
+		var w := _mean(wet, paving)
+		print("LAB weather %s: paving dry %.3f, wet %.3f; block top dry %.3f, snowed %.3f; block side dry %.3f, snowed %.3f" % [
+			e, d, w, _mean(dry, block_top), _mean(snow, block_top), _mean(dry, block_side), _mean(snow, block_side)])
+		check(w < d * 0.9, "weather %s: wet paving is darker than dry (%.3f against %.3f)" % [e, w, d])
+		var front := Rect2(0.02, 0.68, 0.96, 0.30)       # all the paving in front of the block
+		check(_spread(wet, front) > _spread(dry, front) * 1.5 + 0.01,
+			"weather %s: puddles break up the wet paving (spread %.4f against %.4f dry)" % [e, _spread(wet, front), _spread(dry, front)])
+		var top := snow.get_pixel(int(snow.get_width() * 0.39), int(snow.get_height() * 0.40))
+		check(_mean(snow, block_top) > 0.75 and absf(top.r - top.b) < 0.12, "weather %s: snow lies white on the block, on top of the wet (%.3f, %s)" % [e, _mean(snow, block_top), top.to_html(false)])
+		var side := snow.get_pixel(int(snow.get_width() * 0.465), int(snow.get_height() * 0.59))
+		check(side.r > side.b * 1.4, "weather %s: the block's side is still brick red under the snow (%s)" % [e, side.to_html(false)])
+
+
+## How uneven a part of a picture is (the standard deviation of its brightness).
+static func _spread(img: Image, rect: Rect2) -> float:
+	var x0 := clampi(int(rect.position.x * img.get_width()), 0, img.get_width() - 1)
+	var y0 := clampi(int(rect.position.y * img.get_height()), 0, img.get_height() - 1)
+	var x1 := clampi(int(rect.end.x * img.get_width()), x0 + 1, img.get_width())
+	var y1 := clampi(int(rect.end.y * img.get_height()), y0 + 1, img.get_height())
+	var sum := 0.0
+	var sq := 0.0
+	var n := 0
+	for y in range(y0, y1):
+		for x in range(x0, x1):
+			var l := img.get_pixel(x, y).get_luminance()
+			sum += l
+			sq += l * l
+			n += 1
+	var mean := sum / n
+	return sqrt(maxf(sq / n - mean * mean, 0.0))
+
+
+# ------------------------------------------------------------------ wind
+# A tree placed from the library and a scatter of trees: with wind, two
+# moments of a film show the crowns in different places; without, the same.
+static func _wind(main: Node) -> void:
+	var GnWeather = load("res://addons/genesis/core/gn_weather.gd")
+	var GnWind = load("res://addons/genesis/core/gn_wind.gd")
+	var GnAssets = load("res://addons/genesis/core/gn_assets.gd")
+	var GnPlacement = load("res://addons/genesis/core/gn_placement.gd")
+	var GnScatter = load("res://addons/genesis/core/gn_scatter.gd")
+	var root := await _studio(main, "Wind check", false)
+	if root == null:
+		return
+	GnEnvironment.apply("time_of_day", 11.0, false)
+	var tree: String = GnAssets.find("trees", "tree_round")
+	var tall: String = GnAssets.find("trees", "tree_tall")
+	check(tree != "" and tall != "", "wind: the library has trees to plant")
+	var single: Node3D = GnPlacement.place(tree, "trees", Vector3(-3, 0, 0))
+	GnScatter.fill_circle(tall, Vector3(5, 0, -2), 4.0, 6, Vector2(0.9, 1.2), 7)
+	await _frames(main, 4)
+	var dressed: int = GnWind.dress(root)
+	check(dressed >= 2, "wind: the placed tree and the scatter were given their swaying twins (%d surfaces)" % dressed)
+	var cam := _camera("Trees", Vector3(1, 3.0, 16), Vector3(1, 3.0, 0), 50.0)
+	await _frames(main, 4)
+	var size := Vector2i(640, 360)
+	var shots := {}
+	for spec in [["still", 0.0, 0.0], ["windy_a", 0.8, 0.0], ["windy_b", 0.8, 1.4]]:
+		GnWeather.set_value("wind", spec[1])
+		GnWind.set_time(spec[2])
+		await _frames(main, 6)
+		var path: String = await GnRender.render(cam, size, main, false)
+		var dest := _out.path_join("wind_%s.png" % spec[0])
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(path), dest)
+		shots[spec[0]] = Image.load_from_file(dest)
+	GnWeather.set_value("wind", 0.0)
+	GnWind.set_time(5.0)
+	await _frames(main, 6)
+	var again_path: String = await GnRender.render(cam, size, main, false)
+	var again := Image.load_from_file(ProjectSettings.globalize_path(again_path))
+	var moved := _difference(shots.windy_a, shots.windy_b)
+	var held := _difference(shots.still, again)
+	print("LAB wind: pictures differ by %.4f between two moments of wind, %.4f with none" % [moved, held])
+	# Crowns a few pixels across the picture: a small share of all its pixels.
+	check(moved > 0.0008, "wind: the trees are in different places at two moments (%.4f)" % moved)
+	check(held < 0.0001, "wind: with no wind they hold still (%.4f)" % held)
+	# The scene itself is untouched: nothing of the twins is on the nodes.
+	var clean := true
+	for gi in root.find_children("*", "GeometryInstance3D", true, false):
+		if (gi as GeometryInstance3D).material_override != null:
+			clean = false
+	check(clean and single != null, "wind: the scene's own materials are as they were (nothing to save)")
+
+
+## The mean difference between two pictures of one size, 0-1.
+static func _difference(a: Image, b: Image) -> float:
+	var total := 0.0
+	var n := 0
+	for y in range(0, a.get_height(), 2):
+		for x in range(0, a.get_width(), 2):
+			total += absf(a.get_pixel(x, y).get_luminance() - b.get_pixel(x, y).get_luminance())
+			n += 1
+	return total / maxf(n, 1)

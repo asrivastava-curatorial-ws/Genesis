@@ -13,6 +13,9 @@ const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
 const GnOscIn := preload("res://addons/genesis/core/gn_osc_in.gd")
 const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
 const Placer := preload("res://app/runtime/placer.gd")
+const GnWind := preload("res://addons/genesis/core/gn_wind.gd")
+const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 
 signal poll_changed
 
@@ -53,9 +56,27 @@ func _poll() -> void:
 func on_scene_opened(root: Node) -> void:
 	if root:
 		GnWeather.apply()
+		GnWind.dress(root)
+		var ur := GnHost.undo_redo()
+		if ur and not ur.changed.is_connected(_dress_soon):
+			ur.changed.connect(_dress_soon)
 
 
-func _process(_delta: float) -> void:
+var _dress_in := -1.0
+
+
+## Whatever was just planted, painted or brought back by undo sways too:
+## looked at a moment after the last change, not after every one.
+func _dress_soon() -> void:
+	_dress_in = 0.4
+
+
+func _process(delta: float) -> void:
+	GnWind.advance(delta)
+	if _dress_in >= 0.0:
+		_dress_in -= delta
+		if _dress_in < 0.0:
+			GnWind.dress(GnScene.root())
 	if osc.listening():
 		for cmd in osc.poll():
 			print("Oriel: cue command from outside: %s" % osc.last)

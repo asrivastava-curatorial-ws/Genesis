@@ -24,6 +24,7 @@ const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnSceneExport := preload("res://addons/genesis/core/gn_scene_export.gd")
 const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
 const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
+const GnWind := preload("res://addons/genesis/core/gn_wind.gd")
 
 const META := &"gn_shots"
 # {"from": hour, "to": hour} when the sun moves through the film, else absent.
@@ -77,6 +78,7 @@ static func show_time(t: float, list: Array) -> float:
 	if not lapse.is_empty() and total > 0.0:
 		hour = lerpf(float(lapse.from), float(lapse.to), clampf(t / total, 0.0, 1.0))
 		GnEnvironment.apply("time_of_day", hour, false)
+	GnWind.set_time(t)
 	var root := GnScene.root()
 	if root:
 		for m in root.get_tree().get_nodes_in_group(Mover.GROUP):

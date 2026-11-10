@@ -17,6 +17,7 @@ const SIZES := {
 
 const OUTPUT_DIR := "res://renders"
 const GnQuality := preload("res://addons/genesis/core/gn_quality.gd")
+const GnWind := preload("res://addons/genesis/core/gn_wind.gd")
 const GnLook := preload("res://addons/genesis/core/gn_look.gd")
 const GnSurface := preload("res://addons/genesis/core/gn_surface.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
@@ -77,6 +78,8 @@ static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 	# continuous drawing for the few frames the capture needs.
 	var low_power := OS.low_processor_usage_mode
 	OS.low_processor_usage_mode = false
+	# A still averages many frames: the wind holds the trees where they are.
+	GnWind.freeze()
 	var quality: GnQuality.State = GnQuality.begin_high() if high else null
 	var frames := GnQuality.SETTLE_HIGH if high else GnQuality.SETTLE_DRAFT
 	var image: Image
@@ -99,6 +102,7 @@ static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 	GnStaging.unstage(cut)
 	if quality:
 		GnQuality.end(quality)
+	GnWind.unfreeze()
 	OS.low_processor_usage_mode = low_power
 	if image and image.get_size() != size:
 		image.resize(size.x, size.y, Image.INTERPOLATE_LANCZOS)

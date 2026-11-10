@@ -212,6 +212,88 @@ func _site_file(root: Node) -> void:
 	GnHost.undo_redo().undo()
 
 
+# Wet, puddles and snow lie on every surface (three decals over the whole
+# design, and the same handed to Eevee and Cycles); wind sways what grows.
+func _weather_and_wind(root: Node) -> void:
+	var GnWeather = load("res://addons/genesis/core/gn_weather.gd")
+	var GnWind = load("res://addons/genesis/core/gn_wind.gd")
+	var GnSceneExport = load("res://addons/genesis/core/gn_scene_export.gd")
+	var tower := MeshInstance3D.new()
+	tower.name = "Tower"
+	var box := BoxMesh.new()
+	box.size = Vector3(10, 30, 10)
+	tower.mesh = box
+	tower.position = Vector3(40, 15, -20)
+	GnScene.add_node(tower, root, "Add a tower")
+	GnWeather.set_value("wet", 0.6)
+	GnWeather.set_value("puddles", 0.5)
+	var holder: Node = null
+	for c in GnWeather.node().get_children():
+		if c.has_meta(&"gn_weather_surfaces"):
+			holder = c
+	var names: Array = holder.get_children().map(func(d): return str(d.name)) if holder else []
+	check(holder != null and "Wet" in names and "Puddles" in names and not "Snow" in names, "weather: wet and puddles are decals over the design (%s)" % ", ".join(names))
+	var cover: AABB = GnWeather.cover_box(120.0)
+	check(cover.has_point(Vector3(40, 29, -20)) and cover.has_point(Vector3(-50, 0, 50)), "weather: they cover the tower's roof and the whole site (%s)" % cover)
+	var wet := holder.get_node("Wet") as Decal if holder else null
+	check(wet != null and wet.size.is_equal_approx(cover.size) and wet.normal_fade < 0.5, "weather: wet lies on everything that faces the sky, walls a little")
+	GnWeather.set_value("snow", 1.0)
+	var lying: Dictionary = GnWeather.surfaces()
+	check(is_equal_approx(lying.snow, 1.0) and is_equal_approx(lying.wet, 0.6), "weather: snow can lie on wet ground (%s)" % lying)
+	holder = null
+	for c in GnWeather.node().get_children():
+		if c.has_meta(&"gn_weather_surfaces"):
+			holder = c
+	var snow := holder.get_node_or_null("Snow") as Decal if holder else null
+	check(snow != null and snow.position.y > 1000.0 and snow.size.y > snow.position.y * 2.0 - 100.0,
+		"weather: the snow's decal is drawn last, so it lies on top")
+	GnWeather.set_value("kind", "Snow")
+	GnWeather.set_value("amount", 0.8)
+	GnWeather.set_value("snow", 0.0)
+	check(is_equal_approx(GnWeather.surfaces().snow, 1.0) and is_equal_approx(GnWeather.surfaces().wet, 0.0), "weather: heavy snowfall lays snow by itself, over everything")
+	GnWeather.set_value("kind", "Clear")
+	GnWeather.set_value("snow", 0.4)
+	var spec: Dictionary = GnSceneExport._weather(GnSceneExport.Ctx.new())
+	check(is_equal_approx(float(spec.get("snow", 0.0)), 0.4) and (spec.get("box", []) as Array).size() == 4 and spec.has("wet_roughness"),
+		"weather: Eevee and Cycles are told what lies, where, and how it looks")
+	for key in ["wet", "puddles", "snow"]:
+		GnWeather.set_value(key, 0.0)
+	holder = null
+	for c in GnWeather.node().get_children():
+		if c.has_meta(&"gn_weather_surfaces"):
+			holder = c
+	check(holder == null, "weather: dry again, nothing lies on the scene")
+	# Wind: what a plant's material needs to sway.
+	var leaf := StandardMaterial3D.new()
+	leaf.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	leaf.alpha_antialiasing_mode = BaseMaterial3D.ALPHA_ANTIALIASING_ALPHA_TO_COVERAGE
+	leaf.cull_mode = BaseMaterial3D.CULL_DISABLED
+	leaf.backlight_enabled = true
+	var code: String = GnWind.shader_for(leaf)
+	check(code.contains("oriel_sway(VERTEX, MODEL_MATRIX)") and code.contains("cull_disabled") and code.contains("alpha_to_coverage")
+		and code.contains("ALPHA_SCISSOR_THRESHOLD") and code.contains("BACKLIGHT"), "wind: a cut-out leaf's twin sways and keeps the leaf's look")
+	var probe := Shader.new()
+	probe.code = code.replace("global uniform vec4 oriel_wind;", "uniform vec4 oriel_wind;")
+	check(not probe.get_shader_uniform_list().is_empty(), "wind: the twin's shader is read by the engine")
+	var stone := StandardMaterial3D.new()
+	stone.uv1_triplanar = true
+	check(GnWind.shader_for(stone) == "" and not GnWind.can_twin(stone), "wind: a material the twin cannot match is left as it is")
+	check(GnWind.category_of("res://genesis_assets/trees/oak.glb") == "trees" and GnWind.category_of("/home/x/library/plants/fern.scn") == "plants"
+		and GnWind.category_of("res://genesis_assets/furniture/chair.glb") == "furniture", "wind: what grows is known by where it is in the library")
+	GnWeather.set_value("wind", 0.7)
+	GnWind.set_time(3.0)
+	check(is_equal_approx(GnWind.time(), 3.0), "wind: a film sets the wind's clock")
+	GnWind.freeze()
+	GnWind.advance(1.0)
+	check(is_equal_approx(GnWind.time(), 3.0), "wind: a still holds the trees where they are")
+	GnWind.unfreeze()
+	GnWind.advance(0.5)
+	check(is_equal_approx(GnWind.time(), 3.5), "wind: and the view moves them on")
+	GnWeather.set_value("wind", 0.25)
+	GnScene.root().remove_child(tower)
+	tower.free()
+
+
 func _until_live(spec: String, seconds: float) -> bool:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
@@ -337,6 +419,7 @@ func _run() -> void:
 	await _outgoing(root)
 	await _live_video(root)
 	await _site_file(root)
+	await _weather_and_wind(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")

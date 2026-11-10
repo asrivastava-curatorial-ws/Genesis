@@ -1,19 +1,43 @@
 @tool
 extends RefCounted
 
-# Weather and seasons, Lumion-style: rain, snow, wet ground, and leaves that
-# change with the season. State lives as metadata on a "Weather" node, so it
-# saves with the scene; the particles are children of it.
+# Weather and seasons, Lumion-style: rain, snow, wet surfaces, puddles, lying
+# snow, wind in the trees, and leaves that change with the season. State lives
+# as metadata on a "Weather" node, so it saves with the scene; what it shows
+# (particles, decals) are children of it, made again whenever it is applied.
 #
 # Rain and snow are GPU particles over a box around the site. Pre-simulated,
 # so a still captures falling rain rather than the first drops leaving the sky.
-# Wet ground darkens the ground and makes it glossy so it mirrors the sky.
+#
+# Wet, puddles and snow lie on every surface, not only the ground: three
+# large decals looking straight down over the whole design. Wet darkens and
+# glosses whatever faces the sky (walls a little); puddles are glassy patches
+# on what is flat; snow whitens what faces up, roofs and tree tops included.
+# Eevee and Cycles get the same from nodes added to every material, with the
+# very same puddle and snow patterns (gn_scene_export.gd, oriel_render.py).
+#
 # Seasons tint the shared foliage materials; winter drops the leaves.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnWind := preload("res://addons/genesis/core/gn_wind.gd")
 
 const META := &"gn_weather"
-const DEFAULTS := {"kind": "Clear", "amount": 0.6, "wet": 0.0, "puddles": 0.0, "season": "Summer", "area": 120.0}
+const DEFAULTS := {"kind": "Clear", "amount": 0.6, "wet": 0.0, "puddles": 0.0, "snow": 0.0, "season": "Summer", "area": 120.0,
+	"wind": 0.25, "wind_heading": 0.0}
+## How the three surface decals behave; the renderers' nodes use the same numbers.
+const WET_COLOUR := Color(0.02, 0.025, 0.03)
+const WET_DARKEN := 0.5            # how far a fully wet surface goes towards WET_COLOUR
+const WET_ROUGHNESS := 0.08
+const PUDDLE_COLOUR := Color(0.035, 0.04, 0.045)
+const PUDDLE_OPACITY := 0.85
+const PUDDLE_ROUGHNESS := 0.02
+const SNOW_COLOUR := Color(0.92, 0.93, 0.96)
+const SNOW_ROUGHNESS := 0.85
+## Decals fade by how far a surface turns from facing up: 1 is flat, 0.5 a wall.
+const WET_FACING := 0.25
+const PUDDLE_FACING := 0.93
+const SNOW_FACING := 0.62
+const MASK_SIZE := 2048
 const KINDS := ["Clear", "Rain", "Snow"]
 const SEASONS := ["Spring", "Summer", "Autumn", "Winter"]
 
@@ -57,6 +81,7 @@ static func set_value(key: String, value: Variant) -> void:
 static func apply() -> void:
 	var s := state()
 	var n := node()
+	GnWind.set_wind(float(s.wind), float(s.wind_heading))
 	if n == null:
 		_season(s)
 		return
@@ -68,66 +93,179 @@ static func apply() -> void:
 		n.add_child(_particles(s, true))
 	elif s.kind == "Snow":
 		n.add_child(_particles(s, false))
-	_ground(float(s.wet) if s.kind != "Snow" else 0.0, s.kind == "Snow" and float(s.amount) > 0.3, str(s.season))
-	if s.kind != "Snow" and float(s.puddles) > 0.0:
-		n.add_child(_puddles(float(s.puddles), float(s.area)))
+	_ground(str(s.season))
+	var lying := surfaces(s)
+	if lying.wet > 0.0 or lying.puddles > 0.0 or lying.snow > 0.0:
+		n.add_child(_surface_decals(lying, cover_box(float(s.area))))
 	_season(s)
 
 
-# Puddles: dark, glassy patches of standing water on whatever lies below
-# them (paving, road, lawn), as decals, so they sit on any ground's shape.
-static func _puddles(amount: float, area: float) -> Node3D:
+## What lies on the surfaces, 0-1 each: {"wet", "puddles", "snow"}. Heavy
+## snowfall lays snow by itself, as it always has; under full snow nothing
+## shows of the wet below it.
+static func surfaces(s: Dictionary = state()) -> Dictionary:
+	var snow := clampf(float(s.get("snow", 0.0)), 0.0, 1.0)
+	if str(s.kind) == "Snow" and float(s.amount) > 0.3:
+		snow = maxf(snow, 1.0)
+	var wet := clampf(float(s.wet), 0.0, 1.0)
+	var puddles := clampf(float(s.get("puddles", 0.0)), 0.0, 1.0)
+	if str(s.kind) == "Snow" and snow >= 1.0:
+		wet = 0.0
+		puddles = 0.0
+	return {"wet": wet, "puddles": puddles, "snow": snow}
+
+
+## The box the weather lies in: around everything in the scene that is not
+## enormous (the lawn, a terrain), with room to spare, never smaller than
+## the weather's own area.
+static func cover_box(area: float) -> AABB:
+	var root := GnScene.root()
+	var box := AABB()
+	var first := true
+	if root:
+		for g in root.find_children("*", "GeometryInstance3D", true, false):
+			var gi := g as GeometryInstance3D
+			if gi is GPUParticles3D or gi is CPUParticles3D or not gi.is_visible_in_tree():
+				continue
+			var b: AABB = gi.global_transform * gi.get_aabb()
+			if b.size == Vector3.ZERO or maxf(b.size.x, b.size.z) > 800.0:
+				continue
+			box = b if first else box.merge(b)
+			first = false
+	var half := maxf(area * 0.5, 20.0)
+	var least := AABB(Vector3(-half, -1.0, -half), Vector3(half * 2.0, 6.0, half * 2.0))
+	box = least if first else box.grow(15.0).merge(least)
+	# No larger than a mask can cover finely.
+	var c := box.get_center()
+	var sx := minf(box.size.x, 800.0)
+	var sz := minf(box.size.z, 800.0)
+	return AABB(Vector3(c.x - sx * 0.5, box.position.y - 1.0, c.z - sz * 0.5), Vector3(sx, box.size.y + 3.0, sz))
+
+
+static var _flat: Array = []
+
+
+## Small plain textures every decal shares: a flat normal, and a
+## occlusion/roughness/metal picture per roughness.
+static func _plain(colour: Color) -> ImageTexture:
+	var img := Image.create(4, 4, false, Image.FORMAT_RGBA8)
+	img.fill(colour)
+	return ImageTexture.create_from_image(img)
+
+
+## A blotchy mask over the box: opaque where the noise is above a level that
+## leaves `cover` of the area covered. Drawn by the engine in the background.
+static func _mask(colour: Color, opacity: float, cover: float, box: AABB, period_m: float, seed: int) -> NoiseTexture2D:
+	var noise := FastNoiseLite.new()
+	noise.seed = seed
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.fractal_octaves = 4
+	# One period of the pattern is `period_m` on the ground.
+	noise.frequency = (maxf(box.size.x, box.size.z) / MASK_SIZE) / period_m
+	var level := clampf(1.0 - cover, 0.0, 1.0)
+	var ramp := Gradient.new()
+	var clear := Color(colour.r, colour.g, colour.b, 0.0)
+	var full := Color(colour.r, colour.g, colour.b, opacity)
+	ramp.set_offset(0, clampf(level - 0.03, 0.0, 1.0))
+	ramp.set_color(0, clear if cover < 0.999 else full)
+	ramp.set_offset(1, clampf(level + 0.03, 0.0, 1.0))
+	ramp.set_color(1, full)
+	var tex := NoiseTexture2D.new()
+	tex.width = MASK_SIZE
+	tex.height = MASK_SIZE
+	tex.noise = noise
+	tex.normalize = true
+	tex.color_ramp = ramp
+	tex.generate_mipmaps = true
+	return tex
+
+
+## Puddles cover at most this much of the flat ground, at 100 %.
+const PUDDLE_COVER := 0.38
+
+
+# The decals for what lies on the surfaces. Each looks straight down over the
+# whole box. Wet and puddles mix towards the same dark, glossy finish, so the
+# order they are drawn in does not show; snow lies on top of both, which is
+# arranged by where its decal's centre is (see _snow_centre).
+static func _surface_decals(lying: Dictionary, box: AABB) -> Node3D:
 	var holder := Node3D.new()
-	holder.name = "Puddles"
+	holder.name = "Surfaces"
 	holder.set_meta(&"gn_generated", true)
-	var textures := _puddle_textures()
-	var r := RandomNumberGenerator.new()
-	r.seed = 1919
-	var reach := minf(area * 0.35, 60.0)
-	for i in int(amount * 60.0) + 1:
-		var d := Decal.new()
-		d.texture_albedo = textures[0]
-		d.texture_orm = textures[1]
-		d.texture_normal = textures[2]
-		var s := r.randf_range(0.8, 3.5) * lerpf(0.7, 1.3, amount)
-		d.size = Vector3(s * r.randf_range(1.0, 2.2), 1.0, s)
-		d.position = Vector3(r.randf_range(-reach, reach), 0.0, r.randf_range(-reach, reach))
-		d.rotation.y = r.randf() * TAU
+	holder.set_meta(&"gn_weather_surfaces", true)
+	holder.set_meta(&"gn_box", box)
+	var flat_normal := _plain(Color(0.5, 0.5, 1.0))
+	var centre := box.get_center()
+	if float(lying.wet) > 0.0:
+		var d := _decal("Wet", box, centre, WET_FACING)
+		d.texture_albedo = _plain(Color(WET_COLOUR.r, WET_COLOUR.g, WET_COLOUR.b, 0.9 * float(lying.wet)))
+		d.texture_orm = _plain(Color(1.0, WET_ROUGHNESS, 0.0))
+		d.albedo_mix = WET_DARKEN
+		holder.add_child(d)
+	if float(lying.puddles) > 0.0:
+		var d := _decal("Puddles", box, centre, PUDDLE_FACING)
+		d.texture_albedo = _mask(PUDDLE_COLOUR, PUDDLE_OPACITY, PUDDLE_COVER * float(lying.puddles), box, 5.0, 1919)
+		d.texture_orm = _plain(Color(1.0, PUDDLE_ROUGHNESS, 0.0))
+		d.texture_normal = flat_normal
 		d.albedo_mix = 1.0
-		d.normal_fade = 0.6
-		d.upper_fade = 0.2
-		d.lower_fade = 0.2
+		holder.add_child(d)
+	if float(lying.snow) > 0.0:
+		var d := _decal("Snow", box, _snow_centre(box), SNOW_FACING)
+		d.size.y = SNOW_FAR * 2.0 + box.size.y
+		d.texture_albedo = _mask(SNOW_COLOUR, 1.0, float(lying.snow), box, 9.0, 2024)
+		d.texture_orm = _plain(Color(1.0, SNOW_ROUGHNESS, 0.0))
+		d.texture_normal = flat_normal
+		d.albedo_mix = 1.0
 		holder.add_child(d)
 	return holder
 
 
-static var _puddle_tex: Array = []
+## Decals are drawn nearest the camera first, so the last to be drawn (the
+## one on top) is the one whose centre is farthest. The snow's box reaches
+## far above the scene, which puts its centre farther than any other's from
+## wherever the camera is: snow always lies on top of wet.
+const SNOW_FAR := 20000.0
 
 
-# The puddle's shape (soft, blotchy), its glassy roughness, and the faint
-# ripple normal, drawn once.
-static func _puddle_textures() -> Array:
-	if not _puddle_tex.is_empty():
-		return _puddle_tex
-	var size := 256
-	var noise := FastNoiseLite.new()
-	noise.frequency = 0.02
-	noise.fractal_octaves = 4
-	var albedo := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var orm := Image.create(size, size, false, Image.FORMAT_RGB8)
-	var normal := Image.create(size, size, false, Image.FORMAT_RGB8)
-	for y in size:
-		for x in size:
-			var p := Vector2(x, y) / size - Vector2(0.5, 0.5)
-			var edge := p.length() * 2.0 + noise.get_noise_2d(x, y) * 0.55
-			var water := clampf((0.9 - edge) * 6.0, 0.0, 1.0)
-			albedo.set_pixel(x, y, Color(0.035, 0.04, 0.045, water * 0.85))
-			# Occlusion, roughness, metal: wet and glassy.
-			orm.set_pixel(x, y, Color(1.0, lerpf(0.6, 0.02, water), 0.0))
-			var rip := noise.get_noise_2d(x * 6.0, y * 6.0) * 0.05
-			normal.set_pixel(x, y, Color(0.5 + rip, 0.5 - rip, 1.0))
-	_puddle_tex = [ImageTexture.create_from_image(albedo), ImageTexture.create_from_image(orm), ImageTexture.create_from_image(normal)]
-	return _puddle_tex
+static func _snow_centre(box: AABB) -> Vector3:
+	return box.get_center() + Vector3(0, SNOW_FAR, 0)
+
+
+static func _decal(decal_name: String, box: AABB, centre: Vector3, facing: float) -> Decal:
+	var d := Decal.new()
+	d.name = decal_name
+	d.size = box.size
+	d.position = centre
+	# The same on a roof as on the ground: no fading with height.
+	d.upper_fade = 0.00001
+	d.lower_fade = 0.00001
+	d.normal_fade = facing
+	d.distance_fade_enabled = false
+	return d
+
+
+## What lies on the surfaces, for Eevee and Cycles: the amounts, the box, and
+## the puddle and snow patterns as pictures (null until the engine has drawn
+## them, a moment after the weather is set).
+static func surface_spec() -> Dictionary:
+	var n := node()
+	if n == null:
+		return {}
+	var holder: Node3D = null
+	for c in n.get_children():
+		if c.has_meta(&"gn_weather_surfaces"):
+			holder = c
+	if holder == null:
+		return {}
+	var lying := surfaces()
+	var box: AABB = holder.get_meta(&"gn_box")
+	var spec := {"wet": lying.wet, "puddles": lying.puddles, "snow": lying.snow,
+		"box": [box.position.x, box.position.z, box.size.x, box.size.z]}
+	for pair in [["Puddles", "puddle_mask"], ["Snow", "snow_mask"]]:
+		var d := holder.get_node_or_null(pair[0]) as Decal
+		if d and d.texture_albedo:
+			spec[pair[1]] = d.texture_albedo.get_image()
+	return spec
 
 
 static func _particles(s: Dictionary, rain: bool) -> GPUParticles3D:
@@ -178,10 +316,9 @@ const GROUND_TINT := {"Spring": Color(1.0, 1.05, 0.95), "Summer": Color(1, 1, 1)
 	"Autumn": Color(1.1, 0.95, 0.7), "Winter": Color(1.05, 0.92, 0.72)}
 
 
-# The ground's material, remembered as it was the first time, then changed
-# for the conditions: snow replaces the lawn with white; wet ground darkens
-# and goes nearly mirror-smooth so it reflects the sky and the buildings.
-static func _ground(wet: float, snow: bool, season: String) -> void:
+# The ground's material in the season's colour: summer's own, browner in
+# autumn, straw in winter. (Wet and snow lie on it as on everything else.)
+static func _ground(season: String) -> void:
 	var ground := GnScene.find_role("ground") as MeshInstance3D
 	if ground == null or ground.mesh == null:
 		return
@@ -192,18 +329,12 @@ static func _ground(wet: float, snow: bool, season: String) -> void:
 		mat.set_meta(&"gn_dry", {"roughness": mat.roughness, "albedo": mat.albedo_color,
 			"texture": mat.albedo_texture, "detail": mat.detail_enabled})
 	var dry: Dictionary = mat.get_meta(&"gn_dry")
-	if snow:
-		# Snow covers the lawn: the grass texture goes, not tinted white.
-		mat.albedo_texture = null
-		mat.detail_enabled = false
-		mat.albedo_color = Color(0.92, 0.93, 0.96)
-		mat.roughness = 0.85
-		return
+	# A scene saved by an older version while it was wet or snowed on.
 	mat.albedo_texture = dry.texture
 	mat.detail_enabled = dry.detail
+	mat.roughness = float(dry.roughness)
 	var tint: Color = GROUND_TINT.get(season, Color.WHITE)
-	mat.roughness = lerpf(float(dry.roughness), 0.08, wet)
-	mat.albedo_color = ((dry.albedo as Color) * tint).darkened(0.45 * wet)
+	mat.albedo_color = (dry.albedo as Color) * tint
 
 
 static func _season(s: Dictionary) -> void:

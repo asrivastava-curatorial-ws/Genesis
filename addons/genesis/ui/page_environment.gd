@@ -19,6 +19,9 @@ var _weather: OptionButton
 var _weather_amount: HSlider
 var _wet: HSlider
 var _puddles: HSlider
+var _snow: HSlider
+var _wind: HSlider
+var _wind_heading: HSlider
 var _season: OptionButton
 var _hint: Label
 var _body: VBoxContainer
@@ -68,10 +71,20 @@ func _init() -> void:
 	_weather = GnUi.option(_body, "Weather", GnWeather.KINDS, func(t): GnWeather.set_value("kind", t))
 	_weather_amount = GnUi.slider(_body, "Heaviness", 0.05, 1.0, 0.01,
 		func(v): GnWeather.set_value("amount", v), func(v): return "%d%%" % int(v * 100))
-	_wet = GnUi.slider(_body, "Wet ground", 0.0, 1.0, 0.01,
+	_wet = GnUi.slider(_body, "Wet surfaces", 0.0, 1.0, 0.01,
 		func(v): GnWeather.set_value("wet", v), func(v): return "dry" if v <= 0.0 else "%d%%" % int(v * 100))
+	_wet.tooltip_text = "Everything that faces the sky goes darker and glossy: paving, roofs, cars, a little of the walls"
 	_puddles = GnUi.slider(_body, "Puddles", 0.0, 1.0, 0.01,
 		func(v): GnWeather.set_value("puddles", v), func(v): return "none" if v <= 0.0 else "%d%%" % int(v * 100))
+	_puddles.tooltip_text = "Standing water on whatever is flat, at any height"
+	_snow = GnUi.slider(_body, "Snow lying", 0.0, 1.0, 0.01,
+		func(v): GnWeather.set_value("snow", v), func(v): return "none" if v <= 0.0 else ("patches, %d%%" % int(v * 100) if v < 0.99 else "everywhere"))
+	_snow.tooltip_text = "Snow on the ground, the roofs and the tops of things. Heavy snowfall lays it by itself."
+	_wind = GnUi.slider(_body, "Wind", 0.0, 1.0, 0.01,
+		func(v): GnWeather.set_value("wind", v), func(v): return "still" if v <= 0.0 else ("a breeze" if v < 0.35 else ("windy" if v < 0.7 else "a strong wind")))
+	_wind.tooltip_text = "Trees, plants and grass sway in the view and in films"
+	_wind_heading = GnUi.slider(_body, "Wind from", 0.0, 360.0, 5.0,
+		func(v): GnWeather.set_value("wind_heading", v), func(v): return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][int(round(v / 45.0)) % 8])
 	_season = GnUi.option(_body, "Season", GnWeather.SEASONS, func(t): GnWeather.set_value("season", t))
 	GnUi.heading(_body, "Light")
 	_controls.exposure = GnUi.slider(_body, "Exposure", -2.0, 2.0, 0.05,
@@ -97,6 +110,9 @@ func refresh() -> void:
 	GnUi.show_value(_weather_amount, float(w.amount))
 	GnUi.show_value(_wet, float(w.wet))
 	GnUi.show_value(_puddles, float(w.get("puddles", 0.0)))
+	GnUi.show_value(_snow, float(w.get("snow", 0.0)))
+	GnUi.show_value(_wind, float(w.get("wind", 0.25)))
+	GnUi.show_value(_wind_heading, float(w.get("wind_heading", 0.0)))
 	GnUi.select_text(_season, w.season)
 	var real := bool(GnEnvironment.value("real_sun"))
 	_real.set_pressed_no_signal(real)
