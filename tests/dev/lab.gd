@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -42,6 +42,8 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _ies(main)
 		"mix":
 			await _mix(main)
+		"haze":
+			await _haze(main)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -300,3 +302,52 @@ static func _mix(main: Node) -> void:
 		"mix: put on the lights, the cool lamp is 6,000 lm and the warm one is out (%d changed, %.0f, %.0f)" % [n, cool_node.lumens, warm_node.lumens])
 	GnHost.undo_redo().undo()
 	check(is_equal_approx(float(cool_node.lumens), 3000.0), "mix: and that is one undo step")
+
+
+# ------------------------------------------------------------------ haze
+# A moving-head beam across a hazy stage at night, seen from the side: the
+# beam must show in the air in every renderer, about as bright in each.
+static func _haze(main: Node) -> void:
+	var root := await _studio(main, "Haze check")
+	if root == null:
+		return
+	_box(root, "Floor", Vector3(20, 0.2, 12), Vector3(0, 0.1, 0), Color(0.15, 0.15, 0.15))
+	_box(root, "Backdrop", Vector3(20, 8, 0.2), Vector3(0, 4.2, -4), Color(0.05, 0.05, 0.05))
+	GnEnvironment.apply("haze", 0.5, false)
+	var f: Node3D = Fixture.new()
+	f.name = "Beam"
+	f.kind = "Beam (moving head)"
+	f.lumens = 17000.0
+	f.beam_degrees = 8.0
+	f.hung = true
+	f.pan = -90.0
+	f.tilt = -25.0
+	f.position = Vector3(-7, 6.0, 0)
+	GnScene.add_node(f, root, "Add a beam")
+	await _frames(main, 6)
+	var cam := _camera("Side", Vector3(0, 3.0, 14.0), Vector3(0, 3.5, 0), 50.0)
+	await _frames(main, 4)
+	var pics := await _render(main, cam, "haze", Vector2i(640, 360))
+	var levels := {}
+	for e in pics:
+		if not pics[e] is Image:
+			continue
+		var img: Image = pics[e]
+		# The brightest row of a column a third of the way along the beam,
+		# against the air well above it.
+		var best := 0.0
+		for y in range(int(img.get_height() * 0.15), int(img.get_height() * 0.85)):
+			best = maxf(best, _mean(img, Rect2(0.36, float(y) / img.get_height(), 0.04, 1.5 / img.get_height())))
+		var air := _mean(img, Rect2(0.36, 0.04, 0.04, 0.05))
+		levels[e] = best - air
+		print("LAB haze %s: the beam is %.3f against %.3f for the air above it" % [e, best, air])
+		check(best - air > 0.03, "haze %s: the beam shows in the air (+%.3f)" % [e, best - air])
+	# Eevee has a volume factor per light; Cycles gets the same from a twin
+	# light that lights only the haze: the two must agree.
+	if levels.has("eevee") and levels.has("cycles"):
+		var ratio: float = levels.cycles / maxf(levels.eevee, 0.001)
+		check(ratio > 0.7 and ratio < 1.4, "haze: Cycles' beam is as bright as Eevee's (%.0f %%)" % (ratio * 100.0))
+	if levels.has("godot"):
+		for e in ["eevee", "cycles"]:
+			if levels.has(e):
+				print("LAB note haze: the beam in %s is %.0f %% of the editor's at this spot" % [e, 100.0 * levels[e] / maxf(levels.godot, 0.001)])
