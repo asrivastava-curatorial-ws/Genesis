@@ -629,6 +629,117 @@ func _layered(root: Node) -> void:
 	wall.free()
 
 
+# A spread (many library things along a line or over an area) and traffic
+# (a road's worth of vehicles or walkers, kept moving).
+func _spreads_and_traffic(root: Node) -> void:
+	var Spread = load("res://addons/genesis/set/gn_spread.gd")
+	var Traffic = load("res://addons/genesis/set/gn_traffic.gd")
+	var Mover = load("res://addons/genesis/set/gn_mover.gd")
+	var trees: Array = Spread.models_for("trees", "")
+	check(trees.size() >= 2 and Spread.models_for("trees", "tall").size() == 1 and Spread.models_for("people", "").all(func(p): return not str(p).contains("walker")),
+		"spread: a shelf of the library, or the models on it with a word in their name (%d trees)" % trees.size())
+	var avenue = Spread.new()
+	avenue.name = "Avenue"
+	avenue.curve = Mover.shaped(PackedVector3Array([Vector3(0, 0, 0), Vector3(80, 0, 0)]), false)
+	GnScene.add_node(avenue, root, "Add an avenue")
+	avenue.position = Vector3(700, 0, 700)
+	avenue.on_surfaces = false
+	avenue.spacing = 8.0
+	avenue.out_of_line = 0.0
+	avenue._build()
+	check(avenue.is_in_group(Mover.GROUP) and avenue.headcount() == 11, "spread: along 80 m at 8 m there are eleven (%d)" % avenue.headcount())
+	var spots: Array[Transform3D] = avenue.places()
+	check(spots[1].origin.distance_to(Vector3(8, 0, 0)) < 0.05 and spots[10].origin.distance_to(Vector3(80, 0, 0)) < 0.05, "spread: in a line, evenly, when nothing is out of line (%s, %s)" % [spots[1].origin, spots[10].origin])
+	var holders: Array = avenue.get_children().filter(func(c): return c.has_meta(&"gn_generated"))
+	var drawn := 0
+	for h in holders:
+		for mmi in h.get_children():
+			if mmi is MultiMeshInstance3D and mmi == h.get_child(0):
+				drawn += mmi.multimesh.instance_count
+	check(holders.size() >= 1 and drawn == 11 and str(holders[0].get_meta(&"gn_category")) == "trees", "spread: drawn as a batch a model (%d models, %d copies), known as trees to the wind" % [holders.size(), drawn])
+	avenue.both_sides = true
+	avenue.aside = 3.0
+	avenue._build()
+	var sides: Array[Transform3D] = avenue.places()
+	check(avenue.headcount() == 22 and absf(absf(sides[0].origin.z) - 3.0) < 0.01 and sides[0].origin.z * sides[11].origin.z < 0.0, "spread: on both sides, three metres off the line")
+	avenue.out_of_line = 0.5
+	avenue.smallest = 0.5
+	avenue.largest = 1.5
+	var a: Array[Transform3D] = avenue.places()
+	var b: Array[Transform3D] = avenue.places()
+	var sizes := a.map(func(t): return t.basis.get_scale().x)
+	check(a[5].is_equal_approx(b[5]) and sizes.max() > sizes.min() + 0.3 and sizes.min() >= 0.49 and sizes.max() <= 1.51, "spread: varied in place and size, and the same every time")
+	avenue.seed = 2
+	check(not avenue.places()[5].is_equal_approx(a[5]), "spread: another variation is another arrangement")
+	avenue.facing = "Towards the line"
+	avenue.out_of_line = 0.0
+	var facing: Array[Transform3D] = avenue.places()
+	check(absf((-facing[0].basis.z.normalized()).z + signf(facing[0].origin.z)) < 0.01, "spread: facing the line, each looks back at it")
+	# An area: a 20 m square at four to the 100 m² is sixteen.
+	var wood = Spread.new()
+	wood.name = "Wood"
+	wood.curve = Mover.shaped(PackedVector3Array([Vector3(0, 0, 0), Vector3(20, 0, 0), Vector3(20, 0, 20), Vector3(0, 0, 20)]), false)
+	GnScene.add_node(wood, root, "Add a wood")
+	wood.position = Vector3(700, 0, 800)
+	wood.layout = "Inside the outline"
+	wood.on_surfaces = false
+	wood.per_100_m2 = 4.0
+	wood.out_of_line = 0.3
+	wood._build()
+	var inside: Array[Transform3D] = wood.places()
+	check(wood.headcount() == 16 and inside.all(func(t): return t.origin.x >= 0.0 and t.origin.x <= 20.0 and t.origin.z >= 0.0 and t.origin.z <= 20.0),
+		"spread: inside a 20 m square at four to the 100 m² there are sixteen, all inside (%d)" % wood.headcount())
+	# Traffic.
+	check(Traffic.models_for("Cars").size() == 2 and Traffic.models_for("People walking").size() == 1 and (Traffic.models_for("People walking")[0] as Array).size() == 8,
+		"traffic: cars and taxis for a road, the eight walkers for a pavement")
+	var road = Traffic.new()
+	road.name = "High street"
+	road.curve = Mover.shaped(PackedVector3Array([Vector3(0, 0, 0), Vector3(200, 0, 0)]), false)
+	GnScene.add_node(road, root, "Add a road")
+	road.position = Vector3(700, 0, 900)
+	road.gap = 25.0
+	road.lanes = 2
+	road.both_ways = true
+	road.unevenness = 0.0
+	road.speed_spread = 0.0
+	road.speed = 10.0
+	road._build()
+	var cars: Array = road.get_children().filter(func(c): return c.has_meta(&"gn_generated"))
+	check(cars.size() == 16 and road.headcount() == 16, "traffic: 200 m of two lanes at 25 m is sixteen vehicles (%d)" % cars.size())
+	road.at_time(0.0)
+	var near: Array = cars.filter(func(c): return c.position.z > 0.0)
+	var far: Array = cars.filter(func(c): return c.position.z < 0.0)
+	check(near.size() == 8 and far.size() == 8 and absf(absf(cars[0].position.z) - road.lane_width * 0.5) < 0.5, "traffic: eight in each lane, a lane's width apart")
+	var x0: float = near[0].position.x
+	var x0_far: float = far[0].position.x
+	var heading_near: Vector3 = -near[0].global_transform.basis.z
+	var heading_far: Vector3 = -far[0].global_transform.basis.z
+	road.at_time(2.0)
+	var d_near: float = fposmod(near[0].position.x - x0 + 100.0, 200.0) - 100.0
+	var d_far: float = fposmod(far[0].position.x - x0_far + 100.0, 200.0) - 100.0
+	check(absf(absf(d_near) - 20.0) < 0.1 and absf(absf(d_far) - 20.0) < 0.1 and d_near * d_far < 0.0, "traffic: two seconds at 10 m/s is 20 m, the two lanes opposite ways (%.1f, %.1f)" % [d_near, d_far])
+	check(heading_near.dot(heading_far) < -0.9 and absf(heading_near.x * signf(d_near) - 1.0) < 0.05, "traffic: each faces the way it goes")
+	check((d_near > 0.0) == (near[0].position.z > 0.0), "traffic: driving on the right")
+	road.drive_on = "Left"
+	road._build()
+	road.at_time(0.0)
+	cars = road.get_children().filter(func(c): return c.has_meta(&"gn_generated"))
+	var c0: Node3D = cars[0]
+	var xa := c0.position.x
+	road.at_time(1.0)
+	check((fposmod(c0.position.x - xa + 100.0, 200.0) - 100.0 > 0.0) == (c0.position.z < 0.0), "traffic: or on the left")
+	road.traffic = "People walking"
+	road.gap = 4.0
+	road.lanes = 1
+	road.speed = 1.4
+	road._build()
+	var walkers: Array = road.get_children().filter(func(c): return c.has_meta(&"gn_generated"))
+	check(walkers.size() == 50 and walkers[0].find_children("*", "AnimationPlayer", true, false).size() == 1, "traffic: people walking, fifty on 200 m at four metres, each with their own walk")
+	for node in [avenue, wood, road]:
+		node.get_parent().remove_child(node)
+		node.free()
+
+
 func _until_live(spec: String, seconds: float) -> bool:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
@@ -759,6 +870,7 @@ func _run() -> void:
 	await _walking(root)
 	await _keys_and_edit(root)
 	await _layered(root)
+	await _spreads_and_traffic(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")

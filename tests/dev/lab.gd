@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film, layers. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film, layers, street. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -60,6 +60,8 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _film(main)
 		"layers":
 			await _layers(main)
+		"street":
+			await _street(main)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -1197,3 +1199,75 @@ static func _layers(main: Node) -> void:
 	check(err == "" and green > n / 200 and green < n / 3, "layers: a third layer lies in the brick's joints (%d%% of the picture is green)" % (100 * green / n))
 	GnLayers.remove(surf)
 	check((wall.get_active_material(0) as BaseMaterial3D).resource_name == "Brick", "layers: taken off, the wall is brick again")
+
+
+# ------------------------------------------------------------------ a spread and traffic
+# A street drawn as the tools make it: an avenue of trees on both sides, a
+# wood behind, two lanes of city traffic. Trees and vehicles must be in the
+# picture in every renderer, and the traffic further on a second later.
+static func _street(main: Node) -> void:
+	var Spread = load("res://addons/genesis/set/gn_spread.gd")
+	var Traffic = load("res://addons/genesis/set/gn_traffic.gd")
+	var Mover = load("res://addons/genesis/set/gn_mover.gd")
+	var GnMovie = load("res://addons/genesis/core/gn_movie.gd")
+	var root := await _studio(main, "Street check", false)
+	if root == null:
+		return
+	GnEnvironment.apply("time_of_day", 14.0, false)
+	_box(root, "Road", Vector3(120, 0.1, 8), Vector3(0, 0.05, 0), Color(0.22, 0.22, 0.24))
+	# As the path tool makes them: the kind of route, then its points.
+	var tool = App.modules.paths
+	tool.start_new(Spread, "Avenue")
+	tool.add_point(Vector3(-55, 0.1, 0))
+	tool.add_point(Vector3(55, 0.1, 0))
+	tool.drawing = false
+	var avenue: Node3D = tool.path
+	check(avenue != null and avenue.get_script() == Spread, "street: the path tool draws a spread")
+	avenue.set("spacing", 9.0)
+	avenue.set("both_sides", true)
+	avenue.set("aside", 6.0)
+	avenue.set("out_of_line", 0.1)
+	tool.start_new(Traffic, "Traffic")
+	tool.add_point(Vector3(-58, 0.12, 0))
+	tool.add_point(Vector3(58, 0.12, 0))
+	tool.drawing = false
+	var road: Node3D = tool.path
+	check(road != null and road.get_script() == Traffic and road != avenue, "street: and traffic")
+	road.set("traffic", "City traffic")
+	road.set("lanes", 2)
+	road.set("both_ways", true)
+	road.set("gap", 14.0)
+	road.set("speed", 10.0)
+	await _frames(main, 6)
+	print("LAB street: %d trees, %d vehicles" % [avenue.call("headcount"), road.call("headcount")])
+	check(int(avenue.call("headcount")) == 26 and int(road.call("headcount")) == 16, "street: thirteen trees a side and sixteen vehicles")
+	var cam := _camera("Down the street", Vector3(-48, 5, 13), Vector3(0, 1, 0), 55.0)
+	await _frames(main, 4)
+	GnMovie.show_time(0.0, [])
+	var pics := await _render(main, cam, "street", Vector2i(640, 360), "Draft")
+	for e in pics:
+		if not pics[e] is Image:
+			continue
+		var img: Image = pics[e]
+		var greens := 0
+		var n := 0
+		for y in range(0, 200, 4):
+			for x in range(0, 640, 4):
+				var c := img.get_pixel(x, y)
+				n += 1
+				if c.g > c.r * 1.15 and c.g > c.b * 1.15 and c.g > 0.12:
+					greens += 1
+		check(greens > n / 50, "street %s: the avenue's trees stand against the sky (%d%% of the upper picture is green)" % [e, 100 * greens / n])
+	# A second later the traffic has moved on (the 3D view's picture).
+	var before: Image = pics.get("godot")
+	if before:
+		GnMovie.show_time(1.0, [])
+		await _frames(main, 3)
+		var path := (await GnRender.render(cam, Vector2i(640, 360), main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0)) as String
+		var after := Image.load_from_file(ProjectSettings.globalize_path(path))
+		after.save_png(_out.path_join("street_a_second_on.png"))
+		var road_band := Rect2(0.0, 0.45, 1.0, 0.4)
+		var moved := _difference(before, after, road_band)
+		var still := _difference(before, after, Rect2(0.0, 0.0, 1.0, 0.25))
+		check(moved > 0.004 and moved > still * 3.0, "street: a second later the traffic is further on, the trees where they were (%.4f on the road, %.4f above)" % [moved, still])
+		GnMovie.show_time(0.0, [])

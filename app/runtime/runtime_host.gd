@@ -99,6 +99,12 @@ func start_tool(tool: String) -> bool:
 		"draw_path":
 			paths.start_new()
 			return true
+		"draw_traffic":
+			paths.start_new(load("res://addons/genesis/set/gn_traffic.gd"), "Traffic")
+			return true
+		"draw_spread":
+			paths.start_new(load("res://addons/genesis/set/gn_spread.gd"), "Spread")
+			return true
 		"extend_path":
 			if paths.path == null:
 				return false

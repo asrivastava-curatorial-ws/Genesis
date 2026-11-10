@@ -78,6 +78,13 @@ func _init() -> void:
 	_count = GnUi.note(self, "")
 	_ground.get_parent().visible = false
 	_paint_strength.get_parent().visible = false
+	# Many things at once, set out by a drawn line.
+	GnUi.heading(self, "Rows and fills")
+	GnUi.note(self, "An avenue of trees, lamp posts down a street, cars parked along a kerb; a wood, a crowd in a square. Draw a line (click points, Enter to finish); then in Properties say what is spread, how far apart, and whether along the line or inside it.")
+	var srow := HFlowContainer.new()
+	GnUi.button(srow, "Draw a spread", func(): GnHost.start_tool("draw_spread"), "scatter")
+	add_child(srow)
+
 	GnUi.heading(self, "Terrain and water")
 	GnUi.button(self, "Add terrain", _add_terrain, "kind_terrain").tooltip_text = "Ground you can shape and paint; it replaces the flat ground"
 	var row := HBoxContainer.new()

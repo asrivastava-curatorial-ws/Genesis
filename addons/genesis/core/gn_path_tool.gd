@@ -58,8 +58,16 @@ var _hovered_point := -1
 var _surface: GnSurface
 
 
-## Starts drawing a new route.
-func start_new() -> void:
+## What the next route drawn is: moving objects, or something that is one
+## (traffic, a spread), and what it is called.
+var new_kind: GDScript = Mover
+var new_name := "Moving objects"
+
+
+## Starts drawing a new route (of moving objects, or of `kind`).
+func start_new(kind: GDScript = Mover, called := "Moving objects") -> void:
+	new_kind = kind
+	new_name = called
 	path = null
 	drawing = true
 
@@ -74,7 +82,7 @@ func extend(route: Mover) -> void:
 func follow_selection(nodes: Array) -> void:
 	if drawing:
 		return
-	var routes := nodes.filter(func(n): return n is Node and n.get_script() == Mover)
+	var routes := nodes.filter(func(n): return n is Mover)
 	path = routes[0] if nodes.size() == 1 and routes.size() == 1 else null
 
 
@@ -166,8 +174,8 @@ func add_point(world: Vector3) -> void:
 	if root == null:
 		return
 	if not is_instance_valid(path):
-		var m := Mover.new()
-		m.name = "Moving objects"
+		var m: Mover = new_kind.new()
+		m.name = new_name
 		m.curve = Mover.shaped(PackedVector3Array([Vector3.ZERO]), true)
 		m.position = world
 		GnScene.add_node(m, root, "Genesis: draw a path", "mover")

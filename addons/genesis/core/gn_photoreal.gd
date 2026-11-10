@@ -52,6 +52,12 @@ static func quality_of(engine: String) -> String:
 	return str(q.get(engine, "Good")) if q is Dictionary else "Good"
 
 
+## Draft and Good renders are sent the materials' pictures packed small
+## (hardly lossy, a tenth the size); High and Best get them exact.
+static func light_scene(quality: String) -> bool:
+	return quality in ["Draft", "Good"]
+
+
 ## Cycles' caustics: light gathered by solid glass and water, and bounced
 ## off shiny things, falls as bright patterns. Off unless asked for (slower).
 static func caustics() -> bool:
@@ -83,7 +89,7 @@ static func _job(engine: String, quality: String, scene: Dictionary, renders: Ar
 static func _export(tag: String, host: Node, quality := "Good") -> Dictionary:
 	var dir: String = GnBlender.new_job_dir(tag)
 	await prepare_sky(host, dir, quality)
-	var ex: Dictionary = GnSceneExport.export_scene(GnScene.root(), dir)
+	var ex: Dictionary = GnSceneExport.export_scene(GnScene.root(), dir, light_scene(quality))
 	ex["dir"] = dir
 	return ex
 

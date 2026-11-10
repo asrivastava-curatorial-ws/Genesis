@@ -44,6 +44,11 @@ class Ctx:
 	var objects := {}
 	var materials := {}
 	var mat_cache := {}
+	## Pictures already going into the file: by the texture, and by what is in it.
+	var tex_seen := {}
+	var tex_by_content := {}
+	## Materials already going into the file, by what they are made of.
+	var mat_by_content := {}
 	var instancers: Array = []
 	var lights: Array = []
 	var texts: Array = []
@@ -63,8 +68,11 @@ class Ctx:
 
 
 ## Writes `dir`/scene.glb and returns {"error": "", "glb": path, "scene": {...},
-## "warnings": [...]}. `root` is the design (GnScene.root()).
-static func export_scene(root: Node, dir: String) -> Dictionary:
+## "warnings": [...]}. `root` is the design (GnScene.root()). With `light`,
+## the pictures on the materials are packed small (WebP, hardly lossy): a
+## scene full of textured things is then a tenth the size to write and to
+## read, which is what a quick render wants; without, they are exact.
+static func export_scene(root: Node, dir: String, light := false) -> Dictionary:
 	if root == null:
 		return {"error": "There is no scene open.", "glb": "", "scene": {}, "warnings": []}
 	DirAccess.make_dir_recursive_absolute(dir)
@@ -90,6 +98,9 @@ static func export_scene(root: Node, dir: String) -> Dictionary:
 		scene["weather"] = weather
 	var glb := dir.path_join("scene.glb")
 	var doc := GLTFDocument.new()
+	if light:
+		doc.image_format = "Lossy WebP"
+		doc.lossy_quality = 0.92
 	var state := GLTFState.new()
 	var err := doc.append_from_scene(ctx.out_root, state)
 	if err == OK:
@@ -97,7 +108,124 @@ static func export_scene(root: Node, dir: String) -> Dictionary:
 	ctx.out_root.free()
 	if err != OK or not FileAccess.file_exists(glb):
 		return {"error": "The scene could not be written for the renderer (error %d)." % err, "glb": "", "scene": {}, "warnings": ctx.warnings}
+	once_each(glb)
 	return {"error": "", "glb": glb, "scene": scene, "warnings": ctx.warnings}
+
+
+## Godot writes a normal map (and a roughness map) into the file once for
+## every material that uses it: a street of library cars carries the same
+## dozen pictures twenty times over. This puts the file right, each picture
+## once, which makes it several times smaller and as much lighter to read.
+## Returns how many copies were taken out.
+static func once_each(glb: String) -> int:
+	var f := FileAccess.open(glb, FileAccess.READ)
+	if f == null or f.get_length() < 28:
+		return 0
+	var magic := f.get_32()
+	var version := f.get_32()
+	f.get_32()
+	var json_len := f.get_32()
+	var json_type := f.get_32()
+	if magic != 0x46546C67 or json_type != 0x4E4F534A:
+		return 0
+	var text := f.get_buffer(json_len).get_string_from_utf8()
+	var bin_len := f.get_32()
+	var bin_type := f.get_32()
+	if bin_type != 0x004E4942:
+		return 0
+	var bin := f.get_buffer(bin_len)
+	f.close()
+	var j = JSON.parse_string(text)
+	if not j is Dictionary or not j.get("images") is Array or not j.get("bufferViews") is Array:
+		return 0
+	var images: Array = j.images
+	var views: Array = j.bufferViews
+	# Which pictures are the same, byte for byte.
+	var first := {}
+	var keep_as := {}          # an image's place -> the place of the one kept
+	var copies := 0
+	for i in images.size():
+		if not (images[i] as Dictionary).has("bufferView"):
+			keep_as[i] = i
+			continue
+		var v: Dictionary = views[int(images[i].bufferView)]
+		var off := int(v.get("byteOffset", 0))
+		var size := int(v.byteLength)
+		var key := "%d:%d:%s" % [size, hash(bin.slice(off, off + size)), str(images[i].get("mimeType", ""))]
+		if first.has(key):
+			keep_as[i] = first[key]
+			copies += 1
+		else:
+			first[key] = i
+			keep_as[i] = i
+	if copies == 0:
+		return 0
+	# The pictures kept, in their new places; the textures told where.
+	var place := {}
+	var kept: Array = []
+	var dropped_views := {}
+	for i in images.size():
+		if keep_as[i] == i:
+			place[i] = kept.size()
+			kept.append(images[i])
+		else:
+			dropped_views[int(images[i].bufferView)] = true
+	for t in j.get("textures", []):
+		if (t as Dictionary).has("source"):
+			t["source"] = place[keep_as[int(t.source)]]
+		for ext in (t.get("extensions", {}) as Dictionary).values():
+			if ext is Dictionary and ext.has("source"):
+				ext["source"] = place[keep_as[int(ext.source)]]
+	j["images"] = kept
+	# The data again, without the copies. (Their views are left empty-handed,
+	# pointing at the start: nothing refers to them any more.)
+	var out := PackedByteArray()
+	for vi in views.size():
+		var v: Dictionary = views[vi]
+		if dropped_views.has(vi):
+			v["byteOffset"] = 0
+			v["byteLength"] = 4
+			continue
+		var off := int(v.get("byteOffset", 0))
+		var size := int(v.byteLength)
+		while out.size() % 4 != 0:
+			out.append(0)
+		v["byteOffset"] = out.size()
+		out.append_array(bin.slice(off, off + size))
+	while out.size() % 4 != 0:
+		out.append(0)
+	(j.buffers[0] as Dictionary)["byteLength"] = out.size()
+	var json := JSON.stringify(_whole_numbers(j)).to_utf8_buffer()
+	while json.size() % 4 != 0:
+		json.append(0x20)
+	var w := FileAccess.open(glb, FileAccess.WRITE)
+	if w == null:
+		return 0
+	w.store_32(magic)
+	w.store_32(version)
+	w.store_32(12 + 8 + json.size() + 8 + out.size())
+	w.store_32(json.size())
+	w.store_32(json_type)
+	w.store_buffer(json)
+	w.store_32(out.size())
+	w.store_32(bin_type)
+	w.store_buffer(out)
+	w.close()
+	return copies
+
+
+# Reading JSON makes every number a decimal; glTF's places and counts must
+# be written as whole numbers again.
+static func _whole_numbers(v: Variant) -> Variant:
+	if v is float:
+		return int(v) if is_equal_approx(v, roundf(v)) and absf(v) < 9.0e15 else v
+	if v is Array:
+		for i in (v as Array).size():
+			v[i] = _whole_numbers(v[i])
+	elif v is Dictionary:
+		for k in v:
+			v[k] = _whole_numbers(v[k])
+	return v
 
 
 ## The scene's lights as they are now, without writing anything.
@@ -343,6 +471,11 @@ static func _material(ctx: Ctx, mat: Material, mesh: Mesh, surface: int) -> Mate
 		return null
 	var key := mat.get_instance_id()
 	var out: Material
+	# The same material under another name goes once: every car of a library
+	# brings its own "Tyre" and "Black trim", all alike.
+	var made_of := _made_of(mat) if not ctx.mat_cache.has(key) else ""
+	if made_of != "" and ctx.mat_by_content.has(made_of):
+		ctx.mat_cache[key] = ctx.mat_by_content[made_of]
 	if ctx.mat_cache.has(key):
 		out = ctx.mat_cache[key]
 	else:
@@ -362,6 +495,8 @@ static func _material(ctx: Ctx, mat: Material, mesh: Mesh, surface: int) -> Mate
 		if not spec.is_empty():
 			ctx.materials[out.resource_name] = spec
 		ctx.mat_cache[key] = out
+		if made_of != "":
+			ctx.mat_by_content[made_of] = out
 	# Colours stored on the mesh multiply the colour in glTF; the editor uses
 	# them only when the material says so.
 	if mat is BaseMaterial3D and not (mat as BaseMaterial3D).vertex_color_use_as_albedo and mesh is ArrayMesh \
@@ -370,6 +505,24 @@ static func _material(ctx: Ctx, mat: Material, mesh: Mesh, surface: int) -> Mate
 		s["no_vertex_colour"] = true
 		ctx.materials[out.resource_name] = s
 	return out
+
+
+## Everything a standard material is set to, as one word: two materials
+## with the same word look the same. "" for a material that is not compared.
+static func _made_of(mat: Material) -> String:
+	if not mat is BaseMaterial3D:
+		return ""
+	var parts := PackedStringArray()
+	for p in mat.get_property_list():
+		if not (int(p.usage) & PROPERTY_USAGE_STORAGE) or str(p.name) in ["resource_name", "resource_path", "resource_local_to_scene", "script"]:
+			continue
+		var v = mat.get(p.name)
+		if v is Resource:
+			var r := v as Resource
+			parts.append("%s=%s" % [p.name, r.resource_path if r.resource_path != "" and not r.resource_path.contains("::") else str(r.get_instance_id())])
+		elif v != null:
+			parts.append("%s=%s" % [p.name, var_to_str(v)])
+	return "\n".join(parts)
 
 
 static func _material_spec(ctx: Ctx, m: BaseMaterial3D) -> Dictionary:
@@ -418,7 +571,21 @@ static func _snapshot_textures(ctx: Ctx, m: BaseMaterial3D) -> void:
 ## Textures glTF can carry as they are, or a picture of what one shows now
 ## (a video on an LED wall, a generated noise, a viewport).
 static func _exportable_texture(ctx: Ctx, t: Texture2D) -> Texture2D:
+	var id := t.get_instance_id()
+	if ctx.tex_seen.has(id):
+		return ctx.tex_seen[id]
 	if t is ImageTexture or t is CompressedTexture2D or t is PortableCompressedTexture2D:
+		# The same picture under another name is written once: every model
+		# of a library brings its own copy of the textures they share, and a
+		# street of cars would otherwise carry each of them twenty times.
+		var data := t.get_image()
+		var key := "%d x %d %d %d" % [data.get_width(), data.get_height(), data.get_format(), hash(data.get_data())] if data and not data.is_empty() else ""
+		if key != "" and ctx.tex_by_content.has(key):
+			ctx.tex_seen[id] = ctx.tex_by_content[key]
+			return ctx.tex_by_content[key]
+		if key != "":
+			ctx.tex_by_content[key] = t
+		ctx.tex_seen[id] = t
 		return t
 	var img := t.get_image()
 	if img == null or img.is_empty():

@@ -295,7 +295,7 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 	# (and again whenever a time-lapse moves the sun).
 	show_time(0.0, list)
 	await GnPhotoreal.prepare_sky(host, dir, quality)
-	var ex := GnSceneExport.export_scene(root, dir)
+	var ex := GnSceneExport.export_scene(root, dir, GnPhotoreal.light_scene(quality))
 	if str(ex.error) != "":
 		say.call(str(ex.error))
 		return ""

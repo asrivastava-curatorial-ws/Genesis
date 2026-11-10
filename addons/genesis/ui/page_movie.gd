@@ -142,6 +142,8 @@ func _init() -> void:
 		GnUi.note(self, "Traffic, people, boats. Draw a path: click points on the ground, a deck or a roof, then press Enter. Drag a point to move it, Ctrl + click the path to add one, right-click a point to remove it. Then select what should travel and put it on the path; speed, direction and round corners are in the Properties panel. The walkers (Assets, people) walk as they go.")
 		GnUi.button(mrow, "Draw a path", func(): GnHost.start_tool("draw_path"), "route")
 		GnUi.button(mrow, "Add points to it", _extend)
+		var traffic := GnUi.button(mrow, "Draw traffic", func(): GnHost.start_tool("draw_traffic"), "car")
+		traffic.tooltip_text = "A road's worth of cars, buses and lorries, or people walking, made and kept moving along the line you draw. What travels, how far apart, lanes and both ways are in Properties."
 	add_child(mrow)
 	var rrow := HBoxContainer.new()
 	GnUi.button(rrow, "Put selection on it", _ride)
@@ -442,7 +444,7 @@ func _ride() -> void:
 	var movers: Array = GnScene.root().get_tree().get_nodes_in_group(Mover.GROUP) if GnScene.root() else []
 	var path: Node = null
 	for n in picked:
-		if n.get_script() == Mover:
+		if n.get_script() == Mover:      # (not traffic or a spread: those make what is on them)
 			path = n
 	if path == null and movers.size() == 1:
 		path = movers[0]

@@ -16,6 +16,7 @@ const SCRIPTS := {
 	"gn_dimension": ["Dimension", "kind_dimension"], "gn_cue_list": ["Cue list", "kind_cues"],
 	"gn_underlay": ["Floor plan", "kind_plan"], "gn_drawing": ["CAD drawing", "kind_plan"],
 	"gn_weather": ["Weather", "rain"],
+	"gn_traffic": ["Traffic", "car"], "gn_spread": ["Spread", "scatter"],
 }
 ## Roles the scene gives some of its parts.
 const ROLES := {
