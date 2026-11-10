@@ -95,6 +95,50 @@ static func layout(layers: Array, own: BaseMaterial3D) -> Dictionary:
 	return {"tile": tile, "repeats": repeats, "size": 2048}
 
 
+## How much the first layer's normal map must be made of for its joints to
+## be found: what the map says of a place (how much higher its surroundings
+## stand) is measured against the map's own deepest places, so the joints of
+## a softly drawn brick, of a deeply scanned one and of a map the graphics
+## card keeps packed small are all found alike. The same sum as the shader's
+## (cavity() in gn_material_layers.gdshader), in this picture's own pixels.
+static func cavity_gain(normal: Texture2D, strength: float, repeats: float, size: int) -> float:
+	var img: Image = normal.get_image() if normal else null
+	if img == null or img.is_empty():
+		return 1.6
+	if img.is_compressed() and img.decompress() != OK:
+		return 1.6
+	var w := img.get_width()
+	var h := img.get_height()
+	# One step of the shader's (1.4 pixels of the drawn picture), in this picture's pixels.
+	var step := 1.4 / float(maxi(size, 1)) * repeats * float(w)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var found := PackedFloat32Array()
+	for i in 5000:
+		var x := rng.randf() * w
+		var y := rng.randf() * h
+		var around := 0.0
+		for dir: Vector2 in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
+			var rise := 0.0
+			for k in 6:
+				var at := Vector2(x, y) + dir * (k + 0.5) * step
+				var n := _lean(img, int(floor(at.x)), int(floor(at.y)), strength)
+				rise += -(n.x * dir.x - n.y * dir.y) / maxf(n.z, 0.2)
+				around += rise
+		found.append(around / 24.0)
+	found.sort()
+	# The deepest three places in a hundred are a full joint.
+	var deep := found[int(found.size() * 0.97)]
+	return clampf(0.5 / maxf(deep, 0.0005), 0.05, 600.0)
+
+
+## The surface's normal at a pixel of a normal map (the picture repeats).
+static func _lean(img: Image, x: int, y: int, strength: float) -> Vector3:
+	var c := img.get_pixel(posmod(x, img.get_width()), posmod(y, img.get_height()))
+	var n := Vector2(c.r * 2.0 - 1.0, c.g * 2.0 - 1.0) * strength
+	return Vector3(n.x, n.y, sqrt(maxf(1.0 - n.length_squared(), 0.04))).normalized()
+
+
 ## The pictures of a stack of layers: {"albedo", "normal", "roughness"
 ## (Images), "tile" (metres)}; {} if they cannot be drawn here. `own` is the
 ## surface's material from before it was layered (what a layer without a
@@ -144,6 +188,8 @@ static func bake(layers: Array, own: BaseMaterial3D, host: Node) -> Dictionary:
 		soft.append(clampf(float(l.get("soft", 0.3)), 0.0, 1.0))
 		thick.append(clampf(float(l.get("thickness", 0.0)), 0.0, 1.0))
 		seed.append(float(l.get("seed", float(i))))
+	var first := _source(layers[0], own)
+	m.set_shader_parameter("cavity_gain", cavity_gain(first.normal, float(first.normal_scale), float(lay.repeats[0]), int(lay.size)))
 	m.set_shader_parameter("count", n)
 	m.set_shader_parameter("size", float(lay.size))
 	m.set_shader_parameter("tint", tint)

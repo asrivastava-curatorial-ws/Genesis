@@ -180,7 +180,7 @@ curl.exe -L -o LICENSE.txt https://raw.githubusercontent.com/xinntao/Real-ESRGAN
 ./Oriel-1.0.0-rc5-x86_64.AppImage --headless -- --smoke --expect-library     # ends with: GENESIS_SMOKE RESULT PASS
 ```
 
-**End-to-end test.** This is the full test from the brief, in five launches, with real rendering. On a computer with a GPU it takes a few minutes; in software it takes about an hour.
+**End-to-end test.** This is the full test from the brief, in five launches, with real rendering (a sixth, `photoreal`, does the same for Eevee and Cycles). On a computer with a GPU it takes a few minutes; in software it takes about an hour.
 
 1. *build* makes a project, brings in models (glTF, OBJ, FBX and `.blend` when Blender is there, and one into your own library), a DXF drawing and PDF plans, paints trees, sets the sun and your own sky, adds set pieces and cues, then saves and quits.
 2. *verify* reopens the project, checks every object and setting, then renders 1080p and 4K.
@@ -266,7 +266,7 @@ bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genes
 
 **Tested** on Ubuntu 24.04 with software Vulkan (lavapipe):
 
-- 386 headless checks in four suites, and a smoke tour of the whole program.
+- 564 headless checks in five suites, and a smoke tour of the whole program.
 - The built program's own smoke tour, with the bundled library and the material presets.
 - The end-to-end test in five launches with real renders: 1080p, 4K, 360° (mono, stereo and a virtual tour), photo match, a sun study, render passes, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
 - Importing glTF, OBJ, FBX and `.blend` (with Ubuntu's Blender 4.0.2), DXF, and PDF plans (as lines and as pictures).
@@ -276,11 +276,16 @@ bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genes
 - Outgoing show commands (OSC, text, TCP), and live video on screens from a file, UDP and SRT.
 - Site context from a saved OpenStreetMap file: buildings at their mapped heights, streets, a park and a river.
 - Both demo projects, built and rendered by the program itself.
+- Eevee and Cycles from the AppImage: stills, a sun study, passes, 360° panoramas, stopping a render, stopping and resuming a film.
+- **What rc5 added**, each in a scene built with the program's own tools, rendered by the real-time renderer, Eevee and Cycles where it applies, and measured in the pictures ([reports/LAB_RESULTS.md](reports/LAB_RESULTS.md)): IES beams; the light mixer; stage haze; wet surfaces, puddles and snow; wind; relief and light inside; caustics; volumetric clouds; the walk-through on the screen; a film with keys, a dissolve, a title and sound; layered materials; a street with an avenue and traffic; Cycles in the 3D view; a scene of five million triangles (levels of detail, boxes, copies, opening).
+- IFC, USD, Collada, 3DS, STL, PLY and Alembic models: a bench in each format (a wall for IFC) comes in at its size and the right way up.
+- The walk-through on a headset, on a **simulated** headset (Monado's): an OpenXR session starts, both eyes are drawn, and the walk's checks pass.
 
 **Not tested here:**
 
 - Windows (not part of this delivery).
 - A real GPU.
+- A real VR headset (see above: a simulated one was used). See [docs/VR_WALKTHROUGH.md](docs/VR_WALKTHROUGH.md).
 - DWG plans (the ODA converter is not open source and could not be installed).
 - OpenStreetMap site context from an address (no internet access to the services). Bringing in a saved `.osm` map file is tested.
 - The downloaded library (photographed HDRI skies, scanned materials, 54 plant species). It is not bundled; build it with `python3 tools/setup.py` on a computer with internet access. Your own skies and models work without it.

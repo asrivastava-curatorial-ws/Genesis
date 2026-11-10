@@ -24,7 +24,7 @@ One material over another, where a mask says: plaster in patches over brick, mos
 
 Pick a surface. Under *Layers*, choose a material in *Lay on* and press *Add as a layer* (the surface as it is becomes the first layer). For each layer on top:
 
-- **Where it lies**: Everywhere, Patches, In the joints, On the raised parts, Streaks, Speckles. The joints and the raised parts are found from the first layer's own relief.
+- **Where it lies**: Everywhere, Patches, In the joints, On the raised parts, Streaks, Speckles. The joints and the raised parts are the first layer's own, found from its normal map (measured against the map's own deepest places, so a softly drawn brick and a deeply scanned one are treated alike), and only where the first layer still shows: a layer with thickness, such as plaster, buries the joints beneath it.
 - **How much**, **Pattern size**, **Soft edge**, **Thickness** (a thick layer has its own relief and hides the one beneath), **Its tint**.
 
 Up to four layers. *Remove the layer* takes one off; *Take the layers off* returns the surface to what it was. Undo works throughout.

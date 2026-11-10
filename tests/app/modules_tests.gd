@@ -608,6 +608,21 @@ func _layered(root: Node) -> void:
 	check(is_equal_approx(float(lay.tile), 4.0) and is_equal_approx(float(lay.repeats[0]), 4.0) and is_equal_approx(float(lay.repeats[1]), 2.0) and int(lay.size) == 2048,
 		"layers: the whole repeats every 4 m; the brick fits four times across it, the concrete twice")
 	check(GnLayers.describe(layers[0], 0) == "Brick" and GnLayers.describe(layers[1], 1) == "Concrete · patches 40%", "layers: each layer is named for what it is and where it lies")
+	# Joints are found by what a normal map says against its own deepest
+	# places: a groove drawn softly and the same groove drawn deeply are the
+	# same joint. A flat tile with a groove down it, twice: steep sides, and
+	# sides a fifth as steep.
+	var gains: Array = []
+	for lean in [0.5, 0.1]:
+		var groove := Image.create(64, 64, false, Image.FORMAT_RGB8)
+		groove.fill(Color(0.5, 0.5, 1.0))
+		for y in 64:
+			groove.set_pixel(30, y, Color(0.5 + lean * 0.5, 0.5, 1.0))        # the left side leans right, into the groove
+			groove.set_pixel(34, y, Color(0.5 - lean * 0.5, 0.5, 1.0))        # the right side leans left
+		gains.append(GnLayers.cavity_gain(ImageTexture.create_from_image(groove), 1.0, 1.0, 64))
+	check(float(gains[0]) > 0.05 and float(gains[1]) > float(gains[0]) * 3.5 and float(gains[1]) < float(gains[0]) * 7.0,
+		"layers: a softly drawn joint is made as much of as a deep one (a map a fifth as strong counts %.1f times as much)" % (float(gains[1]) / maxf(float(gains[0]), 0.0001)))
+	check(is_equal_approx(GnLayers.cavity_gain(null, 1.0, 1.0, 64), 1.6), "layers: with no normal map there are no joints to find")
 	var wall := MeshInstance3D.new()
 	wall.name = "Layer wall"
 	wall.mesh = BoxMesh.new()

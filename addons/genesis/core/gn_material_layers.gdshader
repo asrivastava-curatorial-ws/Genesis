@@ -39,6 +39,9 @@ uniform float mask_scale[4];
 uniform float soft[4];
 uniform float thickness[4];
 uniform float seed[4];
+// What the first layer's normal map is made of so that its strongest creases are a full joint
+// (worked out from the map itself when the layers are drawn).
+uniform float cavity_gain = 1.6;
 
 float hash(vec2 p, float s) {
 	return fract(sin(dot(p, vec2(127.1, 311.7)) + s * 17.3) * 43758.5453);
@@ -99,22 +102,30 @@ float layer_rough(int i, vec2 uv) {
 }
 
 // How deep in a joint of the first layer a place is: 1 in a crevice, 0 on a
-// ridge, a half on the flat. From how its normals lean towards each other.
-float cavity(vec2 uv) {
+// ridge, a half on the flat (or, with `raised`, the other way about: 1 on a
+// ridge). The normal map says how the surface slopes; going out from a place
+// in four directions and adding the slopes up says how much higher its
+// surroundings stand, which is what a joint is: lower than what is on
+// either side of it. A joint is found whole, however thin its edges are
+// drawn, up to some sixteen pixels wide.
+float cavity(vec2 uv, bool raised) {
 	if (has_normal[0] < 0.5) {
 		return 0.5;
 	}
-	float c = 0.0;
-	float w = 0.0;
-	for (int k = 1; k <= 3; k++) {
-		float r = float(k) * 1.5 / size;
-		// In a crevice the normals on either side lean towards each other.
-		// (Green is up, and v runs down the picture: its part is the other way round.)
-		c += -(layer_normal(0, uv + vec2(r, 0.0)).x - layer_normal(0, uv - vec2(r, 0.0)).x)
-			+ (layer_normal(0, uv + vec2(0.0, r)).y - layer_normal(0, uv - vec2(0.0, r)).y);
-		w += 1.0;
+	float around = 0.0;
+	for (int d = 0; d < 4; d++) {
+		vec2 dir = d == 0 ? vec2(1.0, 0.0) : (d == 1 ? vec2(-1.0, 0.0) : (d == 2 ? vec2(0.0, 1.0) : vec2(0.0, -1.0)));
+		float h = 0.0;
+		for (int k = 0; k < 6; k++) {
+			vec3 n = layer_normal(0, uv + dir * (float(k) + 0.5) * 1.4 / size);
+			// The surface rises along the way where its normal leans back against it.
+			// (Green is up, and v runs down the picture: its part is the other way round.)
+			h += -(n.x * dir.x - n.y * dir.y) / max(n.z, 0.2);
+			around += h;
+		}
 	}
-	return clamp(0.5 + c / w * 1.6, 0.0, 1.0);
+	around /= 24.0;
+	return clamp(0.5 + (raised ? -around : around) * cavity_gain, 0.0, 1.0);
 }
 
 // Where layer i lies, 0 to 1.
@@ -134,12 +145,11 @@ float mask(int i, vec2 uv) {
 	if (kind == 1) {
 		n = tile_fbm(uv, vec2(cells), seed[i]);
 	} else if (kind == 2 || kind == 3) {
-		float c = cavity(uv);
-		c = kind == 2 ? c : 1.0 - c;
+		float c = cavity(uv, kind == 3);
 		// Broken up a little, so it is not the same everywhere.
 		n = c * mix(0.85, 1.1, tile_fbm(uv, vec2(cells * 2.0), seed[i]));
 		// (The flat is a half: only what is deeper than that is a joint.)
-		edge = mix(0.98, 0.58, a);
+		edge = mix(0.98, 0.72, a);
 		s *= 0.5;
 	} else if (kind == 4) {
 		// Streaks run down the picture: fine across, long down.
@@ -159,16 +169,23 @@ void fragment() {
 	vec3 normal = layer_normal(0, uv);
 	float rough = layer_rough(0, uv);
 	float e = 1.5 / size;
+	// How much of the first layer's relief the layers so far have buried: a
+	// layer with thickness (plaster) fills the joints under it, so what lies
+	// "in the joints" above it lies only where the first layer still shows.
+	float buried = 0.0;
 	for (int i = 1; i < count; i++) {
-		float m = mask(i, uv);
+		bool by_relief = mask_kind[i] == 2 || mask_kind[i] == 3;
+		float shows = by_relief ? 1.0 - buried : 1.0;
+		float m = mask(i, uv) * shows;
 		colour = mix(colour, layer_albedo(i, uv).rgb, m);
 		rough = mix(rough, layer_rough(i, uv), m);
 		normal = normalize(mix(normal, layer_normal(i, uv), m));
 		if (thickness[i] > 0.0) {
 			// The layer's edge as a step: the normal leans away from where it lies.
-			vec2 g = vec2(mask(i, uv + vec2(e, 0.0)) - mask(i, uv - vec2(e, 0.0)), mask(i, uv - vec2(0.0, e)) - mask(i, uv + vec2(0.0, e)));
+			vec2 g = vec2(mask(i, uv + vec2(e, 0.0)) - mask(i, uv - vec2(e, 0.0)), mask(i, uv - vec2(0.0, e)) - mask(i, uv + vec2(0.0, e))) * shows;
 			normal = normalize(normal - vec3(g * thickness[i] * 6.0, 0.0));
 		}
+		buried = max(buried, m * smoothstep(0.0, 0.15, thickness[i]));
 	}
 	if (mode == 0) {
 		COLOR = vec4(colour, 1.0);
