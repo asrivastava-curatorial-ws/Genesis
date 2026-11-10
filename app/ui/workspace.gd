@@ -14,6 +14,7 @@ const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const ViewportPanel := preload("res://app/ui/viewport_panel.gd")
 const ConsolePanel := preload("res://app/ui/console_panel.gd")
 const TimelinePanel := preload("res://app/ui/timeline_panel.gd")
+const GnLiveRender := preload("res://addons/genesis/core/gn_live_render.gd")
 const SceneTreePanel := preload("res://app/ui/scene_tree_panel.gd")
 const InspectorPanel := preload("res://app/ui/inspector_panel.gd")
 const ActionRegistry := preload("res://app/core/action_registry.gd")
@@ -31,7 +32,7 @@ const MENUS := [
 	["Add", ["add.empty", "add.box", "add.plane", "add.sphere", "add.cylinder", "-", "add.point_light", "add.spot_light", "-", "add.camera"]],
 	["Tools", ["tool.select", "tool.move", "tool.rotate", "tool.scale", "-", "tool.local", "tool.snap", "-", "tools.dependencies"]],
 	["View", ["view.frame_selection", "view.frame", "-", "view.top", "view.front", "view.right", "view.ortho", "-",
-		"view.look_through", "-", "view.walk", "view.walk_vr", "-", "view.grid", "view.outliner", "view.panel", "view.timeline", "view.console"]],
+		"view.look_through", "-", "view.live", "view.live_eevee", "view.walk", "view.walk_vr", "-", "view.grid", "view.outliner", "view.panel", "view.timeline", "view.console"]],
 	["Help", ["help.docs", "help.shortcuts", "-", "help.logs", "help.about"]],
 ]
 const CHECKED := {"view.outliner": "_left", "view.panel": "_side", "view.console": "console", "view.timeline": "timeline"}
@@ -180,6 +181,8 @@ func _register_actions() -> void:
 	_add("view.right", "From the Right", _view.bind("right"), [K.key(KEY_KP_3)])
 	_add("view.ortho", "Perspective / Orthographic", _toggle_ortho, [K.key(KEY_KP_5)])
 	_add("view.look_through", "Look Through Selected Camera", _look_through, [K.key(KEY_KP_0)], _camera_selected)
+	_add("view.live", "Cycles in the View", toggle_live.bind("cycles"), [K.key(KEY_F10)], _has_scene)
+	_add("view.live_eevee", "Eevee in the View", toggle_live.bind("eevee"), [K.key(KEY_F10, false, true)], _has_scene)
 	_add("view.walk", "Walk Through on This Screen", walk_through.bind(false), [K.key(KEY_F9)], _has_scene)
 	_add("view.walk_vr", "Walk Through on a Headset (VR)", walk_through.bind(true), [K.key(KEY_F9, false, true)], _has_scene)
 	_add("view.grid", "Grid", _toggle_grid, [K.key(KEY_NUMBERSIGN, true)])
@@ -575,7 +578,7 @@ func _build_menu() -> void:
 			if action and action.shortcut:
 				popup.set_item_shortcut(index, action.shortcut)
 				popup.set_item_shortcut_disabled(index, true)
-			if id in CHECKED or id in ["view.grid", "tool.local", "tool.snap"]:
+			if id in CHECKED or id in ["view.grid", "tool.local", "tool.snap", "view.live", "view.live_eevee"]:
 				popup.set_item_as_checkable(index, true)
 			ids.append(id)
 		popup.id_pressed.connect(_on_menu_item.bind(ids))
@@ -623,7 +626,7 @@ func _build_toolbar() -> void:
 	_divider(bar)
 	var frame := _tool(bar, "frame", "Frame", "view.frame_selection")
 	frame.pressed.connect(App.actions.run.bind("view.frame_selection"))
-	for t in [["ortho", "Ortho", "view.ortho"], ["grid", "", "view.grid"]]:
+	for t in [["ortho", "Ortho", "view.ortho"], ["grid", "", "view.grid"], ["zap", "Cycles", "view.live"]]:
 		var b := _tool(bar, t[0], t[1], t[2])
 		b.toggle_mode = true
 		b.pressed.connect(func():
@@ -865,6 +868,19 @@ func toggle_console() -> void:
 	_toggle(console, "console_visible")
 
 
+## Cycles' (or Eevee's) own picture of the 3D view, laid over it and kept
+## up: quick at first, finer the longer the view is left alone.
+func toggle_live(engine: String) -> void:
+	if viewport_panel.is_live() and GnLiveRender.engine == engine:
+		viewport_panel.set_live(false)
+		_refresh_menus()
+		return
+	var err: String = await viewport_panel.set_live(true, engine)
+	if err != "":
+		App.notify.warning("The live view could not start.", err)
+	_refresh_menus()
+
+
 func toggle_timeline() -> void:
 	_toggle(timeline, "timeline_visible")
 
@@ -929,6 +945,8 @@ func _refresh_menus() -> void:
 				popup.set_item_checked(i, get(CHECKED[id]).visible)
 			elif id == "view.grid":
 				popup.set_item_checked(i, viewport_panel.show_grid)
+			elif id in ["view.live", "view.live_eevee"]:
+				popup.set_item_checked(i, viewport_panel.is_live() and (GnLiveRender.engine == "eevee") == (id == "view.live_eevee"))
 			elif id == "tool.local":
 				popup.set_item_checked(i, viewport_panel.gizmo.local)
 			elif id == "tool.snap":
@@ -939,6 +957,7 @@ func _refresh_menus() -> void:
 		_toggles["tool.snap"].set_pressed_no_signal(viewport_panel.gizmo.snap)
 		_toggles["view.ortho"].set_pressed_no_signal(viewport_panel.orthographic)
 		_toggles["view.grid"].set_pressed_no_signal(viewport_panel.show_grid)
+		_toggles["view.live"].set_pressed_no_signal(viewport_panel.is_live())
 		for id in ["edit.undo", "edit.redo", "project.save"]:
 			_toggles[id].disabled = not App.actions.is_enabled(id)
 			_toggles[id].tooltip_text = App.actions.label_of(id)

@@ -462,6 +462,37 @@ def import_glb(path):
     log("imported %d objects from %s" % (len(OBJECTS), os.path.basename(path)))
 
 
+def build_copies():
+    """The same shape in the same materials is in the file once, however many
+    times it stands in the scene: the others are made here from the first,
+    sharing its mesh, each in its own place. A model placed two hundred
+    times is then read once and held in memory once, and both renderers draw
+    its copies as copies."""
+    made = 0
+    lost = 0
+    for name, spec in SCENE.get("objects", {}).items():
+        first = spec.get("copy_of")
+        if not first:
+            continue
+        src = OBJECTS.get(first)
+        if src is None or src.data is None:
+            lost += 1
+            continue
+        o = bpy.data.objects.new(name, src.data)
+        colls = list(src.users_collection) or [bpy.context.scene.collection]
+        for c in colls:
+            c.objects.link(o)
+        o.matrix_world = object_matrix(spec["xform"])
+        # What the first is given by the file's reader beyond its mesh.
+        o.visible_shadow = src.visible_shadow
+        OBJECTS[name] = o
+        made += 1
+    if lost:
+        warn_once("copies", "%d objects were left out: the shape they are copies of is not in the scene file" % lost)
+    if made:
+        log("copies: %d objects made from shapes already read" % made)
+
+
 def apply_object_flags():
     for name, spec in SCENE.get("objects", {}).items():
         o = OBJECTS.get(name)
@@ -2700,6 +2731,77 @@ def do_still(r, idx):
     _restore_overrides(ov)
 
 
+# The live view: quick at first, finer while the view stays put. Each step
+# is (size as a share of the view, seconds Cycles may take / Eevee samples).
+LIVE_STEPS = ((0.3, 0.5, 4), (0.5, 1.5, 8), (1.0, 3.0, 16), (1.0, 7.0, 48))
+
+
+def do_live(r, idx):
+    """Renders the view Oriel's 3D view shows, again and again as it
+    changes, until told to stop. Oriel writes live.json (the camera, the
+    view's size, a number that goes up when either changes, and the time, as
+    a sign of life); each picture goes to live.png with live_out.json
+    saying which view it is of and how fine. The scene stays in memory, so
+    a new view starts at once."""
+    sc = bpy.context.scene
+    ask = os.path.join(JOB_DIR, "live.json")
+    steps = [tuple(s) for s in r.get("steps", LIVE_STEPS)]
+    seen = None
+    step = 0
+    quiet = 0
+    try:
+        sc.render.use_persistent_data = True
+    except Exception:
+        pass
+    STATUS.set(state="running", stage="live", message="Live view", progress=0.0)
+    while True:
+        try:
+            with open(ask, "r", encoding="utf-8") as f:
+                want = json.load(f)
+        except (OSError, ValueError):
+            want = None
+        if want is None:
+            quiet += 1
+            if quiet > 600:              # a minute with nothing to read: Oriel has gone
+                break
+            time.sleep(0.1)
+            continue
+        quiet = 0
+        if want.get("stop") or time.time() - float(want.get("beat", time.time())) > 30.0:
+            break
+        seq = want.get("seq", 0)
+        if seq != seen:
+            seen = seq
+            step = 0
+        if step >= len(steps):
+            time.sleep(0.1)
+            continue
+        share, seconds, eevee_samples = steps[step]
+        w = max(int(float(want["size"][0]) * share) // 2 * 2, 64)
+        h = max(int(float(want["size"][1]) * share) // 2 * 2, 64)
+        cam = make_camera(want["camera"], [w, h])
+        if ENGINE == "cycles":
+            sc.cycles.samples = 4096
+            sc.cycles.time_limit = float(seconds)
+            sc.cycles.use_adaptive_sampling = True
+        else:
+            sc.eevee.taa_render_samples = int(eevee_samples)
+        t0 = time.time()
+        layers = render_layers("live")
+        post = dict(SCENE.get("post", {}))
+        post.update(want.get("post", {}))
+        img = finish(layers, cam, post, SCENE.get("fog"))
+        tmp = os.path.join(JOB_DIR, "live_tmp.png")
+        write_png(tmp, img)
+        os.replace(tmp, os.path.join(JOB_DIR, "live.png"))
+        meta = os.path.join(JOB_DIR, "live_out.tmp")
+        with open(meta, "w", encoding="utf-8") as f:
+            json.dump({"seq": seq, "step": step, "steps": len(steps), "size": [w, h], "seconds": round(time.time() - t0, 2)}, f)
+        os.replace(meta, os.path.join(JOB_DIR, "live_out.json"))
+        step += 1
+        STATUS.set(message="Live view: step %d of %d" % (step, len(steps)), progress=step / float(len(steps)))
+
+
 def _write_pass(name, layers, cam, r, idx):
     base = os.path.splitext(_out_path(r["out"]))[0]
     path = "%s_%s.png" % (base, name)
@@ -3282,6 +3384,7 @@ def main():
     reset()
     STATUS.set(state="running", stage="scene", message="Setting up the scene", progress=0.01)
     import_glb(_abs(JOB["glb"]))
+    build_copies()
     apply_object_flags()
     fix_materials()
     apply_weather()
@@ -3316,6 +3419,8 @@ def main():
             do_frames(r, i, base, span)
         elif kind == "pass":
             do_pass(r, i)
+        elif kind == "live":
+            do_live(r, i)
         done += weights[i]
     STATUS.set(state="done", stage="", progress=1.0, message="Finished in %d s" % int(time.time() - t0))
     log("done in %.1f s" % (time.time() - t0))

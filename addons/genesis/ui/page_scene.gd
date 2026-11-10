@@ -30,6 +30,7 @@ var _photo: CheckBox
 var _site_status: Label
 var _measure_button: Button
 var _layer_name: LineEdit
+var _big_note: Label
 var _layer_list: VBoxContainer
 var measure: GnMeasure
 var _link: Label
@@ -89,6 +90,17 @@ func _init() -> void:
 	GnUi.note(self, "Click two points in the 3D view; a dimension stays there. Right-click or Esc starts again.")
 	_measure_button = GnUi.button(self, "Start measuring", _toggle_measure, "ruler")
 	_measure_button.toggle_mode = true
+
+	# A large scene: how big it is, and ways of carrying it.
+	GnUi.heading(self, "A large scene")
+	_big_note = GnUi.note(self, "How many triangles, objects and pictures the scene holds, and what is heaviest.")
+	var brow := HFlowContainer.new()
+	GnUi.button(brow, "Count the scene", _count_scene, "gauge")
+	GnUi.button(brow, "Show selection as boxes", func(): _stand_in(true), "kind_model").tooltip_text = "Heavy things as plain boxes in the 3D view while you work around them; every render shows them in full"
+	GnUi.button(brow, "…in full again", func(): _stand_in(false))
+	var lods := GnUi.button(brow, "Lighten the project's models", _lighten, "layers_2")
+	lods.tooltip_text = "Gives the heavy models this project keeps lighter versions of themselves, which the 3D view draws when they are small on the screen. Models brought in from now on get them by themselves."
+	add_child(brow)
 
 	GnUi.heading(self, "Layers")
 	GnUi.note(self, "Put things on a layer to show or hide them together: landscaping, furniture, option A.")
@@ -256,6 +268,35 @@ func _toggle_measure() -> void:
 	# changes, so re-select to make it ask again.
 	if GnScene.root():
 		GnScene.select(GnScene.root())
+
+
+func _count_scene() -> void:
+	var GnBig = load("res://addons/genesis/core/gn_big.gd")
+	if GnScene.root() == null:
+		return
+	var vp: Viewport = GnScene.root().get_viewport() if GnScene.root().is_inside_tree() else null
+	_big_note.text = GnBig.describe(GnBig.count(GnScene.root()), vp)
+
+
+func _stand_in(on: bool) -> void:
+	var GnBig = load("res://addons/genesis/core/gn_big.gd")
+	var n: int = GnBig.set_stand_in(GnHost.selected_nodes(), on)
+	_big_note.text = ("%d object%s shown as %s in the 3D view; every render shows %s in full." % [n, "" if n == 1 else "s",
+		"a box" if n == 1 else "boxes", "it" if n == 1 else "them"]) if on and n > 0 else (
+		"%d object%s shown in full again." % [n, "" if n == 1 else "s"] if n > 0 else "Select what to change first.")
+
+
+func _lighten() -> void:
+	var GnBig = load("res://addons/genesis/core/gn_big.gd")
+	var dir: String = load("res://addons/genesis/core/gn_paths.gd").at(load("res://addons/genesis/core/gn_import.gd").DEST)
+	if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(dir)):
+		_big_note.text = "This project keeps no models of its own yet."
+		return
+	_big_note.text = "Working on the models…"
+	await get_tree().process_frame
+	var r: Dictionary = GnBig.add_lods_to_files(ProjectSettings.globalize_path(dir))
+	_big_note.text = "%d model file%s lightened (%d shapes): close and open the project to see them drawn lighter from afar." % [
+		int(r.files), "" if int(r.files) == 1 else "s", int(r.meshes)] if int(r.files) > 0 else "The project's models are light already, or have their lighter versions."
 
 
 func _put_on_layer() -> void:

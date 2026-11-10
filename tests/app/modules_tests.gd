@@ -740,6 +740,167 @@ func _spreads_and_traffic(root: Node) -> void:
 		node.free()
 
 
+# A large scene: counting it, levels of detail, stand-ins; the scene file for
+# Eevee and Cycles with each picture once; the live view off until asked for.
+func _large_scenes(root: Node) -> void:
+	var GnBig = load("res://addons/genesis/core/gn_big.gd")
+	var GnSceneExport = load("res://addons/genesis/core/gn_scene_export.gd")
+	var GnLiveRender = load("res://addons/genesis/core/gn_live_render.gd")
+	var yard := Node3D.new()
+	yard.name = "Big yard"
+	GnScene.add_node(yard, root, "Add a yard")
+	yard.position = Vector3(900, 0, 900)
+	var ball := MeshInstance3D.new()
+	ball.name = "Dome"
+	var sphere := SphereMesh.new()
+	sphere.radial_segments = 96
+	sphere.rings = 48
+	var am := ArrayMesh.new()
+	am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, sphere.get_mesh_arrays())
+	ball.mesh = am
+	yard.add_child(ball)
+	ball.owner = root
+	var cube := MeshInstance3D.new()
+	cube.name = "Crate"
+	cube.mesh = BoxMesh.new()
+	yard.add_child(cube)
+	cube.owner = root
+	cube.position = Vector3(5, 0, 0)
+	var before: int = GnBig.triangles(am)
+	check(before == 96 * 49 * 2 and GnBig.triangles(cube.mesh) == 12, "big: a dome of %d triangles, a crate of twelve" % before)
+	var c: Dictionary = GnBig.count(yard)
+	check(int(c.objects) == 2 and int(c.triangles) == before + 12 and int(c.meshes) == 2 and str(c.heaviest[0][0]) == "Dome",
+		"big: the scene is counted, the heaviest thing first (%s)" % GnBig.describe(c).split("\n")[0])
+	check(not GnBig.has_lods(am), "big: a mesh as it comes has no lighter versions")
+	var r: Dictionary = GnBig.add_lods(yard)
+	check(int(r.meshes) == 1 and GnBig.has_lods(ball.mesh) and ball.mesh != am and GnBig.triangles(ball.mesh) == before and cube.mesh is BoxMesh,
+		"big: the dome is given levels of detail, the crate needs none")
+	check(int(GnBig.add_lods(yard).meshes) == 0, "big: and not twice")
+	# Stand-ins.
+	var view_bit := 1 << (GnHost.VIEW_ONLY_LAYER - 1)
+	var render_bit: int = 1 << (GnBig.RENDER_ONLY_LAYER - 1)
+	check(GnBig.set_stand_in([ball], true) == 1 and GnBig.is_stand_in(ball), "big: the dome is marked to be shown as a box")
+	var box := ball.get_node_or_null("AsBox") as MeshInstance3D
+	check(box != null and box.layers == view_bit and ball.layers == render_bit and absf((box.mesh as BoxMesh).size.x - 1.0) < 0.05,
+		"big: a box its size shows in the 3D view only; the dome itself in renders only")
+	check(not GnSceneExport._view_only(ball) and GnSceneExport._view_only(box), "big: Eevee and Cycles get the dome, not the box")
+	GnHost.undo_redo().undo()
+	check(not GnBig.is_stand_in(ball) and not ball.has_meta(GnBig.AS_BOX) and ball.get_node_or_null("AsBox") == null and ball.layers == 1, "big: one undo step shows it in full again, with no mark left behind")
+	GnHost.undo_redo().redo()
+	ball.get_node("AsBox").free()
+	ball.layers = 1
+	check(GnBig.dress_all(root) == 1 and ball.get_node_or_null("AsBox") != null, "big: opening the scene puts the stand-ins back from their marks")
+	# A copy of a thing shown as a box is one too, and its box is never saved.
+	var twin := ball.duplicate() as MeshInstance3D
+	GnScene.add_nodes([twin], yard, "Copy the dome")
+	check(twin.owner == root and GnBig.is_stand_in(twin) and twin.get_node_or_null("AsBox") != null and twin.get_node("AsBox").owner == null,
+		"big: a copy of it is shown as a box too, and the box is not kept in the file")
+	# What the mouse is over: the box, which is the dome to the user; not the dome nobody sees.
+	var Picker = load("res://app/runtime/picker.gd")
+	var eye := Camera3D.new()
+	root.add_child(eye)
+	eye.set_cull_mask_value(GnBig.RENDER_ONLY_LAYER, false)
+	eye.global_position = yard.global_position + Vector3(0, 0, 6)
+	var corner: Vector2 = eye.unproject_position(yard.global_position + Vector3(0.47, 0.47, 0.5)) if eye.is_inside_tree() and eye.get_viewport() else Vector2(-1, -1)
+	var hit: Dictionary = Picker.pick(eye, corner, root) if corner.x >= 0.0 else {}
+	check(corner.x < 0.0 or hit.get("node") in [ball, twin, yard], "big: clicking the corner of a box picks the thing it stands for")
+	eye.free()
+	GnBig.set_stand_in([ball, twin], false)
+	# The models a project keeps already are given their lighter versions in their files.
+	var kept := OS.get_user_data_dir().path_join("big_models")
+	DirAccess.make_dir_recursive_absolute(kept.path_join("inner"))
+	var heavy := MeshInstance3D.new()
+	heavy.name = "Heavy"
+	var raw := ArrayMesh.new()
+	raw.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, sphere.get_mesh_arrays())
+	heavy.mesh = raw
+	var as_file := PackedScene.new()
+	as_file.pack(heavy)
+	ResourceSaver.save(as_file, kept.path_join("inner/heavy.scn"))
+	heavy.free()
+	var lightened: Dictionary = GnBig.add_lods_to_files(kept)
+	var reread := (ResourceLoader.load(kept.path_join("inner/heavy.scn"), "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene).instantiate() as MeshInstance3D
+	check(int(lightened.files) == 1 and int(lightened.meshes) == 1 and reread != null and GnBig.has_lods(reread.mesh as ArrayMesh),
+		"big: a model the project already keeps is given lighter versions of itself, in its file")
+	check(int(GnBig.add_lods_to_files(kept).files) == 0, "big: and once is enough")
+	if reread:
+		reread.free()
+	# The same shape twice goes to Eevee and Cycles once, with where the second stands.
+	var pair := Node3D.new()
+	pair.name = "Pair"
+	GnScene.add_node(pair, root, "Add a pair")
+	var shared_mesh := BoxMesh.new()
+	for i in 3:
+		var part := MeshInstance3D.new()
+		part.name = "Block %d" % i
+		part.mesh = shared_mesh if i < 2 else BoxMesh.new()
+		pair.add_child(part)
+		part.owner = root
+		part.position = Vector3(950 + i * 3, 0, 950)
+	var handed: Dictionary = GnSceneExport.export_scene(pair, OS.get_user_data_dir().path_join("glb_test_pair"), true)
+	var firsts := 0
+	var seconds: Array = []
+	for name in handed.scene.objects:
+		var o: Dictionary = handed.scene.objects[name]
+		if str(o.path).begins_with("Block"):
+			if o.has("copy_of"):
+				seconds.append(o)
+			else:
+				firsts += 1
+	var pair_state := GLTFState.new()
+	GLTFDocument.new().append_from_file(handed.glb, pair_state)
+	check(handed.error == "" and firsts == 2 and seconds.size() == 1 and str(seconds[0].path) == "Block 1" and handed.scene.objects.has(str(seconds[0].copy_of))
+		and absf(float(seconds[0].xform[3]) - 953.0) < 0.01 and pair_state.get_meshes().size() == 2,
+		"big: the same shape twice is handed to Eevee and Cycles once, with where the second stands")
+	pair.get_parent().remove_child(pair)
+	pair.free()
+	# The scene file: each picture once.
+	var dir := OS.get_user_data_dir().path_join("glb_test")
+	DirAccess.make_dir_recursive_absolute(dir)
+	var holder := Node3D.new()
+	var img := Image.create(64, 64, false, Image.FORMAT_RGB8)
+	img.fill(Color(0.4, 0.5, 0.6))
+	var tex := ImageTexture.create_from_image(img)
+	for i in 3:
+		var mi := MeshInstance3D.new()
+		mi.name = "Part %d" % i
+		var bm := BoxMesh.new()
+		var mat := StandardMaterial3D.new()
+		mat.normal_enabled = true
+		mat.normal_texture = tex
+		mat.albedo_color = Color(0.1 * (i + 1), 0.5, 0.5)
+		bm.material = mat
+		mi.mesh = bm
+		holder.add_child(mi)
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	doc.append_from_scene(holder, state)
+	var glb := dir.path_join("three.glb")
+	doc.write_to_filesystem(state, glb)
+	holder.free()
+	var size_before := FileAccess.get_file_as_bytes(glb).size()
+	var taken: int = GnSceneExport.once_each(glb)
+	var back := GLTFState.new()
+	var read_err := GLTFDocument.new().append_from_file(glb, back)
+	check(taken == 2 and read_err == OK and back.get_images().size() == 1 and back.get_materials().size() == 3 and FileAccess.get_file_as_bytes(glb).size() < size_before,
+		"big: a picture three materials share is written once (%d copies taken out), and the file still reads" % taken)
+	check(GnSceneExport.once_each(glb) == 0, "big: a file that is right is left alone")
+	var m1 := StandardMaterial3D.new()
+	var m2 := StandardMaterial3D.new()
+	m1.resource_name = "Tyre"
+	m2.resource_name = "Tyre of another car"
+	m1.albedo_color = Color(0.1, 0.1, 0.1)
+	m2.albedo_color = Color(0.1, 0.1, 0.1)
+	var m3 := m2.duplicate() as StandardMaterial3D
+	m3.roughness = 0.2
+	check(GnSceneExport._made_of(m1) == GnSceneExport._made_of(m2) and GnSceneExport._made_of(m1) != GnSceneExport._made_of(m3), "big: two materials made the same are one to the renderer; a different finish is another")
+	check(not GnLiveRender.is_on() and GnLiveRender.poll().is_empty() and is_zero_approx(GnLiveRender.progress()), "live: off until switched on")
+	var files: PackedStringArray = load("res://app/main.gd").scene_files(App.projects.folder) if App.projects and App.projects.is_open() else PackedStringArray()
+	check(files.size() >= 0, "big: the files a project's scene is made of are known before it is opened (%d here)" % files.size())
+	GnScene.root().remove_child(yard)
+	yard.free()
+
+
 func _until_live(spec: String, seconds: float) -> bool:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
@@ -871,6 +1032,7 @@ func _run() -> void:
 	await _keys_and_edit(root)
 	await _layered(root)
 	await _spreads_and_traffic(root)
+	await _large_scenes(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")

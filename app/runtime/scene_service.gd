@@ -96,6 +96,9 @@ func open(file: String) -> String:
 			scene.free()
 		return "This scene isn't 3D. Oriel works in 3D scenes."
 	var swapped := _add_stand_ins(scene, records) if not gone.is_empty() else []
+	var healed := own_again(scene)
+	if healed > 0:
+		print("Oriel: %d model%s in %s held a second copy of their shape; the next save leaves it out." % [healed, "" if healed == 1 else "s", file.get_file()])
 	_replace(scene, file, gone, records, swapped)
 	return ""
 
@@ -476,12 +479,94 @@ func _write(file: String) -> String:
 ## left out when it opened put back. Also used for autosave copies.
 func write_copy(file: String, root_dir: String) -> Error:
 	_swap_stand_ins(true)
+	var lent := set_aside_own(root)
 	var packed := PackedScene.new()
 	var err := packed.pack(root)
+	take_back(lent)
 	if err == OK:
 		err = write_scene(packed, file, root_dir, left_out)
 	_swap_stand_ins(false)
 	return err
+
+
+## A model that is one shape comes in as a scene whose top node holds the
+## shape itself. Saving a scene that uses it, Godot (outside its editor)
+## cannot tell that the shape is the model file's own and writes a second
+## copy of it into the scene, as text: a heavy model made a scene file of a
+## hundred megabytes that took as long to open. So while the scene is
+## written, such a node lets go of what is its model file's own; a scene
+## that says nothing about the shape gets it from the model file when read.
+## Returns what was set aside, for take_back().
+static func set_aside_own(scene: Node) -> Array:
+	var lent: Array = []
+	if scene == null:
+		return lent
+	for n in scene.find_children("*", "", true, true):
+		if n.scene_file_path == "":
+			continue
+		var own: String = n.scene_file_path + "::"
+		# A shape with morphs keeps the morphs' values with it: left as it is.
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh is ArrayMesh and ((n as MeshInstance3D).mesh as ArrayMesh).get_blend_shape_count() > 0:
+			continue
+		for prop in n.get_property_list():
+			if int(prop.type) != TYPE_OBJECT or int(prop.usage) & PROPERTY_USAGE_STORAGE == 0:
+				continue
+			var v: Variant = n.get(prop.name)
+			if v is Resource and (v as Resource).resource_path.begins_with(own):
+				lent.append([n, str(prop.name), v])
+	for l in lent:
+		(l[0] as Node).set(l[1], null)
+	return lent
+
+
+static func take_back(lent: Array) -> void:
+	for l in lent:
+		if is_instance_valid(l[0]):
+			(l[0] as Node).set(l[1], l[2])
+
+
+## Scenes saved before that hold such copies. Where a node's shape is a copy
+## of its model file's own (the same surfaces, points and size), the node is
+## given the file's own again: the next save is small, and the model is
+## drawn with whatever its file has gained since (lighter versions of
+## itself). Returns how many.
+static func own_again(scene: Node) -> int:
+	var n_healed := 0
+	if scene == null:
+		return 0
+	for node in scene.find_children("*", "MeshInstance3D", true, true):
+		var mi := node as MeshInstance3D
+		if mi.scene_file_path == "" or mi.mesh == null or mi.mesh.resource_path.begins_with(mi.scene_file_path + "::"):
+			continue
+		if not ResourceLoader.exists(mi.scene_file_path):
+			continue
+		var packed := ResourceLoader.load(mi.scene_file_path, "PackedScene") as PackedScene
+		var st := packed.get_state() if packed else null
+		if st == null or st.get_node_count() == 0:
+			continue
+		var base: Mesh = null
+		for i in st.get_node_property_count(0):
+			if st.get_node_property_name(0, i) == &"mesh":
+				base = st.get_node_property_value(0, i) as Mesh
+		if base != null and base != mi.mesh and same_shape(mi.mesh, base):
+			mi.mesh = base
+			n_healed += 1
+	return n_healed
+
+
+static func same_shape(a: Mesh, b: Mesh) -> bool:
+	if a == b:
+		return true
+	if not (a is ArrayMesh and b is ArrayMesh) or a.get_surface_count() != b.get_surface_count():
+		return false
+	if not a.get_aabb().is_equal_approx(b.get_aabb()):
+		return false
+	for i in a.get_surface_count():
+		if (a as ArrayMesh).surface_get_array_len(i) != (b as ArrayMesh).surface_get_array_len(i) \
+				or (a as ArrayMesh).surface_get_array_index_len(i) != (b as ArrayMesh).surface_get_array_index_len(i) \
+				or (a as ArrayMesh).surface_get_primitive_type(i) != (b as ArrayMesh).surface_get_primitive_type(i):
+			return false
+	return true
 
 
 ## Counts the scene as changed though nothing in the history says so (recovered

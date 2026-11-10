@@ -15,7 +15,7 @@ Button and option names below are as they appear in the program.
 **Building.**
 
 - *Bring in a building…* does the same as *File > Bring In a Model…* (Ctrl+I).
-- GLB, glTF, FBX and OBJ come in directly. `.blend` files go through Blender: your own if it is installed (*Find Blender…* tells Oriel where it is), otherwise Oriel's built-in engine.
+- GLB, glTF, FBX and OBJ come in directly. IFC, USD, Collada (DAE), 3DS, STL, PLY and Alembic are converted by Oriel's built-in engine. `.blend` files go through Blender: your own if it is installed (*Find Blender…* tells Oriel where it is), otherwise the built-in engine.
 - With *Live link* ticked, Oriel watches the source file. When you export again from SketchUp, Revit, Rhino, Archicad or Blender, it brings the new version into the same place. It keeps the model's position, the materials you changed in Oriel, and anything you put inside it.
 
 **Site context.** This brings in the real neighbourhood from OpenStreetMap: buildings, roads, parks and water, on the real ground.
@@ -32,6 +32,14 @@ This needs the internet. Renders that show the data carry "© OpenStreetMap cont
 **World.** *Add sun, sky and ground* sets up the lighting. A new project already has them.
 
 **Measure.** Press *Start measuring*, then click two points in the 3D view. The dimension stays in the scene. Right-click or Esc starts again.
+
+**A large scene.**
+
+- *Count the scene* says how many triangles, objects, shapes, lights, materials and megabytes of pictures the scene holds, what the 3D view is drawing, and what is heaviest.
+- *Show selection as boxes* shows the selected things as plain boxes in the 3D view while you work around them; every render shows them in full. *…in full again* brings them back.
+- *Lighten the project's models* gives the heavy models the project keeps lighter versions of themselves for when they are small on the screen (models brought in with this version have them already).
+
+See [PERFORMANCE.md](PERFORMANCE.md).
 
 **Layers.** Name a layer and use *Put selection on it*. You can then show or hide the layer as a group: landscaping, furniture, option A.
 
@@ -109,12 +117,13 @@ See [ONLINE_LIBRARY.md](ONLINE_LIBRARY.md), also for the terminal script (`--get
 - The photographed skies of the downloaded library appear in the list once installed with `tools/setup.py` (see Known limitations).
 - *Distance haze* softens the far distance.
 - *Stage haze (shows beams)* makes light beams visible in the air.
-- *Clouds* sets the cloud cover.
+- *Clouds* sets the cloud cover. *Volumetric clouds* gives them depth: lit from where the sun is, carried by the wind, the same in Eevee and Cycles.
 
 **Weather.**
 
 - Choose *Clear*, *Rain* or *Snow*, with *Heaviness*.
-- *Wet ground* and *Puddles* make surfaces wet.
+- *Wet surfaces* darkens and glosses everything that faces the sky; *Puddles* lays standing water on whatever is flat; *Snow lying* covers the ground, the roofs and the tops of things. The three renderers show them in the same places.
+- *Wind* sways trees, plants and grass in the view and in films; *Wind from* says where it blows from.
 - *Season* tints the leaves and the grass: fresh in spring, browner in autumn, straw-coloured in winter.
 
 **Light.** *Exposure* sets how bright the whole picture is. *Sky light* sets how much the sky lights the scene.
@@ -136,6 +145,8 @@ Adjust the brush as you go:
 - *Size* and *Density*.
 - *Variation*: the *Smallest* and *Largest* plant scale, and *Random rotation*.
 - *Paint on any surface* lets plants land on roofs and planters, not only the ground.
+
+**Rows and fills.** *Draw a spread*, click points in the 3D view, press Enter: an avenue of trees, lamp posts down a street, cars along a kerb; or, with *Layout* set to *Inside the outline* in Properties, a wood, a crowd in a square. Properties also say what is spread (*Shelf*, *Only*), how far apart, how much out of line, sizes and facing. See [LANDSCAPE.md](LANDSCAPE.md).
 
 **Terrain and water.**
 
@@ -183,7 +194,9 @@ Select a piece to change it in the Properties panel. For an LED wall, that means
    - **Your own image**: *Use an image…* takes a photo or a texture map. *One tile is* sets its real size in metres. Normal and roughness maps saved next to the image under the usual names come in too.
    - **Tiles and grout**: choose the *Layout*, tile width and height, grout joint and colour, *Tile finish* and *Shade variation*, then press *Tile this surface*. The tiles are real size and laid in world space.
 
-**Finish** adjusts any surface: *Roughness*, *Metallic*, *Opacity*, *Pattern size* and *Weathering*.
+**Layers** lays one material over another where a mask says. Choose a material in *Lay on*, press *Add as a layer*, then *Where it lies* (Everywhere, Patches, In the joints, On the raised parts, Streaks, Speckles), *How much*, *Pattern size*, *Soft edge*, *Thickness* and *Its tint*. Up to four layers; *Take the layers off* returns the surface to what it was.
+
+**Finish** adjusts any surface: *Roughness*, *Metallic*, *Opacity*, *Pattern size* and *Weathering*; *Relief* (how far its height map moves the surface in and out; Cycles really moves it), *Light inside* (wax, marble, skin, leaves) and *Solid glass (bends light)* for vases and bottles, not window panes.
 
 ## CAMERAS
 
@@ -238,7 +251,8 @@ A look belongs to a camera, so choose the *Camera* first.
 3. Choose the *Quality*:
    - Real-time: *Preview (fast)* for checks, *Standard* for most stills, *High quality (16 samples)* and *Maximum quality (64 samples)*, which average many renders for clean edges, soft shadows and true lens blur.
    - Eevee and Cycles: *Draft* (a quick look), *Good* (for sharing), *High* (for print), *Best* (the finest detail). Each engine remembers its own.
-4. Press *Render still*. With Eevee or Cycles the line under the buttons shows how far it is and the time left; *Stop rendering* stops it (nothing half-made is saved).
+4. With Cycles, *Caustics (Cycles)* lets water and solid glass gather light into bright patterns (slower; wants High or Best).
+5. Press *Render still*. With Eevee or Cycles the line under the buttons shows how far it is and the time left; *Stop rendering* stops it (nothing half-made is saved).
 
 Pictures are saved as PNG in the project's `renders/` folder. *Show renders folder* opens it.
 
@@ -248,7 +262,8 @@ The page also offers:
 - *Sun study: 9:00, 12:00, 15:00*.
 - *360° panorama from this camera*. Tick *Stereo, for VR headsets* for a 3D 360° image.
 - *Virtual tour of every camera*: one web page, which opens in any browser.
-- *Render passes for compositing*: depth, normals, object ID, mask and clay.
+- *Render passes for compositing*: depth, normals, object ID, mask and clay; with Eevee or Cycles also occlusion, diffuse, reflection, emission and colour, and one EXR file with all of them and Cryptomatte.
+- **Light mixer** (Cycles): *Render for the light mixer*, then *Open the light mixer* to change each group of lights' brightness and colour after the render; *Save the picture*, or *Put on the lights* to change the scene's lamps to match.
 - *AI upscale* ×2 or ×4, then *AI upscale the last render*. This uses Real-ESRGAN on your own computer. The first time, it downloads the upscaler (about 47 MB) and checks it.
 
 ## MOVIE
@@ -258,6 +273,8 @@ A film is a list of **shots**. *Play* previews it; *Move up* and *Remove* arrang
 **Add a path through cameras.** Pick two or more saved cameras, set the *Length* in seconds, and press *Add path*. The camera glides through them in list order. Pick one camera for a still shot: the film holds that view for the length you set.
 
 **Add an orbit.** Select the building, set *Turn* (degrees), *Height* and *Length*, and press *Add orbit*.
+
+**The edit.** *Selected shot comes in with* a Cut, a Dissolve, Through black or Through white, *Taking* so many seconds; *Fade to black at the end*; *Soundtrack…* and *Its volume*. Titles, and whatever moves by keys, are on the timeline under the 3D view (*View > Timeline*, Ctrl+T): see [MOVIE_AND_ANIMATION.md](MOVIE_AND_ANIMATION.md).
 
 **Time-lapse.** Tick *The sun moves through the film* and set *From* and *To*.
 
@@ -274,6 +291,8 @@ A film is a list of **shots**. *Play* previews it; *Move up* and *Remove* arrang
    - *Add points to it* carries on drawing from its end.
 4. Select what should travel along it (a car, a boat, a walker from *Assets > People*), select the path too (or have just one), and press *Put selection on it*. Several things on one path are spaced evenly along it. They keep going: at the end of the path each starts again from the beginning, so make a path long enough for the film.
 5. In the Properties panel, with the path selected: *Speed (m/s)* (1.4 is a walking pace), *Reverse*, and *Round corners* (curves; untick it for straight lines and sharp corners).
+
+*Draw traffic* draws a road instead: vehicles of the kind chosen in Properties (or people walking) are made for it and travel in lanes, both ways if wanted.
 
 The walkers walk as they go: their stride follows the distance they cover, so feet do not slide at any speed. Play the film, or scrub it, to watch them; the rendered film shows them the same way. People of your own walk too, if their model has a walk animation: one called *walk*, one with *walk* in its name, or the only animation it has (as a character downloaded from Mixamo with one walk comes; choose *In Place* there, so the figure walks on the spot and the path moves it). Bring them in as GLB or FBX with the animation included.
 

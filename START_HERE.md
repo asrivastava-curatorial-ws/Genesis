@@ -1,10 +1,11 @@
-# Start here: Oriel 1.0.0-rc4
+# Start here: Oriel 1.0.0-rc5
 
 Oriel (called Genesis Community up to rc3) is free architectural and event visualisation that runs as its own program, with no Godot editor, and renders in real time or photoreal with the built-in Eevee and Cycles engines. This page covers getting it running, finding your way around, and checking that it works on your computer.
 
 > **This is a release candidate, not 1.0.0.**
 >
-> - **What is new in rc4:** Eevee and Cycles built in (choose the renderer on the Render page; nothing to install), the *Online* page with BlendKit, Poly Haven and ambientCG, a starter pack of free assets (also from a terminal with `--get-assets`), and the new name. See [CHANGELOG.md](CHANGELOG.md), [docs/RENDERING.md](docs/RENDERING.md) and [docs/ONLINE_LIBRARY.md](docs/ONLINE_LIBRARY.md).
+> - **What is new in rc5:** what Lumion, D5 and V-Ray users would miss. IFC, USD, Collada and 3DS models; lights in lumens and kelvin with IES files; a light mixer, more passes and EXR; wind, wet surfaces, puddles and snow; relief (true displacement), caustics, light inside and volumetric clouds; layered materials; keyframes, a timeline, transitions, titles and sound; rows, fills and traffic; Cycles in the 3D view; walking through the project on the screen or a VR headset; and tools for large scenes. Section 4 has a table of where each is. See [CHANGELOG.md](CHANGELOG.md).
+> - **What was new in rc4:** Eevee and Cycles built in (choose the renderer on the Render page; nothing to install), the *Online* page with BlendKit, Poly Haven and ambientCG, a starter pack of free assets (also from a terminal with `--get-assets`), and the new name. See [docs/RENDERING.md](docs/RENDERING.md) and [docs/ONLINE_LIBRARY.md](docs/ONLINE_LIBRARY.md).
 > - **What was new in rc3:** a professional interface. GitHub's Dark Default theme (as VSCodium shows it) in JetBrains Mono, icons throughout, a strip of icons for the twelve pages, models placed by clicking or dragging where they go, and one way of choosing files and folders everywhere. Every feature of rc2 is still there. See [CHANGELOG.md](CHANGELOG.md).
 > - **Linux:** one AppImage (about 640 MB, with the engines), tested on Ubuntu 24.04 (the base of Kubuntu 24.04) with software rendering and no graphics card: every automated suite, the smoke tour and the end-to-end test, run from the AppImage itself.
 > - **Windows:** not part of this delivery. The Windows program is built from the same source, but has **not** been run on Windows yet.
@@ -14,17 +15,17 @@ Oriel (called Genesis Community up to rc3) is free architectural and event visua
 ## 1. Check the download (optional)
 
 ```bash
-sha256sum -c Oriel-1.0.0-rc4-x86_64.AppImage.sha256
+sha256sum -c Oriel-1.0.0-rc5-x86_64.AppImage.sha256
 ```
 
 ## 2. Run it on Linux (Ubuntu or Kubuntu 24.04)
 
 ```bash
-mkdir -p ~/Applications && mv Oriel-1.0.0-rc4-x86_64.AppImage ~/Applications/
+mkdir -p ~/Applications && mv Oriel-1.0.0-rc5-x86_64.AppImage ~/Applications/
 cd ~/Applications
-chmod +x Oriel-1.0.0-rc4-x86_64.AppImage
-./Oriel-1.0.0-rc4-x86_64.AppImage                      # start Oriel
-./Oriel-1.0.0-rc4-x86_64.AppImage --install-shortcut   # optional: add it to the applications menu
+chmod +x Oriel-1.0.0-rc5-x86_64.AppImage
+./Oriel-1.0.0-rc5-x86_64.AppImage                      # start Oriel
+./Oriel-1.0.0-rc5-x86_64.AppImage --install-shortcut   # optional: add it to the applications menu
 ```
 
 - Nothing is installed system-wide, and no administrator rights are needed.
@@ -81,7 +82,7 @@ This delivery has no Windows program. One can be built from the source (section 
 
 The people walk, stepping in time with the ground they cover. At the end of the path they start again from the beginning. [docs/SECTION_GUIDE.md](docs/SECTION_GUIDE.md) has every detail.
 
-**Your own models and skies.** On *Assets*, *Add a model…* puts a model of yours (GLB, glTF, FBX, OBJ or `.blend`) into a library that every project can use: people, trees, plants, furniture, vehicles. You say what licence it may be used under, and that stays with it. On *Environment*, *Add a sky image…* adds a 360° HDR, JPG or PNG panorama as a sky. On *Materials*, *Use an image…* turns any photo or texture (with its normal and roughness maps beside it) into a material at its real size. Free CC0 skies, models and textures: polyhaven.com and ambientcg.com.
+**Your own models and skies.** On *Assets*, *Add a model…* puts a model of yours (any of the formats Oriel reads) into a library that every project can use: people, trees, plants, furniture, vehicles. You say what licence it may be used under, and that stays with it. On *Environment*, *Add a sky image…* adds a 360° HDR, JPG or PNG panorama as a sky. On *Materials*, *Use an image…* turns any photo or texture (with its normal and roughness maps beside it) into a material at its real size. Free CC0 skies, models and textures: polyhaven.com and ambientcg.com.
 
 What the demos' cameras give at *Standard* quality:
 
@@ -93,12 +94,33 @@ What the demos' cameras give at *Standard* quality:
 
 **Render it photoreal.** On the Render page, set *Renderer* to *Eevee* or *Cycles*, pick a quality (*Draft* for a first look) and choose *Render still*. The engines are inside Oriel; the render runs in the background, with the time left, and *Stop rendering* stops it. The picture lands in the project's `renders/` folder next to the real-time ones. The Movie page renders films with the same renderer (a stopped film carries on where it stopped). See [docs/RENDERING.md](docs/RENDERING.md).
 
-**Fill your library.** On the *Online* page (the cloud icon), search Poly Haven, ambientCG or BlendKit (*Connect to BlendKit*, then *Log in*: a free account) and download models, materials and skies into your own library; or press *Download the starter pack* for the most useful ones in one go. Everything is kept, and a stopped download carries on later. From a terminal: `./Oriel-1.0.0-rc4-x86_64.AppImage --get-assets --size standard`. See [docs/ONLINE_LIBRARY.md](docs/ONLINE_LIBRARY.md).
+**Fill your library.** On the *Online* page (the cloud icon), search Poly Haven, ambientCG or BlendKit (*Connect to BlendKit*, then *Log in*: a free account) and download models, materials and skies into your own library; or press *Download the starter pack* for the most useful ones in one go. Everything is kept, and a stopped download carries on later. From a terminal: `./Oriel-1.0.0-rc5-x86_64.AppImage --get-assets --size standard`. See [docs/ONLINE_LIBRARY.md](docs/ONLINE_LIBRARY.md).
+
+**What rc5 adds, and where it is.**
+
+| To do this | Go here |
+|---|---|
+| Bring in an IFC, USD, Collada, 3DS, STL, PLY or Alembic model | *File > Bring In a Model…* (Ctrl+I), as for any model |
+| Set a light in lumens and kelvin, or give a fixture an IES file | select the light; *Output (lumens)*, *Colour temp (K)* and *IES file* under Properties |
+| Change the lights after a render | *Render*, with Cycles: *Render for the light mixer*, then *Open the light mixer* |
+| Get every pass in one EXR with Cryptomatte | *Render* > *Render passes for compositing*, with Eevee or Cycles |
+| Make it windy, wet or snowy | *Environment* > *Weather*: *Wind*, *Wet surfaces*, *Puddles*, *Snow lying* |
+| Clouds with depth | *Environment* > *Volumetric clouds* |
+| Brick joints that are really deep, light through wax and leaves, glass that bends light | *Materials* > *Finish*: *Relief*, *Light inside*, *Solid glass* |
+| Bright patterns of light under water and glass | *Render* > *Caustics (Cycles)* |
+| Plaster over brick, moss in the joints, rust on the edges | *Materials* > *Layers* |
+| Move anything during a film | *View > Timeline* (Ctrl+T), then *Key the selection* (K) at two moments |
+| Dissolves, titles and music in a film | *Movie* > *The edit*, and *Title* on the timeline |
+| An avenue of trees, a wood, a crowd in a square | *Landscape* > *Draw a spread* |
+| A road full of traffic | *Movie* > *Draw traffic* |
+| See the view as Cycles renders it, while working | *View > Cycles in the View* (F10), or *Cycles* on the tool bar |
+| Walk through the project | *View > Walk Through on This Screen* (F9), or *on a Headset (VR)* (Shift+F9): see [docs/VR_WALKTHROUGH.md](docs/VR_WALKTHROUGH.md) for a Meta Quest |
+| Keep a very large scene workable | *Scene* > *A large scene*: *Count the scene*, *Show selection as boxes*: see [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
 
 Then start your own project:
 
 1. Choose *New Project…*. The new project already has a sun, a sky and ground.
-2. Choose *File > Bring In a Model…* (**Ctrl+I**), or drop a model file on the 3D view: it lands where you drop it. GLB, glTF, FBX, OBJ and `.blend` work directly (Oriel's built-in Blender engine reads `.blend`).
+2. Choose *File > Bring In a Model…* (**Ctrl+I**), or drop a model file on the 3D view: it lands where you drop it. GLB, glTF, FBX and OBJ come in directly; `.blend`, IFC, USD, Collada (DAE), 3DS, STL, PLY and Alembic are read by Oriel's built-in engine.
 3. Say what unit the model was made in and which way is up.
 4. With *Live link* on, re-exporting from your modelling program updates the model in Oriel.
 
@@ -155,7 +177,7 @@ curl.exe -L -o LICENSE.txt https://raw.githubusercontent.com/xinntao/Real-ESRGAN
 **Self-test.** This takes about 20 seconds. It makes a project in a temporary folder, fills it, saves it, reopens it and deletes it. Your own projects and settings are not touched.
 
 ```bash
-./Oriel-1.0.0-rc4-x86_64.AppImage --headless -- --smoke --expect-library     # ends with: GENESIS_SMOKE RESULT PASS
+./Oriel-1.0.0-rc5-x86_64.AppImage --headless -- --smoke --expect-library     # ends with: GENESIS_SMOKE RESULT PASS
 ```
 
 **End-to-end test.** This is the full test from the brief, in five launches, with real rendering. On a computer with a GPU it takes a few minutes; in software it takes about an hour.
@@ -169,7 +191,7 @@ curl.exe -L -o LICENSE.txt https://raw.githubusercontent.com/xinntao/Real-ESRGAN
 Each launch starts the program afresh. With software rendering all graphics memory is the computer's own, and one launch doing every kind of picture needed more than the 6 GB of the build machine.
 
 ```bash
-for phase in build verify views media walk; do ./Oriel-1.0.0-rc4-x86_64.AppImage -- --e2e $phase ~/genesis-e2e; done
+for phase in build verify views media walk; do ./Oriel-1.0.0-rc5-x86_64.AppImage -- --e2e $phase ~/genesis-e2e; done
 cat ~/genesis-e2e/E2E_RESULTS_*.md
 ```
 
@@ -201,16 +223,16 @@ See [docs/PROJECT_FORMAT.md](docs/PROJECT_FORMAT.md) for the full format.
 
 **To uninstall:**
 
-1. Run `./Oriel-1.0.0-rc4-x86_64.AppImage --remove-shortcut` if you added the menu entry.
+1. Run `./Oriel-1.0.0-rc5-x86_64.AppImage --remove-shortcut` if you added the menu entry.
 2. Delete the AppImage.
 3. Optionally, delete the data folder in the table above (`rm -rf ~/.local/share/Oriel`). Your projects are yours; they stay.
 
 ## 8. Source code, tests and building it yourself
 
-The git repository with its full history comes as `oriel-repo-rc4.bundle`:
+The git repository with its full history comes as `oriel-repo-rc5.bundle`:
 
 ```bash
-git clone -b oriel oriel-repo-rc4.bundle oriel && cd oriel && git log --oneline | head
+git clone -b oriel oriel-repo-rc5.bundle oriel && cd oriel && git log --oneline | head
 ```
 
 You need Godot 4.7.2 and its export templates to run the tests or build the programs:

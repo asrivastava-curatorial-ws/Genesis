@@ -612,6 +612,51 @@ func _models() -> void:
 	check(text.contains('path="../assets/box.scn"') and not text.contains(dir + "/assets"), "place: the saved scene points at the model relatively")
 	projects.close()
 	check(projects.open(dir) == "" and scenes.root.get_node_or_null("Box") != null, "place: and it opens again with the model")
+	# A model that is one shape (its top node holds the shape itself): the
+	# shape is its file's own, and is not written into the scene a second time.
+	var one := MeshInstance3D.new()
+	one.name = "Pebble"
+	var ball := SphereMesh.new()
+	ball.radial_segments = 64
+	ball.rings = 32
+	var pebble_mesh := ArrayMesh.new()
+	pebble_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, ball.get_mesh_arrays())
+	one.mesh = pebble_mesh
+	var doc1 := GLTFDocument.new()
+	var state1 := GLTFState.new()
+	doc1.append_from_scene(one, state1)
+	doc1.write_to_filesystem(state1, src + "/pebble.glb")
+	one.free()
+	check(GnImport.import_runtime(src + "/pebble.glb") == "", "one shape: a model that is a single shape is brought in")
+	var pebble := scenes.root.get_node_or_null("Pebble") as MeshInstance3D
+	var own := dir + "/assets/pebble.scn"
+	check(pebble != null and pebble.mesh != null and pebble.scene_file_path == own, "one shape: its top node is the shape itself")
+	if pebble:
+		var its_mesh := pebble.mesh
+		var points := (its_mesh as ArrayMesh).surface_get_array_len(0)
+		scenes.save()
+		text = FileAccess.get_file_as_string(dir + "/scenes/main.tscn")
+		check(not text.contains('type="ArrayMesh"') and text.contains('path="../assets/pebble.scn"') and pebble.mesh == its_mesh,
+			"one shape: saving does not write the shape into the scene again (the scene is %d KB), and the model keeps it" % (text.length() / 1024))
+		projects.close()
+		check(projects.open(dir) == "", "one shape: the project opens again")
+		pebble = scenes.root.get_node_or_null("Pebble") as MeshInstance3D
+		check(pebble != null and pebble.mesh is ArrayMesh and pebble.mesh.resource_path.begins_with(own + "::") and (pebble.mesh as ArrayMesh).surface_get_array_len(0) == points,
+			"one shape: and the model has its shape, from its own file")
+		# A scene as the last version saved it, with the copy inside.
+		var old_way := PackedScene.new()
+		old_way.pack(scenes.root)
+		SceneService.write_scene(old_way, dir + "/scenes/main.tscn", dir)
+		var heavy := FileAccess.get_file_as_string(dir + "/scenes/main.tscn")
+		check(heavy.contains('type="ArrayMesh"') and heavy.length() > text.length() * 5, "one shape: (a scene saved the old way holds a second copy of the shape: %d KB)" % (heavy.length() / 1024))
+		projects.close()
+		check(projects.open(dir) == "", "one shape: such a scene opens")
+		pebble = scenes.root.get_node_or_null("Pebble") as MeshInstance3D
+		check(pebble != null and pebble.mesh != null and pebble.mesh.resource_path.begins_with(own + "::"), "one shape: and its model is given its file's own shape again")
+		scenes.mark_dirty()
+		scenes.save()
+		text = FileAccess.get_file_as_string(dir + "/scenes/main.tscn")
+		check(not text.contains('type="ArrayMesh"'), "one shape: so the next save is small again (%d KB)" % (text.length() / 1024))
 	check(GnModelImport.convert_file(src + "/box.dwg", dir + "/assets").error.contains("can bring in"), "formats: an unknown format says which ones work")
 	var blend := GnModelImport.convert_file(src + "/house.blend", dir + "/assets")
 	check(blend.error != "", "formats: .blend without the file (or Blender) gives a reason")

@@ -35,6 +35,8 @@ func _init() -> void:
 	_vp = SubViewport.new()
 	_vp.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	_cam = Camera3D.new()
+	# As the render will be: without what is drawn only for the working view.
+	_cam.set_cull_mask_value(GnHost.VIEW_ONLY_LAYER, false)
 	_vp.add_child(_cam)
 	_box.add_child(_vp)
 	_post = GnLook.post_material(GnLook.DEFAULTS)

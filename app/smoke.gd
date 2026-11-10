@@ -243,7 +243,7 @@ static func run(main: Node) -> int:
 	await tree.process_frame
 	await tree.process_frame
 	_check(main.screen is ProjectManager and not App.projects.is_open(), "closing returns to the project manager")
-	main.open_project_at(parent.path_join("Smoke"))
+	await main.open_project_at(parent.path_join("Smoke"))
 	await tree.process_frame
 	await tree.process_frame
 	_check(main.screen is Workspace and GnScene.find_role("smoke_cam") != null, "the project reopens with its contents")

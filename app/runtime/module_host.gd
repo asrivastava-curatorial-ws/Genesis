@@ -60,6 +60,7 @@ func on_scene_opened(root: Node) -> void:
 		GnWeather.apply()
 		GnWind.dress(root)
 		_find_sky()
+		load("res://addons/genesis/core/gn_big.gd").dress_all(root)
 		var ur := GnHost.undo_redo()
 		if ur and not ur.changed.is_connected(_dress_soon):
 			ur.changed.connect(_dress_soon)

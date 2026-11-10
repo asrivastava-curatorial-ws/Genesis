@@ -1981,7 +1981,13 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 - **Blender 5.2.3 as a Python module** (`bpy`, by the Blender Foundation, from PyPI, unmodified): GNU General Public Licence, version 3 or later. Its full text is `engine/LICENSES/Blender-GPL-3.0.txt`. Blender's source code for this version: <https://download.blender.org/source/blender-5.2.3.tar.xz> and <https://projects.blender.org/blender/blender> (tag v5.2.3); the libraries Blender uses and their licences are listed in that source under `release/license`. Oriel runs Blender's engines as a separate program and does not link to them; Oriel's own code stays under the MIT licence.
 - **CPython 3.13.14** (python-build-standalone): Python Software Foundation Licence 2.0 (`engine/LICENSES/Python-PSF-2.0.txt`).
-- **numpy, zstandard, requests, urllib3, idna, certifi, charset-normalizer, attrs, cattrs, typing_extensions, pip**: their licences (BSD-3-Clause, Apache-2.0, MIT, MPL-2.0, PSF-2.0) are in `engine/LICENSES/`.
+- **IfcOpenShell 0.9.0** (from PyPI, unmodified), which reads IFC building models: GNU Lesser General Public Licence, version 3 or later (`engine/LICENSES/IfcOpenShell-LGPL-3.0.txt`, with the GPL text above, which the LGPL adds to). It carries Open CASCADE Technology (LGPL-2.1 with an exception), CGAL, Boost and others. Source: <https://github.com/IfcOpenShell/IfcOpenShell> (tag v0.9.0).
+- **assimp-py 1.2.0** (MIT) with the **Open Asset Import Library, Assimp** (BSD-3-Clause), which reads Collada, 3DS and other model formats. Source: <https://github.com/ranjian0/assimp_py> and <https://github.com/assimp/assimp>.
+- **numpy, zstandard, requests, urllib3, idna, certifi, charset-normalizer, attrs, cattrs, typing_extensions, pip** and the other Python packages these need: their licences (BSD-3-Clause, Apache-2.0, MIT, MPL-2.0, PSF-2.0) are in `engine/LICENSES/`.
+
+## Virtual reality
+
+Oriel talks to a headset through **OpenXR**, with the OpenXR loader that is part of the Godot Engine (Apache-2.0, listed above). The OpenXR runtime itself (WiVRn, Monado, SteamVR, or another) is a program on your computer, not part of Oriel.
 
 ## Downloaded on your computer only when you ask
 

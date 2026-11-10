@@ -96,6 +96,8 @@ static func convert_file(source: String, dest_dir: String, options := {}) -> Dic
 	var base: String = str(opts.name) if str(opts.name) != "" else source.get_file().get_basename()
 	root.name = base.validate_node_name().to_pascal_case() if base.validate_node_name() != "" else "Model"
 	_pack_textures(root)
+	# Heavy meshes get lighter versions of themselves for when they are small on the screen.
+	load("res://addons/genesis/core/gn_big.gd").add_lods(root)
 	for n in root.find_children("*", "", true, false):
 		n.owner = root
 	var packed := PackedScene.new()

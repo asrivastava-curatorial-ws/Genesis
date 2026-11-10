@@ -5,7 +5,8 @@ Oriel runs on its own. These free programs each add one thing. Tools > Other Pro
 | Program | Adds | How Oriel finds it | Get it |
 |---|---|---|---|
 | FFmpeg | MP4 films, live video on screens | PATH, then the usual install places | `sudo apt install ffmpeg`; `winget install Gyan.FFmpeg` |
-| Eevee and Cycles (built in) | photoreal rendering, and reading `.blend` files | `engine/` beside the program (inside the AppImage) | nothing to get: they come with Oriel (Blender 5.2.3 LTS as a module, see [RENDERING.md](RENDERING.md)) |
+| Eevee and Cycles (built in) | photoreal rendering, the live view, and reading `.blend`, IFC, USD, Collada, 3DS, STL, PLY and Alembic files | `engine/` beside the program (inside the AppImage) | nothing to get: they come with Oriel (Blender 5.2.3 LTS as a module, see [RENDERING.md](RENDERING.md)) |
+| An OpenXR runtime (optional) | walking through a project on a VR headset | the system's active OpenXR runtime | WiVRn (free, open; for Meta Quest and other standalone headsets), Monado, or SteamVR with ALVR: see [VR_WALKTHROUGH.md](VR_WALKTHROUGH.md) |
 | Blender (optional) | your own Blender for `.blend` files instead of the built-in engine | the path you set, then PATH and the usual places | blender.org; or `sudo apt install blender python3-numpy` |
 | Real-ESRGAN | AI upscaling | `tools/realesrgan` in your user data folder | downloads itself when first used (≈45 MB, checksum-verified) |
 | Poppler (pdftoppm) or MuPDF | PDF pages as plans | PATH | `sudo apt install poppler-utils`; poppler-windows |

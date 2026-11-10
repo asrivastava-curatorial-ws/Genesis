@@ -21,3 +21,14 @@
 **Unsaved work after a crash.** Open the project; Oriel offers it.
 
 **Show cues from outside do nothing.** Preferences > tick *Take show cues from outside*, check the port, and that the scene has a cue list with cues.
+
+**The 3D view is slow in a large scene.** *Scene > A large scene > Count the scene* says what is heaviest. Show heavy things you are not working on as boxes (*Show selection as boxes*; renders still show them in full), give models brought in with an older version their lighter versions (*Lighten the project's models*), and lower *Preferences > 3D view quality*. See [PERFORMANCE.md](PERFORMANCE.md).
+
+**Nothing shows in the headset.** An OpenXR runtime must be running, with the headset connected to it, before *View > Walk Through on a Headset (VR)* is chosen: WiVRn, or SteamVR with ALVR, for a Meta Quest. Oriel says "No headset answered" and walks on the screen instead when there is none. See [VR_WALKTHROUGH.md](VR_WALKTHROUGH.md).
+
+**Cycles in the View shows nothing, or "Handing the scene to the engine…" for a long time.** The engine is reading the scene: a large scene takes as long as the start of a render. The words at the top of the 3D view say what it is doing; a failure is said there too, and in the Console.
+
+**A model in IFC, USD, Collada or 3DS does not come in.** These are converted by the built-in engine, which the AppImage carries; a copy of Oriel built from source without the engine (`tools/build_engine.sh`) reads GLB, glTF, FBX and OBJ only, and says so.
+
+**A film's keys do nothing.** Keys play when the film's time moves: drag in the timeline's ruler, or press Play. An object with keys is where its keys say at that time; move it and press *Key the selection* (K) again to change a key, or it goes back when the time moves.
+

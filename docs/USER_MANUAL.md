@@ -24,19 +24,20 @@ The layout is remembered; Preferences > Reset the window layout puts it back.
 | [The side panel, section by section](SECTION_GUIDE.md) | what every button in the thirteen sections does, with short recipes |
 | [Projects](PROJECT_MANAGEMENT.md) | making, opening, saving, backups, recovery, moving a project, old Genesis projects |
 | [The scene editor](SCENE_EDITOR.md) | the 3D view, selecting, moving, the scene tree, properties, undo |
-| [Importing models](IMPORTING_MODELS.md) | GLB, glTF, FBX, OBJ, Blender; live link |
+| [Importing models](IMPORTING_MODELS.md) | GLB, glTF, FBX, OBJ, Blender, IFC, USD, Collada, 3DS, STL, PLY, Alembic; live link |
 | [Plans and CAD](CAD_AND_PLANS.md) | floor plans, PDF, DXF, DWG, scale, snapping |
 | [Asset library](ASSET_LIBRARY.md) | the bundled models, placing them, and your own library of models |
-| [Materials](MATERIALS.md) | presets, images as materials, tiles, weathering |
-| [Environment](ENVIRONMENT.md) | sun, real sun, sky (and your own HDRI skies), haze, weather |
-| [Landscape](LANDSCAPE.md) | painting plants, terrain |
+| [Materials](MATERIALS.md) | presets, images as materials, tiles, weathering, relief, light inside, solid glass, layers |
+| [Environment](ENVIRONMENT.md) | sun, real sun, sky (and your own HDRI skies), haze, weather, wind, wet, puddles, snow, volumetric clouds |
+| [Landscape](LANDSCAPE.md) | painting plants, terrain, rows and fills (avenues, woods, crowds) |
 | [Geographic context](GEOGRAPHIC_CONTEXT.md) | real neighbourhoods from OpenStreetMap, by address or from a saved map file |
 | [Cameras](CAMERAS.md) | saved views, plans, sections, elevations, looks |
 | [Photo matching](PHOTO_MATCHING.md) | the design in a photograph of the site |
-| [Rendering](RENDERING.md) | stills, quality levels, passes |
+| [Rendering](RENDERING.md) | real-time, Eevee and Cycles; stills, quality, passes and EXR, the light mixer, caustics, Cycles in the 3D view |
 | [Panoramas](PANORAMA.md) | 360° images and virtual tours |
 | [AI upscaling](AI_UPSCALING.md) | Real-ESRGAN |
-| [Movies](MOVIE_AND_ANIMATION.md) | fly-throughs, stills, time-lapse, paths for traffic and people walking, MP4 |
+| [Movies](MOVIE_AND_ANIMATION.md) | fly-throughs, stills, time-lapse, keys and the timeline, transitions, titles, sound, traffic, people walking, MP4 |
+| [Walking through](VR_WALKTHROUGH.md) | the project from inside, on the screen or on a VR headset |
 | [SET](SET_EVENT_PRODUCTION.md) | stages, LED walls, truss, sound, lights, crowds, effects |
 | [SHOW](SHOW_EVENT_OPERATION.md) | live video, cues, GO, OSC |
 

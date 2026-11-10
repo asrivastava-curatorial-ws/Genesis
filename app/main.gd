@@ -334,9 +334,108 @@ func pick_folder(title: String, purpose: String, chosen: Callable) -> void:
 
 ## Opens a project folder, and says why if it cannot.
 func open_project_at(folder: String) -> void:
+	if _opening:
+		return
+	_opening = true
+	await _read_ahead(folder)
+	_opening = false
+	var began := Time.get_ticks_msec()
 	var err: String = App.projects.open(folder)
+	read_ahead_last["open_ms"] = Time.get_ticks_msec() - began
+	_read_ahead_kept.clear()
 	if err != "":
 		App.notify.error("The project could not be opened.", err)
+
+
+var _read_ahead_kept: Array = []
+## One project is opened at a time (a second click while a large one is being read is not a second opening).
+var _opening := false
+## Fewer files than this are read as fast as the words could be shown.
+const READ_AHEAD_FROM := 12
+
+
+## What a project's scene is made of (its models, pictures, materials), as
+## files that exist: what is read ahead when the project is opened.
+static func scene_files(folder: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	var m := ProjectService.manifest_of(folder)
+	if m.is_empty():
+		return out
+	var scene := folder.path_join(str(m.get("main_scene", ProjectService.MAIN_SCENE)))
+	if scene.get_extension().to_lower() != "tscn" or not FileAccess.file_exists(scene):
+		return out
+	var re := RegEx.create_from_string('(?m)^\\[ext_resource [^\\]]*path="([^"]+)"')
+	for hit in re.search_all(FileAccess.get_file_as_string(scene)):
+		var p := hit.get_string(1)
+		if not p.begins_with("res://") and not p.is_absolute_path():
+			p = scene.get_base_dir().path_join(p).simplify_path()
+		if (ResourceLoader.exists(p) or FileAccess.file_exists(p)) and not p in out:
+			out.append(p)
+	return out
+
+
+## Reads what the project's scene needs in the background, with a word on
+## how far it has got, so the window stays alive while a large project
+## opens (opening it then finds everything read already).
+func _read_ahead(folder: String) -> void:
+	read_ahead_last = {}
+	var files := scene_files(folder)
+	if files.size() < READ_AHEAD_FROM or DisplayServer.get_name() == "headless":
+		return
+	# Over everything, taking the clicks: nothing else is started meanwhile.
+	var veil := ColorRect.new()
+	veil.name = "Opening"
+	veil.color = Color(0, 0, 0, 0.35)
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.mouse_filter = Control.MOUSE_FILTER_STOP
+	var middle := CenterContainer.new()
+	middle.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.add_child(middle)
+	var card := PanelContainer.new()
+	card.theme_type_variation = &"Card"
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(380, 0)
+	var words := Label.new()
+	var bar := ProgressBar.new()
+	bar.max_value = files.size()
+	bar.show_percentage = false
+	box.add_child(words)
+	box.add_child(bar)
+	card.add_child(box)
+	middle.add_child(card)
+	add_child(veil)
+	var asked: Array = []
+	for p in files:
+		if ResourceLoader.load_threaded_request(p, "", true) == OK:
+			asked.append(p)
+	var started := Time.get_ticks_msec()
+	var frames := 0
+	while true:
+		var done := 0
+		for p in asked:
+			if ResourceLoader.load_threaded_get_status(p) != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+				done += 1
+		bar.value = done
+		words.text = "Opening %s: %d of %d files read…" % [folder.get_file(), done, asked.size()]
+		if done >= asked.size() or Time.get_ticks_msec() - started > 600000:
+			break
+		await get_tree().process_frame
+		frames += 1
+	# Held until the scene itself holds them.
+	for p in asked:
+		if ResourceLoader.load_threaded_get_status(p) == ResourceLoader.THREAD_LOAD_LOADED:
+			_read_ahead_kept.append(ResourceLoader.load_threaded_get(p))
+	read_ahead_last = {"files": asked.size(), "kept": _read_ahead_kept.size(), "ms": Time.get_ticks_msec() - started, "frames": frames}
+	words.text = "Opening %s…" % folder.get_file()
+	bar.value = bar.max_value
+	# One more picture, so the words are on show while the scene is put together.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	veil.queue_free()
+
+
+## What the last reading ahead came to: {"files", "kept", "ms"} (for the tests and the console).
+var read_ahead_last := {}
 
 
 func _on_project_opened() -> void:
@@ -579,11 +678,11 @@ func _command_line() -> void:
 	var args := OS.get_cmdline_user_args()
 	var i := args.find("--project")
 	if i >= 0 and i + 1 < args.size():
-		open_project_at(args[i + 1])
+		await open_project_at(args[i + 1])
 	# A project folder given on its own (a desktop shortcut, "Open with").
 	for a in OS.get_cmdline_args():
 		if DirAccess.dir_exists_absolute(a) and not ProjectService.manifest_of(a).is_empty():
-			open_project_at(a)
+			await open_project_at(a)
 			break
 	# The walkthrough: this copy of the program shows the project from inside,
 	# on a headset (--vr, with --xr-mode on before the --) or on this screen.

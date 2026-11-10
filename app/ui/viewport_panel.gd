@@ -22,6 +22,9 @@ const App := preload("res://app/core/app.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const Picker := preload("res://app/runtime/picker.gd")
+const GnLiveRender := preload("res://addons/genesis/core/gn_live_render.gd")
+const GnBig := preload("res://addons/genesis/core/gn_big.gd")
+const GnSceneExport := preload("res://addons/genesis/core/gn_scene_export.gd")
 const TransformGizmo := preload("res://app/runtime/transform_gizmo.gd")
 
 signal view_changed
@@ -59,6 +62,15 @@ var orthographic := false:
 
 var _hint: Label
 var _overlay: Control
+# The live view (Cycles or Eevee laid over this one): its picture, its words.
+var _live: TextureRect
+var _live_words: Label
+var _live_engine := "cycles"
+var _live_seen := ""             # the view as it was last frame
+var _live_sent := ""             # the view the engine was last given
+var _live_still := 0.0           # how long the view has not moved
+var _live_beat := 0.0
+var _live_scene_wait := -1.0     # the scene changed: hand it over again in this many seconds
 var _grid: MeshInstance3D
 var _attached: Node
 # What the mouse is doing: "", "orbit", "pan", "look", "gizmo", "box", "click".
@@ -85,9 +97,31 @@ func _init() -> void:
 	camera.name = "ViewCamera"
 	camera.near = 0.05
 	camera.far = 6000.0
+	# What is shown as a stand-in box here is drawn in full by every other camera.
+	camera.set_cull_mask_value(GnBig.RENDER_ONLY_LAYER, false)
 	viewport.add_child(camera)
 	_grid = _make_grid()
 	viewport.add_child(_grid)
+	_live = TextureRect.new()
+	_live.name = "LiveView"
+	_live.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_live.stretch_mode = TextureRect.STRETCH_SCALE
+	_live.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_live.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_live.visible = false
+	add_child(_live)
+	_live_words = Label.new()
+	_live_words.name = "LiveWords"
+	_live_words.theme_type_variation = &"MutedLabel"
+	_live_words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_live_words.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_live_words.offset_left = 12
+	_live_words.offset_top = -30
+	_live_words.offset_bottom = -8
+	_live_words.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
+	_live_words.add_theme_constant_override("outline_size", 4)
+	_live_words.visible = false
+	add_child(_live_words)
 	_overlay = Control.new()
 	_overlay.name = "Overlay"
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -122,6 +156,7 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	GnLiveRender.stop()
 	if App.scenes:
 		for pair in [[App.scenes.opened, attach], [App.scenes.closed, detach]]:
 			if pair[0].is_connected(pair[1]):
@@ -153,6 +188,8 @@ func attach(root: Node) -> void:
 
 
 func detach() -> void:
+	if GnLiveRender.is_on():
+		set_live(false)
 	gizmo.set_nodes([])
 	Picker.forget_cache()
 	if is_instance_valid(_attached) and _attached.get_parent() == viewport:
@@ -311,7 +348,91 @@ func frame_selection() -> void:
 		_frame_box(bounds_of(picked))
 
 
+# ------------------------------------------------------------------ the live view
+func is_live() -> bool:
+	return GnLiveRender.is_on()
+
+
+## Lays Cycles' (or Eevee's) picture of this view over it, kept up as the
+## view and the scene change; or takes it off again. Returns "" or why not.
+func set_live(on: bool, engine := "cycles") -> String:
+	var ur := GnHost.undo_redo()
+	if ur.changed.is_connected(_live_scene_changed):
+		ur.changed.disconnect(_live_scene_changed)
+	_live.visible = false
+	_live_sent = ""
+	_live_scene_wait = -1.0
+	if not on:
+		GnLiveRender.stop()
+		_live_words.visible = false
+		return ""
+	_live_engine = engine
+	_live_words.visible = true
+	_live_words.text = "Handing the scene to the engine…"
+	ur.changed.connect(_live_scene_changed)
+	var err: String = await GnLiveRender.start(self, engine)
+	if err != "":
+		_live_words.text = err
+	return err
+
+
+func _live_scene_changed() -> void:
+	# Not at every step of a drag: once things have been left alone a moment.
+	_live_scene_wait = 1.2
+
+
+## The view as the engine needs it.
+func live_view() -> Dictionary:
+	var spec := GnSceneExport.camera_spec_from(camera.global_transform, camera.fov, camera.near, camera.far, {}, 10.0)
+	if camera.projection == Camera3D.PROJECTION_ORTHOGONAL:
+		spec["projection"] = "ortho"
+		spec["size"] = camera.size
+	return spec
+
+
+func _live_tick(delta: float) -> void:
+	if GnLiveRender.state == "":
+		if _live.visible or _live_words.visible:
+			_live.visible = false
+			_live_words.visible = false
+		return
+	_live_words.visible = true
+	_live_words.text = GnLiveRender.note
+	if GnLiveRender.state != "running":
+		_live.visible = false
+		return
+	if _live_scene_wait >= 0.0:
+		_live_scene_wait -= delta
+		if _live_scene_wait < 0.0:
+			_live.visible = false
+			_live_sent = ""
+			GnLiveRender.start(self, _live_engine)
+			return
+	var px := Vector2i(viewport.size)
+	var spec := live_view()
+	var key := "%s %s" % [var_to_str(spec), px]
+	if key != _live_seen:
+		# The view is moving: the 3D view itself shows, until it stops.
+		_live_seen = key
+		_live_still = 0.0
+		_live.visible = false
+	else:
+		_live_still += delta
+	if _live_still >= 0.25 and key != _live_sent:
+		_live_sent = key
+		GnLiveRender.set_view(spec, px)
+	_live_beat += delta
+	if _live_beat > 2.0:
+		_live_beat = 0.0
+		GnLiveRender.beat()
+	var got := GnLiveRender.poll()
+	if not got.is_empty() and key == _live_sent:
+		_live.texture = ImageTexture.create_from_image(got.image)
+		_live.visible = true
+
+
 func _process(delta: float) -> void:
+	_live_tick(delta)
 	if _drag != "look" or _fly == Vector3.ZERO:
 		return
 	var speed := FLY_SPEED * delta * (4.0 if Input.is_key_pressed(KEY_SHIFT) else 1.0) * maxf(distance / DEFAULT_DISTANCE, 0.25)

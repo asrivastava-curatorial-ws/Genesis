@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film, layers, street. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film, layers, street, live. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -62,6 +62,12 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _layers(main)
 		"street":
 			await _street(main)
+		"live":
+			await _live(main)
+		"big":
+			await _big(main)
+		"bigopen":
+			await _bigopen(main, args)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -1271,3 +1277,333 @@ static func _street(main: Node) -> void:
 		var still := _difference(before, after, Rect2(0.0, 0.0, 1.0, 0.25))
 		check(moved > 0.004 and moved > still * 3.0, "street: a second later the traffic is further on, the trees where they were (%.4f on the road, %.4f above)" % [moved, still])
 		GnMovie.show_time(0.0, [])
+
+
+# ------------------------------------------------------------------ the live view
+# Cycles in the 3D view: switched on, its picture of the view is laid over
+# it; it gets finer while the view is left alone; turning the view takes the
+# picture off until a new one is made; moving a thing in the scene is seen;
+# switched off, the engine is gone.
+static func _live(main: Node) -> void:
+	var GnLiveRender = load("res://addons/genesis/core/gn_live_render.gd")
+	var root := await _studio(main, "Live check", false)
+	if root == null:
+		return
+	GnEnvironment.apply("time_of_day", 13.0, false)
+	_box(root, "Floor", Vector3(30, 0.2, 30), Vector3(0, 0.1, 0), Color(0.7, 0.7, 0.7))
+	var red := _box(root, "Red box", Vector3(2, 2, 2), Vector3(-3, 1.2, 0), Color(0.9, 0.1, 0.1))
+	_box(root, "Blue box", Vector3(2, 3, 2), Vector3(3, 1.7, 0), Color(0.1, 0.2, 0.9))
+	await _frames(main, 6)
+	var panel = main.find_child("ViewportPanel", true, false)
+	panel.pivot = Vector3(0, 1, 0)
+	panel.distance = 16.0
+	panel.call("_apply_camera")
+	await _frames(main, 4)
+	var engine: String = "eevee" if "eevee" in _engines and not "cycles" in _engines else "cycles"
+	var t0 := Time.get_ticks_msec()
+	App.actions.run("view.live" if engine == "cycles" else "view.live_eevee")
+	var live := panel.get_node("LiveView") as TextureRect
+	var first := await _live_wait(main, panel, 0, 240.0)
+	check(first >= 0 and live.visible and live.texture != null, "live: %s's picture of the view is laid over it, %.1f s after switching on" % [engine, (Time.get_ticks_msec() - t0) / 1000.0])
+	if first < 0:
+		print("LAB live: %s %s" % [GnLiveRender.state, GnLiveRender.note])
+		return
+	var quick := live.texture.get_image()
+	quick.save_png(_out.path_join("live_first.png"))
+	var view_now: Image = panel.viewport.get_texture().get_image()
+	view_now.save_png(_out.path_join("live_realtime.png"))
+	check(_red_x(quick) > 0.0 and absf(_red_x(quick) - _red_x(view_now)) < 0.06, "live: it shows what the view shows (the red box at %.2f, %.2f in the view)" % [_red_x(quick), _red_x(view_now)])
+	# Left alone, it gets finer.
+	var last := await _live_wait(main, panel, 3, 300.0)
+	check(last == 3 and is_equal_approx(GnLiveRender.progress(), 1.0), "live: left alone it is refined to the last step (%s)" % GnLiveRender.note)
+	var fine := live.texture.get_image()
+	fine.save_png(_out.path_join("live_fine.png"))
+	check(fine.get_width() > quick.get_width(), "live: finer, and larger (%d px wide after %d)" % [fine.get_width(), quick.get_width()])
+	# Turning the view: the picture comes off at once, and a new one is made.
+	panel.yaw += deg_to_rad(50.0)
+	panel.call("_apply_camera")
+	await _frames(main, 3)
+	check(not live.visible, "live: when the view turns, the 3D view itself shows")
+	var again := await _live_wait(main, panel, 0, 120.0)
+	var turned := live.texture.get_image() if again >= 0 else null
+	check(again >= 0 and live.visible and turned != null and absf(_red_x(turned) - _red_x(quick)) > 0.03, "live: and a new picture is made of the new view")
+	if turned:
+		turned.save_png(_out.path_join("live_turned.png"))
+	# Moving a thing: the scene is handed over again.
+	var before_x := _red_x(turned) if turned else 0.0
+	GnScene.set_props("Move the red box", [[red, "position", Vector3(-3, 1.2, 6)]])
+	var moved_step := -1
+	var deadline := Time.get_ticks_msec() + 240000
+	var saw_restart := false
+	while Time.get_ticks_msec() < deadline:
+		await main.get_tree().create_timer(0.5).timeout
+		if not live.visible:
+			saw_restart = true
+		elif saw_restart:
+			moved_step = 0
+			break
+	var after: Image = live.texture.get_image() if moved_step >= 0 else null
+	if after:
+		after.save_png(_out.path_join("live_moved.png"))
+	check(after != null and absf(_red_x(after) - before_x) > 0.02, "live: a thing moved in the scene is moved in the live view (%.2f, %.2f before)" % [_red_x(after) if after else -1.0, before_x])
+	var pid: int = GnLiveRender.get("_job").pid if GnLiveRender.get("_job") else -1
+	App.actions.run("view.live" if engine == "cycles" else "view.live_eevee")
+	await main.get_tree().create_timer(1.5).timeout
+	check(not panel.is_live() and not live.visible and (pid <= 0 or not OS.is_process_running(pid)), "live: switched off, the picture is gone and so is the engine")
+
+
+## Waits until the live view shows a picture at `step` or beyond; returns the step, or -1.
+static func _live_wait(main: Node, panel: Node, step: int, seconds: float) -> int:
+	var GnLiveRender = load("res://addons/genesis/core/gn_live_render.gd")
+	var live := panel.get_node("LiveView") as TextureRect
+	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		await main.get_tree().create_timer(0.3).timeout
+		var shown: Dictionary = GnLiveRender.get("_shown")
+		if live.visible and not shown.is_empty() and int(shown.get("step", -1)) >= step:
+			return int(shown.step)
+		if GnLiveRender.state == "failed":
+			return -1
+	return -1
+
+
+# ------------------------------------------------------------------ a large scene
+# Fourteen heavy models (two million triangles between them), each its own
+# file, brought in the program's own way, and twenty more of the first. Each
+# must get lighter versions of itself, so that from afar the 3D view draws a
+# fraction of the triangles; shown as boxes the view draws next to nothing,
+# while every render shows them in full; Eevee and Cycles are handed the
+# twenty copies as copies; and the project, closed and opened again, is read
+# in the background with the window alive.
+static func _big(main: Node) -> void:
+	var GnBig = load("res://addons/genesis/core/gn_big.gd")
+	var GnImport = load("res://addons/genesis/core/gn_import.gd")
+	var GnSceneExport = load("res://addons/genesis/core/gn_scene_export.gd")
+	var Main = load("res://app/main.gd")
+	var root := await _studio(main, "Big check", false)
+	if root == null:
+		return
+	GnEnvironment.apply("time_of_day", 13.0, false)
+	_box(root, "Floor", Vector3(160, 0.2, 160), Vector3(0, -0.1, 0), Color(0.62, 0.62, 0.6))
+	var stones: Array = []
+	var t0 := Time.get_ticks_msec()
+	for i in 14:
+		var file := _out.path_join("stone_%02d.glb" % i)
+		_write_stone(file, i)
+		var err: String = GnImport.import_runtime(file, {}, Vector3((i % 7 - 3) * 7.0, 2.3, (i / 7) * 9.0 - 4.5))
+		if err != "":
+			check(false, "big: stone %d could not be brought in (%s)" % [i, err])
+			return
+		stones.append(GnHost.selected_nodes()[0])
+	print("LAB big: fourteen stones written and brought in, %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
+	for k in 20:
+		var twin := (stones[0] as Node3D).duplicate() as Node3D
+		twin.name = "Twin %d" % k
+		GnScene.add_node(twin, root, "Copy the first stone")
+		twin.position = Vector3((k % 10 - 4.5) * 6.0, 2.3, 16.0 + (k / 10) * 8.0)
+		stones.append(twin)
+	await _frames(main, 6)
+	var lodded := 0
+	for st in stones.slice(0, 14):
+		for mi in (st as Node).find_children("*", "MeshInstance3D", true, false) + ([st] if st is MeshInstance3D else []):
+			if (mi as MeshInstance3D).mesh is ArrayMesh and GnBig.has_lods((mi as MeshInstance3D).mesh):
+				lodded += 1
+	check(lodded == 14, "big: every heavy model brought in has lighter versions of itself (%d of 14)" % lodded)
+	var panel = main.find_child("ViewportPanel", true, false)
+	var c: Dictionary = GnBig.count(root)
+	check(int(c.triangles) > 4500000 and int(c.objects) >= 35 and int(c.meshes) <= 16, "big: the scene is counted: %s" % GnBig.describe(c, panel.viewport).replace("\n", " "))
+	# From close to, one stone in full; from afar, all of them at a fraction.
+	panel.pivot = (stones[3] as Node3D).global_position
+	panel.distance = 5.0
+	panel.call("_apply_camera")
+	await _frames(main, 8)
+	var close := _drawn(panel)
+	panel.pivot = Vector3(0, 2, 8)
+	panel.distance = 700.0
+	panel.pitch = deg_to_rad(-30.0)
+	panel.call("_apply_camera")
+	await _frames(main, 8)
+	var afar := _drawn(panel)
+	check(close > 50000 and close > afar * 8 and afar < int(c.triangles) / 8, "big: close to a stone the view draws %d triangles; from 700 m, all thirty-four in %d (of %d)" % [close, afar, int(c.triangles)])
+	# The whole scene in the view; then as boxes.
+	panel.pivot = Vector3(0, 2, 10)
+	panel.distance = 70.0
+	panel.pitch = deg_to_rad(-35.0)
+	panel.call("_apply_camera")
+	await _frames(main, 8)
+	var full := _drawn(panel)
+	(panel.viewport.get_texture().get_image() as Image).save_png(_out.path_join("big_view_full.png"))
+	var cam := _camera("Over the stones", Vector3(0, 38, 62), Vector3(0, 0, 10), 50.0)
+	await _frames(main, 4)
+	var full_path := (await GnRender.render(cam, Vector2i(640, 360), main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0)) as String
+	var full_pic := Image.load_from_file(ProjectSettings.globalize_path(full_path))
+	full_pic.save_png(_out.path_join("big_render_full.png"))
+	check(GnBig.set_stand_in(stones, true) == 34, "big: all thirty-four are marked to be shown as boxes")
+	await _frames(main, 8)
+	var boxed := _drawn(panel)
+	var view_pic: Image = panel.viewport.get_texture().get_image()
+	view_pic.save_png(_out.path_join("big_view_boxes.png"))
+	check(boxed < 6000 and boxed < full / 20, "big: as boxes the view draws %d triangles (%d in full)" % [boxed, full])
+	# The renders show them in full all the same.
+	var pics := await _render(main, cam, "big", Vector2i(640, 360), "Draft")
+	if pics.get("godot") is Image:
+		var d := _difference(full_pic, pics.godot)
+		check(d < 0.004, "big godot: the render shows the stones in full, as before they were boxes (the pictures differ by %.4f)" % d)
+	var red_godot := _red_share(full_pic)
+	for e in pics:
+		if not pics[e] is Image or e == "godot":
+			continue
+		var share := _red_share(pics[e])
+		var same := _red_overlap(full_pic, pics[e])
+		check(share > red_godot * 0.7 and same > 0.75, "big %s: all the stones are in the picture, the twenty copies where they stand (%.0f%% of it is stone, %.0f%% in the editor's; %.0f%% of that in the same places)" % [e, share * 100.0, red_godot * 100.0, same * 100.0])
+	# The scene as the engines are handed it: the twenty copies as copies.
+	var dir := _out.path_join("handed_over")
+	var ex: Dictionary = GnSceneExport.export_scene(root, dir, true)
+	var copies := 0
+	for name in ex.scene.objects:
+		if (ex.scene.objects[name] as Dictionary).has("copy_of"):
+			copies += 1
+	var glb_mb := FileAccess.get_file_as_bytes(ex.glb).size() / 1048576.0
+	var handed := GLTFState.new()
+	GLTFDocument.new().append_from_file(ex.glb, handed)
+	# Fourteen stones, the floor and the ground; the twenty twins only as places.
+	check(copies == 20 and handed.get_meshes().size() == 16, "big: the scene for Eevee and Cycles holds each shape once: %d shapes in the file (%.0f MB), %d copies named" % [handed.get_meshes().size(), glb_mb, copies])
+	# Saved, closed, opened: first the plain way, then read ahead with the window alive.
+	var saved: String = App.scenes.save()
+	var folder: String = App.projects.folder
+	var files: PackedStringArray = Main.scene_files(folder)
+	var scene_kb := FileAccess.get_file_as_bytes(App.scenes.path).size() / 1024
+	check(saved == "" and files.size() >= 14 and scene_kb < 300, "big: the project is saved; its scene is made of %d files and is itself %d KB (the stones are in their own files, once)" % [files.size(), scene_kb])
+	App.projects.close()
+	await _frames(main, 6)
+	var t1 := Time.get_ticks_msec()
+	var err2: String = App.projects.open(folder)
+	var plain_ms := Time.get_ticks_msec() - t1
+	check(err2 == "", "big: it opens the plain way in %.1f s, the window still meanwhile" % (plain_ms / 1000.0))
+	App.projects.close()
+	await _frames(main, 6)
+	var t2 := Time.get_ticks_msec()
+	await main.open_project_at(folder)
+	var all_ms := Time.get_ticks_msec() - t2
+	var ra: Dictionary = main.read_ahead_last
+	check(App.projects.is_open() and int(ra.get("files", 0)) >= 14 and int(ra.get("kept", -1)) == int(ra.get("files", 0)) and int(ra.get("frames", 0)) >= 1,
+		"big: opened from the program, its %d files are read in the background (%.1f s, the window drawn %d times meanwhile)" % [int(ra.get("files", 0)), int(ra.get("ms", 0)) / 1000.0, int(ra.get("frames", 0))])
+	check(int(ra.get("open_ms", 1 << 30)) < plain_ms, "big: and the scene is then put together from what was read: %.2f s with the window still, %.2f s the plain way (%.1f s in all)" % [int(ra.get("open_ms", 0)) / 1000.0, plain_ms / 1000.0, all_ms / 1000.0])
+	await _frames(main, 6)
+	root = GnHost.edited_scene_root()
+	var again := 0
+	var twins := 0
+	for n in root.get_children():
+		if n.get_node_or_null("AsBox") != null and GnBig.is_stand_in(n):
+			again += 1
+		if str(n.name).begins_with("Twin"):
+			twins += 1
+	check(again == 34 and twins == 20, "big: the scene is as it was saved: thirty-four stones, shown as boxes (%d, %d of them the copies)" % [again, twins])
+	await _frames(main, 6)
+	panel = main.find_child("ViewportPanel", true, false)
+	var with_lods := 0
+	for n in root.get_children():
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh is ArrayMesh and GnBig.has_lods((n as MeshInstance3D).mesh):
+			with_lods += 1
+	check(with_lods == 34, "big: each with its shape and its lighter versions, from its own file (%d of 34)" % with_lods)
+	var reopened := _drawn(panel)
+	check(reopened < 6000, "big: and the view draws %d triangles of it" % reopened)
+	check(GnBig.set_stand_in(root.get_children(), false) == 34, "big: shown in full again")
+
+
+## How many triangles the 3D view drew in its last frame.
+static func _drawn(panel: Node) -> int:
+	return (panel.viewport as SubViewport).get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME)
+
+
+static func _is_red(c: Color) -> bool:
+	return c.r > 0.2 and c.r > c.g * 1.8 and c.r > c.b * 1.8
+
+
+## The share of a picture that is red.
+static func _red_share(img: Image) -> float:
+	var n := 0
+	var all := 0
+	for y in range(0, img.get_height(), 2):
+		for x in range(0, img.get_width(), 2):
+			all += 1
+			if _is_red(img.get_pixel(x, y)):
+				n += 1
+	return n / float(maxi(all, 1))
+
+
+## Of what is red in `a`, the share that is red in `b` too.
+static func _red_overlap(a: Image, b: Image) -> float:
+	var n := 0
+	var both := 0
+	for y in range(0, a.get_height(), 2):
+		for x in range(0, a.get_width(), 2):
+			if _is_red(a.get_pixel(x, y)):
+				n += 1
+				if _is_red(b.get_pixel(x, y)):
+					both += 1
+	return both / float(maxi(n, 1))
+
+
+## A lumpy stone of 150 thousand triangles, as a .glb.
+static func _write_stone(path: String, seed: int) -> void:
+	var sphere := SphereMesh.new()
+	sphere.radius = 2.0
+	sphere.height = 4.0
+	sphere.radial_segments = 384
+	sphere.rings = 192
+	var arrays := sphere.get_mesh_arrays()
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var noise := FastNoiseLite.new()
+	noise.seed = seed + 1
+	noise.frequency = 0.5
+	for i in verts.size():
+		# By its direction, so the seam stays closed.
+		verts[i] += normals[i] * noise.get_noise_3dv(normals[i] * 2.0) * 0.5
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	var am := ArrayMesh.new()
+	am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.8, 0.16, 0.12)
+	mat.roughness = 0.8
+	am.surface_set_material(0, mat)
+	var mi := MeshInstance3D.new()
+	mi.name = "Stone %d" % seed
+	mi.mesh = am
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	doc.append_from_scene(mi, state)
+	doc.write_to_filesystem(state, path)
+	mi.free()
+
+
+# Where the time goes when the large scene of the "big" check is opened
+# (run "big" first: this reads the project it left).
+static func _bigopen(main: Node, args: PackedStringArray) -> void:
+	var Main = load("res://app/main.gd")
+	var folder := _out.get_base_dir().path_join("big/Big check")
+	var files: PackedStringArray = Main.scene_files(folder)
+	print("LAB bigopen: %d files, the first %s" % [files.size(), files[0] if files.size() > 0 else "-"])
+	var kept: Array = []
+	var t := Time.get_ticks_msec()
+	for f in files:
+		kept.append(ResourceLoader.load(f))
+	print("LAB bigopen: the files read one by one: %d ms" % (Time.get_ticks_msec() - t))
+	t = Time.get_ticks_msec()
+	var packed := ResourceLoader.load(folder.path_join("scenes/main.tscn"), "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene
+	print("LAB bigopen: the scene file read with them in memory: %d ms" % (Time.get_ticks_msec() - t))
+	t = Time.get_ticks_msec()
+	var scene := packed.instantiate()
+	print("LAB bigopen: made into a scene: %d ms" % (Time.get_ticks_msec() - t))
+	for n in scene.get_children():
+		if str(n.name).begins_with("Stone") or str(n.name).begins_with("Twin"):
+			print("LAB bigopen: %s is %s (in memory: %s)" % [n.name, n.scene_file_path, ResourceLoader.has_cached(n.scene_file_path)])
+			break
+	scene.free()
+	t = Time.get_ticks_msec()
+	var err: String = App.projects.open(folder)
+	print("LAB bigopen: the project opened with everything in memory: %d ms (%s)" % [Time.get_ticks_msec() - t, err])
+	await _frames(main, 2)
+	print("LAB bigopen: two pictures later: %d ms" % (Time.get_ticks_msec() - t))
+

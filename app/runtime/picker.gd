@@ -1,7 +1,7 @@
 extends RefCounted
 
 # What is under the mouse. A ray from the camera through the pointer is tested
-# against every visible mesh in the scene, exactly (triangle by triangle) for
+# against every mesh in the scene that the camera draws, exactly (triangle by triangle) for
 # ordinary meshes and by bounding box for instanced copies, particles and the
 # like. Helpers that have no surface (cameras, lights, empty groups) are picked
 # by how close their marker is on screen.
@@ -63,7 +63,8 @@ static func pick(camera: Camera3D, screen: Vector2, root: Node) -> Dictionary:
 	var ground := {}
 	for g in root.find_children("*", "GeometryInstance3D", true, false):
 		var gi := g as GeometryInstance3D
-		if not gi.is_visible_in_tree() or is_locked(gi, root):
+		# What this camera does not draw (a heavy thing shown as a box) cannot be clicked: its box can.
+		if not gi.is_visible_in_tree() or gi.layers & camera.cull_mask == 0 or is_locked(gi, root):
 			continue
 		var d := _hit_distance(gi, from, dir)
 		if d < 0.0:

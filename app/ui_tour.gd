@@ -20,7 +20,7 @@ static func run(main: Node, project: String, out: String, only_docs := false) ->
 	DirAccess.make_dir_recursive_absolute(out)
 	await _settle(main, 40)
 	await shot(main, out, "01_start")
-	main.open_project_at(project)
+	await main.open_project_at(project)
 	await _settle(main, 150)
 	var ws: Node = main.screen
 	if not ws.has_method("toggle_panel"):

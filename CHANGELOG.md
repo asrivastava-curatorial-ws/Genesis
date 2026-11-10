@@ -1,5 +1,59 @@
 # Changelog
 
+## 1.0.0-rc5 (Oriel)
+
+What Lumion, D5 and V-Ray users would miss, added. Every feature of rc4 is kept, and rc4 projects open unchanged.
+
+### Bringing models in
+- **IFC, USD (usd, usda, usdc, usdz), Collada (DAE), 3DS, STL, PLY, Alembic** and a dozen older formats, beside GLB, glTF, FBX, OBJ and .blend. The built-in engine converts them: USD, Alembic, PLY and STL through Blender's own readers; IFC through IfcOpenShell, every element its own object under its storey, in the model's colours; Collada, 3DS and the others through Assimp. One file filter for every kind of model.
+- **Heavy models get lighter versions of themselves** as they come in (levels of detail), which the 3D view draws when the model is small on the screen.
+
+### Light
+- **Lumens and kelvin** on every light: *Output (lumens)* and *Colour temp (K)* in Properties, for plain lights as for the set's fixtures.
+- **IES files**: a manufacturer's photometric file on a fixture shapes its beam in all three renderers (Cycles from the file itself, Eevee as a cone from the file's angles, real-time as a projected pattern).
+- **Light mixer** (Render page, Cycles): after the render, change how bright each group of lights is and its colour (the sun, the sky, what glows, each group of lamps) in about half a second, graded exactly as the render. Save the mix as a picture, or put it onto the scene's lamps as one undo step.
+- **More passes**: occlusion, diffuse, reflection, emission and colour beside depth, normals, ID, mask and clay, from Eevee and Cycles; and **one multilayer EXR** with all of them and Cryptomatte.
+- **Caustics** (Render page, Cycles): solid glass and water gather light into bright patterns where their shadows fall.
+
+### Weather and sky
+- **Wind**: trees, plants and grass sway in the view and in films; *Wind* and *Wind from* on the Environment page.
+- **Wet surfaces, Puddles, Snow lying**: over the whole design, the same in the three renderers.
+- **Volumetric clouds**: clouds with depth, lit from where the sun is and carried by the wind; Eevee and Cycles show the same clouds.
+
+### Materials
+- **Relief**: a height map moves the surface in and out (brick joints, cobbles, bark): Cycles moves the surface itself, Eevee and the 3D view shade it as if moved. Without a height map the heights are worked out from the normal map. Height maps come with downloaded materials and with your own images.
+- **Light inside** (wax, marble, skin, leaves, snow) and **Solid glass (bends light)** for a vase, a bottle, a glass block.
+- **Layers**: one material over another where a mask says: plaster in patches over brick, moss in the joints, bare metal on the raised parts, streaks of damp, speckles. Up to four layers, each with how much, pattern size, soft edge, thickness and tint. The same in the three renderers.
+
+### Films
+- **Keyframes and a timeline** under the 3D view (View > Timeline, Ctrl+T): *Key the selection* (K) records where things are, how they are turned and how large; a light's brightness and colour; a camera's lens. *Key…* records the sun, the sky, the weather, or whether the selection shows. Keys can be dragged, eased (Smooth, Linear, Glide, Ease in, Ease out, Hold) and removed.
+- **The film as an edit** (Movie page, *The edit*): each shot comes in with a Cut, a Dissolve, Through black or Through white; **titles** on the picture, placed and timed on the timeline; a **soundtrack** with its volume; a fade to black at the end. Real-time, Eevee and Cycles films are finished the same way.
+- **Traffic** (Movie page, *Draw traffic*): draw a road; vehicles of the kind chosen drive along it in lanes, both ways if wanted, keeping their distance.
+
+### Populating a scene
+- **Rows and fills** (Landscape page, *Draw a spread*): an avenue of trees, lamp posts down a street, cars parked along a kerb; or a wood, a crowd in a square, filling the line drawn. What is spread, how far apart, how much out of line, sizes and facing are in Properties; the spread follows the ground.
+
+### Seeing the result
+- **Cycles (or Eevee) in the 3D view** (View > Cycles in the View, F10; Eevee, Shift+F10; the *Cycles* switch on the tool bar): the engine's picture of the view is laid over it and gets finer while the view is left alone. Turning the view or changing the scene starts it again.
+- **Walk through the project** on this screen (F9) or **on a headset** (Shift+F9), through OpenXR: walk with the left stick, turn with the right, point and let go to jump there, fly, step from camera to camera. Meta Quest headsets connect through a streamer on the computer (WiVRn, or ALVR with SteamVR).
+
+### Large scenes
+- **Count the scene** (Scene page, *A large scene*): triangles, objects, shapes, lights, materials, megabytes of pictures, what the 3D view is drawing, and the heaviest things.
+- **Show selection as boxes**: heavy things as plain boxes in the 3D view while you work around them; every render shows them in full.
+- **Lighten the project's models**: levels of detail for the models a project already keeps.
+- **Large projects open with the window alive**: the scene's files are read in the background, with how far it has got.
+- **Eevee and Cycles are handed each shape once**: a model placed two hundred times is written, read and held in memory once, and its pictures (a normal map twenty materials share) once. Draft and Good renders pack the pictures small. A street of library cars and trees went from 235 MB to 12 MB.
+
+### Fixes
+- A model that is a single shape (its top node the mesh itself, as a glTF file written by Godot is) was written into the scene file a second time, as text, whenever the scene was saved: a scene with fourteen heavy models of that kind grew to 105 MB and took twenty seconds to open. The shape now stays in the model's own file. Scenes saved before are put right when they are next opened and saved, and a re-exported model of this kind (live link) is no longer shadowed by the old copy in the scene.
+- Cycles: lamp-lit scenes were noisy because every surface spent most of its light samples on the lights that only light stage haze. Those lights are now made only where there is haze, and light only the haze.
+- The small preview of a camera (Cameras, Look and Movie pages) showed the 3D view's grid; it now shows what the camera will render.
+- Clicking in the 3D view tests only what the view draws.
+
+### Tests
+- A lab (`tests/dev/lab.gd`, run by `--script`): scenes built with the program's own tools, rendered by the three renderers and measured: IES beams, the light mixer, haze, weather, wind, relief and light inside, caustics, clouds, the walk-through (on Monado's stand-in headset too), a film with keys, a dissolve, a title and sound, layered materials, a street with a spread and traffic, the live view, a five-million-triangle scene.
+- The headless suites grew from 394 checks to 562; the module suite alone tripled, to 176.
+
 ## 1.0.0-rc4 (Oriel)
 
 Photoreal rendering built in, an online library, and a new name. Every feature of rc3 is kept.

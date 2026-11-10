@@ -61,6 +61,8 @@ func start(scene_root: Node, want_vr: bool, from_camera := "") -> void:
 	_camera.name = "Head"
 	_camera.near = 0.05
 	_camera.far = 6000.0
+	# What is drawn only for the working view (the boxes heavy things are shown as) stays out.
+	_camera.set_cull_mask_value(preload("res://addons/genesis/core/gn_host.gd").VIEW_ONLY_LAYER, false)
 	rig.add_child(_camera)
 	_make_pointer()
 	rig.set_scene(scene, [rig])

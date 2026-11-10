@@ -49,6 +49,9 @@ class Ctx:
 	var tex_by_content := {}
 	## Materials already going into the file, by what they are made of.
 	var mat_by_content := {}
+	## Shapes already going into the file: {the mesh and what it wears: the first object that has it}.
+	var mesh_first := {}
+	var n_copies := 0
 	var instancers: Array = []
 	var lights: Array = []
 	var texts: Array = []
@@ -344,18 +347,39 @@ static func _mesh(ctx: Ctx, mi: MeshInstance3D, extra: Dictionary) -> void:
 		var baked2 = mi.bake_mesh_from_current_blend_shape_mix()
 		if baked2:
 			mesh = baked2
-	var copy := MeshInstance3D.new()
-	copy.name = _next_name(ctx)
-	copy.mesh = mesh
-	copy.transform = mi.global_transform
+	var wears: Array = []
 	for i in mesh.get_surface_count():
-		copy.set_surface_override_material(i, _material(ctx, mi.get_active_material(i), mesh, i))
-	ctx.out_root.add_child(copy)
+		wears.append(_material(ctx, mi.get_active_material(i), mesh, i))
+	# The same shape in the same materials a second time (a model placed
+	# fifty times) is not written again: only where it stands. The renderer
+	# makes it from the first, sharing its mesh, so fifty of a heavy model
+	# weigh what one does, in the file and in the engine's memory.
+	var key := ""
+	if mesh == mi.mesh:
+		key = str(mesh.get_instance_id())
+		for m in wears:
+			key += ":%d" % ((m as Material).get_instance_id() if m else 0)
+	var first := str(ctx.mesh_first.get(key, "")) if key != "" else ""
+	var name := _next_name(ctx)
+	if first == "":
+		var copy := MeshInstance3D.new()
+		copy.name = name
+		copy.mesh = mesh
+		copy.transform = mi.global_transform
+		for i in wears.size():
+			copy.set_surface_override_material(i, wears[i])
+		ctx.out_root.add_child(copy)
+		if key != "":
+			ctx.mesh_first[key] = name
 	var role := _role(ctx, mi)
 	var spec := {
 		"path": str(ctx.root.get_path_to(mi)),
 		"id_color": _col(GnStaging._id_colour(mi)),
 	}
+	if first != "":
+		spec["copy_of"] = first
+		spec["xform"] = _xform(mi.global_transform)
+		ctx.n_copies += 1
 	if role in ["ground", "site"]:
 		spec["ground"] = true
 	if mi.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
@@ -363,7 +387,7 @@ static func _mesh(ctx: Ctx, mi: MeshInstance3D, extra: Dictionary) -> void:
 	elif mi.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY:
 		spec["shadow_only"] = true
 	spec.merge(extra, true)
-	ctx.objects[copy.name] = spec
+	ctx.objects[name] = spec
 	if not spec.has("ground"):
 		_grow(ctx, mi.global_transform * mesh.get_aabb())
 

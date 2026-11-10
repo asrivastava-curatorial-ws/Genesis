@@ -21,7 +21,7 @@ static func run(main: Node, project: String, out_dir: String, args: PackedString
 	var qi := args.find("--quality")
 	var quality := args[qi + 1] if qi >= 0 and qi + 1 < args.size() else "Draft"
 	var ci := args.find("--camera")
-	main.open_project_at(project)
+	await main.open_project_at(project)
 	for i in 20:
 		await main.get_tree().process_frame
 	var cams := GnCameras.cameras()
