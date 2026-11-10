@@ -506,7 +506,7 @@ static func _light(ctx: Ctx, l: Light3D) -> void:
 	var spec := {
 		"matrix": _xform(l.global_transform), "color": _lin(l.light_color),
 		"energy": l.light_energy, "shadow": l.shadow_enabled, "radius": l.light_size,
-		"volume": l.light_volumetric_fog_energy,
+		"volume": l.light_volumetric_fog_energy, "group": mix_group(ctx.root, l),
 	}
 	if l is DirectionalLight3D:
 		spec["type"] = "sun"
@@ -529,6 +529,42 @@ static func _light(ctx: Ctx, l: Light3D) -> void:
 	else:
 		return
 	ctx.lights.append(spec)
+
+
+## The light mixer's group for a light: the sun on its own; lights standing
+## in a group of the scene by that group's name; otherwise by their own name
+## without its number, so "Downlight", "Downlight2" and "Downlight 3" are
+## mixed as one.
+static func mix_group(root: Node, l: Node) -> String:
+	if l is DirectionalLight3D:
+		return "Sun"
+	# The thing the user sees in the scene list: the fixture, not the light inside it.
+	var n: Node = l
+	while n.get_parent() != null and n.get_parent() != root and n.owner != root:
+		n = n.get_parent()
+	var parent := n.get_parent()
+	if parent != null and parent != root and parent.get_script() == null and parent.get_class() == "Node3D":
+		return str(parent.name)
+	var base := str(n.name).rstrip("0123456789 _-")
+	return base if base != "" else str(n.name)
+
+
+## The scene's lights by mix group: {group name: [nodes]} (the fixture or
+## light as the scene lists it), for putting a mix back onto the lights.
+static func lights_by_group(root: Node) -> Dictionary:
+	var out := {}
+	for l in root.find_children("*", "Light3D", true, false):
+		if not (l as Light3D).is_visible_in_tree():
+			continue
+		var n: Node = l
+		while n.get_parent() != null and n.get_parent() != root and n.owner != root:
+			n = n.get_parent()
+		var g := mix_group(root, l)
+		if not out.has(g):
+			out[g] = []
+		if not n in out[g]:
+			out[g].append(n)
+	return out
 
 
 ## A fixture with a manufacturer's IES file: Cycles shapes the beam from the
@@ -583,7 +619,7 @@ static func _area_light(ctx: Ctx, a: Node3D) -> void:
 		"type": "area", "matrix": _xform(a.global_transform), "color": _lin(a.call("light_colour")),
 		"shape": "DISK" if shape == "Disc" else "RECTANGLE",
 		"size": [size.x, size.x if shape == "Disc" else size.y], "shadow": shadow,
-		"parts": parts, "two_sided": bool(a.get("two_sided")),
+		"parts": parts, "two_sided": bool(a.get("two_sided")), "group": mix_group(ctx.root, a),
 		"d_ref": _reach(ctx, a.global_position, -a.global_transform.basis.z, reach),
 	})
 

@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, units. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -18,6 +18,7 @@ const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
 const Fixture := preload("res://addons/genesis/set/gn_light_fixture.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 
 static var _fails := 0
 static var _out := ""
@@ -39,6 +40,8 @@ static func run(main: Node, args: PackedStringArray) -> int:
 	match args[0]:
 		"ies":
 			await _ies(main)
+		"mix":
+			await _mix(main)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -184,3 +187,116 @@ static func _ies(main: Node) -> void:
 		check(edge < centre * 0.1, "ies %s: no light past the beam's edge (+%.3f at 39 degrees)" % [e, edge])
 		var night := img.get_pixel(int(img.get_width() * (0.5 + 3.2 * m)), img.get_height() / 2)
 		check(warm.r / maxf(warm.b, 0.001) > night.r / maxf(night.b, 0.001) * 1.3, "ies %s: 3000 K warms the blue night (%s against %s)" % [e, warm.to_html(false), night.to_html(false)])
+
+
+# ------------------------------------------------------------------ passes and the light mixer
+# A room at night with two lamps of different colours (a warm one on the
+# left, a cool one on the right) and a glowing sign. Rendered once with
+# Cycles for the mixer and with every pass; then the mixer turns the warm
+# lamp off and the cool one up, and the pictures are measured.
+static func _mix(main: Node) -> void:
+	var GnLightMix = load("res://addons/genesis/core/gn_light_mix.gd")
+	var GnPasses = load("res://addons/genesis/core/gn_passes.gd")
+	var root := await _studio(main, "Mix check")
+	if root == null:
+		return
+	_box(root, "Floor", Vector3(12, 0.2, 8), Vector3(0, 0.1, 0))
+	_box(root, "Back wall", Vector3(12, 4, 0.2), Vector3(0, 2.2, -3))
+	var sign := _box(root, "Sign", Vector3(1.0, 0.4, 0.05), Vector3(0, 2.6, -2.85), Color(0.1, 1.0, 0.3))
+	var glow := (sign.mesh as BoxMesh).material as StandardMaterial3D
+	glow.emission_enabled = true
+	glow.emission = Color(0.1, 1.0, 0.3)
+	glow.emission_energy_multiplier = 3.0
+	for spec in [["Warm lamp", -3.0, 2700.0], ["Cool lamp", 3.0, 6500.0]]:
+		var f: Node3D = Fixture.new()
+		f.name = spec[0]
+		f.kind = "Downlight"
+		f.tilt = -90.0
+		f.beam_degrees = 70.0
+		f.lumens = 3000.0
+		f.kelvin = spec[2]
+		f.position = Vector3(spec[1], 3.4, -1.0)
+		GnScene.add_node(f, root, "Add %s" % spec[0])
+	await _frames(main, 4)
+	var cam := _camera("Room", Vector3(0, 1.7, 5.5), Vector3(0, 1.4, -3), 60.0)
+	await _frames(main, 4)
+	var size := Vector2i(640, 360)
+	var passes: Array = GnPasses.PASSES + GnPhotoreal.EXTRA_PASSES
+	var r: Dictionary = await GnPhotoreal.render_stills([cam], size, "cycles", "Draft", main, func(_s): pass,
+		{"light_mix": true, "passes": passes, "exr": true})
+	check(r.state == "done", "mix: the render for the mixer is made (%s %s)" % [r.state, r.error])
+	if r.state != "done":
+		return
+	var names := (r.paths as Array).map(func(p): return str(p).get_file())
+	print("LAB mix outputs: %s" % ", ".join(names))
+	for p in passes:
+		var file := "Room_%s.png" % p
+		var img: Image = Image.load_from_file(ProjectSettings.globalize_path(GnPaths.at(GnRender.OUTPUT_DIR) + "/" + file)) if file in names else null
+		check(img != null and img.get_size() == size, "passes: %s is written" % p)
+		if img:
+			img.save_png(_out.path_join("pass_%s.png" % p))
+	var exr := (r.paths as Array).filter(func(p): return str(p).ends_with(".exr"))
+	var exr_ok := false
+	if not exr.is_empty():
+		var bytes := FileAccess.get_file_as_bytes(ProjectSettings.globalize_path(exr[0]))
+		# The file names its passes and carries Cryptomatte's manifest (the
+		# header is text between zero bytes).
+		var head := bytes.slice(0, mini(bytes.size(), 400000))
+		for i in head.size():
+			if head[i] == 0:
+				head[i] = 32
+		var text := head.get_string_from_ascii()
+		exr_ok = bytes.size() > 100000 and bytes[0] == 0x76 and bytes[1] == 0x2f and text.contains("CryptoObject") \
+			and text.contains("cryptomatte/") and text.contains("Diffuse Direct") and text.contains("Combined_")
+		print("LAB exr %s: %.1f MB" % [str(exr[0]).get_file(), bytes.size() / 1e6])
+	check(exr_ok, "passes: one EXR file holds every pass, with Cryptomatte")
+	var mix: Dictionary = GnLightMix.of_camera(cam)
+	check(not mix.is_empty(), "mix: the camera has a mix")
+	if mix.is_empty():
+		return
+	print("LAB mix groups: %s" % ", ".join(mix.groups))
+	check("Warm lamp" in mix.groups and "Cool lamp" in mix.groups and "Sky" in mix.groups and "Glowing surfaces" in mix.groups,
+		"mix: the two lamps, the sky and the glowing sign are each a group")
+	var warm_i: int = (mix.groups as Array).find("Warm lamp")
+	var cool_i: int = (mix.groups as Array).find("Cool lamp")
+	# As rendered.
+	var t0 := Time.get_ticks_msec()
+	var err: String = await GnLightMix.blend(str(mix.small), mix.weights, mix.tints, _out.path_join("mix_as_rendered.png"), main)
+	var ms := Time.get_ticks_msec() - t0
+	check(err == "", "mix: a mix is made (%s) in %d ms" % [err, ms])
+	var same := Image.load_from_file(_out.path_join("mix_as_rendered.png"))
+	var rendered := Image.load_from_file(ProjectSettings.globalize_path(r.paths[0]))
+	rendered.resize(same.get_width(), same.get_height(), Image.INTERPOLATE_BILINEAR)
+	var left := Rect2(0.24, 0.64, 0.07, 0.06)       # the floor under the warm lamp
+	var right := Rect2(0.69, 0.64, 0.07, 0.06)      # and under the cool one
+	check(absf(_mean(same, left) - _mean(rendered, left)) < 0.03 and absf(_mean(same, right) - _mean(rendered, right)) < 0.03,
+		"mix: with every slider at 100 %% the mix is the render (%.3f / %.3f against %.3f / %.3f)" % [
+			_mean(same, left), _mean(same, right), _mean(rendered, left), _mean(rendered, right)])
+	# The warm lamp off, the cool one doubled.
+	var w: Array = (mix.weights as Array).duplicate()
+	w[warm_i] = 0.0
+	w[cool_i] = 2.0
+	await GnLightMix.blend(str(mix.small), w, mix.tints, _out.path_join("mix_cool_only.png"), main)
+	var cool := Image.load_from_file(_out.path_join("mix_cool_only.png"))
+	print("LAB mix: floor left %.3f -> %.3f, right %.3f -> %.3f" % [_mean(same, left), _mean(cool, left), _mean(same, right), _mean(cool, right)])
+	check(_mean(cool, left) < _mean(same, left) * 0.6, "mix: turning the warm lamp off darkens the floor under it")
+	check(_mean(cool, right) > _mean(same, right) * 1.15, "mix: doubling the cool lamp brightens the floor under it")
+	# A tint: the cool lamp made red.
+	var tints: Array = (mix.tints as Array).duplicate()
+	tints[cool_i] = Color(1, 0.1, 0.1)
+	await GnLightMix.blend(str(mix.small), mix.weights, tints, _out.path_join("mix_red.png"), main)
+	var red := Image.load_from_file(_out.path_join("mix_red.png"))
+	var px := red.get_pixel(int(red.get_width() * 0.725), int(red.get_height() * 0.67))
+	check(px.r > px.b * 1.5, "mix: a red tint on the cool lamp makes its pool of light red (%s)" % px.to_html(false))
+	# The full-size picture, with the camera's look.
+	mix.weights = w
+	var saved: String = await GnLightMix.save(cam, mix, main)
+	check(saved != "" and FileAccess.file_exists(ProjectSettings.globalize_path(saved)), "mix: the full-size mix is saved (%s)" % saved.get_file())
+	# Onto the scene's lamps.
+	var warm_node: Node = root.get_node("Warm lamp")
+	var cool_node: Node = root.get_node("Cool lamp")
+	var n: int = GnLightMix.apply_to_lights(mix)
+	check(n == 2 and is_equal_approx(float(cool_node.lumens), 6000.0) and float(warm_node.lumens) <= 1.0,
+		"mix: put on the lights, the cool lamp is 6,000 lm and the warm one is out (%d changed, %.0f, %.0f)" % [n, cool_node.lumens, warm_node.lumens])
+	GnHost.undo_redo().undo()
+	check(is_equal_approx(float(cool_node.lumens), 3000.0), "mix: and that is one undo step")

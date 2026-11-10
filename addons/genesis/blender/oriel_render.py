@@ -33,12 +33,17 @@ import time
 import traceback
 import zlib
 
-import bpy
 import numpy as np
-from mathutils import Matrix, Vector
+
+# The light mixer (… --mix mix.json) only blends pictures already rendered:
+# it needs numpy and nothing of Blender, and starts in a fraction of a second.
+MIX = "--mix" in sys.argv
+if not MIX:
+    import bpy
+    from mathutils import Matrix, Vector
 
 SCHEMA = "oriel-job/1"
-BV = bpy.app.version
+BV = bpy.app.version if not MIX else (0, 0, 0)
 
 # --------------------------------------------------------------------------
 # The job, the log and the status file
@@ -69,7 +74,23 @@ def _abs(p):
 STATUS_PATH = _abs(JOB.get("status", "status.json"))
 LOG_PATH = _abs(JOB.get("log", ""))
 OUT_DIR = _abs(JOB.get("out_dir", "out"))
-os.makedirs(OUT_DIR, exist_ok=True)
+if not MIX:
+    os.makedirs(OUT_DIR, exist_ok=True)
+
+
+def _wanted():
+    """Everything the job's renders ask for beyond the picture itself."""
+    want = set()
+    for r in JOB.get("renders", []):
+        want.update(r.get("passes", []))
+        if r.get("exr"):
+            want.add("exr")
+        if r.get("light_mix"):
+            want.add("light_mix")
+    return want
+
+
+WANTED = _wanted()
 
 
 def _redirect_output(path):
@@ -99,7 +120,7 @@ class Status:
         self.data = {
             "schema": SCHEMA, "state": "starting", "stage": "", "progress": 0.0,
             "message": "", "outputs": [], "warnings": [], "error": "",
-            "blender": bpy.app.version_string, "engine": "", "device": "",
+            "blender": bpy.app.version_string if not MIX else "", "engine": "", "device": "",
             "started": time.time(), "updated": time.time(), "eta": -1,
         }
         self._last = 0.0
@@ -146,7 +167,7 @@ class Status:
         self.set(force=False, progress=min(0.999, self._render_base + self._render_span * max(0.0, min(1.0, fraction))))
 
 
-STATUS = Status(STATUS_PATH)
+STATUS = Status(STATUS_PATH) if not MIX else None
 
 _SAMPLE_RX = [
     re.compile(r"Sample (\d+)/(\d+)"),
@@ -167,7 +188,8 @@ def _on_stats(stats, *_):
 
 
 try:
-    bpy.app.handlers.render_stats.append(_on_stats)
+    if not MIX:
+        bpy.app.handlers.render_stats.append(_on_stats)
 except Exception:  # an old Blender without the handler: progress per render only
     pass
 
@@ -176,8 +198,8 @@ except Exception:  # an old Blender without the handler: progress per render onl
 # metres; (x, y, z) in the editor is (x, -z, y) in Blender.
 # --------------------------------------------------------------------------
 
-C = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
-C_INV = C.inverted()
+C = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1))) if not MIX else None
+C_INV = C.inverted() if not MIX else None
 C3 = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], dtype=np.float64)
 
 
@@ -1036,6 +1058,51 @@ def _instancer_group(base):
 # ----------------------------------------------------------------- lights
 
 _LIGHTS = []
+# The light mixer: Cycles keeps what each group of lights adds to the picture
+# apart, so their brightness and colour can be changed after the render.
+LIGHT_GROUPS = []          # [(key in Blender, the name the user sees)]
+SKY_GROUP = "Sky"
+GLOW_GROUP = "Glowing surfaces"
+
+
+def light_group_of(L):
+    return str(L.get("group") or ("Sun" if L.get("type") == "sun" else "Lights"))
+
+
+def _group_key(label):
+    for key, name in LIGHT_GROUPS:
+        if name == label:
+            return key
+    return ""
+
+
+def setup_light_groups():
+    """One group per name among the lights, one for the sky and one for
+    everything that glows (screens, lamps' lenses, signs)."""
+    LIGHT_GROUPS.clear()
+    if "light_mix" not in WANTED or ENGINE != "cycles":
+        return
+    vl = bpy.context.scene.view_layers[0]
+    if not hasattr(vl, "lightgroups"):
+        warn_once("lightgroups", "this Blender has no light groups (3.2 or newer has), so there is nothing to mix")
+        return
+    labels = []
+    for L in SCENE.get("lights", []):
+        g = light_group_of(L)
+        if g not in labels:
+            labels.append(g)
+    labels += [SKY_GROUP, GLOW_GROUP]
+    for i, label in enumerate(labels):
+        key = "g%02d" % i
+        vl.lightgroups.add(name=key)
+        LIGHT_GROUPS.append((key, label))
+    for o in bpy.data.objects:
+        if o.type not in ("LIGHT", "CAMERA", "EMPTY"):
+            try:
+                o.lightgroup = _group_key(GLOW_GROUP)
+            except Exception:
+                pass
+    log("light groups: %s" % ", ".join(n for _, n in LIGHT_GROUPS))
 
 
 def _window(d, rng):
@@ -1171,24 +1238,48 @@ def build_lights(lights):
         o.matrix_world = view_matrix(L["matrix"])
         bpy.context.scene.collection.objects.link(o)
         _LIGHTS.append(o)
+        group = _group_key(light_group_of(L))
+        if group:
+            o.lightgroup = group
         # The editor lets a light show stronger in haze than it lights things
         # (its volumetric fog energy). Eevee has the same factor; for Cycles a
         # twin light makes up the difference, seen by the haze only.
         vf = float(L.get("volume", 1.0))
-        if ENGINE == "cycles" and vf > 1.01 and t in ("spot", "point", "area"):
+        if ENGINE == "cycles" and vf > 1.01 and t in ("spot", "point", "area") and _HAZE:
             twin = data.copy()
             twin.name = data.name + "_haze"
             twin.energy = data.energy * (vf - 1.0)
             to = bpy.data.objects.new(twin.name, twin)
             to.matrix_world = o.matrix_world
+            if group:
+                to.lightgroup = group
             for attr in ("visible_camera", "visible_diffuse", "visible_glossy", "visible_transmission"):
                 try:
                     setattr(to, attr, False)
                 except Exception:
                     pass
             bpy.context.scene.collection.objects.link(to)
+            _only_lights_haze(to)
             _LIGHTS.append(to)
     log("lights: %d" % len(_LIGHTS))
+
+
+def _only_lights_haze(light_obj):
+    """Light linking (Blender 4.0 and newer): the twin lights the haze and
+    nothing else, so Cycles does not spend its light samples on it when it
+    shades a surface. (It is many times brighter than the light it twins, and
+    without this most of a surface's samples would go to a light that cannot
+    light it.)"""
+    try:
+        coll = bpy.data.collections.get("oriel_haze_only")
+        if coll is None:
+            coll = bpy.data.collections.new("oriel_haze_only")
+        for hz in _HAZE:
+            if hz.name not in coll.objects:
+                coll.objects.link(hz)
+        light_obj.light_linking.receiver_collection = coll
+    except Exception:
+        pass
 
 
 # ----------------------------------------------------------------- the sky
@@ -1240,6 +1331,8 @@ def build_world(w):
     nt.links.new(colour, bg.inputs["Color"])
     nt.links.new(fac.outputs[0], bg.inputs["Strength"])
     nt.links.new(bg.outputs[0], outn.inputs["Surface"])
+    if _group_key(SKY_GROUP):
+        world.lightgroup = _group_key(SKY_GROUP)
 
 
 def _direction(nt):
@@ -1596,15 +1689,48 @@ def setup_engine():
     vl.use_pass_combined = True
     vl.use_pass_z = True
     vl.use_pass_normal = True
+    _enable_passes(vl)
     st = sc.render.image_settings
     if hasattr(st, "media_type"):          # Blender 5: a multilayer file is a media type
         st.media_type = "MULTI_LAYER_IMAGE"
     st.file_format = "OPEN_EXR_MULTILAYER"
     st.color_depth = "32"
     try:
-        st.exr_codec = "NONE"
+        # A file the user keeps (all passes, Cryptomatte) is packed, losslessly.
+        st.exr_codec = "ZIP" if "exr" in WANTED else "NONE"
     except Exception:
         pass
+
+
+# What each compositing pass needs switched on in the view layer.
+PASS_SWITCHES = {
+    "ao": ("use_pass_ambient_occlusion",),
+    "diffuse": ("use_pass_diffuse_direct", "use_pass_diffuse_indirect", "use_pass_diffuse_color"),
+    "albedo": ("use_pass_diffuse_color",),
+    "reflection": ("use_pass_glossy_direct", "use_pass_glossy_indirect", "use_pass_glossy_color"),
+    "emission": ("use_pass_emit",),
+}
+# In the file for compositing: all of those, and what a compositor asks for.
+EXR_SWITCHES = ("use_pass_transmission_direct", "use_pass_transmission_indirect", "use_pass_transmission_color",
+                "use_pass_environment", "use_pass_shadow", "use_pass_mist", "use_pass_position", "use_pass_uv",
+                "use_pass_cryptomatte_object", "use_pass_cryptomatte_material", "use_pass_object_index")
+
+
+def _enable_passes(vl):
+    switches = set()
+    for name, attrs in PASS_SWITCHES.items():
+        if name in WANTED or "exr" in WANTED:
+            switches.update(attrs)
+    if "exr" in WANTED:
+        switches.update(EXR_SWITCHES)
+    for attr in sorted(switches):
+        for holder in (vl, getattr(vl, "eevee", None), getattr(vl, "cycles", None)):
+            if holder is not None and hasattr(holder, attr):
+                try:
+                    setattr(holder, attr, True)
+                except Exception:
+                    pass
+                break
 
 
 def _has_denoiser():
@@ -1733,13 +1859,18 @@ def _render(path):
         raise RuntimeError("Blender rendered nothing to %s" % path)
 
 
-def render_layers(name):
-    """One render of the current camera into {'rgba', 'depth', 'normal'}."""
+def render_layers(name, keep=""):
+    """One render of the current camera into {'rgba', 'depth', 'normal'}, and
+    'raw': every channel Blender wrote. `keep`: where the file itself (all
+    passes, for a compositing program) is to stay."""
     path = os.path.join(JOB_DIR, "tmp_%s.exr" % name)
     _render(path)
     layers = read_exr(path)
     try:
-        os.remove(path)
+        if keep:
+            os.replace(path, keep)
+        else:
+            os.remove(path)
     except OSError:
         pass
     r = find_channel(layers, "Combined.R", "R")
@@ -1752,7 +1883,20 @@ def render_layers(name):
     normal = None
     if nx is not None:
         normal = np.stack([nx, find_channel(layers, "Normal.Y"), find_channel(layers, "Normal.Z")], axis=-1)
-    return {"rgba": rgba, "depth": depth, "normal": normal}
+    return {"rgba": rgba, "depth": depth, "normal": normal, "raw": layers}
+
+
+def layer_rgb(raw, *names):
+    """A pass's colour (h, w, 3) by any of its names in Blender's files."""
+    for n in names:
+        r = find_channel(raw, n + ".R")
+        if r is not None:
+            g, b = find_channel(raw, n + ".G"), find_channel(raw, n + ".B")
+            return np.stack([r, g if g is not None else r, b if b is not None else r], axis=-1)
+        v = find_channel(raw, n + ".V", n + ".X")
+        if v is not None:
+            return np.stack([v, v, v], axis=-1)
+    return None
 
 
 def view_directions(cam, w, h):
@@ -1775,12 +1919,12 @@ def view_directions(cam, w, h):
     return dirs / np.linalg.norm(dirs, axis=-1, keepdims=True)
 
 
-def apply_fog(rgb, depth, dirs, fog):
-    """Godot's depth fog, where the editor applies it: on linear light before
-    exposure and the tone curve."""
-    if not fog or float(fog.get("density", 0.0)) <= 0.0:
-        return rgb
-    h, w = rgb.shape[:2]
+def fog_terms(depth, dirs, fog):
+    """Godot's depth fog as two pictures: how much of it lies over each pixel
+    (h, w, 1) and its colour there (h, w, 3). None when there is no fog."""
+    if not fog or float(fog.get("density", 0.0)) <= 0.0 or depth is None:
+        return None
+    h, w = depth.shape[:2]
     rho = float(fog["density"])
     flat = dirs.reshape(-1, 3)
     colour = np.tile(np.array(col3(fog.get("color"), (0.5, 0.6, 0.7))) * float(fog.get("energy", 1.0)), (h * w, 1))
@@ -1794,8 +1938,6 @@ def apply_fog(rgb, depth, dirs, fog):
         amount = np.power(np.clip(flat @ sd, 0, 1), 8.0)[:, None]
         colour = colour + np.array(col3(sun.get("color"))) * float(sun.get("energy", 1.0)) * amount * scatter
     colour = colour.reshape(h, w, 3)
-    if depth is None:
-        return rgb
     sky = depth > 1e9
     dist = np.where(sky, 0.0, depth)
     # Blender's Z pass is distance along the view axis; Godot's fog uses the
@@ -1812,6 +1954,16 @@ def apply_fog(rgb, depth, dirs, fog):
         vfog = 1.0 - np.exp(np.minimum(0.0, (z - float(fog.get("height", 0.0))) * hd))
         amount = np.maximum(amount, vfog)
     amount = np.where(sky, float(fog.get("sky_affect", 1.0)), amount)[..., None]
+    return amount.astype(np.float32), colour.astype(np.float32)
+
+
+def apply_fog(rgb, depth, dirs, fog):
+    """Godot's depth fog, where the editor applies it: on linear light before
+    exposure and the tone curve."""
+    terms = fog_terms(depth, dirs, fog)
+    if terms is None:
+        return rgb
+    amount, colour = terms
     return rgb * (1 - amount) + colour * amount
 
 
@@ -1933,15 +2085,10 @@ def to_srgb(c):
     return np.where(c < 0.0031308, 12.92 * c, 1.055 * np.power(c, 1.0 / 2.4) - 0.055)
 
 
-def finish(layers, cam, post, fog, keep_alpha=False):
-    """Linear render -> the editor's grading -> 8-bit sRGB."""
-    rgba = layers["rgba"]
-    rgb = rgba[..., :3].astype(np.float32)
+def grade(rgb, post, alpha=None):
+    """Linear light (fog already on it) -> exposure, glow, the editor's tone
+    curve and adjustments -> 8-bit sRGB."""
     h, w = rgb.shape[:2]
-    if fog and float(fog.get("density", 0.0)) > 0 and layers.get("depth") is not None:
-        dirs = view_directions(cam, w, h) if cam.data.type != "PANO" else layers.get("dirs")
-        if dirs is not None:
-            rgb = apply_fog(rgb, layers["depth"], dirs, fog)
     rgb = rgb * float(post.get("exposure", 1.0))
     white = float(post.get("white", 1.0))
     rgb, soft = apply_glow(rgb, post.get("glow"), white)
@@ -1965,11 +2112,23 @@ def finish(layers, cam, post, fog, keep_alpha=False):
         d = np.mod(171.0 * xx + 231.0 * yy, np.array([103.0, 71.0, 97.0])[:, None, None])
         d = np.moveaxis(d / np.array([103.0, 71.0, 97.0])[:, None, None], 0, -1)
         rgb = rgb + (d - 0.5) / 255.0
-    out8 = np.clip(np.round(rgb * 255.0), 0, 255).astype(np.uint8)
-    if keep_alpha:
-        a = np.clip(np.round(rgba[..., 3] * 255.0), 0, 255).astype(np.uint8)
+    out8 = np.clip(np.round(np.nan_to_num(rgb) * 255.0), 0, 255).astype(np.uint8)
+    if alpha is not None:
+        a = np.clip(np.round(alpha * 255.0), 0, 255).astype(np.uint8)
         out8 = np.concatenate([out8, a[..., None]], axis=-1)
     return out8
+
+
+def finish(layers, cam, post, fog, keep_alpha=False):
+    """Linear render -> the editor's grading -> 8-bit sRGB."""
+    rgba = layers["rgba"]
+    rgb = rgba[..., :3].astype(np.float32)
+    h, w = rgb.shape[:2]
+    if fog and float(fog.get("density", 0.0)) > 0 and layers.get("depth") is not None:
+        dirs = view_directions(cam, w, h) if cam.data.type != "PANO" else layers.get("dirs")
+        if dirs is not None:
+            rgb = apply_fog(rgb, layers["depth"], dirs, fog)
+    return grade(rgb, post, rgba[..., 3] if keep_alpha else None)
 
 
 # --------------------------------------------------------------------------
@@ -2002,15 +2161,25 @@ def do_still(r, idx):
     ov = _apply_overrides(r)
     cam = make_camera(r["camera"], r["size"])
     clay = _clay_override(r.get("clay"))
-    layers = render_layers("r%d" % idx)
+    path = _out_path(r["out"])
+    base = os.path.splitext(path)[0]
+    exr = base + "_passes.exr" if r.get("exr") else ""
+    layers = render_layers("r%d" % idx, exr)
     _clear_override(clay)
     fog = ov.get("fog", SCENE.get("fog"))
     post = dict(SCENE.get("post", {}))
     post.update(r.get("post", {}))
     img = finish(layers, cam, post, fog)
-    path = _out_path(r["out"])
     write_png(path, img)
     STATUS.output(path)
+    if exr and os.path.exists(exr):
+        STATUS.output(exr)
+    if r.get("light_mix"):
+        try:
+            write_mix(layers, cam, post, fog, base)
+        except Exception as e:
+            traceback.print_exc()
+            STATUS.warn("the light mixer's data could not be made (%s)" % e)
     for p in r.get("passes", []):
         _write_pass(p, layers, cam, r, idx)
     _restore_overrides(ov)
@@ -2043,9 +2212,42 @@ def _write_pass(name, layers, cam, r, idx):
         img = _override_pass(name, r, idx)
         if img is not None:
             write_png(path, img)
+    elif name in ("ao", "diffuse", "reflection", "emission", "albedo"):
+        img = _light_pass(name, layers.get("raw") or {}, r)
+        if img is None:
+            warn_once("pass:" + name, "the %s pass is not made by this renderer" % name)
+            return
+        write_png(path, img)
     else:
         return
     STATUS.output(path)
+
+
+def _light_pass(name, raw, r):
+    """The passes a render gives for nothing: what each kind of light path
+    put into the picture. Light is graded as the picture is, so the passes
+    sit together; colours and occlusion are written as they are."""
+    post = dict(SCENE.get("post", {}))
+    post.update(r.get("post", {}))
+    post["glow"] = None
+    post["dither"] = False
+    if name == "ao":
+        ao = layer_rgb(raw, "AO", "Ambient Occlusion")
+        return None if ao is None else np.round(np.clip(to_srgb(ao), 0, 1) * 255).astype(np.uint8)
+    if name == "albedo":
+        c = layer_rgb(raw, "DiffCol", "Diffuse Color")
+        return None if c is None else np.round(np.clip(to_srgb(c), 0, 1) * 255).astype(np.uint8)
+    if name == "emission":
+        e = layer_rgb(raw, "Emit", "Emission")
+        return None if e is None else grade(e, post)
+    kinds = {"diffuse": ("Diff", "Diffuse"), "reflection": ("Gloss", "Glossy")}[name]
+    direct = layer_rgb(raw, kinds[0] + "Dir", kinds[1] + " Direct")
+    indirect = layer_rgb(raw, kinds[0] + "Ind", kinds[1] + " Indirect")
+    colour = layer_rgb(raw, kinds[0] + "Col", kinds[1] + " Color")
+    if direct is None:
+        return None
+    light = direct + (indirect if indirect is not None else 0.0)
+    return grade(light * (colour if colour is not None else 1.0), post)
 
 
 _OVERRIDE_MATS = {}
@@ -2137,6 +2339,133 @@ def _override_pass(kind, r, idx):
     post = SCENE.get("post", {})
     cam = sc.camera
     return finish(layers, cam, post, SCENE.get("fog"))
+
+
+# ----------------------------------------------------------------- the light mixer
+
+
+def _mean_filter(a, r):
+    """The mean over a (2r + 1) square around each pixel, edges repeated."""
+    out = a.astype(np.float64)
+    for axis in (0, 1):
+        c = np.cumsum(out, axis=axis)
+        pad = [(0, 0)] * out.ndim
+        pad[axis] = (r + 1, r)
+        c = np.pad(c, pad, mode="edge")
+        n = out.shape[axis]
+        # Past the far edge the running sum keeps growing by the edge value.
+        if r > 0:
+            edge = np.take(out, [n - 1], axis=axis)
+            steps = np.arange(1, r + 1).reshape([-1 if k == axis else 1 for k in range(out.ndim)])
+            tail = np.take(c, [r + n], axis=axis) + edge * steps
+            idx = [slice(None)] * out.ndim
+            idx[axis] = slice(r + 1 + n, 2 * r + 1 + n)
+            c[tuple(idx)] = tail
+            head = [slice(None)] * out.ndim
+            head[axis] = slice(0, r + 1)
+            first = np.take(out, [0], axis=axis)
+            back = np.arange(-r, 1).reshape([-1 if k == axis else 1 for k in range(out.ndim)])
+            c[tuple(head)] = first * back
+        hi = np.take(c, np.arange(2 * r + 1, 2 * r + 1 + n), axis=axis)
+        lo = np.take(c, np.arange(0, n), axis=axis)
+        out = (hi - lo) / (2 * r + 1)
+    return out
+
+
+def _guided(guide, stats, p, r, eps):
+    """He, Sun and Tang's guided filter: `p` smoothed, keeping the edges of
+    `guide`. `stats` is (mean of guide, its variance), worked out once."""
+    m_i, var_i = stats
+    m_p = _mean_filter(p, r)
+    cov = _mean_filter(guide * p, r) - m_i * m_p
+    a = cov / (var_i + eps)
+    b = m_p - a * m_i
+    return _mean_filter(a, r) * guide + _mean_filter(b, r)
+
+
+def write_mix(layers, cam, post, fog, base):
+    """What each group of lights adds to the picture, kept as its share of
+    the finished (denoised) picture at every pixel. The shares come from the
+    noisy per-group passes, smoothed along the picture's own edges, so a mix
+    is as clean as the render."""
+    raw = layers.get("raw") or {}
+    groups = []
+    for key, label in LIGHT_GROUPS:
+        g = layer_rgb(raw, "Combined_" + key)
+        if g is not None:
+            groups.append((label, np.maximum(g.astype(np.float32), 0.0)))
+    if len(groups) < 2:
+        STATUS.warn("there was only one group of lights, so there is nothing to mix")
+        return
+    D = np.maximum(layers["rgba"][..., :3].astype(np.float32), 0.0)
+    h, w = D.shape[:2]
+    total = np.zeros_like(D)
+    for _, g in groups:
+        total += g
+    # Groups that put nothing into this picture are left out.
+    energy = [float(g.mean()) for _, g in groups]
+    floor = max(sum(energy), 1e-12) * 1e-4
+    groups = [(n, g) for (n, g), e in zip(groups, energy) if e > floor]
+    # Each group's light is smoothed along the finished picture's edges and
+    # only then turned into a share: a lamp's own pass can be mostly black
+    # pixels with a few bright ones, and the share of each pixel on its own
+    # would then be wrong almost everywhere.
+    guide = np.log1p(D.mean(axis=-1).astype(np.float64) * 4.0)
+    r = max(3, int(round(max(h, w) / 160.0)))
+    m_i = _mean_filter(guide, r)
+    stats = (m_i, _mean_filter(guide * guide, r) - m_i * m_i)
+    smooth = np.empty((len(groups), h, w, 3), dtype=np.float32)
+    for gi, (_, g) in enumerate(groups):
+        for c in range(3):
+            smooth[gi, ..., c] = np.maximum(_guided(guide, stats, g[..., c].astype(np.float64), r, 1e-3), 0.0)
+    ssum = smooth.sum(axis=0, keepdims=True)
+    shares = np.where(ssum > 1e-7, smooth / np.maximum(ssum, 1e-7), 1.0 / len(groups)).astype(np.float32)
+    del smooth
+    extra = {}
+    if fog and float(fog.get("density", 0.0)) > 0 and layers.get("depth") is not None and cam.data.type != "PANO":
+        terms = fog_terms(layers["depth"], view_directions(cam, w, h), fog)
+        if terms is not None:
+            extra = {"fog_amount": terms[0].astype(np.float16), "fog_colour": terms[1].astype(np.float16)}
+    names = json.dumps([n for n, _ in groups])
+    keep = dict(post)
+    for suffix, step in (("", 1), ("_small", max(1, int(math.ceil(w / 800.0))))):
+        sl = (slice(None, None, step), slice(None, None, step))
+        data = {"D": np.minimum(D[sl], 6e4).astype(np.float16), "F": shares[(slice(None),) + sl].astype(np.float16),
+                "names": np.array(names), "post": np.array(json.dumps(keep))}
+        for k, v in extra.items():
+            data[k] = v[sl]
+        path = "%s_mix%s.npz" % (base, suffix)
+        with open(path + ".part", "wb") as f:
+            np.savez_compressed(f, **data)
+        os.replace(path + ".part", path)
+        STATUS.output(path)
+    # What the mixer's window needs to know, readable without numpy.
+    info = "%s_mix.json" % base
+    with open(info + ".part", "w", encoding="utf-8") as f:
+        json.dump({"groups": [n for n, _ in groups], "size": [w, h]}, f)
+    os.replace(info + ".part", info)
+    STATUS.output(info)
+    log("light mix: %d groups (%s)" % (len(groups), ", ".join(n for n, _ in groups)))
+
+
+def mix_main():
+    """… --mix mix.json: {"data": the .npz, "weights": [per group], "tints":
+    [[r, g, b] per group], "out": the PNG}. The same grading as the render."""
+    P = JOB
+    z = np.load(_abs(P["data"]), allow_pickle=False)
+    D = z["D"].astype(np.float32)
+    F = z["F"].astype(np.float32)
+    n = F.shape[0]
+    weights = np.array((list(P.get("weights", [])) + [1.0] * n)[:n], dtype=np.float32)
+    tints = np.array((list(P.get("tints", [])) + [[1.0, 1.0, 1.0]] * n)[:n], dtype=np.float32)
+    gain = np.einsum("ghwc,gc->hwc", F, weights[:, None] * tints)
+    rgb = D * gain
+    if "fog_amount" in z:
+        a = z["fog_amount"].astype(np.float32)
+        rgb = rgb * (1.0 - a) + z["fog_colour"].astype(np.float32) * a
+    post = json.loads(str(z["post"]))
+    post.update(P.get("post", {}))
+    write_png(_abs(P["out"]), grade(rgb, post))
 
 
 # ----------------------------------------------------------------- panoramas
@@ -2441,12 +2770,13 @@ def main():
     apply_object_flags()
     fix_materials()
     build_instancers()
+    build_texts()
+    build_haze(SCENE.get("haze"))
+    setup_engine()
+    setup_light_groups()        # before the lights and the sky, which join their groups as they are made
     build_lights(SCENE.get("lights", []))
     build_world(SCENE.get("world", {}))
     prepare_sky_sample()
-    build_haze(SCENE.get("haze"))
-    build_texts()
-    setup_engine()
     if JOB.get("bake_probes"):
         bake_probes(SCENE.get("bounds"))
     renders = JOB.get("renders", [])
@@ -2473,6 +2803,15 @@ def main():
     log("done in %.1f s" % (time.time() - t0))
 
 
+if MIX:
+    try:
+        mix_main()
+    except Exception:
+        traceback.print_exc()
+        sys.stdout.flush()
+        os._exit(1)
+    sys.stdout.flush()
+    os._exit(0)
 try:
     main()
 except SystemExit:

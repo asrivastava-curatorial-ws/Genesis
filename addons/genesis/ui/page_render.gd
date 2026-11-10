@@ -16,8 +16,14 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
 const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
+const GnLightMix := preload("res://addons/genesis/core/gn_light_mix.gd")
+const LightMixDialog := preload("res://addons/genesis/ui/gn_light_mix_dialog.gd")
 
 var _renderer: OptionButton
+var _mix_button: Button
+var _mix_open: Button
+var _mix_note: Label
+var _mix_dialog: LightMixDialog
 var _engine_note: Label
 var _camera: OptionButton
 var _size: OptionButton
@@ -58,7 +64,8 @@ func _init() -> void:
 	# built into the program and run in the background.
 	_renderer = GnUi.option(self, "Renderer", RENDERERS.keys(), func(t):
 		GnHost.set_setting("renderer", RENDERERS.get(t, "godot"))
-		_fill_quality())
+		_fill_quality()
+		_refresh_mix())
 	_renderer.tooltip_text = "Real-time: what the 3D view shows, in seconds.\nEevee: Blender's fast photoreal engine; soft light, reflections, in a minute or so.\nCycles: Blender's path tracer; light bounces as it really does, the most realistic, slower."
 	for label in RENDERERS:
 		if RENDERERS[label] == GnPhotoreal.renderer():
@@ -91,7 +98,15 @@ func _init() -> void:
 	_tour_button = GnUi.button(self, "Virtual tour of every camera", _tour, "globe")
 	_tour_button.tooltip_text = "One web page that opens in any browser, and in a VR headset's"
 	_passes_button = GnUi.button(self, "Render passes for compositing", _passes, "layers")
-	_passes_button.tooltip_text = "Depth, normals, object ID, mask and clay, as separate pictures"
+	_passes_button.tooltip_text = "Depth, normals, object ID, mask and clay, as separate pictures. Eevee and Cycles add occlusion, diffuse, reflection, emission and colour, and one EXR file with every pass and Cryptomatte."
+	# The light mixer (Cycles): each group of lights kept apart in the render,
+	# to dim, brighten or tint afterwards without rendering again.
+	GnUi.heading(self, "Light mixer")
+	_mix_note = GnUi.note(self, "")
+	_mix_button = GnUi.button(self, "Render for the light mixer", _render_mix, "sliders")
+	_mix_button.tooltip_text = "A Cycles render that keeps the sun, the sky and each group of lamps apart, so their brightness and colour can be changed afterwards"
+	_mix_open = GnUi.button(self, "Open the light mixer", _open_mix, "sliders")
+	_camera.item_selected.connect(func(_i): _refresh_mix())
 	# AI upscaling: a 4K still to 8K in seconds rather than rendering 8K.
 	_upscale_factor = GnUi.option(self, "AI upscale", ["×2", "×4"], func(_t): pass)
 	_upscale_button = GnUi.button(self, "AI upscale the last render", _upscale, "wand")
@@ -120,6 +135,53 @@ func refresh() -> void:
 	if _camera.item_count == 0:
 		_result.text = "Save a view on the Cameras tab first."
 	_fill_quality()
+	_refresh_mix()
+
+
+func _selected_camera() -> Camera3D:
+	var cams := GnCameras.cameras()
+	return cams[_camera.selected] if _camera.selected >= 0 and _camera.selected < cams.size() else null
+
+
+func _refresh_mix() -> void:
+	var cycles := _engine() == "cycles" and GnBlender.available()
+	var cam := _selected_camera()
+	_mix_button.disabled = cam == null or not cycles
+	_mix_open.disabled = cam == null or GnLightMix.of_camera(cam).is_empty()
+	_mix_note.text = "Change the lights after the render: how bright each group is, and its colour." if cycles \
+		else "Choose Cycles as the renderer to render for the light mixer."
+
+
+func _render_mix() -> void:
+	var cam := _selected_camera()
+	if cam == null:
+		return
+	if GnPhotoreal.unsupported(cam) != "":
+		_result.text = GnPhotoreal.unsupported(cam)
+		return
+	var size: Vector2i = GnRender.SIZES[_size.get_item_text(_size.selected)]
+	_busy(true)
+	var r: Dictionary = await GnPhotoreal.render_stills([cam], size, "cycles", GnPhotoreal.quality_of("cycles"), self, _say,
+		{"light_mix": true})
+	_busy(false)
+	_report(r, "render")
+	_refresh_mix()
+	if r.state == "done" and not GnLightMix.of_camera(cam).is_empty():
+		_open_mix()
+	elif r.state == "done":
+		_result.text += " There was only one group of lights in the picture, so there is nothing to mix."
+
+
+func _open_mix() -> void:
+	var cam := _selected_camera()
+	if cam == null:
+		return
+	if _mix_dialog == null:
+		_mix_dialog = LightMixDialog.new()
+		_mix_dialog.saved.connect(func(path): _last_path = path; _result.text = "Saved %s" % GnUi.shown(path))
+		add_child(_mix_dialog)
+	if not _mix_dialog.open(cam):
+		_result.text = "Render %s for the light mixer first." % cam.name
 
 
 func _engine() -> String:
@@ -151,7 +213,7 @@ func _photoreal() -> bool:
 
 
 func _busy(on: bool) -> void:
-	for b in [_button, _all_button, _study_button, _pano_button, _tour_button, _passes_button]:
+	for b in [_button, _all_button, _study_button, _pano_button, _tour_button, _passes_button, _mix_button]:
 		b.disabled = on or _camera.item_count == 0
 	_all_button.disabled = on or _camera.item_count < 2
 	_stop.visible = on and _photoreal()
@@ -278,11 +340,13 @@ func _passes() -> void:
 	if _photoreal() and GnPhotoreal.unsupported(cam) == "":
 		_busy(true)
 		var r: Dictionary = await GnPhotoreal.render_stills([cam], size, _engine(), GnPhotoreal.quality_of(_engine()), self, _say,
-			{"passes": GnPasses.PASSES})
+			{"passes": GnPasses.PASSES + GnPhotoreal.EXTRA_PASSES, "exr": true})
 		_busy(false)
 		_report(r, "passes")
 		if r.state == "done":
-			_result.text = "Saved the picture and %d passes in %s." % [r.paths.size() - 1, GnUi.shown(GnPaths.at(GnRender.OUTPUT_DIR))]
+			var exr := (r.paths as Array).filter(func(p): return str(p).ends_with(".exr"))
+			_result.text = "Saved the picture, %d passes%s in %s." % [r.paths.size() - 1 - exr.size(),
+				" and one EXR file with every pass and Cryptomatte" if not exr.is_empty() else "", GnUi.shown(GnPaths.at(GnRender.OUTPUT_DIR))]
 		return
 	_passes_button.disabled = true
 	_result.text = "Rendering passes…"

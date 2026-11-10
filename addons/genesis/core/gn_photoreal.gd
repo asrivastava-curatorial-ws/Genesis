@@ -28,6 +28,11 @@ const QUALITY := {
 	"cycles": {"Draft": 32, "Good": 128, "High": 512, "Best": 1536},
 }
 const QUALITY_NAMES := ["Draft", "Good", "High", "Best"]
+## The passes Eevee and Cycles give beyond the editor's five (gn_passes.gd).
+const EXTRA_PASSES := ["ao", "diffuse", "reflection", "emission", "albedo"]
+## The light mixer's data for a camera, beside its renders: the full picture and a small one to mix live.
+const LIGHT_MIX_SUFFIX := "_lightmix.npz"
+const LIGHT_MIX_SMALL_SUFFIX := "_lightmix_small.npz"
 
 ## The render running now, so it can be stopped.
 static var running: GnBlender.Job = null
@@ -73,7 +78,9 @@ static func _export(tag: String) -> Dictionary:
 
 
 ## Renders `cameras` (each a Camera3D) at `size`. `options`:
-##   passes: ["depth", "normal", "id", "mask", "clay"]  also write these
+##   passes: ["depth", "normal", "id", "mask", "clay", "ao", ...]  also write these
+##   exr: true                 also keep every pass in one EXR file, with Cryptomatte
+##   light_mix: true           (Cycles) keep each group of lights apart, for the light mixer
 ##   hours:  [9.0, 12.0, 15.0]                          a sun study per camera
 ##   names:  ["...png"]                                  file names, one per picture
 ## `progress` gets a status line. Returns {"paths": [...], "error": "",
@@ -97,6 +104,7 @@ static func render_stills(cameras: Array, size: Vector2i, engine: String, qualit
 		for h in (hours if not hours.is_empty() else [null]):
 			var r := {"kind": "still", "camera": spec, "size": [size.x, size.y], "post": post,
 				"clay": bool(look.get("clay", false)), "passes": options.get("passes", []),
+				"exr": bool(options.get("exr", false)), "light_mix": bool(options.get("light_mix", false)) and engine == "cycles",
 				"label": "Rendering %s" % cam.name}
 			var dest := ""
 			if h != null:
@@ -120,12 +128,21 @@ static func render_stills(cameras: Array, size: Vector2i, engine: String, qualit
 			var dest: String = f[1]
 			if await _finish_to(out, dest, f[0], f[2], size, host):
 				paths.append(dest)
+				var stem := "%s/%s" % [GnPaths.at(GnRender.OUTPUT_DIR), str(f[0].name).replace(" ", "")]
+				var from: String = str(ex.dir).path_join("out").path_join(str(f[3]).get_basename())
 				for p in options.get("passes", []):
-					var src: String = str(ex.dir).path_join("out").path_join(str(f[3]).get_basename() + "_%s.png" % p)
+					var src: String = from + "_%s.png" % p
 					if FileAccess.file_exists(src):
-						var pass_dest := "%s/%s_%s.png" % [GnPaths.at(GnRender.OUTPUT_DIR), str(f[0].name).replace(" ", ""), p]
+						var pass_dest := "%s_%s.png" % [stem, p]
 						DirAccess.copy_absolute(src, ProjectSettings.globalize_path(pass_dest))
 						paths.append(pass_dest)
+				# The file for a compositing program, and the light mixer's data.
+				for extra in [["_passes.exr", "_%s_passes.exr" % engine], ["_mix.npz", LIGHT_MIX_SUFFIX],
+						["_mix_small.npz", LIGHT_MIX_SMALL_SUFFIX], ["_mix.json", "_lightmix.json"]]:
+					if FileAccess.file_exists(from + extra[0]):
+						var extra_dest: String = stem + extra[1]
+						DirAccess.copy_absolute(from + extra[0], ProjectSettings.globalize_path(extra_dest))
+						paths.append(extra_dest)
 	return {"paths": paths, "error": str(st.get("error", "")), "warnings": ex.warnings + PackedStringArray(st.get("warnings", [])), "state": st.state}
 
 
