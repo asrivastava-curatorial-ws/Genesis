@@ -220,6 +220,8 @@ static func finish_frames(dir: String, shots: Array, film: Dictionary, fps: int,
 
 ## One frame with its recipe on it.
 static func compose(image: Image, other: Texture2D, r: Dictionary, host: Node) -> Image:
+	if DisplayServer.get_name() == "headless":
+		return image
 	var sub := SubViewport.new()
 	sub.size = image.get_size()
 	sub.render_target_update_mode = SubViewport.UPDATE_ALWAYS

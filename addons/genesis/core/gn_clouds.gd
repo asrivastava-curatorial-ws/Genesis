@@ -129,7 +129,7 @@ static func prepare(mat: ShaderMaterial, sun: DirectionalLight3D, host: Node, di
 ## `width` across and half as high, in linear light, lit by `sun` (or by
 ## nothing). Laid out as Godot's photo skies are. Null if it cannot be made.
 static func bake(mat: ShaderMaterial, sun: DirectionalLight3D, width: int, host: Node) -> Image:
-	if mat == null or host == null or not ensure():
+	if mat == null or host == null or DisplayServer.get_name() == "headless" or not ensure():
 		return null
 	if _bake == null:
 		_bake = load(BAKE_SHADER)

@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film, layers. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -58,6 +58,8 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _walk(main, args)
 		"film":
 			await _film(main)
+		"layers":
+			await _layers(main)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -1111,3 +1113,87 @@ static func _write_tone(path: String, seconds: float) -> void:
 	f.store_32(data.size())
 	f.store_buffer(data)
 	f.close()
+
+
+# ------------------------------------------------------------------ layered materials
+# A brick wall with concrete laid over it in patches, then green in its
+# joints: the drawn material must hold both, in about the share asked for,
+# and look the same in every renderer.
+static func _layers(main: Node) -> void:
+	var GnLayers = load("res://addons/genesis/core/gn_material_layers.gd")
+	var GnMaterials = load("res://addons/genesis/core/gn_materials.gd")
+	var root := await _studio(main, "Layer check", false)
+	if root == null:
+		return
+	GnEnvironment.apply("time_of_day", 11.0, false)
+	var wall := _box(root, "Wall", Vector3(6, 3, 0.3), Vector3(0, 1.5, 0))
+	var surf = GnMaterials.surfaces(wall)[0]
+	GnMaterials.apply_preset(surf, "res://genesis_data/materials/brick.tres")
+	var concrete := "res://genesis_data/materials/concrete.tres"
+	var t0 := Time.get_ticks_msec()
+	var err: String = await GnLayers.apply(surf, [{"preset": ""}, {"preset": concrete, "mask": "Patches", "amount": 0.5, "scale": 1.0, "soft": 0.2, "thickness": 0.5, "seed": 2.0}], main)
+	var mat := wall.get_active_material(0) as BaseMaterial3D
+	check(err == "" and GnLayers.is_layered(mat), "layers: two layers are drawn into one material in %.1f s (%s)" % [(Time.get_ticks_msec() - t0) / 1000.0, err])
+	if err != "":
+		return
+	var pic := mat.albedo_texture.get_image()
+	if pic.is_compressed():
+		pic.decompress()
+	pic.save_png(_out.path_join("layered_albedo.png"))
+	mat.normal_texture.get_image().save_png(_out.path_join("layered_normal.png"))
+	var grey := 0
+	var red := 0
+	var n := 0
+	for y in range(0, pic.get_height(), 8):
+		for x in range(0, pic.get_width(), 8):
+			var c := pic.get_pixel(x, y)
+			n += 1
+			if c.r > c.b * 1.35:
+				red += 1
+			elif absf(c.r - c.b) < 0.08:
+				grey += 1
+	print("LAB layers: of the picture, %d%% is brick, %d%% concrete" % [100 * red / n, 100 * grey / n])
+	check(red > n / 5 and grey > n / 5, "layers: at half, the picture is part brick and part concrete (%d%% and %d%%)" % [100 * red / n, 100 * grey / n])
+	# It tiles: the left edge meets the right, the top the bottom.
+	var seam := 0.0
+	var inside := 0.0
+	# (The brick fits a whole number of times across: the middle of the picture is the same place in the brick as its edge.)
+	var half := pic.get_width() / 2
+	for k in range(0, pic.get_height(), 16):
+		seam += absf(pic.get_pixel(0, k).get_luminance() - pic.get_pixel(pic.get_width() - 1, k).get_luminance())
+		inside += absf(pic.get_pixel(half, k).get_luminance() - pic.get_pixel(half - 1, k).get_luminance())
+	check(seam < inside * 2.0 + 1.0, "layers: the picture repeats without a seam (%.2f across the edge, %.2f at the same place inside)" % [seam, inside])
+	var cam := _camera("Wall", Vector3(0, 1.5, 5.5), Vector3(0, 1.5, 0), 50.0)
+	await _frames(main, 4)
+	var pics := await _render(main, cam, "layers", Vector2i(640, 360), "Draft")
+	var grids := {}
+	for e in pics:
+		if not pics[e] is Image:
+			continue
+		var g: Array = []
+		for gy in 8:
+			for gx in 16:
+				var px: Color = (pics[e] as Image).get_pixel(int((0.12 + 0.76 * (gx + 0.5) / 16.0) * 640), int((0.2 + 0.6 * (gy + 0.5) / 8.0) * 360))
+				g.append(px.r - px.b)       # brick is red, concrete is not
+		grids[e] = g
+	for e in grids:
+		if e != "godot" and grids.has("godot"):
+			var r := _correlation(grids["godot"], grids[e])
+			check(r > 0.7, "layers %s: the same patches in the same places as the 3D view (correlation %.2f)" % [e, r])
+	# A third layer, green, in the joints.
+	var layers: Array = GnLayers.of(wall.get_active_material(0)).layers
+	layers.append({"preset": "res://genesis_data/materials/grass.tres", "mask": "In the joints", "amount": 0.9, "scale": 1.0, "soft": 0.3, "thickness": 0.0, "seed": 4.0})
+	err = await GnLayers.apply(surf, layers, main)
+	var pic3 := (wall.get_active_material(0) as BaseMaterial3D).albedo_texture.get_image()
+	if pic3.is_compressed():
+		pic3.decompress()
+	pic3.save_png(_out.path_join("layered_3_albedo.png"))
+	var green := 0
+	for y in range(0, pic3.get_height(), 8):
+		for x in range(0, pic3.get_width(), 8):
+			var c := pic3.get_pixel(x, y)
+			if c.g > c.r * 1.1 and c.g > c.b * 1.1:
+				green += 1
+	check(err == "" and green > n / 200 and green < n / 3, "layers: a third layer lies in the brick's joints (%d%% of the picture is green)" % (100 * green / n))
+	GnLayers.remove(surf)
+	check((wall.get_active_material(0) as BaseMaterial3D).resource_name == "Brick", "layers: taken off, the wall is brick again")

@@ -8,6 +8,7 @@ const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
 const GnWeathering := preload("res://addons/genesis/core/gn_weathering.gd")
 const GnTiles := preload("res://addons/genesis/core/gn_tiles.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
+const GnMaterialLayers := preload("res://addons/genesis/core/gn_material_layers.gd")
 
 var _hint: Label
 var _body: VBoxContainer
@@ -23,6 +24,15 @@ var _weather: HSlider
 var _relief: HSlider
 var _inside: HSlider
 var _solid_glass: CheckBox
+var _layers: Array = []
+var _layers_list: ItemList
+var _layer_preset: OptionButton
+var _layer_mask: OptionButton
+var _layer_sliders := {}
+var _layer_tint: ColorPickerButton
+var _layers_note: Label
+var _layers_timer: Timer
+var _layers_busy := false
 var _list: Array = []
 var _preset_paths: Array[String] = []
 var _tile: HSlider
@@ -95,6 +105,43 @@ func _init() -> void:
 	_tile_timer.timeout.connect(_tile_now)
 	_body.add_child(_tile_timer)
 	_show_tiles(GnTiles.DEFAULTS)
+
+	# One material over another, where a mask says.
+	GnUi.heading(_body, "Layers")
+	_layers_note = GnUi.note(_body, "One material over another: plaster in patches over brick, moss in the joints, bare metal on the raised edges, streaks of damp.")
+	_layers_list = ItemList.new()
+	_layers_list.custom_minimum_size.y = 84
+	_layers_list.item_selected.connect(func(_i): _show_layer())
+	_body.add_child(_layers_list)
+	_layer_preset = GnUi.option(_body, "Lay on", [], func(_t): pass)
+	var lrow := HFlowContainer.new()
+	GnUi.button(lrow, "Add as a layer", _add_layer, "layers_2")
+	GnUi.button(lrow, "Remove the layer", _remove_layer, "trash")
+	GnUi.button(lrow, "Take the layers off", _clear_layers)
+	_body.add_child(lrow)
+	_layer_mask = GnUi.option(_body, "Where it lies", GnMaterialLayers.MASKS, func(t): _set_layer("mask", t))
+	for spec in [["amount", "How much", 0.0, 1.0, 0.01], ["scale", "Pattern size", 0.3, 4.0, 0.05], ["soft", "Soft edge", 0.0, 1.0, 0.01],
+			["thickness", "Thickness", 0.0, 1.0, 0.01]]:
+		var key: String = spec[0]
+		_layer_sliders[key] = GnUi.slider(_body, spec[1], spec[2], spec[3], spec[4], func(v): _set_layer(key, v),
+			func(v): return ("%d%%" % int(v * 100)) if key != "scale" else "%.2f×" % v)
+	var trow := HBoxContainer.new()
+	var tlabel := Label.new()
+	tlabel.text = "Its tint"
+	tlabel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_layer_tint = ColorPickerButton.new()
+	_layer_tint.custom_minimum_size = Vector2(90, 26)
+	_layer_tint.edit_alpha = false
+	_layer_tint.color = Color.WHITE
+	_layer_tint.popup_closed.connect(func(): _set_layer("tint", _layer_tint.color))
+	trow.add_child(tlabel)
+	trow.add_child(_layer_tint)
+	_body.add_child(trow)
+	_layers_timer = Timer.new()
+	_layers_timer.one_shot = true
+	_layers_timer.wait_time = 0.45
+	_layers_timer.timeout.connect(_draw_layers)
+	_body.add_child(_layers_timer)
 
 	GnUi.heading(_body, "Finish")
 	var row := HBoxContainer.new()
@@ -172,8 +219,10 @@ func refresh() -> void:
 
 func _fill_presets() -> void:
 	_preset_paths = GnMaterials.presets()
+	_layer_preset.clear()
 	for i in _preset_paths.size():
 		_presets.add_item(GnMaterials.preset_name(_preset_paths[i]))
+		_layer_preset.add_item(GnMaterials.preset_name(_preset_paths[i]))
 		GnHost.queue_resource_preview(_preset_paths[i], self, "_on_preview", i)
 
 
@@ -195,6 +244,9 @@ func _show_surface() -> void:
 	for c in [_color, _rough, _metal, _opacity, _scale, _relief, _inside]:
 		(c as Control).get_parent().modulate.a = 1.0 if mat else 0.4
 	_solid_glass.disabled = mat == null
+	if not _layers_busy:
+		_layers = GnMaterialLayers.of(mat).get("layers", []) if mat else []
+		_fill_layers()
 	if mat == null:
 		return
 	GnUi.show_value(_relief, GnMaterials.relief_of(mat) * 100.0)
@@ -212,6 +264,107 @@ func _show_surface() -> void:
 		_show_tiles(GnTiles.design(s))
 	if mat.uv1_triplanar:
 		GnUi.show_value(_scale, 1.0 / maxf(mat.uv1_scale.x, 0.0001) / _preset_tile(mat))
+
+
+# ------------------------------------------------------------------ layers
+func _fill_layers() -> void:
+	var keep := _layers_list.get_selected_items()
+	_layers_list.clear()
+	for i in _layers.size():
+		_layers_list.add_item("%d. %s" % [i + 1, GnMaterialLayers.describe(_layers[i], i)])
+	if not _layers.is_empty():
+		_layers_list.select(clampi(keep[0] if not keep.is_empty() else _layers.size() - 1, 0, _layers.size() - 1))
+	_show_layer()
+
+
+func _picked_layer() -> int:
+	var sel := _layers_list.get_selected_items()
+	return sel[0] if not sel.is_empty() and sel[0] < _layers.size() else -1
+
+
+func _show_layer() -> void:
+	var i := _picked_layer()
+	var above := i > 0
+	_layer_mask.disabled = not above
+	for k in _layer_sliders:
+		(_layer_sliders[k] as HSlider).editable = above
+		(_layer_sliders[k] as HSlider).get_parent().modulate.a = 1.0 if above else 0.4
+	_layer_tint.disabled = i < 0
+	if i < 0:
+		return
+	var l: Dictionary = GnMaterialLayers.LAYER.duplicate()
+	l.merge(_layers[i], true)
+	GnUi.select_text(_layer_mask, str(l.mask))
+	for k in _layer_sliders:
+		GnUi.show_value(_layer_sliders[k], float(l[k]))
+	_layer_tint.color = l.tint if l.tint is Color else Color.WHITE
+
+
+func _add_layer() -> void:
+	var s := _surface()
+	if s == null or not s.material() is BaseMaterial3D:
+		_layers_note.text = "Pick a surface first."
+		return
+	if _layer_preset.selected < 0 or _layer_preset.selected >= _preset_paths.size():
+		return
+	if _layers.size() >= GnMaterialLayers.MAX_LAYERS:
+		_layers_note.text = "Four layers is the most."
+		return
+	if _layers.is_empty():
+		# The surface as it is now is the first layer.
+		_layers.append({"preset": ""})
+	var l: Dictionary = GnMaterialLayers.LAYER.duplicate()
+	l.preset = _preset_paths[_layer_preset.selected]
+	l.seed = float(_layers.size())
+	_layers.append(l)
+	_fill_layers()
+	_layers_list.select(_layers.size() - 1)
+	_show_layer()
+	_draw_layers()
+
+
+func _remove_layer() -> void:
+	var i := _picked_layer()
+	if i <= 0:
+		if i == 0:
+			_layers_note.text = "The first layer is the surface itself; Take the layers off returns to it."
+		return
+	_layers.remove_at(i)
+	if _layers.size() <= 1:
+		_clear_layers()
+		return
+	_fill_layers()
+	_draw_layers()
+
+
+func _clear_layers() -> void:
+	var s := _surface()
+	if s:
+		GnMaterialLayers.remove(s)
+	_layers = []
+	_show_surface()
+
+
+func _set_layer(key: String, value: Variant) -> void:
+	var i := _picked_layer()
+	if i < 0 or (i == 0 and key != "tint"):
+		return
+	_layers[i][key] = value
+	_layers_list.set_item_text(i, "%d. %s" % [i + 1, GnMaterialLayers.describe(_layers[i], i)])
+	_layers_timer.start()
+
+
+# The layers drawn again and put on the surface, a moment after the last change.
+func _draw_layers() -> void:
+	var s := _surface()
+	if s == null or _layers.size() < 2 or _layers_busy:
+		return
+	_layers_busy = true
+	_layers_note.text = "Drawing the layers…"
+	var err: String = await GnMaterialLayers.apply(s, _layers.duplicate(true), self)
+	_layers_busy = false
+	_layers_note.text = err if err != "" else "%d layers, drawn into one material: it looks the same in every renderer." % _layers.size()
+	_show_surface()
 
 
 func _apply(index: int) -> void:

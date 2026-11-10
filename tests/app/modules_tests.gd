@@ -595,6 +595,40 @@ func _keys_and_edit(root: Node) -> void:
 		node.free()
 
 
+# Layered materials: what a stack of layers is, before it is drawn.
+func _layered(root: Node) -> void:
+	var GnLayers = load("res://addons/genesis/core/gn_material_layers.gd")
+	var GnMaterials = load("res://addons/genesis/core/gn_materials.gd")
+	var brick := "res://genesis_data/materials/brick.tres"
+	var concrete := "res://genesis_data/materials/concrete.tres"
+	var src: Dictionary = GnLayers.source_from(load(brick))
+	check(src.albedo != null and src.normal != null and absf(float(src.tile) - 0.9) < 0.01, "layers: a preset gives a layer its pictures and its size (%.2f m)" % float(src.tile))
+	var layers := [{"preset": brick}, {"preset": concrete, "mask": "Patches", "amount": 0.4, "tile": 2.0}]
+	var lay: Dictionary = GnLayers.layout(layers, null)
+	check(is_equal_approx(float(lay.tile), 4.0) and is_equal_approx(float(lay.repeats[0]), 4.0) and is_equal_approx(float(lay.repeats[1]), 2.0) and int(lay.size) == 2048,
+		"layers: the whole repeats every 4 m; the brick fits four times across it, the concrete twice")
+	check(GnLayers.describe(layers[0], 0) == "Brick" and GnLayers.describe(layers[1], 1) == "Concrete · patches 40%", "layers: each layer is named for what it is and where it lies")
+	var wall := MeshInstance3D.new()
+	wall.name = "Layer wall"
+	wall.mesh = BoxMesh.new()
+	GnScene.add_node(wall, root, "Add a wall")
+	var surf = GnMaterials.surfaces(wall)[0]
+	GnMaterials.apply_preset(surf, brick)
+	check(not GnLayers.is_layered(wall.get_active_material(0)), "layers: a plain material has none")
+	var err: String = await GnLayers.apply(surf, [{"preset": ""}, layers[1]], self.root)
+	var mat := wall.get_active_material(0) as BaseMaterial3D
+	if err == "":
+		check(GnLayers.is_layered(mat) and mat.albedo_texture != null and mat.normal_enabled and mat.uv1_triplanar and (GnLayers.of(mat).layers as Array).size() == 2,
+			"layers: drawn, the surface has one ordinary material that remembers its layers")
+		GnLayers.remove(surf)
+		check(not GnLayers.is_layered(wall.get_active_material(0)) and (wall.get_active_material(0) as BaseMaterial3D).resource_name == "Brick",
+			"layers: taken off, the surface is the brick it was")
+	else:
+		check(err.contains("could not be drawn") and not GnLayers.is_layered(mat), "layers: where nothing can be drawn (no graphics) the surface is left alone (%s)" % err)
+	GnScene.root().remove_child(wall)
+	wall.free()
+
+
 func _until_live(spec: String, seconds: float) -> bool:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
@@ -724,6 +758,7 @@ func _run() -> void:
 	await _surfaces_and_sky(root)
 	await _walking(root)
 	await _keys_and_edit(root)
+	await _layered(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")
