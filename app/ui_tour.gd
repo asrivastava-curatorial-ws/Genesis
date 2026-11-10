@@ -88,7 +88,7 @@ static func run(main: Node, project: String, out: String, only_docs := false) ->
 	var picker := GnFileDialog.new()
 	picker.title = "Bring in a model"
 	picker.purpose = "model"
-	picker.add_filter("*.glb, *.gltf, *.fbx, *.obj, *.blend", "Models")
+	picker.add_filter("*.glb, *.gltf, *.fbx, *.obj, *.blend, *.ifc, *.usd, *.usdz, *.dae, *.3ds, *.stl, *.ply, *.abc", "Models")
 	picker.use_native_dialog = false
 	main.add_child(picker)
 	GnFileDialog.system_dialogs = false
@@ -120,7 +120,66 @@ static func run(main: Node, project: String, out: String, only_docs := false) ->
 	await _settle(main, 10)
 	await shot(main, out, "console")
 	ws.toggle_console()
+	await _new_in_rc5(main, ws, out, picked)
 	return 0
+
+
+## What 1.0.0-rc5 added: the timeline, the pages' new parts, a thing shown
+## as a box, and Cycles in the 3D view (when the engines are there).
+static func _new_in_rc5(main: Node, ws: Node, out: String, picked: Node) -> void:
+	var panel: Node = ws.genesis_panel
+	# The timeline under the 3D view, with the film's shots and titles.
+	App.actions.run("view.timeline")
+	await _settle(main, 30)
+	await shot(main, out, "timeline")
+	App.actions.run("view.timeline")
+	await _settle(main, 5)
+	# Parts of pages further down than a first look shows.
+	for spot in [["Scene", "A large scene", "page_scene_large"], ["Environment", "Weather", "page_environment_weather"],
+			["Landscape", "Rows and fills", "page_landscape_rows"], ["Materials", "Layers", "page_materials_layers"],
+			["Render", "Light mixer", "page_render_mixer"], ["Movie", "The edit", "page_movie_edit"]]:
+		panel.show_section(spot[0])
+		await _settle(main, 20)
+		var page: Control = panel.page_named(spot[0])
+		if spot[0] == "Scene" and page and page.has_method("_count_scene"):
+			page.call("_count_scene")
+		var scroll := page.get_parent() as ScrollContainer if page else null
+		if scroll:
+			for l in page.find_children("*", "Label", true, false):
+				if (l as Label).text.to_lower() == str(spot[1]).to_lower() and (l as Label).is_visible_in_tree():
+					scroll.scroll_vertical = int(maxf((l as Control).global_position.y - page.global_position.y - 8.0, 0.0))
+					break
+		await _settle(main, 15)
+		await shot(main, out, spot[2])
+		if scroll:
+			scroll.scroll_vertical = 0
+	# A heavy thing shown as a box while working around it.
+	var GnBig = load("res://addons/genesis/core/gn_big.gd")
+	panel.show_section("Scene")
+	if picked and is_instance_valid(picked):
+		App.host.selection().set_nodes([picked])
+		GnBig.set_stand_in([picked], true)
+		await _settle(main, 25)
+		await shot(main, out, "shown_as_box")
+		App.host.undo_redo().undo()
+		await _settle(main, 10)
+	App.host.selection().clear()
+	# Cycles in the 3D view: its picture of the view, once it has had time to refine.
+	var GnLiveRender = load("res://addons/genesis/core/gn_live_render.gd")
+	var GnBlender = load("res://addons/genesis/core/gn_blender.gd")
+	if str(GnBlender.engine().get("kind", "")) != "":
+		App.actions.run("view.live")
+		var deadline := Time.get_ticks_msec() + 300000
+		while Time.get_ticks_msec() < deadline:
+			await main.get_tree().create_timer(1.0).timeout
+			var shown: Dictionary = GnLiveRender.get("_shown")
+			if GnLiveRender.state == "failed" or (ws.viewport_panel.get_node("LiveView") as Control).visible and int(shown.get("step", -1)) >= 2:
+				break
+		await _settle(main, 5)
+		await shot(main, out, "cycles_in_the_view")
+		if ws.viewport_panel.is_live():
+			App.actions.run("view.live")
+		await _settle(main, 20)
 
 
 static func shot(main: Node, out: String, name: String) -> void:

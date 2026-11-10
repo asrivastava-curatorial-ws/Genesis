@@ -34,6 +34,29 @@ Most of the original coupling went through `GnScene` (194 calls in 33 files), so
 - The 3D view hands the open scene back when the window closes; the scene service frees it at exit.
 - In a built program, folders of the library must be listed with `ResourceLoader.list_directory`, and models instanced without editor-only state.
 - `set_anchors_preset` keeps old offsets; use `set_anchors_and_offsets_preset` to fill a parent.
+- Outside the editor Godot cannot tell that an instanced model's own resources are the model file's: a model whose top node is a mesh was written into the scene a second time. The scene service sets such resources aside while it packs a scene (`set_aside_own`, `take_back`) and gives them back to scenes saved before (`own_again`).
+- Setting a metadata property to null through `UndoRedo` leaves a mark that says null; marks are set and removed by method.
+- `PackedArray`s kept inside an `Array` are copies when read back; a shader's globals and anything that waits on `RenderingServer.frame_post_draw` need a display, so code that draws to make a picture is skipped in headless runs.
+
+## What rc5 added, and where it lives
+
+| Feature | Where |
+|---|---|
+| More model formats | `addons/genesis/blender/oriel_convert.py` (mode "model"), `gn_model_import.gd` |
+| Lumens, kelvin, IES | `gn_light_units.gd`, `gn_ies.gd`, `set/gn_light_fixture.gd`; the engine side in `oriel_render.py` |
+| Light mixer, passes, EXR | `gn_light_mix.gd`, `ui/gn_light_mix_dialog.gd`; light groups and the mix (numpy only) in `oriel_render.py` |
+| Wind; wet, puddles, snow | `gn_wind.gd` (twin materials through the rendering server), `gn_weather.gd` (three decals; one node group in front of every Blender material) |
+| Relief, light inside, solid glass, caustics | `gn_materials.gd`; `apply_relief`, `apply_caustics` in `oriel_render.py` |
+| Volumetric clouds | `gn_clouds.gd`, `gn_volume_sky.gdshader`, `gn_clouds.gdshaderinc`, `gn_sky_bake.gdshader`; noise from `tools/make_cloud_noise.py` |
+| Layered materials | `gn_material_layers.gd` and `.gdshader`: baked into an ordinary material |
+| Keys and the timeline | `gn_timeline.gd` (keys on the Movie node), `app/ui/timeline_panel.gd`; `GnMovie.show_time` plays them |
+| The film as an edit | `gn_film.gd`: what each finished frame is made of (`recipe`), drawn by `compose`, the same for every renderer |
+| Spreads and traffic | `set/gn_spread.gd`, `set/gn_traffic.gd`, both paths (`gn_mover.gd`) drawn with the path tool |
+| Cycles in the 3D view | `gn_live_render.gd`, render kind "live" in `oriel_render.py`, the overlay in `app/ui/viewport_panel.gd` |
+| Walking through, VR | `app/runtime/walkthrough.gd`, `walk_rig.gd`: a second copy of the program (`--walk`, `--vr`, with `--xr-mode on`) |
+| Large scenes | `gn_big.gd`; shared shapes in `gn_scene_export.gd` (`copy_of`) and `build_copies` in `oriel_render.py`; reading ahead in `app/main.gd` |
+
+`tests/dev/lab.gd` (run with `-- --script tests/dev/lab.gd <check> <out folder> [godot] [eevee] [cycles]`) builds a scene for each of these with the program's own tools, renders it with the renderers asked for and measures the pictures.
 
 ## The look
 

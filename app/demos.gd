@@ -6,10 +6,12 @@ extends RefCounted
 #   Genesis -- --make-demos <folder>
 #
 #   Architecture demo        a small museum pavilion: concrete, wood, glass and
-#                            paving; trees, furniture, people, cars; people
-#                            walking a curved path; exterior, interior, aerial
-#                            and plaza cameras; a short film; daylight, golden
-#                            hour and night (blue hour, lights on) scenes
+#                            paving; trees, furniture, people, cars; an avenue
+#                            along the street; a breeze; people walking a
+#                            curved path; exterior, interior, aerial and plaza
+#                            cameras; a short film of two shots with a title
+#                            and a dissolve; daylight, golden hour and night
+#                            (blue hour, lights on) scenes
 #   Event production demo    a concert stage: deck, LED wall, truss, line
 #                            arrays, moving heads, audience, effects, haze, and
 #                            four show cues
@@ -39,6 +41,9 @@ const CueList := preload("res://addons/genesis/set/gn_cue_list.gd")
 const Mover := preload("res://addons/genesis/set/gn_mover.gd")
 const GnMovie := preload("res://addons/genesis/core/gn_movie.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
+const Spread := preload("res://addons/genesis/set/gn_spread.gd")
+const GnFilm := preload("res://addons/genesis/core/gn_film.gd")
+const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
 
 const RENDER_SIZE := Vector2i(1920, 1080)
 ## --render-samples --quality <name>: samples per pixel, as on the Render page.
@@ -134,6 +139,17 @@ static func _architecture(main: Node, out_dir: String) -> int:
 			w.reparent(walk)
 			w.owner = root
 	walk.at_time(0.0)
+	# An avenue along the street (Landscape > Rows and fills): one drawn
+	# line, and the library's trees every seven metres along it.
+	var avenue: Node3D = Spread.new()
+	avenue.name = "Avenue"
+	avenue.curve = Mover.shaped(PackedVector3Array([Vector3(-26, 0, 0), Vector3(26, 0, 0)]), false)
+	avenue.position = Vector3(0, 0, 27)
+	GnScene.add_node(avenue, root, "Add an avenue", "mover")
+	avenue.set("spacing", 7.0)
+	avenue.set("out_of_line", 0.08)
+	# A breeze in the trees (Environment > Weather > Wind).
+	GnWeather.set_value("wind", 0.25)
 	# Interior downlights, aimed and spread as the Set page makes them.
 	for x in [-3.0, 0.0, 3.0]:
 		var d: Node3D = Fixture.new()
@@ -170,8 +186,15 @@ static func _architecture(main: Node, out_dir: String) -> int:
 		cams.append(c)
 	GnEnvironment.apply("time_of_day", 11.0)
 	# A short film: the camera drifts from the exterior view towards the plaza
-	# while the people walk (Movie > Render movie).
-	GnMovie.set_shots([GnMovie.path_shot(["Exterior", "Plaza"], 6.0)], "Demo film")
+	# while the people walk, then comes down from the air, dissolving from the
+	# one shot into the other, under a title (Movie > Render movie).
+	var second := GnMovie.path_shot(["Aerial", "Exterior"], 5.0)
+	second["transition"] = "Dissolve"
+	second["transition_s"] = 1.0
+	GnMovie.set_shots([GnMovie.path_shot(["Exterior", "Plaza"], 6.0), second], "Demo film")
+	var title := GnFilm.add_title("Museum pavilion\nAn Oriel demo", 0.5, 4.0)
+	GnFilm.set_title(title, {"place": "Lower left", "size": 0.055}, "Demo title")
+	GnFilm.set_value("fade_out", 1.0, "Demo film: fade out")
 	App.scenes.save()
 	var failures := 0
 	# Golden hour and night (the blue hour after sunset, when the sky still

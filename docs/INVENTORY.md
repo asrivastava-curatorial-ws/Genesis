@@ -1,4 +1,4 @@
-# What was downloaded and installed: Oriel 1.0.0-rc4
+# What was downloaded and installed: Oriel 1.0.0-rc5
 
 This page lists everything that was downloaded or installed to make this release, everything the AppImage contains, and everything it reads, writes or downloads on your computer. Nothing is left out on purpose; if you find something that is not here, it is a mistake in this page.
 
@@ -6,7 +6,7 @@ This page lists everything that was downloaded or installed to make this release
 
 **Nothing was downloaded or installed on your PC to make this release.** Your PC was never connected to the build: all the building and every test ran on the cloud build machine (section 4).
 
-What you put on your PC yourself is one file, `Oriel-1.0.0-rc4-x86_64.AppImage`, wherever you save it (`~/Applications/` is suggested).
+What you put on your PC yourself is one file, `Oriel-1.0.0-rc5-x86_64.AppImage`, wherever you save it (`~/Applications/` is suggested).
 
 ### What the AppImage does when you run it
 
@@ -22,6 +22,10 @@ It installs nothing: no system packages, no services, nothing that needs adminis
 | Your own library of models and skies | `~/.local/share/Oriel/library/` | only when you add your own models or skies |
 | Assets from the Online page and the starter pack: the originals, and the record of every asset (`online/manifest.json`, with `manifest.json.bak`) | `~/.local/share/Oriel/library/online/`, with the models, materials and skies made of them in `library/<category>/`, `library/materials/` and `library/skies/` | only when you download assets |
 | Photoreal render jobs: the scene written for Eevee or Cycles, the job, its progress and the engine's log; the last six are kept | `~/.local/share/Oriel/cache/render_jobs/` (safe to delete) | when you render with Eevee or Cycles |
+| The live view's job (*Cycles in the View*): the scene as handed to the engine and its pictures of the view | `~/.local/share/Oriel/cache/render_jobs/` (safe to delete), with the other render jobs | while *Cycles in the View* is on |
+| The light mixer's working files | `~/.local/share/Oriel/cache/light_mix/` (safe to delete); the mix data of a render (`<camera>_lightmix.npz`) is beside the render in the project's `renders/` | when you render for the light mixer, and open it |
+| A walk-through's note of how it is going (`walk_status.json`), read by the editor to say when it has opened or why it could not | `~/.local/share/Oriel/` | when you walk through a project |
+| Pictures drawn for layered materials | the project's `data/textures/layers/` | when you add a layer to a material |
 | BlendKit's Client, its licence, its log, your BlendKit login (the access token, in `account.json`) and its own settings (`bk_client-settings.json`, beside it) | `~/.local/share/Oriel/tools/blendkit/` | only when you press *Connect to BlendKit* |
 | Thumbnails and search results of the online sources | `~/.local/share/Oriel/cache/thumbs_online/`, `cache/polyhaven/`, `cache/blendkit_search/` (safe to delete) | when you use the Online page |
 | Settings, library and tools copied once from the rc3 folder `~/.local/share/Genesis/` (left as it was) | `~/.local/share/Oriel/` | the first start, if that folder is there |
@@ -58,8 +62,8 @@ sudo apt install ffmpeg poppler-utils
 ### Removing everything
 
 ```bash
-./Oriel-1.0.0-rc4-x86_64.AppImage --remove-shortcut   # if you added the menu entry
-rm Oriel-1.0.0-rc4-x86_64.AppImage
+./Oriel-1.0.0-rc5-x86_64.AppImage --remove-shortcut   # if you added the menu entry
+rm Oriel-1.0.0-rc5-x86_64.AppImage
 rm -rf ~/.local/share/Oriel                     # settings, logs, your library (and downloaded assets), tools, caches
 rm -rf ~/.local/share/Genesis                   # the rc3 folder, if you no longer need it
 ```
@@ -86,25 +90,38 @@ What each part is, its version and its licence:
 
 | Part | Version | Licence |
 |---|---|---|
-| Oriel (the program, its scripts and shaders, and the Blender-side scripts `oriel_render.py` and `oriel_convert.py`) | 1.0.0-rc4 | MIT |
+| Oriel (the program, its scripts and shaders, and the Blender-side scripts `oriel_render.py` and `oriel_convert.py`) | 1.0.0-rc5 | MIT |
 | Godot Engine runtime (the `Oriel.x86_64` executable) | 4.7.2-stable, official export template | MIT, with the licences of its components (see THIRD_PARTY_NOTICES.md) |
 | The model library: 295 models, each with its licence record | as in rc2 | CC0-1.0 |
 | The eight material presets and their textures | drawn when the program is built | CC0-1.0 |
 | JetBrains Mono (Regular, Medium, SemiBold, Bold, Italic) | 2.304 | SIL Open Font Licence 1.1 |
-| 148 Lucide icons, as SVG text inside the program | 1.67.0 | ISC (some derived from Feather: MIT) |
+| 169 Lucide icons, as SVG text inside the program | 1.67.0 | ISC (some derived from Feather: MIT) |
 | GitHub Dark Default colour values | GitHub VS Code theme 6.3.5 / Primer primitives 7.10.0 | MIT |
-| The two demo projects (Architecture demo, Event production demo) | as in rc2 | MIT (Oriel's own); their models CC0 |
-| The manual (HTML and PDF) and the guides | 1.0.0-rc4 | MIT |
+| The two demo projects (Architecture demo, Event production demo) | made for this release by the program itself (`--make-demos`); the architecture demo gained an avenue, a breeze and a second shot with a dissolve and a title | MIT (Oriel's own); their models CC0 |
+| The manual (HTML and PDF) and the guides | 1.0.0-rc5 | MIT |
 | Blender's render engines (Eevee, Cycles) and its glTF importer: `bpy`, Blender as a Python module, by the Blender Foundation | 5.2.3 LTS | GPL-3.0-or-later (Blender), with the licences of the libraries it carries (in `engine/python/lib/python3.13/site-packages/bpy/5.2/license/`) |
+| IfcOpenShell, which reads IFC building models (with Open CASCADE Technology, CGAL and Boost inside it) | 0.9.0.post1 | LGPL-3.0-or-later (Open CASCADE: LGPL-2.1 with an exception) |
+| assimp-py, with the Open Asset Import Library (Assimp), which reads Collada, 3DS and other model formats | 1.2.0 | MIT (assimp-py), BSD-3-Clause (Assimp) |
+| The clouds' noise (`gn_cloud_noise.bin`, 2.3 MB), computed by `tools/make_cloud_noise.py` | made for this release | MIT (Oriel's own) |
 | CPython, the Python that runs the engines (python-build-standalone build) | 3.13.14 | PSF-2.0 |
 | The engines' Python packages: numpy 2.5.4, zstandard 0.25.0, requests 2.34.2, urllib3 2.8.0, idna 3.20, certifi 2026.10.23, charset-normalizer 3.5.2, attrs 26.1.0, cattrs 26.2.1, typing_extensions 4.16.0, pip 26.1.2 | as listed | BSD-3-Clause, BSD-3-Clause, Apache-2.0, MIT, BSD-3-Clause, MPL-2.0, MIT, MIT, MIT, PSF-2.0, MIT |
-| `oriel_assets.py` (the starter-pack script) and `starter_pack.json` | 1.0.0-rc4 | MIT |
+| `oriel_assets.py` (the starter-pack script) and `starter_pack.json` | 1.0.0-rc5 | MIT |
 | AppImage type2 runtime (the start of the AppImage file, which mounts the rest) | continuous build | MIT |
 | `AppRun`, the desktop file, the icon and the AppStream metadata | written for this release | MIT |
 
 No other program is inside: FFmpeg, Blender's own application (its interface), Real-ESRGAN, BlendKit's Client, Poppler and the ODA File Converter are not bundled. The engines are Blender's rendering and file code without its interface; they run only when Oriel asks them to, as a separate process.
 
 ## 3. Downloaded to make this release (on the build machine)
+
+Downloaded on the cloud build machine for rc5:
+
+| What | From | Size | SHA-256 | Licence | Shipped |
+|---|---|---|---|---|---|
+| IfcOpenShell 0.9.0.post1 (Linux x86_64, CPython 3.13) | `files.pythonhosted.org/packages/ac/dd/e60521d5eefd8af00691346b87b03298ea04f56d9ebdfab60c17d067f7f0/ifcopenshell-0.9.0.post1-py313-none-manylinux_2_31_x86_64.whl` (PyPI), by `uv pip install --no-deps` | 54.9 MB (190 MB unpacked) | `c4dd9b3a8aa8a4e61787e841698bbdd1d7509a4fda10153390bdc136334c8bcc` | LGPL-3.0-or-later | Yes: in `engine/`, for reading IFC files |
+| assimp-py 1.2.0 (Linux x86_64, CPython 3.13) | `files.pythonhosted.org/packages/60/03/6e19dd0cd7b3894af3265081a9dbcfb8d2636d12502f5a8287fbc80f51c2/assimp_py-1.2.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl` (PyPI), by `uv pip install --no-deps` | 4.2 MB (13 MB unpacked) | `f5fd4bac4559f3853ef4914f8c10b682b8adb2212820f462eeddd82e6ec2e119` | MIT, with Assimp (BSD-3-Clause) | Yes: in `engine/`, for reading Collada, 3DS and other model files |
+| Monado, an open OpenXR runtime, with its OpenXR library and tools (`monado-service`, `libopenxr1-monado`, `monado-cli`, and what they depend on) | Ubuntu 24.04's archive, by `apt install` | about 6 MB | apt's | BSL-1.0 | No: its stand-in headset is what the headset walk was tested on |
+
+The checksums are PyPI's own for those files (uv checks what it downloads against them); they were not computed again on the build machine.
 
 Downloaded on the cloud build machine for rc4:
 
@@ -142,6 +159,7 @@ Installed on it earlier for this project (for rc1 and rc2), and used again for r
 |---|---|---|---|
 | Godot Engine editor and export templates | 4.7.2-stable, official | `github.com/godotengine/godot-builds/releases/download/4.7.2-stable/` (`Godot_v4.7.2-stable_linux.x86_64.zip`, `Godot_v4.7.2-stable_export_templates.tpz`) | building the program, running every test |
 | Mesa Vulkan drivers (lavapipe) and vulkan-tools | 25.2.8 / 1.3.275 | `apt install mesa-vulkan-drivers vulkan-tools` | software Vulkan for the tests and the screenshots |
+| Monado (`monado-service`, `libopenxr1-monado`, `monado-cli`) | 21.0.0+git2905 | `apt install monado-service libopenxr1-monado monado-cli` | rc5: the walk-through on a headset, on Monado's stand-in headset |
 | Blender, with python3-numpy | 4.0.2 / 1.26.4 | `apt install blender python3-numpy` | the `.blend` import tests; for rc4 also testing the render script with Blender 4.0 (Ubuntu's build, which has no denoiser) |
 | xdotool | 3.20160805 | `apt install xdotool` | an earlier window test; not used for rc3 |
 | Wine | 9.0 | `apt install wine64` | rc1's Windows start test; not used for rc3 |

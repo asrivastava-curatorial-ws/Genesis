@@ -41,9 +41,9 @@ With BlendKit connected and logged in, the standard and large packs also get Ble
 The same pack, without opening Oriel (for a computer that is left to download overnight, or a slow line):
 
 ```bash
-./Oriel-1.0.0-rc4-x86_64.AppImage --get-assets --size standard
-./Oriel-1.0.0-rc4-x86_64.AppImage --get-assets --list            # what it would get, nothing downloaded
-./Oriel-1.0.0-rc4-x86_64.AppImage --get-assets --only skies --size large
+./Oriel-1.0.0-rc5-x86_64.AppImage --get-assets --size standard
+./Oriel-1.0.0-rc5-x86_64.AppImage --get-assets --list            # what it would get, nothing downloaded
+./Oriel-1.0.0-rc5-x86_64.AppImage --get-assets --only skies --size large
 ```
 
 `--get-assets` runs `oriel_assets.py` with Oriel's own Python, so nothing needs installing. From the source, it is `python3 tools/oriel_assets.py` (Python 3.8 or newer, standard library only, Linux, Windows or macOS). Oriel adds what the script downloaded to the library the next time its Online page opens. BlendKit's assets need its Client and a login, so they come through the Online page.

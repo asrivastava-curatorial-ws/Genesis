@@ -11,7 +11,7 @@ Genesis Community is MIT-licensed (see `LICENSE`). It is built on the Godot Engi
 | The model library (295 models) | CC0-1.0 | `genesis_assets/`, each with its `.license.json`; see `docs/ASSET_LICENSING.md` |
 | The eight material presets and their textures | CC0-1.0 | drawn by `tools/make_materials.gd` when the program is built; `genesis_data/materials/materials.license.json` |
 | JetBrains Mono 2.304 (the interface typeface: Regular, Medium, SemiBold, Bold, Italic) | OFL-1.1 | `app/ui/fonts/`, with its `OFL.txt` and `AUTHORS.txt`; see "Interface" below |
-| Lucide 1.67.0 icons (148 of them; some derived from Feather) | ISC; MIT for the Feather-derived ones | inside `addons/genesis/ui/gn_icons.gd`, which carries the licence text; see "Interface" below |
+| Lucide 1.67.0 icons (169 of them; some derived from Feather) | ISC; MIT for the Feather-derived ones | inside `addons/genesis/ui/gn_icons.gd`, which carries the licence text; see "Interface" below |
 | The GitHub Dark Default colour values (from the GitHub VS Code theme 6.3.5, built on Primer primitives 7.10.0) | MIT | the colour constants in `app/ui/genesis_theme.gd`; see "Interface" below |
 
 Models and skies a user adds to their own library carry the licence the user gives them, in a `.license.json` beside each; they are the user's, not part of the release.

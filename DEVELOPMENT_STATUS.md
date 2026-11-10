@@ -1,4 +1,4 @@
-# Development status: Oriel 1.0.0-rc4
+# Development status: Oriel 1.0.0-rc5
 
 ## Stages
 

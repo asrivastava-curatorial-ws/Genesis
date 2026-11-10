@@ -9,7 +9,7 @@ const GnCaches := preload("res://addons/genesis/core/gn_caches.gd")
 const Picker := preload("res://app/runtime/picker.gd")
 
 const NAME := "Oriel"
-const VERSION := "1.0.0-rc4"
+const VERSION := "1.0.0-rc5"
 const MIN_WINDOW := Vector2i(1100, 680)
 
 static var settings: RefCounted
