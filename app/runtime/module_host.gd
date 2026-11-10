@@ -14,6 +14,8 @@ const GnOscIn := preload("res://addons/genesis/core/gn_osc_in.gd")
 const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
 const Placer := preload("res://app/runtime/placer.gd")
 const GnWind := preload("res://addons/genesis/core/gn_wind.gd")
+const GnClouds := preload("res://addons/genesis/core/gn_clouds.gd")
+const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 
@@ -57,6 +59,7 @@ func on_scene_opened(root: Node) -> void:
 	if root:
 		GnWeather.apply()
 		GnWind.dress(root)
+		_find_sky()
 		var ur := GnHost.undo_redo()
 		if ur and not ur.changed.is_connected(_dress_soon):
 			ur.changed.connect(_dress_soon)
@@ -71,8 +74,39 @@ func _dress_soon() -> void:
 	_dress_in = 0.4
 
 
+var _sky: WeakRef = null
+var _sky_look := 0.0
+var _drift := Vector2.INF
+
+
+## The sky with volumetric clouds, if that is the scene's sky: its noise is
+## put in place, and it is remembered so that the wind can carry its clouds.
+func _find_sky() -> void:
+	_sky = null
+	var we := GnEnvironment.world()
+	var env: Environment = we.environment if we else null
+	if env and env.sky and GnClouds.is_volume_sky(env.sky.sky_material):
+		GnClouds.ensure()
+		_sky = weakref(env.sky.sky_material)
+
+
+func _carry_clouds(delta: float) -> void:
+	_sky_look -= delta
+	if _sky_look <= 0.0:
+		_sky_look = 0.5
+		_find_sky()
+	var mat: ShaderMaterial = _sky.get_ref() if _sky else null
+	if mat == null:
+		return
+	var drift := GnClouds.drift(GnWind.strength(), GnWind.heading(), GnWind.elapsed())
+	if not drift.is_equal_approx(_drift):
+		_drift = drift
+		mat.set_shader_parameter("cloud_drift", drift)
+
+
 func _process(delta: float) -> void:
 	GnWind.advance(delta)
+	_carry_clouds(delta)
 	if _dress_in >= 0.0:
 		_dress_in -= delta
 		if _dress_in < 0.0:

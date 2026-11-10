@@ -315,7 +315,8 @@ static func _ph_get(item: Dictionary, res: String, host: Node, progress: Callabl
 			return {"result": dest, "files": [dest]}
 		"materials":
 			var maps := {}
-			for m in [["albedo", ["Diffuse", "diff"]], ["normal", ["nor_gl"]], ["roughness", ["Rough", "rough"]], ["ao", ["AO", "ao"]]]:
+			for m in [["albedo", ["Diffuse", "diff"]], ["normal", ["nor_gl"]], ["roughness", ["Rough", "rough"]], ["ao", ["AO", "ao"]],
+					["height", ["Displacement", "disp"]]]:
 				for name in m[1]:
 					var f := _pick(files.get(name, {}), res, ["jpg", "png"])
 					if f.is_empty():
@@ -415,6 +416,8 @@ static func _acg_get(item: Dictionary, res: String, host: Node, progress: Callab
 			which = "roughness"
 		elif lower.contains("_ambientocclusion."):
 			which = "ao"
+		elif lower.contains("_displacement."):
+			which = "height"
 		elif lower.ends_with(".hdr") or lower.ends_with(".exr") or lower.ends_with(".gltf") or lower.ends_with(".glb") or lower.ends_with(".bin") \
 				or (item.kind == "models" and (lower.ends_with(".jpg") or lower.ends_with(".png"))):
 			which = "file"
@@ -483,7 +486,7 @@ static func _bk_get(item: Dictionary, host: Node, progress: Callable) -> Diction
 			if str(c.get("error", "")) != "":
 				return {"error": c.error}
 			var maps := {}
-			for k in ["albedo", "normal", "roughness", "ao"]:
+			for k in ["albedo", "normal", "roughness", "ao", "height"]:
 				if str(c.get(k, "")) != "":
 					maps[k] = str(c[k])
 			if maps.is_empty() and c.get("color") is Array:
@@ -509,7 +512,7 @@ static func make_material(id: String, maps: Dictionary, tile_m: float, item: Dic
 	if maps.get("color") is Array:
 		var c: Array = maps.color
 		m.albedo_color = Color(float(c[0]), float(c[1]), float(c[2])).linear_to_srgb()
-	for k in ["albedo", "normal", "roughness", "ao"]:
+	for k in ["albedo", "normal", "roughness", "ao", "height"]:
 		if not maps.has(k) or not maps[k] is String:
 			continue
 		var img := Image.load_from_file(maps[k])
@@ -529,6 +532,9 @@ static func make_material(id: String, maps: Dictionary, tile_m: float, item: Dic
 				m.ao_enabled = true
 				m.ao_texture = tex
 				m.ao_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
+			"height":
+				# For the Relief slider (Materials page); flat until that is raised.
+				m.heightmap_texture = tex
 	var path := dir.path_join("%s.tres" % id)
 	ResourceSaver.save(m, path)
 	_write_licence(dir.path_join("%s.license.json" % id), item)

@@ -20,6 +20,7 @@ const GnLook := preload("res://addons/genesis/core/gn_look.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const GnPhotomatch := preload("res://addons/genesis/core/gn_photomatch.gd")
+const GnClouds := preload("res://addons/genesis/core/gn_clouds.gd")
 
 ## Samples per quality, per engine. Eevee's are frames averaged; Cycles' are
 ## paths per pixel, with its denoiser cleaning what is left.
@@ -51,6 +52,12 @@ static func quality_of(engine: String) -> String:
 	return str(q.get(engine, "Good")) if q is Dictionary else "Good"
 
 
+## Cycles' caustics: light gathered by solid glass and water, and bounced
+## off shiny things, falls as bright patterns. Off unless asked for (slower).
+static func caustics() -> bool:
+	return bool(GnHost.get_setting("render_caustics", false))
+
+
 static func stop() -> void:
 	if running:
 		running.stop()
@@ -59,9 +66,12 @@ static func stop() -> void:
 static func _job(engine: String, quality: String, scene: Dictionary, renders: Array) -> Dictionary:
 	var samples: int = QUALITY.get(engine, QUALITY.cycles).get(quality, 128)
 	var threads := maxi(OS.get_processor_count() - 1, 1)
+	var q := {"samples": samples, "denoise": true}
+	if engine == "cycles" and caustics():
+		q["caustics"] = true
 	return {
 		"schema": "oriel-job/1", "glb": "scene.glb", "engine": engine,
-		"quality": {"samples": samples, "denoise": true}, "device": str(GnHost.get_setting("render_device", "auto")),
+		"quality": q, "device": str(GnHost.get_setting("render_device", "auto")),
 		"threads": threads, "scene": scene, "renders": renders,
 		# Eevee's light bounces indoors come from a baked probe volume; worth it
 		# for the better qualities only.
@@ -70,11 +80,23 @@ static func _job(engine: String, quality: String, scene: Dictionary, renders: Ar
 
 
 ## Writes the scene for a job. Returns {"dir", "scene", "error", "warnings"}.
-static func _export(tag: String) -> Dictionary:
+static func _export(tag: String, host: Node, quality := "Good") -> Dictionary:
 	var dir: String = GnBlender.new_job_dir(tag)
+	await prepare_sky(host, dir, quality)
 	var ex: Dictionary = GnSceneExport.export_scene(GnScene.root(), dir)
 	ex["dir"] = dir
 	return ex
+
+
+## A sky with volumetric clouds goes to Eevee and Cycles as a picture of
+## itself all the way round, made here (GnSceneExport then finds it). Call
+## again whenever the sun or the sky has changed.
+static func prepare_sky(host: Node, dir: String, quality := "Good") -> void:
+	var we := GnEnvironment.world()
+	var env: Environment = we.environment if we else null
+	if env == null or env.sky == null or not GnClouds.is_volume_sky(env.sky.sky_material):
+		return
+	await GnClouds.prepare(env.sky.sky_material, GnEnvironment.sun(), host, dir, 2048 if quality == "Draft" else 4096)
 
 
 ## Renders `cameras` (each a Camera3D) at `size`. `options`:
@@ -89,7 +111,7 @@ static func render_stills(cameras: Array, size: Vector2i, engine: String, qualit
 		progress := Callable(), options := {}) -> Dictionary:
 	var label: String = GnBlender.LABELS.get(engine, engine)
 	_say(progress, "%s: writing the scene…" % label)
-	var ex := _export(engine)
+	var ex: Dictionary = await _export(engine, host, quality)
 	if ex.error != "":
 		return {"paths": [], "error": ex.error, "warnings": ex.warnings, "state": "failed"}
 	var scene: Dictionary = ex.scene
@@ -109,6 +131,7 @@ static func render_stills(cameras: Array, size: Vector2i, engine: String, qualit
 			var dest := ""
 			if h != null:
 				GnEnvironment.apply("time_of_day", float(h), false)
+				await prepare_sky(host, ex.dir, quality)
 				r["overrides"] = _sun_overrides()
 				r["label"] = "Rendering %s at %d:00" % [cam.name, int(h)]
 				dest = "%s/%s_sun_study_%02d00.png" % [GnPaths.at(GnRender.OUTPUT_DIR), str(cam.name).replace(" ", ""), int(h)]
@@ -158,7 +181,7 @@ static func render_panoramas(cameras: Array, width: int, stereo: bool, engine: S
 		progress := Callable()) -> Dictionary:
 	var label: String = GnBlender.LABELS.get(engine, engine)
 	_say(progress, "%s: writing the scene…" % label)
-	var ex := _export(engine + "_360")
+	var ex: Dictionary = await _export(engine + "_360", host, quality)
 	if ex.error != "":
 		return {"paths": [], "error": ex.error, "warnings": ex.warnings, "state": "failed"}
 	var renders: Array = []

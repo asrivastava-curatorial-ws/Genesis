@@ -20,6 +20,9 @@ var _opacity: HSlider
 var _scale: HSlider
 var _scale_row: Control
 var _weather: HSlider
+var _relief: HSlider
+var _inside: HSlider
+var _solid_glass: CheckBox
 var _list: Array = []
 var _preset_paths: Array[String] = []
 var _tile: HSlider
@@ -57,7 +60,7 @@ func _init() -> void:
 	_tile = GnUi.slider(_body, "One tile is", 0.1, 10.0, 0.05, func(_v): pass, func(v): return "%.2f m across" % v)
 	GnUi.show_value(_tile, 1.0)
 	GnUi.button(_body, "Use an image…", _pick_image, "image")
-	_own_note = GnUi.note(_body, "A photo or texture map. Normal and roughness maps beside it, named the usual way, come too.")
+	_own_note = GnUi.note(_body, "A photo or texture map. Normal, roughness and height maps beside it, named the usual way, come too.")
 
 	GnUi.heading(_body, "Tiles and grout")
 	_tile_layout = GnUi.option(_body, "Layout", GnTiles.LAYOUTS, func(_t): _tiles_changed())
@@ -124,6 +127,30 @@ func _init() -> void:
 			if s:
 				GnWeathering.apply(s, v),
 		func(v): return ["new", "a little", "weathered", "well weathered", "old", "very old"][clampi(roundi(v * 5), 0, 5)])
+	# What makes a surface more than a picture of one.
+	_relief = GnUi.slider(_body, "Relief", 0.0, GnMaterials.RELIEF_MAX * 100.0, 0.1,
+		func(v):
+			var s := _surface()
+			if s:
+				GnMaterials.set_relief(s, v / 100.0),
+		func(v): return "flat" if v <= 0.0 else "%.1f cm" % v)
+	_relief.tooltip_text = "How far the surface's height map moves it in and out: brick joints, cobbles, bark.\nCycles moves the surface itself, Eevee shades it as if moved. Without a height map, the heights are worked out from the normal map."
+	_inside = GnUi.slider(_body, "Light inside", 0.0, 1.0, 0.01,
+		func(v):
+			var s := _surface()
+			if s:
+				GnMaterials.set_light_inside(s, v),
+		func(v): return "none" if v <= 0.0 else "%d%%" % int(v * 100))
+	_inside.tooltip_text = "Light goes a little way into the surface and comes out nearby: wax, marble, skin, leaves, snow."
+	_solid_glass = CheckBox.new()
+	_solid_glass.text = "Solid glass (bends light)"
+	_solid_glass.tooltip_text = "For a vase, a bottle, a glass block: what is seen through it is bent, and with Caustics on (Render page, Cycles) it gathers light into bright patterns. Leave it off for window panes."
+	_solid_glass.toggled.connect(func(on):
+		var s := _surface()
+		if s and s.material() is BaseMaterial3D and GnMaterials.is_solid_glass(s.material()) != on:
+			GnMaterials.set_solid_glass(s, on)
+			_show_surface())
+	_body.add_child(_solid_glass)
 
 
 func refresh() -> void:
@@ -165,10 +192,16 @@ func _surface() -> GnMaterials.Surface:
 func _show_surface() -> void:
 	var s := _surface()
 	var mat := s.material() as BaseMaterial3D if s else null
-	for c in [_color, _rough, _metal, _opacity, _scale]:
+	for c in [_color, _rough, _metal, _opacity, _scale, _relief, _inside]:
 		(c as Control).get_parent().modulate.a = 1.0 if mat else 0.4
+	_solid_glass.disabled = mat == null
 	if mat == null:
 		return
+	GnUi.show_value(_relief, GnMaterials.relief_of(mat) * 100.0)
+	_relief.editable = GnMaterials.can_have_relief(mat)
+	_relief.get_parent().modulate.a = 1.0 if _relief.editable else 0.4
+	GnUi.show_value(_inside, GnMaterials.light_inside_of(mat))
+	_solid_glass.set_pressed_no_signal(GnMaterials.is_solid_glass(mat))
 	_color.color = mat.albedo_color
 	GnUi.show_value(_rough, mat.roughness)
 	GnUi.show_value(_metal, mat.metallic)
@@ -277,6 +310,8 @@ func _use_image(path: String) -> void:
 		extra.append("normal map")
 	if maps.roughness != "":
 		extra.append("roughness map")
+	if maps.height != "":
+		extra.append("height map (raise Relief to use it)")
 	_own_note.text = err if err != "" else "%s is on, %.2f m a tile%s." % [path.get_file(), _tile.value,
 		"" if extra.is_empty() else ", with its " + " and ".join(extra)]
 	_show_surface()

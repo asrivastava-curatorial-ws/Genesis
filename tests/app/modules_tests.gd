@@ -294,6 +294,93 @@ func _weather_and_wind(root: Node) -> void:
 	tower.free()
 
 
+# Relief, light inside and solid glass on a material; the caustics switch;
+# the sky with volumetric clouds.
+func _surfaces_and_sky(root: Node) -> void:
+	var GnMaterials = load("res://addons/genesis/core/gn_materials.gd")
+	var GnSceneExport = load("res://addons/genesis/core/gn_scene_export.gd")
+	var GnPhotoreal = load("res://addons/genesis/core/gn_photoreal.gd")
+	var GnClouds = load("res://addons/genesis/core/gn_clouds.gd")
+	var GnEnvironment = load("res://addons/genesis/core/gn_environment.gd")
+	var dir := OS.get_user_data_dir().path_join("surface_test")
+	DirAccess.make_dir_recursive_absolute(dir)
+	var flat := Image.create(8, 8, false, Image.FORMAT_RGB8)
+	flat.fill(Color(0.6, 0.3, 0.2))
+	flat.save_png(dir.path_join("cobble_Color.png"))
+	flat.save_png(dir.path_join("cobble_NormalGL.png"))
+	flat.save_png(dir.path_join("cobble_Displacement.png"))
+	var maps: Dictionary = GnMaterials.partner_maps(dir.path_join("cobble_Color.png"))
+	check(str(maps.height).ends_with("cobble_Displacement.png") and str(maps.normal).ends_with("cobble_NormalGL.png"),
+		"materials: a picture's height map is found beside it")
+	var block := MeshInstance3D.new()
+	block.name = "Block"
+	block.mesh = BoxMesh.new()
+	GnScene.add_node(block, root, "Add a block")
+	var surf = GnMaterials.surfaces(block)[0]
+	var err: String = await GnMaterials.apply_image(surf, dir.path_join("cobble_Color.png"), 0.5)
+	var mat := block.get_active_material(0) as BaseMaterial3D
+	check(err == "" and mat and mat.heightmap_texture != null and is_zero_approx(GnMaterials.relief_of(mat)),
+		"materials: it comes with the picture, and the surface stays flat until asked (%s)" % err)
+	GnMaterials.set_relief(surf, 0.03)
+	mat = block.get_active_material(0) as BaseMaterial3D
+	var ctx = GnSceneExport.Ctx.new()
+	ctx.dir = dir
+	var spec: Dictionary = GnSceneExport._material_spec(ctx, mat)
+	check(is_equal_approx(GnMaterials.relief_of(mat), 0.03) and is_equal_approx(float(spec.get("relief", {}).get("scale", 0.0)), 0.03)
+		and str(spec.relief.image) != "" and FileAccess.file_exists(dir.path_join(str(spec.relief.image))),
+		"materials: 3 cm of relief goes to Eevee and Cycles with its height map")
+	GnMaterials.set_relief(surf, 5.0)
+	check(is_equal_approx(GnMaterials.relief_of(block.get_active_material(0)), GnMaterials.RELIEF_MAX), "materials: relief stops at 10 cm")
+	GnMaterials.set_light_inside(surf, 0.6)
+	mat = block.get_active_material(0) as BaseMaterial3D
+	spec = GnSceneExport._material_spec(ctx, mat)
+	check(mat.subsurf_scatter_enabled and is_equal_approx(GnMaterials.light_inside_of(mat), 0.6)
+		and is_equal_approx(float(spec.get("subsurface", {}).get("weight", 0.0)), 0.6), "materials: light inside is the editor's own subsurface scattering, and goes to Eevee and Cycles")
+	GnMaterials.set_light_inside(surf, 0.0)
+	check(not (block.get_active_material(0) as BaseMaterial3D).subsurf_scatter_enabled, "materials: and off again")
+	GnMaterials.set_solid_glass(surf, true)
+	mat = block.get_active_material(0) as BaseMaterial3D
+	spec = GnSceneExport._material_spec(ctx, mat)
+	check(GnMaterials.is_solid_glass(mat) and mat.refraction_enabled and mat.albedo_color.a < 0.5 and spec.get("solid_glass") == true,
+		"materials: solid glass is clear, bends what is seen through it, and is real glass to Cycles")
+	GnHost.undo_redo().undo()
+	check(not GnMaterials.is_solid_glass(block.get_active_material(0)), "materials: one undo step makes it what it was")
+	var plain := StandardMaterial3D.new()
+	check(not GnMaterials.can_have_relief(plain) and is_zero_approx(GnMaterials.relief_of(plain)) and not GnMaterials.is_solid_glass(plain),
+		"materials: a plain colour has nothing to make relief from")
+	GnScene.root().remove_child(block)
+	block.free()
+	# Caustics: a switch the job carries, for Cycles only.
+	var was = GnHost.get_setting("render_caustics", false)
+	GnHost.set_setting("render_caustics", true)
+	var job: Dictionary = GnPhotoreal._job("cycles", "Good", {}, [])
+	var job_e: Dictionary = GnPhotoreal._job("eevee", "Good", {}, [])
+	check(job.quality.get("caustics") == true and not job_e.quality.has("caustics"), "render: caustics are asked of Cycles, not of Eevee")
+	GnHost.set_setting("render_caustics", false)
+	check(not GnPhotoreal._job("cycles", "Good", {}, []).quality.has("caustics"), "render: and only when switched on")
+	GnHost.set_setting("render_caustics", was)
+	# The sky with volumetric clouds.
+	check(GnClouds.ensure(), "clouds: the noise they are carved from is part of the program")
+	var env: Environment = GnEnvironment.world().environment
+	var painted := env.sky.sky_material
+	GnEnvironment.apply("volumetric_clouds", true)
+	var sky := env.sky.sky_material as ShaderMaterial
+	check(GnClouds.is_volume_sky(sky) and not GnClouds.is_volume_sky(painted) and env.sky.process_mode == Sky.PROCESS_MODE_REALTIME,
+		"clouds: the Environment page's switch gives the sky volumetric clouds")
+	check(is_equal_approx(float(sky.get_shader_parameter("cloudiness")), float(GnEnvironment.value("cloudiness"))),
+		"clouds: with the cover the Clouds slider says")
+	var drift: Vector2 = GnClouds.drift(1.0, 0.0, 10.0)
+	check(is_zero_approx(drift.x) and is_equal_approx(drift.y, -10.0 * GnClouds.DRIFT_SPEED), "clouds: a north wind carries them south (%s)" % drift)
+	var sig_a: String = GnClouds.signature(sky, GnEnvironment.sun())
+	GnEnvironment.apply("time_of_day", 16.5)
+	check(GnClouds.signature(env.sky.sky_material, GnEnvironment.sun()) != sig_a, "clouds: a sky is drawn again for Eevee and Cycles when the sun has moved")
+	GnHost.undo_redo().undo()
+	var world: Dictionary = GnSceneExport.environment_spec().world
+	check(str(world.get("kind")) in ["gradient", "hdri"], "clouds: Eevee and Cycles get the sky as a picture of itself, or the painted clouds where one cannot be made (%s)" % world.get("kind"))
+	GnHost.undo_redo().undo()
+	check(not GnClouds.is_volume_sky(env.sky.sky_material) and env.sky.process_mode == Sky.PROCESS_MODE_AUTOMATIC, "clouds: one undo step brings the painted sky back")
+
+
 func _until_live(spec: String, seconds: float) -> bool:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
@@ -420,6 +507,7 @@ func _run() -> void:
 	await _live_video(root)
 	await _site_file(root)
 	await _weather_and_wind(root)
+	await _surfaces_and_sky(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")

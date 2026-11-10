@@ -13,6 +13,7 @@ const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 var _controls := {}
 var _real: CheckBox
+var _volumetric: CheckBox
 var _real_box: VBoxContainer
 var _place: OptionButton
 var _weather: OptionButton
@@ -67,6 +68,13 @@ func _init() -> void:
 		func(v): GnEnvironment.apply("haze", v), func(v): return "off" if v <= 0.0 else "%d%%" % int(v * 100))
 	_controls.cloudiness = GnUi.slider(_body, "Clouds", 0.0, 1.0, 0.01,
 		func(v): GnEnvironment.apply("cloudiness", v), func(v): return "clear" if v < 0.05 else "%d%%" % int(v * 100))
+	_volumetric = CheckBox.new()
+	_volumetric.text = "Volumetric clouds"
+	_volumetric.tooltip_text = "Clouds with depth, lit from where the sun is and carried by the wind, in place of clouds painted on the sky. Asks more of the graphics card. Eevee and Cycles show the same clouds."
+	_volumetric.toggled.connect(func(on):
+		if bool(GnEnvironment.value("volumetric_clouds")) != on:
+			GnEnvironment.apply("volumetric_clouds", on))
+	_body.add_child(_volumetric)
 	GnUi.heading(_body, "Weather")
 	_weather = GnUi.option(_body, "Weather", GnWeather.KINDS, func(t): GnWeather.set_value("kind", t))
 	_weather_amount = GnUi.slider(_body, "Heaviness", 0.05, 1.0, 0.01,
@@ -114,11 +122,13 @@ func refresh() -> void:
 	GnUi.show_value(_wind, float(w.get("wind", 0.25)))
 	GnUi.show_value(_wind_heading, float(w.get("wind_heading", 0.0)))
 	GnUi.select_text(_season, w.season)
+	_volumetric.set_pressed_no_signal(bool(GnEnvironment.value("volumetric_clouds")))
 	var real := bool(GnEnvironment.value("real_sun"))
 	_real.set_pressed_no_signal(real)
 	_real_box.visible = real
 	# A photo sky fixes the time of day: the sun is where the photo's sun is.
 	var photo := GnEnvironment.is_photo_sky()
+	_volumetric.disabled = photo
 	_controls.time_of_day.get_parent().modulate.a = 0.4 if photo else 1.0
 	_controls.time_of_day.editable = not photo
 

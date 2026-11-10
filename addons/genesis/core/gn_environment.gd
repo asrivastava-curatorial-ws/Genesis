@@ -9,6 +9,7 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const GnSun := preload("res://addons/genesis/core/gn_sun.gd")
 const CLOUD_SKY := preload("res://addons/genesis/core/gn_cloud_sky.gdshader")
+const GnClouds := preload("res://addons/genesis/core/gn_clouds.gd")
 
 const SKIES := {
 	"Clear": {
@@ -35,6 +36,8 @@ const DEFAULTS := {
 	"day_of_year": 172,
 	"haze": 0.0,
 	"cloudiness": 0.3,
+	# Clouds with depth, lit from where the sun is; off: painted on the sky (faster).
+	"volumetric_clouds": false,
 }
 
 const MAX_ELEVATION := 58.0
@@ -216,9 +219,10 @@ static func apply(key: String, v: Variant, undoable := true) -> void:
 	var light := sun()
 	var env: Environment = world().environment if world() else null
 	match key:
-		"sun_strength", "time_of_day", "heading", "sky", "real_sun", "latitude", "longitude", "utc_offset", "day_of_year", "cloudiness":
+		"sun_strength", "time_of_day", "heading", "sky", "real_sun", "latitude", "longitude", "utc_offset", "day_of_year", "cloudiness", "volumetric_clouds":
 			var vals := {}
-			for k in ["time_of_day", "heading", "sun_strength", "sky", "real_sun", "latitude", "longitude", "utc_offset", "day_of_year", "cloudiness"]:
+			for k in ["time_of_day", "heading", "sun_strength", "sky", "real_sun", "latitude", "longitude", "utc_offset", "day_of_year", "cloudiness",
+					"volumetric_clouds"]:
 				vals[k] = v if k == key else value(k)
 			changes.append_array(_sun_and_sky(light, env, vals, key == "sky"))
 		"exposure":
@@ -286,12 +290,19 @@ static func _sun_and_sky(light: DirectionalLight3D, env: Environment, vals: Dict
 	changes.append([light, "light_color", sun_color(el).lerp(MOON_COLOUR, night)])
 	changes.append([env, "sky_rotation", Vector3.ZERO])
 	# The procedural sky is Genesis's own cloud sky shader: Godot's
-	# gradient sky plus a cloud layer whose cover is one number.
+	# gradient sky plus a cloud layer whose cover is one number. The clouds
+	# are painted on it, or (volumetric) a real layer of cloud with depth.
+	var volumetric := bool(vals.get("volumetric_clouds", false))
+	var shader: Shader = GnClouds.sky_shader() if volumetric else CLOUD_SKY
 	var mat := env.sky.sky_material as ShaderMaterial
-	if mat == null or mat.shader != CLOUD_SKY:
+	if mat == null or mat.shader != shader:
 		mat = ShaderMaterial.new()
-		mat.shader = CLOUD_SKY
+		mat.shader = shader
 		changes.append([env.sky, "sky_material", mat])
+	# Clouds that drift are a sky that changes every frame: lit from it at once, not over several frames.
+	changes.append([env.sky, "process_mode", Sky.PROCESS_MODE_REALTIME if volumetric else Sky.PROCESS_MODE_AUTOMATIC])
+	if volumetric:
+		changes.append([env.sky, "radiance_size", Sky.RADIANCE_SIZE_256])
 	var p: Dictionary = SKIES.get(sky, SKIES["Clear"])
 	changes.append([mat, "shader_parameter/sky_top", p.top])
 	changes.append([mat, "shader_parameter/sky_horizon", p.horizon])

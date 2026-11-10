@@ -728,7 +728,26 @@ def _water(mat, spec):
     bump.inputs["Strength"].default_value = 0.15 * float(spec.get("wave_strength", 0.6))
     bump.inputs["Distance"].default_value = 0.05
     nt.links.new(out(noise, "Fac"), bump.inputs["Height"])
-    nt.links.new(bump.outputs["Normal"], sock(bsdf, "Normal"))
+    if caustics_on() and not spec.get("ocean"):
+        # For caustics the waves must be the water's real shape, and only its
+        # shape: Cycles traces the light through the surface itself, and
+        # waves that are shading on top of it flatten the patterns out.
+        disp = nt.nodes.new("ShaderNodeDisplacement")
+        disp.inputs["Midlevel"].default_value = 0.5
+        disp.inputs["Scale"].default_value = 0.06 * float(spec.get("wave_strength", 0.6))
+        nt.links.new(out(noise, "Fac"), disp.inputs["Height"])
+        nt.links.new(disp.outputs[0], outn.inputs["Displacement"])
+        try:
+            mat.displacement_method = "DISPLACEMENT"
+        except Exception:
+            pass
+        # And it must be clear water all through (its colour then comes from
+        # its depth alone): a surface that is partly paint gathers no light.
+        set_input(bsdf, ("Transmission Weight", "Transmission"), 1.0)
+        set_input(bsdf, "Base Color", (*[1.0 - (1.0 - c) * 0.35 for c in shallow], 1.0))
+        set_input(bsdf, "Roughness", 0.0)
+    else:
+        nt.links.new(bump.outputs["Normal"], sock(bsdf, "Normal"))
     # Deeper water tints darker: a volume absorber the colour of its depth.
     if not spec.get("ocean"):
         vol = nt.nodes.new("ShaderNodeVolumeAbsorption")
@@ -944,8 +963,326 @@ def fix_materials():
                                             s.default_value = (1, 1, 1, 1)
             if spec.get("unshaded"):
                 _emission_only(mat, float(spec.get("emission_strength", 1.0)))
+            if spec.get("subsurface") and bsdf is not None:
+                _subsurface(bsdf, spec["subsurface"])
+            if spec.get("solid_glass") and bsdf is not None:
+                _solid_glass(mat, bsdf, spec)
+            if spec.get("relief"):
+                _relief(mat, spec["relief"])
         except Exception as e:  # a material that can't be fixed renders as glTF made it
             warn_once("mat:" + mat.name, "material %s kept as imported (%s)" % (mat.name, e))
+
+
+# ----------------------------------------------------------------- light inside, solid glass, relief
+
+def caustics_on():
+    return ENGINE == "cycles" and bool(QUALITY.get("caustics"))
+
+
+def _subsurface(bsdf, spec):
+    """Light that enters the surface and leaves it nearby (the editor's
+    subsurface scattering): wax, marble, skin, leaves."""
+    set_input(bsdf, ("Subsurface Weight", "Subsurface"), max(0.0, min(1.0, float(spec.get("weight", 0.0)))))
+    depth = float(spec.get("depth", 0.03))
+    # How far each colour travels, as a share of the depth: red furthest, as
+    # in skin, wax and stone; skin much more so.
+    radius = (1.0, 0.2, 0.1) if spec.get("skin") else (1.0, 0.7, 0.5)
+    set_input(bsdf, "Subsurface Radius", radius)
+    set_input(bsdf, "Subsurface Scale", depth)
+    try:
+        bsdf.subsurface_method = "RANDOM_WALK"
+    except Exception:
+        pass
+
+
+_SOLID_GLASS = set()
+
+
+def _solid_glass(mat, bsdf, spec):
+    """Glass as a solid piece (a vase, a glass block): light bends through
+    it. The editor's see-through becomes transmission, tinted by the colour."""
+    nt = mat.node_tree
+    alpha = sock(bsdf, "Alpha")
+    a = 0.25
+    if alpha is not None:
+        if not alpha.is_linked:
+            a = float(alpha.default_value)
+        for l in list(alpha.links):
+            nt.links.remove(l)
+        alpha.default_value = 1.0
+    set_input(bsdf, ("Transmission Weight", "Transmission"), 1.0)
+    set_input(bsdf, "IOR", float(spec.get("ior", 1.5)))
+    base = sock(bsdf, "Base Color")
+    tint = (1.0, 1.0, 1.0)
+    if base is not None and not base.is_linked:
+        c = base.default_value
+        k = max(0.0, min(1.0, a * 2.0))      # the more opaque it was, the deeper the tint
+        tint = tuple(1.0 - (1.0 - c[i]) * k for i in range(3))
+        base.default_value = (*tint, 1.0)
+    for attr, val in (("use_raytrace_refraction", True), ("surface_render_method", "DITHERED"), ("blend_method", "HASHED"),
+                      ("use_screen_refraction", True)):
+        try:
+            setattr(mat, attr, val)
+        except Exception:
+            pass
+    _SOLID_GLASS.add(mat.name)
+    if ENGINE != "cycles" or caustics_on():
+        return
+    # Without caustics, Cycles' glass would cast a solid shadow: let the
+    # light through instead, tinted, as a glass table really does.
+    outn = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeOutputMaterial" and n.is_active_output), None)
+    if outn is None or not outn.inputs["Surface"].is_linked:
+        return
+    surface = outn.inputs["Surface"].links[0].from_socket
+    lp = nt.nodes.new("ShaderNodeLightPath")
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+    tr.inputs["Color"].default_value = (*tint, 1.0)
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(out(lp, "Is Shadow Ray"), mix.inputs[0])
+    nt.links.new(surface, mix.inputs[1])
+    nt.links.new(tr.outputs[0], mix.inputs[2])
+    nt.links.new(mix.outputs[0], outn.inputs["Surface"])
+
+
+_RELIEF = {}        # material name -> metres of relief
+_HEIGHTS = {}       # normal map image name -> heights worked out from it
+
+
+def _source_image(socket, seen=0):
+    """The image node feeding a socket, through the nodes in between."""
+    if socket is None or not socket.is_linked or seen > 8:
+        return None
+    node = socket.links[0].from_node
+    if node.bl_idname == "ShaderNodeTexImage" and node.image is not None:
+        return node
+    for inp in node.inputs:
+        found = _source_image(inp, seen + 1)
+        if found is not None:
+            return found
+    return None
+
+
+def heights_from_normals(rgb):
+    """A height map (0-1) from a normal map (h, w, 3 in 0-1, rows from the
+    bottom, green up): the surface whose slopes the normals are, found in one
+    step in the frequency domain (Frankot and Chellappa). Exact for a map
+    that tiles, which these do."""
+    n = rgb[..., :3].astype(np.float64) * 2.0 - 1.0
+    nz = np.maximum(n[..., 2], 0.05)
+    p = -n[..., 0] / nz         # dz/dx
+    q = -n[..., 1] / nz         # dz/dy
+    h, w = p.shape
+    u = np.fft.fftfreq(w) * 2.0 * np.pi
+    v = np.fft.fftfreq(h) * 2.0 * np.pi
+    uu, vv = np.meshgrid(u, v)
+    denom = uu * uu + vv * vv
+    denom[0, 0] = 1.0
+    z = np.real(np.fft.ifft2((-1j * uu * np.fft.fft2(p) - 1j * vv * np.fft.fft2(q)) / denom))
+    lo, hi = np.percentile(z, 0.5), np.percentile(z, 99.5)
+    if hi - lo < 1e-9:
+        return np.full((h, w), 0.5, dtype=np.float32)
+    return np.clip((z - lo) / (hi - lo), 0.0, 1.0).astype(np.float32)
+
+
+def _height_from_normal_map(mat):
+    """The material's normal map as a height map, made once per picture."""
+    for nm in _normal_map_nodes(mat):
+        c = nm.inputs["Color"]
+        tex = c.links[0].from_node if c.is_linked else None
+        if tex is None or tex.bl_idname != "ShaderNodeTexImage" or tex.image is None:
+            continue
+        img = tex.image
+        if img.name in _HEIGHTS:
+            return _HEIGHTS[img.name]
+        w, h = img.size
+        if w < 4 or h < 4:
+            continue
+        px = np.empty(w * h * 4, dtype=np.float32)
+        img.pixels.foreach_get(px)
+        z = heights_from_normals(px.reshape(h, w, 4))
+        himg = bpy.data.images.new("relief_" + img.name, w, h, alpha=False, float_buffer=True, is_data=True)
+        himg.pixels.foreach_set(np.dstack([z, z, z, np.ones_like(z)]).ravel())
+        himg.pack()
+        _HEIGHTS[img.name] = himg
+        return himg
+    return None
+
+
+def _relief(mat, spec):
+    """Relief: the height map moves the surface in and out by `scale` metres
+    (Cycles: really, the mesh diced finely where the camera is near; Eevee:
+    in the shading). Laid on exactly as the colour is."""
+    scale = float(spec.get("scale", 0.0))
+    nt = mat.node_tree
+    outn = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeOutputMaterial" and n.is_active_output), None)
+    bsdf = principled(mat)
+    if scale <= 0.0 or outn is None or bsdf is None:
+        return
+    img = _load_image(spec.get("image"), non_color=True) or _height_from_normal_map(mat)
+    if img is None:
+        return
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = img
+    tex.interpolation = "Cubic"
+    like = _source_image(sock(bsdf, "Base Color")) or next(iter(_image_nodes(mat)), None)
+    if like is not None and like is not tex:
+        tex.projection = like.projection
+        try:
+            tex.projection_blend = like.projection_blend
+        except Exception:
+            pass
+        v = like.inputs["Vector"]
+        if v.is_linked:
+            nt.links.new(v.links[0].from_socket, tex.inputs["Vector"])
+    height = tex.outputs["Color"]
+    if spec.get("flip"):
+        inv = nt.nodes.new("ShaderNodeInvert")
+        nt.links.new(height, inv.inputs["Color"])
+        height = inv.outputs["Color"]
+    disp = nt.nodes.new("ShaderNodeDisplacement")
+    disp.inputs["Midlevel"].default_value = 0.5
+    disp.inputs["Scale"].default_value = scale
+    nt.links.new(height, disp.inputs["Height"])
+    nt.links.new(disp.outputs[0], outn.inputs["Displacement"])
+    try:
+        mat.displacement_method = "BOTH" if ENGINE == "cycles" else "BUMP"
+    except Exception:
+        pass
+    _RELIEF[mat.name] = scale
+
+
+def _weld(me):
+    """Corners that only touch are joined, so a surface that is moved does
+    not come apart at its edges. The shading normals are kept."""
+    import bmesh
+    try:
+        normals = [tuple(cn.vector) for cn in me.corner_normals]
+    except Exception:
+        normals = None
+    loops = len(me.loops)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+    bm.to_mesh(me)
+    bm.free()
+    me.update()
+    try:
+        if normals is not None and len(me.loops) == loops:
+            me.normals_split_custom_set(normals)
+        else:
+            me.set_sharp_from_angle(angle=math.radians(35.0))
+    except Exception:
+        pass
+
+
+def _dice(o, pixels):
+    """Dices the object finely for the camera (Cycles' adaptive subdivision),
+    keeping its shape: flat stays flat."""
+    mod = o.modifiers.new("oriel_dice", "SUBSURF")
+    mod.subdivision_type = "SIMPLE"
+    mod.levels = 0
+    mod.render_levels = 1
+    try:
+        mod.use_adaptive_subdivision = True
+        mod.adaptive_space = "PIXEL"
+        mod.adaptive_pixel_size = pixels
+    except Exception:
+        # Blender 4: the switch is on the object, and the feature experimental.
+        try:
+            bpy.context.scene.cycles.feature_set = "EXPERIMENTAL"
+            o.cycles.use_adaptive_subdivision = True
+            o.cycles.dicing_rate = pixels
+        except Exception:
+            mod.render_levels = 4
+    return mod
+
+
+def _dicing_pixels():
+    """Edge length of the dicing in pixels: finer with the render's quality."""
+    n = int(QUALITY.get("samples", 128))
+    return 4.0 if n <= 32 else (2.0 if n <= 128 else (1.5 if n <= 512 else 1.0))
+
+
+def apply_relief():
+    """Cycles: the objects wearing a material with relief are joined at their
+    corners and diced, so the surface can really move."""
+    if ENGINE != "cycles" or not _RELIEF:
+        return
+    sc = bpy.context.scene
+    welded = set()
+    count = 0
+    for o in list(bpy.data.objects):
+        if o.type != "MESH" or not any(sl.material and sl.material.name in _RELIEF for sl in o.material_slots):
+            continue
+        if o.data.name not in welded:
+            welded.add(o.data.name)
+            _weld(o.data)
+        _dice(o, _dicing_pixels())
+        count += 1
+    try:
+        sc.cycles.offscreen_dicing_scale = 8.0
+        sc.cycles.max_subdivisions = 12
+        # Dicing follows the camera: nothing of it may be kept from one picture to the next.
+        sc.render.use_persistent_data = False
+    except Exception:
+        pass
+    log("relief: %d objects diced for %d materials" % (count, len(_RELIEF)))
+
+
+def apply_caustics():
+    """Cycles, when asked: light gathered by solid glass and by water falls
+    as bright patterns where their shadows would be (Cycles' shadow
+    caustics), and light may bounce off and through shiny things on its way
+    to a surface (slow to clear, and what the option is for)."""
+    if not caustics_on():
+        return
+    sc = bpy.context.scene
+    cy = sc.cycles
+    cy.caustics_reflective = True
+    cy.caustics_refractive = True
+    try:
+        cy.blur_glossy = 0.3
+    except Exception:
+        pass
+    casters = 0
+    for o in list(bpy.data.objects):
+        if o.type != "MESH":
+            continue
+        kinds = set()
+        for sl in o.material_slots:
+            m = sl.material
+            if m is None:
+                continue
+            if m.name in _SOLID_GLASS:
+                kinds.add("glass")
+            elif SCENE.get("materials", {}).get(m.name, {}).get("kind") == "water" and not SCENE["materials"][m.name].get("ocean"):
+                kinds.add("water")
+        try:
+            o.cycles.is_caustics_caster = bool(kinds)
+            o.cycles.is_caustics_receiver = not kinds
+        except Exception:
+            return
+        if not kinds:
+            continue
+        casters += 1
+        # The patterns fall where the thing's shadow would: it must have one
+        # (the editor's water casts none).
+        try:
+            o.visible_shadow = True
+        except Exception:
+            pass
+        # The light is traced through the surface's own shape: it must be smooth.
+        for poly in o.data.polygons:
+            poly.use_smooth = True
+        if "water" in kinds and not any(md.type == "SUBSURF" for md in o.modifiers):
+            # The waves, which are only shading otherwise, become the water's
+            # shape, finely: the patterns are as sharp as the ripples are small.
+            _dice(o, max(_dicing_pixels() * 0.5, 0.75))
+            try:
+                sc.render.use_persistent_data = False
+            except Exception:
+                pass
+    log("caustics: %d objects gather light" % casters)
 
 
 # ----------------------------------------------------------------- weather on the surfaces
@@ -1397,6 +1734,11 @@ def build_lights(lights):
                 data.volume_factor = float(L["volume"])
             except Exception:
                 pass
+        if caustics_on() and t in ("sun", "spot", "point"):
+            try:
+                data.cycles.is_caustics_light = True
+            except Exception:
+                pass
         o = bpy.data.objects.new(data.name, data)
         o.matrix_world = view_matrix(L["matrix"])
         bpy.context.scene.collection.objects.link(o)
@@ -1654,9 +1996,19 @@ def sky_colour(dirs):
         xr, yr = x * cx - y * sx, x * sx + y * cx
         u = (0.5 - np.arctan2(yr, xr) / (2 * math.pi)) % 1.0
         v = np.arccos(np.clip(up, -1, 1)) / math.pi
-        px = np.clip((u * wd).astype(int), 0, wd - 1)
-        py = np.clip((v * h).astype(int), 0, h - 1)
-        return small[py, px, :3] * float(w.get("strength", 1.0))
+        # Between the small picture's cells, smoothly (its cells would show
+        # in the sky as faint curved patches).
+        fx = u * wd - 0.5
+        fy = np.clip(v * h - 0.5, 0.0, h - 1.0)
+        x0 = np.floor(fx).astype(int)
+        y0 = np.minimum(np.floor(fy).astype(int), h - 1)
+        y1 = np.minimum(y0 + 1, h - 1)
+        ax = (fx - x0)[:, None]
+        ay = (fy - y0)[:, None]
+        xa, xb = x0 % wd, (x0 + 1) % wd
+        top = small[y0, xa, :3] * (1 - ax) + small[y0, xb, :3] * ax
+        bottom = small[y1, xa, :3] * (1 - ax) + small[y1, xb, :3] * ax
+        return (top * (1 - ay) + bottom * ay) * float(w.get("strength", 1.0))
     if w.get("kind") == "color":
         return np.tile(np.array(col3(w.get("color"))), (dirs.shape[0], 1))
     top = np.array(col3(w.get("top"), (0.22, 0.42, 0.78)))
@@ -2937,6 +3289,8 @@ def main():
     build_texts()
     build_haze(SCENE.get("haze"))
     setup_engine()
+    apply_relief()
+    apply_caustics()
     setup_light_groups()        # before the lights and the sky, which join their groups as they are made
     build_lights(SCENE.get("lights", []))
     build_world(SCENE.get("world", {}))

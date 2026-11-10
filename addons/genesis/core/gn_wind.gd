@@ -49,6 +49,7 @@ vec3 oriel_sway(vec3 v, mat4 model) {
 static var _twins := {}        # material instance id -> {"shader": RID, "material": RID, "source": Material, "code": hash}
 static var _registered := false
 static var _time := 0.0
+static var _elapsed := 0.0     # the same clock, never wrapped: how long the clouds have drifted
 static var _frozen := 0
 static var _strength := 0.0
 static var _heading := 0.0
@@ -81,12 +82,14 @@ static func advance(delta: float) -> void:
 	if _frozen > 0 or _strength <= 0.0:
 		return
 	_time = fmod(_time + delta, 3600.0)
+	_elapsed += delta
 	_push()
 
 
 ## A film's clock: the moment being shown.
 static func set_time(t: float) -> void:
 	_time = t
+	_elapsed = t
 	_push()
 
 
@@ -101,6 +104,19 @@ static func unfreeze() -> void:
 
 static func time() -> float:
 	return _time
+
+
+## Seconds of wind since the program started (or the film's moment), for what drifts with it.
+static func elapsed() -> float:
+	return _elapsed
+
+
+static func strength() -> float:
+	return _strength
+
+
+static func heading() -> float:
+	return _heading
 
 
 ## Frees the twins (when the program closes).

@@ -101,6 +101,9 @@ static func capture(sub: SubViewport, cam: Camera3D, samples: int, focus: float,
 			cam.frustum_offset = base_offset + pixel * px - lens * cam.near / maxf(focus, 0.1)
 		if sun:
 			sun.global_basis = sun_basis * Basis(Vector3.RIGHT, sun_at.y) * Basis(Vector3.UP, sun_at.x)
+		# Volumetric clouds are walked through in steps: each sample starts its
+		# steps somewhere else, and the average has no grain (gn_clouds.gdshaderinc).
+		RenderingServer.global_shader_parameter_set(&"oriel_cloud_jitter", _halton(n + 1, 17))
 		for f in FRAMES:
 			await RenderingServer.frame_post_draw
 		# Draw this sample over the mean so far at 1/n: an exact running average.
@@ -129,6 +132,7 @@ static func capture(sub: SubViewport, cam: Camera3D, samples: int, focus: float,
 		host.remove_child(v)
 		v.queue_free()
 	cam.global_transform = base
+	RenderingServer.global_shader_parameter_set(&"oriel_cloud_jitter", 0.0)
 	if sun:
 		sun.global_basis = sun_basis
 		sun.light_angular_distance = sun_soft

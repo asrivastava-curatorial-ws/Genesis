@@ -280,6 +280,10 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 	var say := func(t: String): if progress.is_valid(): progress.call(t)
 	say.call("%s: writing the scene…" % GnBlender.LABELS.get(engine, engine))
 	var dir := GnBlender.new_job_dir(engine + "_film")
+	# Volumetric clouds: the sky's picture is made at the film's first moment
+	# (and again whenever a time-lapse moves the sun).
+	show_time(0.0, list)
+	await GnPhotoreal.prepare_sky(host, dir, quality)
 	var ex := GnSceneExport.export_scene(root, dir)
 	if str(ex.error) != "":
 		say.call(str(ex.error))
@@ -317,6 +321,7 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 			"camera": GnSceneExport.camera_spec_from(at.transform, at.fov, 0.05, 4000.0, look, 10.0),
 			"post": {"exposure": env_exposure * pow(2.0, float(look.get("exposure", 0.0)))}}
 		if lapse:
+			await GnPhotoreal.prepare_sky(host, dir, "Draft")
 			fr["lights"] = GnSceneExport.lights_spec(root)
 			fr["world"] = GnSceneExport.environment_spec().world
 		if not follow.is_empty():

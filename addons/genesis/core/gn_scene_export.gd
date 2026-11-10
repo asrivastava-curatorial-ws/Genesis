@@ -29,6 +29,8 @@ const LightFixture := preload("res://addons/genesis/set/gn_light_fixture.gd")
 const GnIes := preload("res://addons/genesis/core/gn_ies.gd")
 const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
 const Terrain := preload("res://addons/genesis/set/gn_terrain.gd")
+const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
+const GnClouds := preload("res://addons/genesis/core/gn_clouds.gd")
 
 const TONEMAPS := ["linear", "reinhard", "filmic", "aces", "agx"]
 const GLOW_BLEND := ["additive", "screen", "softlight", "replace", "mix"]
@@ -384,6 +386,17 @@ static func _material_spec(ctx: Ctx, m: BaseMaterial3D) -> Dictionary:
 		s["specular"] = m.metallic_specular
 	if m.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
 		s["unshaded"] = true
+	# Light that goes into the surface (wax, marble, skin).
+	if m.subsurf_scatter_enabled and m.subsurf_scatter_strength > 0.0:
+		s["subsurface"] = {"weight": m.subsurf_scatter_strength, "skin": m.subsurf_scatter_skin_mode,
+			"depth": GnMaterials.LIGHT_INSIDE_DEPTH}
+	# Relief: the height map (or, without one, the normal map) moves the surface.
+	var relief := GnMaterials.relief_of(m)
+	if relief > 0.0 and GnMaterials.can_have_relief(m):
+		s["relief"] = {"scale": relief, "image": _save_texture(ctx, m.heightmap_texture) if m.heightmap_texture else "",
+			"flip": m.heightmap_flip_texture}
+	if GnMaterials.is_solid_glass(m):
+		s["solid_glass"] = true
 	if m.detail_enabled and m.detail_albedo:
 		var img := _save_texture(ctx, m.detail_albedo)
 		if img != "":
@@ -687,7 +700,13 @@ static func environment_spec(ctx: Ctx = null) -> Dictionary:
 	var world := {"kind": "color", "color": _lin(env.background_color), "ambient": amb, "energy": bg_mult}
 	if env.background_mode == Environment.BG_SKY and env.sky and env.sky.sky_material:
 		var sm := env.sky.sky_material
-		if sm is ShaderMaterial and (sm as ShaderMaterial).shader == CLOUD_SKY:
+		var sky_picture := GnClouds.baked(sm, sun) if GnClouds.is_volume_sky(sm) else ""
+		if sky_picture != "":
+			# Volumetric clouds: the sky as the picture GnPhotoreal had made of it (its brightness is in the picture).
+			world = {"kind": "hdri", "hdri": sky_picture, "strength": bg_mult, "rotation": 0.0, "ambient": amb, "clouds": "volumetric"}
+		elif sm is ShaderMaterial and ((sm as ShaderMaterial).shader == CLOUD_SKY or GnClouds.is_volume_sky(sm)):
+			if GnClouds.is_volume_sky(sm) and ctx:
+				ctx.warn("The volumetric clouds could not be drawn for this renderer; its sky has the painted ones.")
 			var m := sm as ShaderMaterial
 			world = {"kind": "gradient", "ambient": amb,
 				"top": _lin(_c(m, "sky_top", Color(0.22, 0.42, 0.78))),

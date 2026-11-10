@@ -13,6 +13,7 @@ const PageAssets := preload("res://addons/genesis/ui/page_assets.gd")
 const GnAccumulate := preload("res://addons/genesis/core/gn_accumulate.gd")
 const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
 const GnWind := preload("res://addons/genesis/core/gn_wind.gd")
+const GnClouds := preload("res://addons/genesis/core/gn_clouds.gd")
 const GnEffect := preload("res://addons/genesis/set/gn_effect.gd")
 const GnCrowd := preload("res://addons/genesis/set/gn_crowd.gd")
 const GnSurface := preload("res://addons/genesis/core/gn_surface.gd")
@@ -26,6 +27,7 @@ static func release() -> void:
 	PageAssets._thumbs.clear()
 	GnAccumulate._encode = null
 	GnWind.release()
+	GnClouds.release()
 	GnEffect._dot = null
 	GnCrowd._meshes.clear()
 	GnSurface._tri_cache.clear()

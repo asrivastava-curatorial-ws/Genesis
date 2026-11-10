@@ -280,7 +280,8 @@ def get_ph(item, res, lib):
         return {"result": dest, "files": [dest]}, "complete"
     if item["kind"] == "materials":
         maps = {}
-        for key, names in (("albedo", ["Diffuse", "diff"]), ("normal", ["nor_gl"]), ("roughness", ["Rough", "rough"]), ("ao", ["AO", "ao"])):
+        for key, names in (("albedo", ["Diffuse", "diff"]), ("normal", ["nor_gl"]), ("roughness", ["Rough", "rough"]), ("ao", ["AO", "ao"]),
+                           ("height", ["Displacement", "disp"])):
             for n in names:
                 f = pick(files.get(n), res, ["jpg", "png"])
                 if f:
@@ -318,7 +319,8 @@ def get_acg(item, res, lib):
             for n in zf.namelist():
                 low = n.lower()
                 key = ("albedo" if low.endswith("_color.jpg") else "normal" if "_normalgl." in low else
-                       "roughness" if "_roughness." in low else "ao" if "_ambientocclusion." in low else "")
+                       "roughness" if "_roughness." in low else "ao" if "_ambientocclusion." in low else
+                       "height" if "_displacement." in low else "")
                 if key:
                     dest = os.path.join(src, os.path.basename(n))
                     with zf.open(n) as a, open(dest, "wb") as b:

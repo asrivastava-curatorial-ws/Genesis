@@ -98,6 +98,22 @@ def material(src, outdir):
             result[key] = dest
         except Exception as e:  # keep what could be saved
             result.setdefault("warnings", []).append("%s: %s" % (key, e))
+    # The height map, where the material displaces its surface.
+    outn = next((n for n in mat.node_tree.nodes if n.bl_idname == "ShaderNodeOutputMaterial" and n.is_active_output), None)
+    disp = outn.inputs.get("Displacement") if outn is not None else None
+    himg = _image_from(disp) if disp is not None else None
+    if himg is not None:
+        dest = os.path.join(outdir, "height.png")
+        try:
+            src_path = bpy.path.abspath(himg.filepath)
+            if himg.packed_file is None and os.path.exists(src_path):
+                himg = bpy.data.images.load(src_path)
+            himg.filepath_raw = dest
+            himg.file_format = "PNG"
+            himg.save()
+            result["height"] = dest
+        except Exception as e:
+            result.setdefault("warnings", []).append("height: %s" % e)
     base = bsdf.inputs.get("Base Color")
     if base is not None and not base.is_linked:
         c = base.default_value

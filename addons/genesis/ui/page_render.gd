@@ -28,6 +28,7 @@ var _engine_note: Label
 var _camera: OptionButton
 var _size: OptionButton
 var _quality: OptionButton
+var _caustics: CheckBox
 var _stop: Button
 var _button: Button
 var _all_button: Button
@@ -84,6 +85,12 @@ func _init() -> void:
 				if PHOTOREAL_QUALITY[k] == t:
 					q[eng] = k
 			GnHost.set_setting("render_quality", q))
+	_caustics = CheckBox.new()
+	_caustics.text = "Caustics (Cycles)"
+	_caustics.tooltip_text = "Light gathered by water and by solid glass falls as bright patterns, and light bounces off shiny things onto what is near. Slower, and needs High or Best to come out clean.\nGlass gathers light when it is marked Solid glass on the Materials page."
+	_caustics.button_pressed = GnPhotoreal.caustics()
+	_caustics.toggled.connect(func(on): GnHost.set_setting("render_caustics", on))
+	add_child(_caustics)
 	_fill_quality()
 	_button = GnUi.primary(self, "Render still", _render, "image")
 	_stop = GnUi.button(self, "Stop rendering", func(): GnPhotoreal.stop(), "stop")
@@ -192,6 +199,8 @@ func _engine() -> String:
 # for Eevee and Cycles.
 func _fill_quality() -> void:
 	var eng := _engine()
+	if _caustics:
+		_caustics.visible = eng == "cycles"
 	var keep := _quality.get_item_text(_quality.selected) if _quality.selected >= 0 else ""
 	_quality.clear()
 	if GnPhotoreal.is_photoreal(eng):

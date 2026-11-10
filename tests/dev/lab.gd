@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix, haze, weather, wind. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -48,6 +48,12 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _weather(main)
 		"wind":
 			await _wind(main)
+		"surfaces":
+			await _surfaces(main)
+		"caustics":
+			await _caustics(main)
+		"clouds":
+			await _clouds(main)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -482,11 +488,354 @@ static func _wind(main: Node) -> void:
 
 
 ## The mean difference between two pictures of one size, 0-1.
-static func _difference(a: Image, b: Image) -> float:
+static func _difference(a: Image, b: Image, rect := Rect2(0, 0, 1, 1)) -> float:
 	var total := 0.0
 	var n := 0
-	for y in range(0, a.get_height(), 2):
-		for x in range(0, a.get_width(), 2):
+	for y in range(int(rect.position.y * a.get_height()), int(rect.end.y * a.get_height()), 2):
+		for x in range(int(rect.position.x * a.get_width()), int(rect.end.x * a.get_width()), 2):
 			total += absf(a.get_pixel(x, y).get_luminance() - b.get_pixel(x, y).get_luminance())
 			n += 1
 	return total / maxf(n, 1)
+
+
+# ------------------------------------------------------------------ relief and light inside
+# A wall wearing the user's own picture with a height map beside it, seen
+# level with its top: with Relief raised, Cycles must move the top edge up
+# and down (true displacement) and Eevee must shade the face differently.
+# Then two thin slabs lit from behind, one with Light inside: it must glow.
+static func _surfaces(main: Node) -> void:
+	var GnMaterials = load("res://addons/genesis/core/gn_materials.gd")
+	var root := await _studio(main, "Surface check", false)
+	if root == null:
+		return
+	GnEnvironment.apply("time_of_day", 11.0, false)
+	# The pictures: red and cream squares, and heights that roll every 25 cm.
+	var pics_dir := _out.path_join("maps")
+	DirAccess.make_dir_recursive_absolute(pics_dir)
+	var colour := Image.create(256, 256, false, Image.FORMAT_RGB8)
+	var height := Image.create(256, 256, false, Image.FORMAT_RGB8)
+	for y in 256:
+		for x in 256:
+			var a := sin(x / 256.0 * TAU * 2.0) * sin(y / 256.0 * TAU * 2.0) * 0.5 + 0.5
+			height.set_pixel(x, y, Color(a, a, a))
+			colour.set_pixel(x, y, Color(0.75, 0.22, 0.15) if ((x / 64) + (y / 64)) % 2 == 0 else Color(0.8, 0.45, 0.3))
+	colour.save_png(pics_dir.path_join("lab_Color.png"))
+	height.save_png(pics_dir.path_join("lab_Displacement.png"))
+	var wall := _box(root, "Wall", Vector3(3.2, 1.2, 0.3), Vector3(0, 0.6, 0))
+	var surf = GnMaterials.surfaces(wall)[0]
+	var err: String = await GnMaterials.apply_image(surf, pics_dir.path_join("lab_Color.png"), 0.5)
+	var mat := wall.get_active_material(0) as BaseMaterial3D
+	check(err == "" and mat != null and mat.heightmap_texture != null, "relief: the picture came with its height map (%s)" % err)
+	check(GnMaterials.can_have_relief(mat) and is_zero_approx(GnMaterials.relief_of(mat)), "relief: flat until asked for")
+	var cam := _camera("Wall top", Vector3(0, 1.2, 2.0), Vector3(0, 1.2, 0), 50.0)
+	await _frames(main, 4)
+	var engines := _engines.duplicate()
+	_engines = engines.filter(func(e): return e != "godot")
+	var flat := await _render(main, cam, "relief_flat", Vector2i(640, 360), "Draft")
+	GnMaterials.set_relief(surf, 0.04)
+	check(is_equal_approx(GnMaterials.relief_of(wall.get_active_material(0)), 0.04), "relief: 4 cm is asked for")
+	await _frames(main, 2)
+	var raised := await _render(main, cam, "relief_raised", Vector2i(640, 360), "Draft")
+	for e in raised:
+		if not raised[e] is Image or not flat.get(e) is Image:
+			continue
+		var edge_flat := _edge_roughness(flat[e])
+		var edge_raised := _edge_roughness(raised[e])
+		var face := _difference(flat[e], raised[e], Rect2(0.2, 0.6, 0.6, 0.3))
+		print("LAB relief %s: the wall's top edge wanders %.2f px flat, %.2f px raised; its face differs by %.4f" % [e, edge_flat, edge_raised, face])
+		if e == "cycles":
+			check(edge_flat < 0.2 and edge_raised > edge_flat + 0.4, "relief cycles: the surface itself moves (the top edge wanders %.2f px, %.2f flat)" % [edge_raised, edge_flat])
+		else:
+			check(face > 0.004, "relief %s: the face is shaded as if moved (differs by %.4f)" % [e, face])
+	GnHost.undo_redo().undo()
+	check(is_zero_approx(GnMaterials.relief_of(wall.get_active_material(0))), "relief: one undo step takes it away")
+	# A preset with only a normal map: the heights are worked out from it.
+	var brick := _box(root, "Brick wall", Vector3(3.2, 1.2, 0.3), Vector3(0, 0.6, -6))
+	var bs = GnMaterials.surfaces(brick)[0]
+	GnMaterials.apply_preset(bs, "res://genesis_data/materials/brick.tres")
+	GnMaterials.set_relief(bs, 0.02)
+	var cam_b := _camera("Brick", Vector3(0.8, 1.0, -4.6), Vector3(0, 0.7, -6), 50.0)
+	await _frames(main, 4)
+	var bricks := await _render(main, cam_b, "relief_brick", Vector2i(640, 360), "Draft")
+	for e in bricks:
+		if bricks[e] is Image:
+			check(_mean(bricks[e], Rect2(0.3, 0.4, 0.4, 0.3)) > 0.03, "relief %s: a preset with only a normal map renders with relief" % e)
+	_engines = engines
+	# Light inside: two thin slabs at night, each with a lamp behind it.
+	GnEnvironment.apply("time_of_day", 0.5, false)
+	var slabs := {}
+	for spec in [["Plain slab", -0.7], ["Wax slab", 0.7]]:
+		var slab := _box(root, spec[0], Vector3(1.0, 1.0, 0.03), Vector3(20.0 + spec[1], 0.7, 0), Color(0.92, 0.86, 0.72))
+		slabs[spec[0]] = slab
+		var lamp := SpotLight3D.new()
+		lamp.name = "Lamp behind %s" % spec[0]
+		lamp.spot_angle = 14.0
+		lamp.spot_range = 8.0
+		lamp.light_energy = 12.0
+		lamp.shadow_enabled = true
+		GnScene.add_node(lamp, root, "Add a lamp")
+		lamp.global_transform = Transform3D(Basis.looking_at(Vector3(0, 0, 1), Vector3.UP), Vector3(20.0 + spec[1], 0.7, -2.0))
+	GnMaterials.set_light_inside(GnMaterials.surfaces(slabs["Wax slab"])[0], 1.0)
+	var wax := (slabs["Wax slab"] as MeshInstance3D).get_active_material(0) as BaseMaterial3D
+	check(wax.subsurf_scatter_enabled and is_equal_approx(GnMaterials.light_inside_of(wax), 1.0), "light inside: the slab's material takes light in")
+	var cam_s := _camera("Slabs", Vector3(20, 0.7, 3.2), Vector3(20, 0.7, 0), 50.0)
+	await _frames(main, 4)
+	var lit := await _render(main, cam_s, "light_inside", Vector2i(640, 360), "Draft")
+	for e in lit:
+		if not lit[e] is Image:
+			continue
+		var plain := _mean(lit[e], Rect2(0.27, 0.4, 0.1, 0.2))
+		var glow := _mean(lit[e], Rect2(0.63, 0.4, 0.1, 0.2))
+		print("LAB light inside %s: the plain slab's face %.3f, the wax slab's %.3f" % [e, plain, glow])
+		if e == "godot":
+			# The 3D view softens light across such a surface; it does not carry it right through.
+			check(glow > plain - 0.01, "light inside godot: the wax slab renders (%.3f, the plain one %.3f)" % [glow, plain])
+		else:
+			check(glow > plain * 1.5 + 0.02, "light inside %s: the lamp behind shows through the wax slab (%.3f against %.3f)" % [e, glow, plain])
+
+
+## How far the upper edge of what is red in the picture's middle band wanders
+## from a straight line, in pixels (the standard deviation of its row).
+static func _edge_roughness(img: Image) -> float:
+	var rows: Array = []
+	var w := img.get_width()
+	var h := img.get_height()
+	for x in range(int(w * 0.2), int(w * 0.8)):
+		for y in range(int(h * 0.25), int(h * 0.75)):
+			var c := img.get_pixel(x, y)
+			if c.r > c.b * 1.25 and c.r > 0.12:
+				rows.append(float(y))
+				break
+	if rows.size() < 20:
+		return -1.0
+	# Against the straight line through them (the camera may not be dead level).
+	var n := float(rows.size())
+	var sx := 0.0
+	var sy := 0.0
+	var sxx := 0.0
+	var sxy := 0.0
+	for i in rows.size():
+		sx += i
+		sy += rows[i]
+		sxx += float(i) * i
+		sxy += i * rows[i]
+	var slope := (n * sxy - sx * sy) / maxf(n * sxx - sx * sx, 0.0001)
+	var base := (sy - slope * sx) / n
+	var total := 0.0
+	for i in rows.size():
+		var d: float = rows[i] - (base + slope * i)
+		total += d * d
+	return sqrt(total / n)
+
+
+# ------------------------------------------------------------------ solid glass and caustics
+# A glass ball under a lamp, and a pool under another, at night. With
+# Caustics on, Cycles must gather the lamp's light into a patch brighter than
+# the lit floor inside the ball's shadow, and into moving-water patterns on
+# the pool's floor.
+static func _caustics(main: Node) -> void:
+	var GnMaterials = load("res://addons/genesis/core/gn_materials.gd")
+	var WaterBody = load("res://addons/genesis/set/gn_water_body.gd")
+	var root := await _studio(main, "Caustics check")
+	if root == null:
+		return
+	_box(root, "Floor", Vector3(8, 0.2, 8), Vector3(0, 0.1, 0), Color(0.75, 0.75, 0.75))
+	var ball := MeshInstance3D.new()
+	ball.name = "Glass ball"
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.5
+	sphere.height = 1.0
+	sphere.radial_segments = 96
+	sphere.rings = 48
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.9, 0.97, 1.0, 0.2)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.roughness = 0.0
+	sphere.material = glass
+	ball.mesh = sphere
+	ball.position = Vector3(0, 0.7, 0)
+	GnScene.add_node(ball, root, "Add a glass ball")
+	GnMaterials.set_solid_glass(GnMaterials.surfaces(ball)[0], true)
+	check(GnMaterials.is_solid_glass(ball.get_active_material(0)), "glass: the ball is solid glass")
+	var lamp := SpotLight3D.new()
+	lamp.name = "Lamp"
+	lamp.spot_angle = 25.0
+	lamp.spot_range = 12.0
+	lamp.light_energy = 1.5
+	lamp.shadow_enabled = true
+	GnScene.add_node(lamp, root, "Add a lamp")
+	lamp.global_transform = Transform3D(Basis.looking_at(Vector3(-1.5, -3.3, 0).normalized(), Vector3.UP), Vector3(1.5, 4.0, 0))
+	var cam := _camera("Over the ball", Vector3(-0.6, 5.0, 0.01), Vector3(-0.6, 0.2, 0), 50.0)
+	# The pool: a tiled floor 0.7 m under the water, a lamp straight above.
+	_box(root, "Pool floor", Vector3(4, 0.2, 4), Vector3(20, 0.1, 0), Color(0.6, 0.75, 0.8))
+	var water: Node3D = WaterBody.new()
+	water.name = "Pool"
+	water.kind = "Pool"
+	water.width = 4.0
+	water.length = 4.0
+	water.waves = 1.0
+	GnScene.add_node(water, root, "Add a pool")
+	water.position = Vector3(20, 0.9, 0)
+	var lamp2 := SpotLight3D.new()
+	lamp2.name = "Pool lamp"
+	lamp2.spot_angle = 22.0
+	lamp2.spot_range = 12.0
+	lamp2.light_energy = 6.0
+	lamp2.shadow_enabled = true
+	GnScene.add_node(lamp2, root, "Add a lamp")
+	lamp2.global_transform = Transform3D(Basis.looking_at(Vector3(0.05, -1, 0).normalized(), Vector3.FORWARD), Vector3(20, 5.0, 0))
+	var cam2 := _camera("Over the pool", Vector3(20, 4.2, 2.6), Vector3(20, 0.2, 0), 45.0)
+	await _frames(main, 6)
+	var was = GnHost.get_setting("render_caustics", false)
+	var shots := {}
+	for mode in ["plain", "caustics"]:
+		GnHost.set_setting("render_caustics", mode == "caustics")
+		shots[mode] = [await _render(main, cam, "ball_" + mode, Vector2i(480, 480), "Draft"),
+			await _render(main, cam2, "pool_" + mode, Vector2i(480, 360), "Draft")]
+	GnHost.set_setting("render_caustics", was)
+	for e in _engines:
+		if e == "godot":
+			continue
+		var ball_plain = shots.plain[0].get(e)
+		var ball_c = shots.caustics[0].get(e)
+		var pool_plain = shots.plain[1].get(e)
+		var pool_c = shots.caustics[1].get(e)
+		if not (ball_plain is Image and ball_c is Image and pool_plain is Image and pool_c is Image):
+			continue
+		# The lit floor beside the ball's shadow; and the brightest patch in the shadow.
+		var shadow := Rect2(0.43, 0.43, 0.115, 0.14)
+		var floor_lit := _mean(ball_c, Rect2(0.43, 0.3, 0.115, 0.06))
+		var bright_plain := _brightest(ball_plain, shadow)
+		var bright_c := _brightest(ball_c, shadow)
+		# The pool's floor, clear of the lamp's reflection in the water.
+		var ripple_plain := _spread(pool_plain, Rect2(0.35, 0.25, 0.3, 0.25))
+		var ripple_c := _spread(pool_c, Rect2(0.35, 0.25, 0.3, 0.25))
+		print("LAB caustics %s: lit floor %.3f; brightest patch by the ball %.3f plain, %.3f with caustics; the pool floor's light varies by %.3f plain, %.3f with caustics" % [
+			e, floor_lit, bright_plain, bright_c, ripple_plain, ripple_c])
+		if e == "cycles":
+			check(bright_c > floor_lit * 1.25 and bright_plain < floor_lit * 1.15, "caustics cycles: the ball gathers the lamp's light into a patch brighter than the lit floor (%.3f against %.3f; %.3f without caustics)" % [bright_c, floor_lit, bright_plain])
+			check(ripple_c > ripple_plain * 1.5 and ripple_c > 0.02, "caustics cycles: the water throws patterns of light on the pool's floor (%.3f against %.3f)" % [ripple_c, ripple_plain])
+		else:
+			check(_mean(ball_c, Rect2(0.3, 0.3, 0.4, 0.4)) > 0.02, "glass %s: solid glass renders" % e)
+
+
+## The mean of the brightest 1 %% of a rectangle (so one bright speck is not the answer).
+static func _brightest(img: Image, rect: Rect2) -> float:
+	var vals: Array = []
+	var x0 := int(rect.position.x * img.get_width())
+	var y0 := int(rect.position.y * img.get_height())
+	var x1 := maxi(int(rect.end.x * img.get_width()), x0 + 1)
+	var y1 := maxi(int(rect.end.y * img.get_height()), y0 + 1)
+	for y in range(y0, y1):
+		for x in range(x0, x1):
+			vals.append(img.get_pixel(x, y).get_luminance())
+	vals.sort()
+	var n := maxi(vals.size() / 100, 1)
+	var total := 0.0
+	for i in n:
+		total += vals[vals.size() - 1 - i]
+	return total / n
+
+
+# ------------------------------------------------------------------ volumetric clouds
+# Half a sky of volumetric cloud, looked up at: there must be cloud and
+# clear sky in the picture, the cloud lit (brighter than the sky) and
+# shaded, and the same clouds in the same places in every renderer.
+static func _clouds(main: Node) -> void:
+	var GnClouds = load("res://addons/genesis/core/gn_clouds.gd")
+	var GnWeather = load("res://addons/genesis/core/gn_weather.gd")
+	var root := await _studio(main, "Cloud check", false)
+	if root == null:
+		return
+	GnWeather.set_value("wind", 0.0)
+	GnEnvironment.apply("time_of_day", 15.0, false)
+	GnEnvironment.apply("cloudiness", 0.5, false)
+	GnEnvironment.apply("volumetric_clouds", true, false)
+	await _frames(main, 6)
+	var env: Environment = GnEnvironment.world().environment
+	var mat := env.sky.sky_material as ShaderMaterial
+	check(GnClouds.is_volume_sky(mat), "clouds: the sky is the volumetric one")
+	# The whole sky as Eevee and Cycles get it, to look at.
+	var t0 := Time.get_ticks_msec()
+	var pano: Image = await GnClouds.bake(mat, GnEnvironment.sun(), 2048, main)
+	check(pano != null and pano.get_width() == 2048, "clouds: the sky is drawn all the way round (%.1f s)" % ((Time.get_ticks_msec() - t0) / 1000.0))
+	if pano:
+		var top := pano.get_pixel(1024, 40)
+		var low := pano.get_pixel(1024, 900)
+		var ground := pano.get_pixel(1024, 1000)
+		print("LAB clouds: overhead %s, low in the sky %s, under the horizon %s (linear light)" % [top, low, ground])
+		var show := pano.duplicate() as Image
+		show.convert(Image.FORMAT_RGBAF)
+		for y in show.get_height():
+			for x in show.get_width():
+				var c := show.get_pixel(x, y)
+				show.set_pixel(x, y, Color(c.r / (1.0 + c.r), c.g / (1.0 + c.g), c.b / (1.0 + c.b)).linear_to_srgb())
+		show.convert(Image.FORMAT_RGB8)
+		show.save_png(_out.path_join("sky_all_round.png"))
+	_box(root, "Tower", Vector3(4, 14, 4), Vector3(0, 7, -30), Color(0.7, 0.7, 0.72))
+	var cam := _camera("Up at the sky", Vector3(0, 1.7, 0), Vector3(0, 14.0, -30), 70.0)
+	await _frames(main, 6)
+	var pics := await _render(main, cam, "clouds", Vector2i(640, 360), "Draft")
+	var sky := Rect2(0.05, 0.03, 0.9, 0.4)
+	var lum := {}
+	for e in pics:
+		if not pics[e] is Image:
+			continue
+		var img: Image = pics[e]
+		var whites := 0
+		var blues := 0
+		var n := 0
+		var grid: Array = []
+		for gy in 12:
+			for gx in 24:
+				var r := Rect2(sky.position.x + sky.size.x * gx / 24.0, sky.position.y + sky.size.y * gy / 12.0, sky.size.x / 24.0, sky.size.y / 12.0)
+				var c := img.get_pixel(int((r.position.x + r.size.x * 0.5) * img.get_width()), int((r.position.y + r.size.y * 0.5) * img.get_height()))
+				grid.append(_mean(img, r))
+				n += 1
+				if c.b > c.r * 1.25:
+					blues += 1
+				elif c.r > 0.55 and absf(c.r - c.b) < 0.18:
+					whites += 1
+		lum[e] = grid
+		print("LAB clouds %s: %d of %d patches of sky are blue, %d cloud; mean %.3f, spread %.3f" % [e, blues, n, whites, _mean(img, sky), _spread(img, sky)])
+		check(blues > n / 10 and whites > n / 10, "clouds %s: cloud and clear sky are both in the picture (%d blue, %d cloud of %d)" % [e, blues, whites, n])
+		check(_spread(img, sky) > 0.05, "clouds %s: the clouds have light and shade (spread %.3f)" % [e, _spread(img, sky)])
+	for e in lum:
+		if e == "godot" or not lum.has("godot"):
+			continue
+		var r := _correlation(lum["godot"], lum[e])
+		check(r > 0.8, "clouds %s: the same clouds as the 3D view, in the same places (correlation %.2f)" % [e, r])
+	# The wind carries them.
+	var before := (await GnRender.render(cam, Vector2i(320, 180), main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0)) as String
+	var a := Image.load_from_file(ProjectSettings.globalize_path(before))
+	mat.set_shader_parameter("cloud_drift", GnClouds.drift(1.0, 90.0, 60.0))
+	await _frames(main, 4)
+	var after := (await GnRender.render(cam, Vector2i(320, 180), main, true, Viewport.DEBUG_DRAW_DISABLED, false, 0)) as String
+	var b := Image.load_from_file(ProjectSettings.globalize_path(after))
+	b.save_png(_out.path_join("clouds_a_minute_on.png"))
+	var moved := _difference(a, b, Rect2(0.05, 0.03, 0.9, 0.4))
+	check(moved > 0.01, "clouds: a minute of wind moves them (the sky differs by %.3f)" % moved)
+	GnEnvironment.apply("volumetric_clouds", false, false)
+	await _frames(main, 3)
+	check(not GnClouds.is_volume_sky(env.sky.sky_material), "clouds: switched off, the painted sky is back")
+
+
+static func _correlation(a: Array, b: Array) -> float:
+	var n := mini(a.size(), b.size())
+	if n < 2:
+		return 0.0
+	var ma := 0.0
+	var mb := 0.0
+	for i in n:
+		ma += a[i]
+		mb += b[i]
+	ma /= n
+	mb /= n
+	var sab := 0.0
+	var saa := 0.0
+	var sbb := 0.0
+	for i in n:
+		sab += (a[i] - ma) * (b[i] - mb)
+		saa += (a[i] - ma) * (a[i] - ma)
+		sbb += (b[i] - mb) * (b[i] - mb)
+	return sab / maxf(sqrt(saa * sbb), 0.000001)
