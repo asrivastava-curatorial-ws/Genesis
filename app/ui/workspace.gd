@@ -30,7 +30,7 @@ const MENUS := [
 	["Add", ["add.empty", "add.box", "add.plane", "add.sphere", "add.cylinder", "-", "add.point_light", "add.spot_light", "-", "add.camera"]],
 	["Tools", ["tool.select", "tool.move", "tool.rotate", "tool.scale", "-", "tool.local", "tool.snap", "-", "tools.dependencies"]],
 	["View", ["view.frame_selection", "view.frame", "-", "view.top", "view.front", "view.right", "view.ortho", "-",
-		"view.look_through", "-", "view.grid", "view.outliner", "view.panel", "view.console"]],
+		"view.look_through", "-", "view.walk", "view.walk_vr", "-", "view.grid", "view.outliner", "view.panel", "view.console"]],
 	["Help", ["help.docs", "help.shortcuts", "-", "help.logs", "help.about"]],
 ]
 const CHECKED := {"view.outliner": "_left", "view.panel": "_side", "view.console": "console"}
@@ -177,6 +177,8 @@ func _register_actions() -> void:
 	_add("view.right", "From the Right", _view.bind("right"), [K.key(KEY_KP_3)])
 	_add("view.ortho", "Perspective / Orthographic", _toggle_ortho, [K.key(KEY_KP_5)])
 	_add("view.look_through", "Look Through Selected Camera", _look_through, [K.key(KEY_KP_0)], _camera_selected)
+	_add("view.walk", "Walk Through on This Screen", walk_through.bind(false), [K.key(KEY_F9)], _has_scene)
+	_add("view.walk_vr", "Walk Through on a Headset (VR)", walk_through.bind(true), [K.key(KEY_F9, false, true)], _has_scene)
 	_add("view.grid", "Grid", _toggle_grid, [K.key(KEY_NUMBERSIGN, true)])
 	_add("view.outliner", "Scene and Properties", toggle_left, [K.key(KEY_K, true)])
 	_add("view.panel", "Side Panel", toggle_panel, [K.key(KEY_B, true)])
@@ -298,6 +300,84 @@ func _toggle_ortho() -> void:
 
 func _look_through() -> void:
 	viewport_panel.look_through(GnHost.selected_nodes()[0])
+
+
+var _walk_pid := -1
+var _walk_watch: Timer
+
+
+## What starts a copy of the program that shows the project in `folder`
+## from inside: [the program, its arguments].
+static func walk_command(folder: String, vr: bool, from_camera := "") -> Array:
+	var args := PackedStringArray()
+	if OS.has_feature("editor"):
+		# Run from the source: the same Godot, told where the program is.
+		args.append_array(["--path", ProjectSettings.globalize_path("res://")])
+	if vr:
+		args.append_array(["--xr-mode", "on"])
+	args.append_array(["--", "--walk", folder])
+	if vr:
+		args.append("--vr")
+	if from_camera != "":
+		args.append_array(["--from", from_camera])
+	return [OS.get_executable_path(), args]
+
+
+## The project from inside, in a window of its own (a second copy of the
+## program, which only looks): on a headset, or on this screen. It starts
+## at the selected camera, else the first saved one.
+func walk_through(vr: bool) -> void:
+	if not App.scenes.has_scene():
+		return
+	if _walk_pid > 0 and OS.is_process_running(_walk_pid):
+		App.notify.info("The walkthrough is already open, in a window of its own.")
+		return
+	# The other copy reads the project from the disk: as it is now.
+	if App.scenes.dirty:
+		var err: String = App.scenes.save()
+		if err != "":
+			App.notify.error("The project could not be saved for the walkthrough.", err)
+			return
+	var from := ""
+	for n in GnHost.selected_nodes():
+		if n is Camera3D:
+			from = str(n.name)
+			break
+	var Walkthrough = load("res://app/runtime/walkthrough.gd")
+	var status := ProjectSettings.globalize_path(Walkthrough.STATUS_FILE)
+	if FileAccess.file_exists(status):
+		DirAccess.remove_absolute(status)
+	var cmd := walk_command(App.projects.folder, vr, from)
+	_walk_pid = OS.create_process(cmd[0], cmd[1])
+	if _walk_pid <= 0:
+		App.notify.error("The walkthrough could not be started.", "%s did not run." % cmd[0])
+		return
+	App.notify.info("The walkthrough is opening in a window of its own%s." % (", and on the headset" if vr else ""),
+		"It shows the project as it was saved just now. Esc in that window leaves it.")
+	if _walk_watch == null:
+		_walk_watch = Timer.new()
+		_walk_watch.wait_time = 1.5
+		_walk_watch.timeout.connect(_watch_walk.bind(status, vr))
+		add_child(_walk_watch)
+	_walk_watch.set_meta("ticks", 0)
+	_walk_watch.start()
+
+
+# Once the other copy says how it started: no headset is worth a word here.
+func _watch_walk(status: String, vr: bool) -> void:
+	var ticks := int(_walk_watch.get_meta("ticks", 0)) + 1
+	_walk_watch.set_meta("ticks", ticks)
+	var said = JSON.parse_string(FileAccess.get_file_as_string(status)) if FileAccess.file_exists(status) else null
+	if said is Dictionary:
+		_walk_watch.stop()
+		if str(said.get("state")) == "failed":
+			App.notify.error("The walkthrough could not open the project.", str(said.get("message", "")))
+		elif vr and not bool(said.get("vr", false)):
+			App.notify.warning("No headset answered, so the walkthrough is on this screen.", str(said.get("message", "")))
+	elif ticks > 60 or not OS.is_process_running(_walk_pid):
+		_walk_watch.stop()
+		if not OS.is_process_running(_walk_pid):
+			App.notify.warning("The walkthrough closed before it opened the project.", "Help > Show the Log Folder has what it said.")
 
 
 func _toggle_grid() -> void:

@@ -381,6 +381,96 @@ func _surfaces_and_sky(root: Node) -> void:
 	check(not GnClouds.is_volume_sky(env.sky.sky_material) and env.sky.process_mode == Sky.PROCESS_MODE_AUTOMATIC, "clouds: one undo step brings the painted sky back")
 
 
+# The walkthrough's walker (the same on a headset and on the screen): it
+# stands on what is under it, steps up a kerb but not a table, turns on the
+# spot, jumps to where it points, flies.
+func _walking(root: Node) -> void:
+	var WalkRig = load("res://app/runtime/walk_rig.gd")
+	var Workspace = load("res://app/ui/workspace.gd")
+	var yard := Node3D.new()
+	yard.name = "Yard"
+	GnScene.add_node(yard, root, "Add a yard")
+	yard.position = Vector3(500, 0, 500)        # clear of everything else in the test scene
+	for spec in [["Paving", Vector3(30, 0.2, 30), Vector3(0, -0.1, 0)], ["Kerb", Vector3(4, 0.3, 4), Vector3(0, 0.15, -5)],
+			["Table", Vector3(2, 0.9, 2), Vector3(6, 0.45, 0)], ["Deck", Vector3(6, 0.2, 6), Vector3(-8, 3.0, 0)]]:
+		var mi := MeshInstance3D.new()
+		mi.name = spec[0]
+		var box := BoxMesh.new()
+		box.size = spec[1]
+		mi.mesh = box
+		mi.position = spec[2]
+		yard.add_child(mi)
+	var rig = WalkRig.new()
+	root.add_child(rig)
+	rig.set_scene(yard)
+	var o := Vector3(500, 0, 500)
+	rig.place(o, 0.0)
+	rig.settle(1.0)
+	check(rig.feet().distance_to(o) < 0.01 and rig.grounded and is_equal_approx(rig.head_position().y, 1.65),
+		"walk: the walker stands on the paving, eyes 1.65 m up (%s)" % rig.feet())
+	# Forward (north, -Z) for three seconds at walking pace.
+	for i in 90:
+		rig.walk(Vector2(0, 1), 1.0 / 30.0)
+	var f: Vector3 = rig.feet()
+	check(absf(f.z - (o.z - 3.0 * WalkRig.WALK_SPEED)) < 0.1 and absf(f.x - o.x) < 0.01, "walk: three seconds forward is %.1f m (%.2f)" % [3.0 * WalkRig.WALK_SPEED, o.z - f.z])
+	check(absf(f.y - 0.3) < 0.02, "walk: and up the 30 cm kerb on the way (%.2f)" % f.y)
+	for i in 90:
+		rig.walk(Vector2(0, 1), 1.0 / 30.0, true)
+	check(absf(rig.feet().y) < 0.02 and rig.feet().z < o.z - 10.0, "walk: running on, down off it again (%.2f m on, at %.2f)" % [o.z - rig.feet().z, rig.feet().y])
+	# The table is in the way; the walker slides along it instead of climbing.
+	rig.place(o + Vector3(3.5, 0, 0.2), -PI / 2.0)          # facing east (+X)
+	check(absf(rig.facing() + PI / 2.0) < 0.01, "walk: placed facing east")
+	for i in 60:
+		rig.walk(Vector2(0, 1), 1.0 / 30.0)
+	check(rig.feet().x < o.x + 5.05 and absf(rig.feet().y) < 0.02, "walk: a table stops the walker (at x %.2f, the table starts at 5)" % (rig.feet().x - o.x))
+	# Turning on the spot: the head stays where it is, wherever it is in the room.
+	rig.head = Transform3D(Basis(), Vector3(0.6, 1.7, -0.4))
+	var head_before: Vector3 = rig.head_position()
+	var facing_before: float = rig.facing()
+	rig.snap_turn(1)
+	check(rig.head_position().distance_to(head_before) < 0.001 and absf(angle_difference(rig.facing(), facing_before - deg_to_rad(WalkRig.SNAP_DEG))) < 0.001,
+		"walk: a turn to the right is %d degrees about the head" % int(WalkRig.SNAP_DEG))
+	rig.head = Transform3D(Basis(), Vector3(0, 1.65, 0))
+	# Pointing: an arc that lands on the paving is a place to stand; a wall is not.
+	rig.place(o, 0.0)
+	var aim: Dictionary = rig.aim(rig.head_position(), Vector3(0, 0.2, -1).normalized())
+	check(aim.ok and absf((aim.end as Vector3).y) < 0.35 and (aim.end as Vector3).z < o.z - 3.0 and (aim.points as PackedVector3Array).size() > 5,
+		"walk: pointing ahead lands on the ground %.1f m away" % (o.z - (aim.end as Vector3).z))
+	rig.teleport(aim.end)
+	check(rig.feet().distance_to(aim.end) < 0.01, "walk: letting go jumps there")
+	var up: Dictionary = rig.aim(rig.head_position(), Vector3.UP)
+	check(not up.ok, "walk: pointing at the sky is nowhere to stand")
+	rig.place(o + Vector3(3.2, 0, 0), -PI / 2.0)
+	var side: Dictionary = rig.aim(rig.head_position() + Vector3(0, -1.2, 0), Vector3(1, 0, 0))
+	check(not side.ok and absf((side.end as Vector3).x - (o.x + 5.0)) < 0.05, "walk: nor is the side of the table")
+	# Flying: along the way the head looks, and not falling.
+	rig.place(o, 0.0)
+	rig.flying = true
+	rig.head = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(30.0)), Vector3(0, 1.65, 0))
+	for i in 30:
+		rig.walk(Vector2(0, 1), 1.0 / 30.0)
+	check(rig.feet().y > 2.5 and rig.feet().z < o.z - 4.5, "walk: flying goes where the head looks, up too (%s)" % (rig.feet() - o))
+	rig.head = Transform3D(Basis(), Vector3(0, 1.65, 0))
+	# A saved camera on the deck: the walker stands under it; one high in the air: flies there.
+	var cam := Camera3D.new()
+	yard.add_child(cam)
+	cam.global_transform = Transform3D(Basis.looking_at(Vector3(1, 0, 0), Vector3.UP), o + Vector3(-8, 4.8, 0))
+	rig.stand_at_camera(cam)
+	check(not rig.flying and absf(rig.feet().y - 3.1) < 0.02 and absf(rig.facing() + PI / 2.0) < 0.01, "walk: starting from a camera on the deck stands on the deck, looking its way")
+	cam.global_position = o + Vector3(0, 40, 0)
+	rig.stand_at_camera(cam)
+	check(rig.flying and absf(rig.head_position().y - 40.0) < 0.01, "walk: starting from a camera high in the air flies there")
+	var cmd: Array = Workspace.walk_command("/tmp/My Project", true, "Camera 1")
+	var words: PackedStringArray = cmd[1]
+	check(words.find("--xr-mode") >= 0 and words.find("--xr-mode") < words.find("--") and words[words.find("--walk") + 1] == "/tmp/My Project"
+		and "--vr" in words and words[words.find("--from") + 1] == "Camera 1", "walk: the headset walk is this program again, asked for OpenXR (%s)" % " ".join(words))
+	check(not "--xr-mode" in Workspace.walk_command("/tmp/p", false)[1], "walk: and the screen walk without it")
+	root.remove_child(rig)
+	rig.free()
+	GnScene.root().remove_child(yard)
+	yard.free()
+
+
 func _until_live(spec: String, seconds: float) -> bool:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
@@ -508,6 +598,7 @@ func _run() -> void:
 	await _site_file(root)
 	await _weather_and_wind(root)
 	await _surfaces_and_sky(root)
+	await _walking(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")

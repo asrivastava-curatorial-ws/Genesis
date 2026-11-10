@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>). Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -54,6 +54,8 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _caustics(main)
 		"clouds":
 			await _clouds(main)
+		"walk":
+			await _walk(main, args)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -839,3 +841,134 @@ static func _correlation(a: Array, b: Array) -> float:
 		saa += (a[i] - ma) * (a[i] - ma)
 		sbb += (b[i] - mb) * (b[i] - mb)
 	return sab / maxf(sqrt(saa * sbb), 0.000001)
+
+
+# ------------------------------------------------------------------ the walkthrough
+# Started as the walkthrough is (Oriel -- --walk <project> [--vr] --script lab.gd walk <out> [vr]):
+# the project shows from inside, the keys walk, turn, point and jump, and
+# the next camera is a key away. With "vr" and no headset here, it must say
+# so and carry on, on the screen.
+static func _walk(main: Node, args: PackedStringArray) -> void:
+	var walk := main.get_node_or_null("Walkthrough")
+	check(walk != null and walk.rig != null and App.projects.is_open(), "walk: the program opened the project as a walkthrough")
+	if walk == null:
+		return
+	check(main.get("screen") == null or not (main.get("screen") as Control).visible, "walk: without the workspace")
+	await _frames(main, 20)
+	var status = JSON.parse_string(FileAccess.get_file_as_string("user://walk_status.json"))
+	check(status is Dictionary and str(status.get("state")) == "running", "walk: it says it is running (%s)" % [status])
+	if "vr" in args:
+		print("LAB walk: headset %s; %s" % ["in use" if walk.in_vr else "not in use", walk.vr_note])
+		check(walk.in_vr or str(walk.vr_note).contains("No headset answered") or str(walk.vr_note).contains("OpenXR"),
+			"walk: asked for a headset, it is on one, or says why not and carries on")
+	var rig = walk.rig
+	var cams := GnCameras.cameras()
+	if walk.in_vr:
+		await _walk_on_headset(main, walk, cams)
+		return
+	var first: Image = main.get_viewport().get_texture().get_image()
+	first.save_png(_out.path_join("walk_start.png"))
+	check(_mean(first, Rect2(0.1, 0.1, 0.8, 0.6)) > 0.05 and _spread(first, Rect2(0.1, 0.1, 0.8, 0.8)) > 0.02, "walk: the scene is on show from the first camera")
+	if not cams.is_empty() and not walk.in_vr:
+		var cam: Camera3D = cams[0]
+		check(Vector2(rig.head_position().x, rig.head_position().z).distance_to(Vector2(cam.global_position.x, cam.global_position.z)) < 0.05,
+			"walk: standing where the first saved camera is")
+	# W for a second: forwards.
+	var from: Vector3 = rig.feet()
+	var facing: float = rig.facing()
+	# (The program's own clock: a slow computer's second is shorter than a real one.)
+	var clock: float = await _key(main, KEY_W, 1.0)
+	var moved: Vector3 = rig.feet() - from
+	var ahead := Vector3(-sin(facing), 0, -cos(facing))
+	check(moved.length() > 0.5 * 1.6 * clock and moved.length() < 1.2 * 1.6 * clock + 0.3 and moved.normalized().dot(ahead) > 0.95,
+		"walk: W walks forwards at walking pace (%.2f m in %.2f s of the program's clock)" % [moved.length(), clock])
+	# E: a turn to the right.
+	await _key(main, KEY_E, 0.05)
+	check(absf(angle_difference(rig.facing(), facing - deg_to_rad(30.0))) < 0.02, "walk: E turns thirty degrees to the right")
+	# T: point (the arc shows), let go: jump.
+	rig.flying = false
+	rig.place(rig.feet(), rig.facing())
+	walk.set("_pitch", -0.35)
+	var before: Vector3 = rig.feet()
+	var e := InputEventKey.new()
+	e.keycode = KEY_T
+	e.physical_keycode = KEY_T
+	e.pressed = true
+	Input.parse_input_event(e)
+	await _frames(main, 12)
+	var arc := walk.get_node("Arc") as MultiMeshInstance3D
+	var marker := walk.get_node("Landing") as MeshInstance3D
+	check(arc.multimesh.visible_instance_count > 3 and marker.visible, "walk: T shows where pointing lands")
+	var landing: Vector3 = marker.global_position
+	main.get_viewport().get_texture().get_image().save_png(_out.path_join("walk_pointing.png"))
+	var ok: bool = walk.get("_aim").get("ok", false)
+	e = e.duplicate()
+	e.pressed = false
+	Input.parse_input_event(e)
+	await _frames(main, 6)
+	check(not marker.visible and (not ok or Vector2(rig.feet().x, rig.feet().z).distance_to(Vector2(landing.x, landing.z)) < 0.05),
+		"walk: letting go jumps there (%.1f m)" % rig.feet().distance_to(before))
+	# N: the next saved camera.
+	if cams.size() > 1:
+		await _key(main, KEY_N, 0.05)
+		var second: Camera3D = cams[1]
+		check(Vector2(rig.head_position().x, rig.head_position().z).distance_to(Vector2(second.global_position.x, second.global_position.z)) < 0.05,
+			"walk: N goes to the next saved camera (%s)" % second.name)
+		await _frames(main, 10)
+		main.get_viewport().get_texture().get_image().save_png(_out.path_join("walk_next_camera.png"))
+	check(not App.scenes.dirty, "walk: nothing in the project was changed")
+
+
+## Holds a key for `seconds`; returns how long that was by the program's own clock.
+static func _key(main: Node, key: Key, seconds: float) -> float:
+	var e := InputEventKey.new()
+	e.keycode = key
+	e.physical_keycode = key
+	e.pressed = true
+	Input.parse_input_event(e)
+	var clock := 0.0
+	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < until:
+		await main.get_tree().process_frame
+		clock += main.get_process_delta_time()
+	e = e.duplicate()
+	e.pressed = false
+	Input.parse_input_event(e)
+	await _frames(main, 2)
+	return clock
+
+
+## The same walk on a headset (an OpenXR runtime answered): the head is the
+## headset's, the hands are tracked, what the headset is shown is the scene
+## (the picture is taken from the screen: the runtime's own window).
+static func _walk_on_headset(main: Node, walk: Node, cams: Array) -> void:
+	var rig = walk.rig
+	var xr := XRServer.find_interface("OpenXR")
+	check(xr != null and xr.is_initialized() and main.get_viewport().use_xr, "headset: OpenXR is running and the view goes to the headset")
+	await _frames(main, 30)
+	var hands: Dictionary = walk.get("_hands")
+	check(hands.has("left") and hands.has("right") and (hands.left as XRController3D).tracker == &"left_hand", "headset: both hands have their controller")
+	var head: Transform3D = rig.head
+	print("LAB headset: the head is %.2f m up in its room, at %s" % [head.origin.y, head.origin])
+	check(head.origin.y > 0.5 and head.origin.y < 2.5, "headset: the head's height is the wearer's own (%.2f m)" % head.origin.y)
+	if cams.size() > 1:
+		walk.call("_go_to_camera", 1)
+		var second: Camera3D = cams[1]
+		check(Vector2(rig.head_position().x, rig.head_position().z).distance_to(Vector2(second.global_position.x, second.global_position.z)) < 0.05,
+			"headset: going to a saved camera puts the wearer's head where it is")
+		walk.call("_go_to_camera", 0)
+	# Walking, as the left stick would ask it: the room moves, the head with it.
+	var from: Vector3 = rig.feet()
+	for i in 20:
+		rig.walk(Vector2(0, 1), 0.05)
+		rig.head = (walk.get("_camera") as Camera3D).transform
+	check(rig.feet().distance_to(from) > 1.0, "headset: the stick walks the wearer through the scene (%.1f m)" % rig.feet().distance_to(from))
+	await _frames(main, 30)
+	# What the headset is shown, from the screen.
+	var shot := _out.path_join("headset_screen.png")
+	var out: Array = []
+	OS.execute("python3", ["-c", "import sys\nfrom PIL import ImageGrab\nImageGrab.grab(xdisplay=sys.argv[1]).save(sys.argv[2])",
+		OS.get_environment("DISPLAY"), shot], out, true)
+	var img := Image.load_from_file(shot) if FileAccess.file_exists(shot) else null
+	check(img != null and _spread(img, Rect2(0.0, 0.0, 1.0, 1.0)) > 0.02, "headset: there is a picture on its way to the headset")
+	check(not App.scenes.dirty, "headset: nothing in the project was changed")

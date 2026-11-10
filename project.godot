@@ -36,6 +36,10 @@ textures/default_filters/anisotropic_filtering_level=4
 environment/volumetric_fog/volume_size=128
 environment/volumetric_fog/volume_depth=96
 
+[xr]
+
+openxr/startup_alert=false
+
 [shader_globals]
 
 oriel_cloud_shape={

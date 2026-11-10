@@ -34,8 +34,12 @@ const PhotorealTest := preload("res://app/photoreal_test.gd")
 const GnFileDialog := preload("res://addons/genesis/core/gn_file_dialog.gd")
 const GnPathField := preload("res://addons/genesis/ui/gn_path_field.gd")
 const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
+const Walkthrough := preload("res://app/runtime/walkthrough.gd")
 
 var screen: Control
+## This copy of the program only shows a project from inside (--walk): no
+## workspace, nothing saved.
+var walking := false
 
 var _toasts: Control
 var _autosave_minutes := 0
@@ -187,6 +191,31 @@ func _has_scene() -> bool:
 	return App.scenes.has_scene()
 
 
+## Shows the project in `folder` from inside, in place of the workspace.
+func _walk(folder: String, want_vr: bool, from_camera: String) -> Walkthrough:
+	walking = true
+	var err: String = App.projects.open(folder)
+	if err != "":
+		push_error("Oriel: %s" % err)
+		var f := FileAccess.open(Walkthrough.STATUS_FILE, FileAccess.WRITE)
+		if f:
+			f.store_string(JSON.stringify({"state": "failed", "message": err}))
+			f.close()
+		get_tree().quit(1)
+		return null
+	if screen:
+		screen.visible = false
+	var walk := Walkthrough.new()
+	walk.name = "Walkthrough"
+	add_child(walk)
+	walk.start(App.scenes.root, want_vr, from_camera)
+	# What a scene is given when it opens (weather, wind) needs it on show.
+	App.modules.on_scene_opened(App.scenes.root)
+	get_window().title = "%s: walking through %s" % [App.NAME, App.projects.project_name]
+	walk.ended.connect(func(): get_tree().quit(0))
+	return walk
+
+
 func _has_missing() -> bool:
 	return App.projects.is_open() and not App.projects.missing.is_empty()
 
@@ -311,6 +340,8 @@ func open_project_at(folder: String) -> void:
 
 
 func _on_project_opened() -> void:
+	if walking:
+		return
 	# The project and the user's own library are places the file picker offers.
 	GnFileDialog.extra_places = PackedStringArray([App.projects.folder, App.host.user_library_dir()])
 	_show_workspace()
@@ -338,7 +369,7 @@ func _offer_recovery() -> void:
 
 
 func _autosave_tick() -> void:
-	if not App.projects.is_open():
+	if not App.projects.is_open() or walking:
 		return
 	_autosave_minutes += 1
 	var every := int(App.projects.manifest.get("settings", {}).get("autosave_minutes", 3))
@@ -554,6 +585,15 @@ func _command_line() -> void:
 		if DirAccess.dir_exists_absolute(a) and not ProjectService.manifest_of(a).is_empty():
 			open_project_at(a)
 			break
+	# The walkthrough: this copy of the program shows the project from inside,
+	# on a headset (--vr, with --xr-mode on before the --) or on this screen.
+	#   Oriel [--xr-mode on] -- --walk <project folder> [--vr] [--from <camera>]
+	var wk := args.find("--walk")
+	if wk >= 0 and wk + 1 < args.size():
+		var from := args.find("--from")
+		await _walk(args[wk + 1], "--vr" in args, args[from + 1] if from >= 0 and from + 1 < args.size() else "")
+		if args.find("--script") < 0:
+			return
 	var d := args.find("--make-demos")
 	if d >= 0 and d + 1 < args.size():
 		var failures: int = await Demos.run(self, args[d + 1])
