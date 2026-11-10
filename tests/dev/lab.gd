@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>). Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -56,6 +56,8 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _clouds(main)
 		"walk":
 			await _walk(main, args)
+		"film":
+			await _film(main)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -972,3 +974,140 @@ static func _walk_on_headset(main: Node, walk: Node, cams: Array) -> void:
 	var img := Image.load_from_file(shot) if FileAccess.file_exists(shot) else null
 	check(img != null and _spread(img, Rect2(0.0, 0.0, 1.0, 1.0)) > 0.02, "headset: there is a picture on its way to the headset")
 	check(not App.scenes.dirty, "headset: nothing in the project was changed")
+
+
+# ------------------------------------------------------------------ keys, the edit, the timeline
+# A red box keyed to cross a floor in two seconds, filmed by two still
+# cameras (the second coming in with a dissolve), a title, music. The film
+# is rendered; its frames must show the box moving, the two views mixed at
+# the join, the title for its time, and the video must have sound.
+static func _film(main: Node) -> void:
+	var GnMovie = load("res://addons/genesis/core/gn_movie.gd")
+	var GnTimeline = load("res://addons/genesis/core/gn_timeline.gd")
+	var GnFilm = load("res://addons/genesis/core/gn_film.gd")
+	var GnFfmpeg = load("res://addons/genesis/core/gn_ffmpeg.gd")
+	var root := await _studio(main, "Film check", false)
+	if root == null:
+		return
+	_box(root, "Floor", Vector3(30, 0.2, 30), Vector3(0, 0.1, 0), Color(0.6, 0.6, 0.6))
+	var box := _box(root, "Runner", Vector3(1, 1, 1), Vector3(-4, 0.7, 0), Color(0.9, 0.1, 0.1))
+	_camera("Front", Vector3(0, 3, 12), Vector3(0, 0.7, 0), 50.0)
+	_camera("Above", Vector3(0, 14, 0.01), Vector3(0, 0, 0), 50.0)
+	await _frames(main, 4)
+	# The timeline panel, as a user opens it.
+	App.actions.run("view.timeline")
+	await _frames(main, 4)
+	var panel = main.find_child("TimelinePanel", true, false)
+	check(panel != null and panel.is_visible_in_tree(), "timeline: View > Timeline opens it under the 3D view")
+	GnScene.select(box)
+	panel.set_time(0.0)
+	panel.key_selection()
+	# (The moment first, then the move: moving through the film puts a keyed thing where its keys have it.)
+	panel.set_time(2.0)
+	box.position.x = 4.0
+	panel.key_selection()
+	check(GnTimeline.tracks().size() == 1 and (GnTimeline.tracks()[0].keys as Array).size() == 2, "timeline: Key the selection at two moments makes a track with two keys")
+	panel.set_time(1.0)
+	await _frames(main, 2)
+	check(absf(box.position.x) < 0.05, "timeline: moving through the film moves the box (at 1 s it is at %.2f)" % box.position.x)
+	GnMovie.set_shots([GnMovie.path_shot(["Front"], 2.0), GnMovie.path_shot(["Above"], 2.0)], "Two shots")
+	var shots: Array = GnMovie.shots()
+	shots[1]["transition"] = "Dissolve"
+	shots[1]["transition_s"] = 1.0
+	GnMovie.set_shots(shots, "A dissolve")
+	var ti: int = GnFilm.add_title("Riverside House", 0.5, 1.0)
+	GnFilm.set_title(ti, {"size": 0.12, "fade": 0.2})
+	# Music: one second of a 440 Hz tone, as a WAV file.
+	var wav := _out.path_join("tone.wav")
+	_write_tone(wav, 1.0)
+	GnFilm.set_value("sound", wav)
+	await _frames(main, 6)
+	var shot_img: Image = main.get_viewport().get_texture().get_image()
+	shot_img.save_png(_out.path_join("timeline_panel.png"))
+	# Its rows: the film's two shots, the title, the box's track.
+	var rows: Array = panel.rows()
+	check(rows.size() == 3 and str(rows[2].label).begins_with("Runner"), "timeline: the film, the titles and the box each have a row (%s)" % [rows.map(func(r): return r.label)])
+	var t0 := Time.get_ticks_msec()
+	var out: String = await GnMovie.render(GnMovie.shots(), Vector2i(480, 270), main, "lab_film", Callable(), 10)
+	print("LAB film: rendered in %.1f s -> %s" % [(Time.get_ticks_msec() - t0) / 1000.0, out])
+	var dir := ProjectSettings.globalize_path("%s/lab_film" % GnPaths.at(GnRender.OUTPUT_DIR))
+	var frames := Array(DirAccess.get_files_at(dir)).filter(func(f): return str(f).begins_with("frame_"))
+	check(frames.size() == 40, "film: four seconds at ten frames a second is forty frames (%d)" % frames.size())
+	var f := func(i: int) -> Image:
+		var img := Image.load_from_file(dir.path_join("frame_%05d.png" % i))
+		img.save_png(_out.path_join("film_%02d.png" % i))
+		return img
+	var first: Image = f.call(0)
+	var late: Image = f.call(14)
+	var a := _red_x(first)
+	var b := _red_x(late)
+	check(a > 0.0 and b > a + 0.2, "film: the box is further right at 1.4 s than at the start (%.2f, %.2f of the picture's width)" % [a, b])
+	# The title: white words low on the left at 1.0 s, none at 1.9 s... (both before the dissolve's first half).
+	var with_title: Image = f.call(10)
+	var words := Rect2(0.05, 0.74, 0.6, 0.2)
+	var w1 := _whites(with_title, words)
+	var w0 := _whites(first, words)
+	check(w1 > 150 and w0 < w1 / 4, "film: the title is on the picture during its time (%d white pixels, %d before it)" % [w1, w0])
+	# The join at 2.0 s: frame 20 is half Front, half Above.
+	var front_only: Image = f.call(13)
+	var above_only: Image = f.call(27)
+	var join: Image = f.call(20)
+	var d_front := _difference(join, front_only)
+	var d_above := _difference(join, above_only)
+	var apart := _difference(front_only, above_only)
+	print("LAB film: the join differs from the first view by %.3f and from the second by %.3f; the views differ by %.3f" % [d_front, d_above, apart])
+	check(d_front > apart * 0.2 and d_above > apart * 0.2 and d_front < apart * 0.85 and d_above < apart * 0.85, "film: at the join the two views are mixed")
+	if GnFfmpeg.find() != "":
+		check(out.ends_with(".mp4") and FileAccess.file_exists(out), "film: the video is made (%s)" % out.get_file())
+		var probe: Array = []
+		OS.execute("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type:format=duration", "-of", "csv=p=0", out], probe, true)
+		var text := "\n".join(probe)
+		check(text.contains("video") and text.contains("audio"), "film: with its soundtrack (%s)" % text.strip_edges().replace("\n", " "))
+	else:
+		print("LAB note: no FFmpeg here; the frames are in %s" % out)
+
+
+static func _red_x(img: Image) -> float:
+	var sum := 0.0
+	var n := 0
+	for y in range(0, img.get_height(), 2):
+		for x in range(0, img.get_width(), 2):
+			var c := img.get_pixel(x, y)
+			if c.r > 0.45 and c.r > c.g * 2.0 and c.r > c.b * 2.0:
+				sum += x
+				n += 1
+	return sum / n / img.get_width() if n > 10 else -1.0
+
+
+static func _whites(img: Image, rect: Rect2) -> int:
+	var n := 0
+	for y in range(int(rect.position.y * img.get_height()), int(rect.end.y * img.get_height())):
+		for x in range(int(rect.position.x * img.get_width()), int(rect.end.x * img.get_width())):
+			var c := img.get_pixel(x, y)
+			if c.r > 0.92 and c.g > 0.92 and c.b > 0.92:
+				n += 1
+	return n
+
+
+static func _write_tone(path: String, seconds: float) -> void:
+	var rate := 22050
+	var n := int(rate * seconds)
+	var data := PackedByteArray()
+	data.resize(n * 2)
+	for i in n:
+		data.encode_s16(i * 2, int(sin(i * TAU * 440.0 / rate) * 9000.0))
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string("RIFF")
+	f.store_32(36 + data.size())
+	f.store_string("WAVEfmt ")
+	f.store_32(16)
+	f.store_16(1)
+	f.store_16(1)
+	f.store_32(rate)
+	f.store_32(rate * 2)
+	f.store_16(2)
+	f.store_16(16)
+	f.store_string("data")
+	f.store_32(data.size())
+	f.store_buffer(data)
+	f.close()

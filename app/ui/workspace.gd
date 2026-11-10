@@ -13,6 +13,7 @@ const GnPanel := preload("res://addons/genesis/ui/gn_panel.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const ViewportPanel := preload("res://app/ui/viewport_panel.gd")
 const ConsolePanel := preload("res://app/ui/console_panel.gd")
+const TimelinePanel := preload("res://app/ui/timeline_panel.gd")
 const SceneTreePanel := preload("res://app/ui/scene_tree_panel.gd")
 const InspectorPanel := preload("res://app/ui/inspector_panel.gd")
 const ActionRegistry := preload("res://app/core/action_registry.gd")
@@ -30,10 +31,10 @@ const MENUS := [
 	["Add", ["add.empty", "add.box", "add.plane", "add.sphere", "add.cylinder", "-", "add.point_light", "add.spot_light", "-", "add.camera"]],
 	["Tools", ["tool.select", "tool.move", "tool.rotate", "tool.scale", "-", "tool.local", "tool.snap", "-", "tools.dependencies"]],
 	["View", ["view.frame_selection", "view.frame", "-", "view.top", "view.front", "view.right", "view.ortho", "-",
-		"view.look_through", "-", "view.walk", "view.walk_vr", "-", "view.grid", "view.outliner", "view.panel", "view.console"]],
+		"view.look_through", "-", "view.walk", "view.walk_vr", "-", "view.grid", "view.outliner", "view.panel", "view.timeline", "view.console"]],
 	["Help", ["help.docs", "help.shortcuts", "-", "help.logs", "help.about"]],
 ]
-const CHECKED := {"view.outliner": "_left", "view.panel": "_side", "view.console": "console"}
+const CHECKED := {"view.outliner": "_left", "view.panel": "_side", "view.console": "console", "view.timeline": "timeline"}
 const DEFAULT_LEFT_OFFSET := 300
 const DEFAULT_PANEL_OFFSET := -60
 const DEFAULT_CONSOLE_OFFSET := -60
@@ -42,6 +43,8 @@ var menu_bar: MenuBar
 var viewport_panel: Control
 var genesis_panel: Control
 var console: Control
+var timeline: TimelinePanel
+var _bottom: VSplitContainer
 var scene_tree: Control
 var inspector: Control
 
@@ -182,6 +185,7 @@ func _register_actions() -> void:
 	_add("view.grid", "Grid", _toggle_grid, [K.key(KEY_NUMBERSIGN, true)])
 	_add("view.outliner", "Scene and Properties", toggle_left, [K.key(KEY_K, true)])
 	_add("view.panel", "Side Panel", toggle_panel, [K.key(KEY_B, true)])
+	_add("view.timeline", "Timeline", toggle_timeline, [K.key(KEY_T, true)])
 	_add("view.console", "Console", toggle_console, [K.key(KEY_J, true)])
 	_add("help.shortcuts", "Keyboard and Mouse", _show_shortcuts, [K.key(KEY_F1)])
 
@@ -707,8 +711,16 @@ func _build_body() -> void:
 	_hsplit.add_child(_vsplit)
 	viewport_panel = ViewportPanel.new()
 	_vsplit.add_child(viewport_panel)
+	# Under the view: the timeline and the console, either or both.
+	_bottom = VSplitContainer.new()
+	_bottom.name = "Under"
+	_vsplit.add_child(_bottom)
+	timeline = TimelinePanel.new()
+	timeline.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_bottom.add_child(timeline)
 	console = ConsolePanel.new()
-	_vsplit.add_child(console)
+	console.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_bottom.add_child(console)
 	var side := PanelContainer.new()
 	side.name = "SidePanel"
 	side.theme_type_variation = &"SideBar"
@@ -806,6 +818,8 @@ func _apply_layout() -> void:
 	_left.visible = bool(App.settings.get_value("layout/left_visible", true))
 	_side.visible = bool(App.settings.get_value("layout/panel_visible", true))
 	console.visible = bool(App.settings.get_value("layout/console_visible", false))
+	timeline.visible = bool(App.settings.get_value("layout/timeline_visible", false))
+	_bottom.visible = console.visible or timeline.visible
 	_outer.split_offsets = PackedInt32Array([int(App.settings.get_value("layout/left_offset", DEFAULT_LEFT_OFFSET))])
 	_hsplit.split_offsets = PackedInt32Array([int(App.settings.get_value("layout/panel_offset", DEFAULT_PANEL_OFFSET))])
 	_vsplit.split_offsets = PackedInt32Array([int(App.settings.get_value("layout/console_offset", DEFAULT_CONSOLE_OFFSET))])
@@ -822,6 +836,7 @@ func reset_layout() -> void:
 	for k in ["left_visible", "panel_visible"]:
 		App.settings.set_value("layout/" + k, true)
 	App.settings.set_value("layout/console_visible", false)
+	App.settings.set_value("layout/timeline_visible", false)
 	App.settings.set_value("layout/left_offset", DEFAULT_LEFT_OFFSET)
 	App.settings.set_value("layout/panel_offset", DEFAULT_PANEL_OFFSET)
 	App.settings.set_value("layout/console_offset", DEFAULT_CONSOLE_OFFSET)
@@ -832,6 +847,7 @@ func reset_layout() -> void:
 
 func _toggle(node: Control, key: String) -> void:
 	node.visible = not node.visible
+	_bottom.visible = console.visible or timeline.visible
 	App.settings.set_value("layout/" + key, node.visible)
 	App.settings.save()
 	_refresh_menus()
@@ -847,6 +863,10 @@ func toggle_panel() -> void:
 
 func toggle_console() -> void:
 	_toggle(console, "console_visible")
+
+
+func toggle_timeline() -> void:
+	_toggle(timeline, "timeline_visible")
 
 
 # ------------------------------------------------------------- status

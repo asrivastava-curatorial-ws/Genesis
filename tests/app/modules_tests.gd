@@ -471,6 +471,130 @@ func _walking(root: Node) -> void:
 	yard.free()
 
 
+# Keyframes (what moves in the film) and the edit (how shots join, titles, sound).
+func _keys_and_edit(root: Node) -> void:
+	var GnTimeline = load("res://addons/genesis/core/gn_timeline.gd")
+	var GnFilm = load("res://addons/genesis/core/gn_film.gd")
+	var GnMovie = load("res://addons/genesis/core/gn_movie.gd")
+	var GnEnvironment = load("res://addons/genesis/core/gn_environment.gd")
+	var door := MeshInstance3D.new()
+	door.name = "Door"
+	door.mesh = BoxMesh.new()
+	GnScene.add_node(door, root, "Add a door")
+	door.position = Vector3(300, 0, 300)
+	var lamp := OmniLight3D.new()
+	lamp.name = "Lamp"
+	GnScene.add_node(lamp, root, "Add a lamp")
+	lamp.light_energy = 0.0
+	check(GnTimeline.kinds_for(door) == ["transform"] and GnTimeline.kinds_for(lamp) == ["transform", "light"], "keys: an object has a place to key, a lamp its light too")
+	var n: int = GnTimeline.key_nodes([door, lamp], 0.0)
+	check(n == 3 and GnTimeline.tracks().size() == 3 and str(door.get_meta(GnTimeline.ID, "")) != "", "keys: keying two things at the start makes their tracks (%d keys)" % n)
+	door.position = Vector3(304, 0, 300)
+	door.rotation.y = PI / 2.0
+	lamp.light_energy = 2.0
+	lamp.light_color = Color(1, 0, 0)
+	GnTimeline.key_nodes([door, lamp], 2.0)
+	check(is_equal_approx(GnTimeline.length(), 2.0), "keys: and again two seconds on")
+	GnTimeline.apply(1.0)
+	check(door.position.is_equal_approx(Vector3(302, 0, 300)) and absf(door.rotation.y - PI / 4.0) < 0.01, "keys: half way, the door is half way and half turned (%s)" % door.position)
+	check(is_equal_approx(lamp.light_energy, 1.0) and absf(lamp.light_color.g - 0.5) < 0.01, "keys: and the lamp half up, half red")
+	GnTimeline.apply(0.5)
+	check(absf(door.position.x - 300.625) < 0.01, "keys: it eases away from a key (%.3f m after a quarter of the time)" % (door.position.x - 300.0))
+	var tracks: Array = GnTimeline.tracks()
+	var ti := -1
+	for i in tracks.size():
+		if str(tracks[i].name) == "Door":
+			ti = i
+	GnTimeline.set_ease(ti, 0, "Linear")
+	GnTimeline.apply(0.5)
+	check(absf(door.position.x - 301.0) < 0.01, "keys: linear, a quarter of the way after a quarter of the time")
+	GnTimeline.set_ease(ti, 0, "Hold")
+	GnTimeline.apply(1.9)
+	check(door.position.is_equal_approx(Vector3(300, 0, 300)), "keys: held, it stays until the next key")
+	GnTimeline.apply(2.0)
+	check(door.position.is_equal_approx(Vector3(304, 0, 300)), "keys: and is there at it")
+	# The node renamed and regrouped: its keys still find it.
+	door.name = "Front door"
+	var group := Node3D.new()
+	group.name = "Entrance"
+	GnScene.add_node(group, root, "Add a group")
+	door.reparent(group)
+	GnTimeline.apply(0.0)
+	check(door.global_position.is_equal_approx(Vector3(300, 0, 300)), "keys: renamed and put in a group, the door still follows its keys")
+	var moved: int = GnTimeline.move_key(ti, 1, 4.0)
+	check(moved == 1 and is_equal_approx(GnTimeline.length(), 4.0), "keys: a key dragged to four seconds")
+	check(door in GnTimeline.animated_nodes() and GnTimeline.changes_light(), "keys: a renderer is told what moves and that the lights change")
+	GnTimeline.key_nodes([door], 1.0, ["visible"], "Hold")
+	door.visible = false
+	GnTimeline.key_nodes([door], 3.0, ["visible"], "Hold")
+	GnTimeline.apply(2.0)
+	var shown_then := door.visible
+	GnTimeline.apply(3.5)
+	check(shown_then and not door.visible, "keys: shown, then hidden from its key on")
+	# The sun.
+	GnEnvironment.apply("time_of_day", 8.0, false)
+	GnTimeline.key_scene("sun", 0.0)
+	GnEnvironment.apply("time_of_day", 18.0, false)
+	GnTimeline.key_scene("sun", 10.0, "Linear")
+	for i in GnTimeline.tracks().size():
+		if str(GnTimeline.tracks()[i].what) == "sun":
+			GnTimeline.set_ease(i, 0, "Linear")
+	GnTimeline.apply(5.0)
+	check(absf(float(GnEnvironment.value("time_of_day")) - 13.0) < 0.01, "keys: the sun keyed at 8:00 and 18:00 is at 13:00 half way")
+	GnMovie.show_time(2.5, [])
+	check(absf(float(GnEnvironment.value("time_of_day")) - 10.5) < 0.01, "keys: showing a moment of the film poses the scene by its keys")
+	# The edit.
+	var shots := [GnMovie.orbit_shot(Vector3.ZERO, 20, 8, 90, 4.0), GnMovie.orbit_shot(Vector3.ZERO, 30, 8, 90, 6.0)]
+	shots[1]["transition"] = "Dissolve"
+	shots[1]["transition_s"] = 2.0
+	var film: Dictionary = GnFilm.DEFAULTS.duplicate(true)
+	check(GnFilm.recipe(shots, 1.0, film, 30).is_empty() and GnFilm.recipe(shots, 8.0, film, 30).is_empty(), "edit: away from a transition a frame is left as it is")
+	var before: Dictionary = GnFilm.recipe(shots, 3.5, film, 30)
+	var after: Dictionary = GnFilm.recipe(shots, 4.5, film, 30)
+	check(absf(float(before.other) - (4.0 + 1.0 / 30.0)) < 0.001 and absf(float(before.mix) - 0.15625) < 0.01 and is_equal_approx(float(after.other), 4.0)
+		and absf(float(after.mix) - 0.15625) < 0.01, "edit: a dissolve mixes the incoming shot's first frame in, then the outgoing one's last out (%.2f, %.2f)" % [before.mix, after.mix])
+	var mid: Dictionary = GnFilm.recipe(shots, 4.0, film, 30)
+	check(absf(float(mid.mix) - 0.5) < 0.02, "edit: half and half at the join")
+	shots[1]["transition"] = "Through black"
+	var black: Dictionary = GnFilm.recipe(shots, 4.0, film, 30)
+	check(is_equal_approx((black.wash as Color).a, 1.0) and (black.wash as Color).r < 0.01 and float(black.other) < 0.0, "edit: through black is black at the join")
+	shots[0]["transition"] = "Through white"
+	var opening: Dictionary = GnFilm.recipe(shots, 0.0, film, 30)
+	check((opening.wash as Color).a > 0.99 and (opening.wash as Color).r > 0.99, "edit: the first shot can open from white")
+	film.fade_out = 2.0
+	check(absf((GnFilm.recipe(shots, 9.0, film, 30).wash as Color).a - 0.5) < 0.01 and (GnFilm.recipe(shots, 10.0, film, 30).wash as Color).a > 0.99, "edit: the film fades out at its end")
+	film.titles = [{"text": "Riverside House", "from": 1.0, "to": 3.0, "place": "Lower left", "size": 0.06, "fade": 0.5, "colour": Color.WHITE}]
+	var shown: Dictionary = GnFilm.recipe(shots, 2.0, film, 30)
+	var fading: Dictionary = GnFilm.recipe(shots, 1.25, film, 30)
+	check((shown.titles as Array).size() == 1 and is_equal_approx(float(shown.titles[0][1]), 1.0) and absf(float(fading.titles[0][1]) - 0.5) < 0.01
+		and GnFilm.recipe(shots, 3.2, film, 30).get("titles", []).is_empty(), "edit: a title fades in, holds and is gone after its time")
+	var label: Label = GnFilm.title_label(film.titles[0], 1.0, Vector2(1920, 1080))
+	check(label.text == "Riverside House" and label.get_theme_font_size("font_size") == 64 and label.position.y > 900.0, "edit: at 6 percent of a 1080 picture the title is 64 px, at the bottom left")
+	label.free()
+	check(is_equal_approx(GnFilm.cuts(shots)[1], 4.0) and is_equal_approx(GnFilm.cuts(shots)[2], 10.0) and GnFilm.has_edit(shots, film), "edit: the shots' joins are known")
+	var plain: Array = GnFilm.video_args("/f/frame_%05d.png", 30, "/out.mp4", GnFilm.DEFAULTS, 10.0)
+	check(not "-stream_loop" in plain and plain[-1] == "/out.mp4" and "libx264" in plain, "edit: a film without music is joined as before")
+	var music := OS.get_user_data_dir().path_join("music.wav")
+	FileAccess.open(music, FileAccess.WRITE).store_string("x")
+	film.sound = music
+	var with: Array = GnFilm.video_args("/f/frame_%05d.png", 30, "/out.mp4", film, 10.0)
+	check(with.find("-stream_loop") < with.find("libx264") and "aac" in with and "afade=t=out:st=8.000:d=2.000" in ",".join(with) and with[-1] == "/out.mp4",
+		"edit: with music, FFmpeg is given the sound, its volume and its fade")
+	GnFilm.set_value("fade_out", 1.5)
+	var ix: int = GnFilm.add_title("Architects", 2.0)
+	GnFilm.set_title(ix, {"place": "Centre"})
+	check(is_equal_approx(float(GnFilm.settings().fade_out), 1.5) and str(GnFilm.titles()[ix].place) == "Centre" and is_equal_approx(float(GnFilm.titles()[ix].to), 6.0),
+		"edit: the film's settings and titles are kept in the scene")
+	GnFilm.remove_title(ix)
+	check(GnFilm.titles().size() == ix, "edit: a title removed")
+	GnTimeline.set_tracks([], "Clear the keys")
+	GnFilm.set_value("titles", [])
+	GnFilm.set_value("fade_out", 0.0)
+	for node in [lamp, group]:
+		node.get_parent().remove_child(node)
+		node.free()
+
+
 func _until_live(spec: String, seconds: float) -> bool:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
@@ -599,6 +723,7 @@ func _run() -> void:
 	await _weather_and_wind(root)
 	await _surfaces_and_sky(root)
 	await _walking(root)
+	await _keys_and_edit(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")

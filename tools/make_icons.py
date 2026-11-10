@@ -66,6 +66,12 @@ ICONS = {
     "rain": "cloud-rain", "snow": "snowflake", "wind": "wind", "compass": "compass",
     "wand": "wand-sparkles", "sliders": "sliders-horizontal", "ruler": "ruler", "route": "route",
     "globe": "globe", "camera": "camera",
+    # the timeline, the film's edit, the walkthrough, scattering, the live view
+    "key": "diamond", "key_add": "diamond-plus", "timeline": "chart-gantt", "title": "type", "music": "music",
+    "skip_back": "skip-back", "step_back": "step-back", "step_forward": "step-forward", "repeat": "repeat",
+    "zoom_in": "zoom-in", "zoom_out": "zoom-out", "scissors": "scissors", "blend": "blend",
+    "walk": "footprints", "headset": "rectangle-goggles", "scatter": "scatter-chart", "users": "users",
+    "car": "car", "zap": "zap", "activity": "activity", "layers_2": "layers-2",
 }
 
 HEADER = '''@tool

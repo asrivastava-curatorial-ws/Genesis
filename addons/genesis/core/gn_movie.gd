@@ -25,11 +25,17 @@ const GnSceneExport := preload("res://addons/genesis/core/gn_scene_export.gd")
 const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
 const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
 const GnWind := preload("res://addons/genesis/core/gn_wind.gd")
+const GnTimeline := preload("res://addons/genesis/core/gn_timeline.gd")
+const GnFilm := preload("res://addons/genesis/core/gn_film.gd")
 
 const META := &"gn_shots"
 # {"from": hour, "to": hour} when the sun moves through the film, else absent.
 const TIMELAPSE := &"gn_timelapse"
 const FPS := 30
+
+## The moment of the film on show (seconds): the Movie page and the timeline
+## move through the film together.
+static var now := 0.0
 
 
 static func movie() -> Node3D:
@@ -81,6 +87,8 @@ static func show_time(t: float, list: Array) -> float:
 	GnWind.set_time(t)
 	var root := GnScene.root()
 	if root:
+		# What has keys is where its keys put it at this moment.
+		GnTimeline.apply(t)
 		for m in root.get_tree().get_nodes_in_group(Mover.GROUP):
 			m.at_time(t)
 		# Things that move in place: a flying screen's swing.
@@ -237,10 +245,11 @@ static func render(list: Array, size: Vector2i, host: Node, movie_name: String,
 	host.add_child(cam)
 	var hour_before = GnEnvironment.value("time_of_day")
 	for f in total:
+		# The moment first, then where the camera is in it (a camera with keys moves too).
+		show_time(float(f) / fps, list)
 		var at := sample(list, float(f) / fps)
 		if at.is_empty():
 			continue
-		show_time(float(f) / fps, list)
 		cam.global_transform = at.transform
 		cam.fov = at.fov
 		cam.set_meta(GnLook.META, at.look)
@@ -258,9 +267,11 @@ static func render(list: Array, size: Vector2i, host: Node, movie_name: String,
 	show_time(0.0, list)
 	GnPhasing.finish(GnScene.root())
 	GnEnvironment.apply("time_of_day", hour_before, false)
+	# The edit: transitions between the shots, fades, titles.
+	var film := GnFilm.settings()
+	await GnFilm.finish_frames(ProjectSettings.globalize_path(dir), list, film, fps, host)
 	var out := ProjectSettings.globalize_path("%s/%s.mp4" % [GnPaths.at(GnRender.OUTPUT_DIR), movie_name])
-	var args := ["-y", "-framerate", str(fps), "-i", ProjectSettings.globalize_path(dir) + "/frame_%05d.png",
-		"-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow", out]
+	var args := GnFilm.video_args(ProjectSettings.globalize_path(dir) + "/frame_%05d.png", fps, out, film, duration(list))
 	var ffmpeg := GnFfmpeg.find()
 	var code := GnPaths.run(ffmpeg, args, [], true) if ffmpeg != "" else -1
 	return out if code == 0 and FileAccess.file_exists(out) else ProjectSettings.globalize_path(dir)
@@ -295,6 +306,7 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 	moving.append_array(root.get_tree().get_nodes_in_group(Mover.GROUP))
 	moving.append_array(root.get_tree().get_nodes_in_group(FlyingScreen.GROUP))
 	moving.append_array(GnPhasing.phased(root))
+	moving.append_array(GnTimeline.animated_nodes())
 	var follow := {}
 	for name in ex.scene.objects:
 		var src := root.get_node_or_null(NodePath(str(ex.scene.objects[name].path)))
@@ -304,17 +316,18 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 			if m == src or (m as Node).is_ancestor_of(src):
 				follow[name] = src
 				break
-	var lapse := not timelapse().is_empty()
+	# The lights and the sky of every frame, when the film changes them.
+	var lapse := not timelapse().is_empty() or GnTimeline.changes_light()
 	var hour_before = GnEnvironment.value("time_of_day")
 	var env_exposure := float((ex.scene.post as Dictionary).get("exposure", 1.0))
 	var frames: Array = []
 	var looks: Array = []
 	for f in total:
 		var t := float(f) / fps
+		show_time(t, list)
 		var at := sample(list, t)
 		if at.is_empty():
 			continue
-		show_time(t, list)
 		var look: Dictionary = GnLook.DEFAULTS.duplicate()
 		look.merge(at.look, true)
 		var fr := {"number": f,
@@ -345,12 +358,15 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 		say.call("The film stopped: %s" % str(st.get("error", "stopped")) if str(st.state) != "stopped"
 			else "Stopped. The frames so far are kept; render again to carry on.")
 		return ""
-	# Each frame's look on top, as the real-time film has it.
+	# Each frame's look on top, as the real-time film has it. (With an edit
+	# every frame is made again from the engine's own: the edit goes on once.)
+	var film := GnFilm.settings()
+	var edited := GnFilm.has_edit(list, film)
 	for i in frames.size():
 		var n := int(frames[i].number)
 		var src := raw.path_join("frame_%05d.png" % n)
 		var dest := base.path_join("frame_%05d.png" % n)
-		if FileAccess.file_exists(dest) and FileAccess.get_modified_time(dest) >= FileAccess.get_modified_time(src):
+		if not edited and FileAccess.file_exists(dest) and FileAccess.get_modified_time(dest) >= FileAccess.get_modified_time(src):
 			continue
 		var img := Image.load_from_file(src)
 		if img == null or img.is_empty():
@@ -359,9 +375,11 @@ static func render_photoreal(list: Array, size: Vector2i, host: Node, movie_name
 		img.save_png(dest)
 		if i % 10 == 0:
 			say.call("Finishing the frames: %d of %d…" % [i + 1, frames.size()])
+	if edited:
+		say.call("The edit: transitions and titles…")
+		await GnFilm.finish_frames(base, list, film, fps, host)
 	var out := ProjectSettings.globalize_path("%s/%s_%s.mp4" % [GnPaths.at(GnRender.OUTPUT_DIR), movie_name, engine])
-	var args := ["-y", "-framerate", str(fps), "-i", base + "/frame_%05d.png",
-		"-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow", out]
+	var args := GnFilm.video_args(base + "/frame_%05d.png", fps, out, film, duration(list))
 	var ffmpeg := GnFfmpeg.find()
 	var code := GnPaths.run(ffmpeg, args, [], true) if ffmpeg != "" else -1
 	return out if code == 0 and FileAccess.file_exists(out) else base

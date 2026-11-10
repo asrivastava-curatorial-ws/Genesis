@@ -19,6 +19,8 @@ const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnPathTool := preload("res://addons/genesis/core/gn_path_tool.gd")
 const GnPhotoreal := preload("res://addons/genesis/core/gn_photoreal.gd")
 const GnBlender := preload("res://addons/genesis/core/gn_blender.gd")
+const GnFilm := preload("res://addons/genesis/core/gn_film.gd")
+const GnTimeline := preload("res://addons/genesis/core/gn_timeline.gd")
 
 const SIZES := {"1920 × 1080 (HD)": Vector2i(1920, 1080), "2560 × 1440": Vector2i(2560, 1440),
 	"3840 × 2160 (4K)": Vector2i(3840, 2160), "1280 × 720 (quick)": Vector2i(1280, 720)}
@@ -47,6 +49,13 @@ var _lapse_to: HSlider
 var _phase_at: HSlider
 var _phase_over: HSlider
 var _phase_style: OptionButton
+var _trans: OptionButton
+var _trans_s: HSlider
+var _fade_out: HSlider
+var _sound_note: Label
+var _sound_volume: HSlider
+var _sound_dialog: Node
+var _edit_note: Label
 
 
 func _init() -> void:
@@ -62,7 +71,7 @@ func _init() -> void:
 	_scrub = HSlider.new()
 	_scrub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scrub.step = 0.01
-	_scrub.value_changed.connect(func(v): _time = v; _pose())
+	_scrub.value_changed.connect(func(v): _time = v; GnMovie.now = v; _pose())
 	transport.add_child(_scrub)
 	add_child(transport)
 
@@ -74,6 +83,25 @@ func _init() -> void:
 	GnUi.button(edit, "Move up", _move_up)
 	GnUi.button(edit, "Remove", _remove)
 	add_child(edit)
+
+	# The edit: how the shots join, what is written over them, the music.
+	GnUi.heading(self, "The edit")
+	_edit_note = GnUi.note(self, "")
+	_trans = GnUi.option(self, "Selected shot comes in with", GnFilm.TRANSITIONS, func(_t): _save_transition())
+	_trans_s = GnUi.slider(self, "Taking", 0.2, 5.0, 0.1, func(_v): _save_transition(), func(v): return "%.1f s" % v)
+	GnUi.show_value(_trans_s, 1.0)
+	_shots.item_selected.connect(func(_i): _show_transition())
+	_fade_out = GnUi.slider(self, "Fade to black at the end", 0.0, 5.0, 0.1,
+		func(v): GnFilm.set_value("fade_out", v), func(v): return "none" if v <= 0.0 else "%.1f s" % v)
+	var srow := HFlowContainer.new()
+	GnUi.button(srow, "Soundtrack…", _pick_sound, "music")
+	GnUi.button(srow, "No soundtrack", func():
+		GnFilm.set_value("sound", "")
+		refresh())
+	add_child(srow)
+	_sound_note = GnUi.note(self, "")
+	_sound_volume = GnUi.slider(self, "Its volume", 0.0, 2.0, 0.05,
+		func(v): GnFilm.set_value("sound_volume", v), func(v): return "%d%%" % int(v * 100))
 
 	GnUi.heading(self, "Add a path through cameras")
 	GnUi.note(self, "Pick saved cameras: with two or more the camera glides through them in list order; with one it holds still (to watch people walk by, say).")
@@ -148,14 +176,29 @@ func refresh() -> void:
 	_renderer_note.text = "Renderer: %s (choose it on the Render page)." % (
 		"%s, %s quality" % [GnBlender.LABELS.get(eng, eng), GnPhotoreal.quality_of(eng)] if GnPhotoreal.is_photoreal(eng) else "Real-time")
 	var list := GnMovie.shots()
+	var film := GnFilm.settings()
+	GnUi.show_value(_fade_out, float(film.fade_out))
+	GnUi.show_value(_sound_volume, float(film.sound_volume))
+	var sound := str(film.sound)
+	_sound_note.text = "No soundtrack." if sound == "" else ("%s%s" % [sound.get_file(),
+		"" if FileAccess.file_exists(sound) else " (the file is not there any more)"])
+	var keyed := GnTimeline.tracks().size()
+	var titled := (film.titles as Array).size()
+	_edit_note.text = "Titles, and what moves by keys, are on the timeline under the 3D view (View > Timeline, Ctrl+T)%s." % (
+		": %d title%s, %d keyed track%s" % [titled, "" if titled == 1 else "s", keyed, "" if keyed == 1 else "s"] if titled + keyed > 0 else "")
 	var lapse := GnMovie.timelapse()
 	_lapse.set_pressed_no_signal(not lapse.is_empty())
 	if not lapse.is_empty():
 		GnUi.show_value(_lapse_from, float(lapse.from))
 		GnUi.show_value(_lapse_to, float(lapse.to))
+	var shot_kept := _shots.get_selected_items()
 	_shots.clear()
 	for i in list.size():
-		_shots.add_item("%d. %s" % [i + 1, _describe(list[i])])
+		var tr := GnFilm.transition_of(list[i])
+		_shots.add_item("%d. %s%s" % [i + 1, _describe(list[i]), "" if tr.kind == "Cut" else "  ·  %s" % str(tr.kind).to_lower()])
+	if not shot_kept.is_empty() and shot_kept[0] < _shots.item_count:
+		_shots.select(shot_kept[0])
+	_show_transition()
 	var keep := _cams.get_selected_items()
 	_cams.clear()
 	for cam in GnCameras.cameras():
@@ -180,6 +223,44 @@ func refresh() -> void:
 	_pose()
 
 
+func _show_transition() -> void:
+	var sel := _shots.get_selected_items()
+	var list := GnMovie.shots()
+	var on := not sel.is_empty() and sel[0] < list.size()
+	_trans.disabled = not on
+	_trans_s.editable = on
+	if on:
+		var tr := GnFilm.transition_of(list[sel[0]])
+		GnUi.select_text(_trans, tr.kind)
+		GnUi.show_value(_trans_s, float(tr.seconds))
+
+
+func _save_transition() -> void:
+	var sel := _shots.get_selected_items()
+	var list := GnMovie.shots()
+	if sel.is_empty() or sel[0] >= list.size():
+		return
+	var kind := _trans.get_item_text(maxi(_trans.selected, 0))
+	if str(list[sel[0]].get("transition", "Cut")) == kind and is_equal_approx(float(list[sel[0]].get("transition_s", 1.0)), _trans_s.value):
+		return
+	list[sel[0]]["transition"] = kind
+	list[sel[0]]["transition_s"] = _trans_s.value
+	GnMovie.set_shots(list, "Genesis: %s" % kind.to_lower())
+	refresh()
+
+
+func _pick_sound() -> void:
+	if _sound_dialog == null:
+		_sound_dialog = GnHost.make_file_dialog("The film's soundtrack")
+		for ext in GnFilm.SOUND_TYPES:
+			_sound_dialog.add_filter("*.%s" % ext)
+		_sound_dialog.file_selected.connect(func(path):
+			GnFilm.set_value("sound", path)
+			refresh())
+		GnHost.dialog_parent().add_child(_sound_dialog)
+	GnUi.pick(_sound_dialog)
+
+
 func _describe(s: Dictionary) -> String:
 	if s.type == "orbit":
 		return "Orbit %d° (%.1f s)" % [int(s.degrees), float(s.seconds)]
@@ -190,10 +271,16 @@ func _describe(s: Dictionary) -> String:
 
 func _process(delta: float) -> void:
 	if not _playing:
+		# The timeline moved through the film: this page's preview follows.
+		if is_visible_in_tree() and not is_equal_approx(GnMovie.now, _time):
+			_time = clampf(GnMovie.now, 0.0, _scrub.max_value)
+			_scrub.set_value_no_signal(_time)
+			_pose()
 		return
 	_time += delta
 	if _time > _scrub.max_value:
 		_time = 0.0
+	GnMovie.now = _time
 	_scrub.set_value_no_signal(_time)
 	_pose()
 
