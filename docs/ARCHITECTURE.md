@@ -36,6 +36,8 @@ Most of the original coupling went through `GnScene` (194 calls in 33 files), so
 - `set_anchors_preset` keeps old offsets; use `set_anchors_and_offsets_preset` to fill a parent.
 - Outside the editor Godot cannot tell that an instanced model's own resources are the model file's: a model whose top node is a mesh was written into the scene a second time. The scene service sets such resources aside while it packs a scene (`set_aside_own`, `take_back`) and gives them back to scenes saved before (`own_again`).
 - Setting a metadata property to null through `UndoRedo` leaves a mark that says null; marks are set and removed by method.
+- Several `ResourceLoader.load_threaded_request`s running at once stopped the built program dead (the engine's readers waiting on each other; from the source it did not happen). A project is read ahead one file at a time, each a single request without sub-threads (`app/main.gd`).
+- The source tree and the built program do not hold the library's pictures the same way (the build's are packed for the graphics card and a little weaker): what measures a picture's content, as the joints of a layered material do, is tested from the build as well (`ORIEL_BIN=… tests/dev/lab.sh`).
 - `PackedArray`s kept inside an `Array` are copies when read back; a shader's globals and anything that waits on `RenderingServer.frame_post_draw` need a display, so code that draws to make a picture is skipped in headless runs.
 
 ## What rc5 added, and where it lives

@@ -21,14 +21,14 @@ What Lumion, D5 and V-Ray users would miss, added. Every feature of rc4 is kept,
 - **Volumetric clouds**: clouds with depth, lit from where the sun is and carried by the wind; Eevee and Cycles show the same clouds.
 
 ### Materials
-- **Relief**: a height map moves the surface in and out (brick joints, cobbles, bark): Cycles moves the surface itself, Eevee and the 3D view shade it as if moved. Without a height map the heights are worked out from the normal map. Height maps come with downloaded materials and with your own images.
+- **Relief**: a height map moves the surface in and out (brick joints, cobbles, bark): Cycles moves the surface itself (true displacement), Eevee shades it as if moved, and the 3D view shows depth where the material is laid by the model's own texture coordinates. Without a height map the heights are worked out from the normal map. Height maps come with downloaded materials and with your own images.
 - **Light inside** (wax, marble, skin, leaves, snow) and **Solid glass (bends light)** for a vase, a bottle, a glass block.
-- **Layers**: one material over another where a mask says: plaster in patches over brick, moss in the joints, bare metal on the raised parts, streaks of damp, speckles. Up to four layers, each with how much, pattern size, soft edge, thickness and tint. The same in the three renderers.
+- **Layers**: one material over another where a mask says: plaster in patches over brick, moss in the joints, bare metal on the raised parts, streaks of damp, speckles. Up to four layers, each with how much, pattern size, soft edge, thickness and tint. Joints and raised parts are found from the first layer's normal map, however softly it is drawn, and only where that layer still shows. The same in the three renderers.
 
 ### Films
 - **Keyframes and a timeline** under the 3D view (View > Timeline, Ctrl+T): *Key the selection* (K) records where things are, how they are turned and how large; a light's brightness and colour; a camera's lens. *Key…* records the sun, the sky, the weather, or whether the selection shows. Keys can be dragged, eased (Smooth, Linear, Glide, Ease in, Ease out, Hold) and removed.
 - **The film as an edit** (Movie page, *The edit*): each shot comes in with a Cut, a Dissolve, Through black or Through white; **titles** on the picture, placed and timed on the timeline; a **soundtrack** with its volume; a fade to black at the end. Real-time, Eevee and Cycles films are finished the same way.
-- **Traffic** (Movie page, *Draw traffic*): draw a road; vehicles of the kind chosen drive along it in lanes, both ways if wanted, keeping their distance.
+- **Traffic** (Movie page, *Draw traffic*): draw a road; vehicles of the kind chosen (or people walking) travel along it in lanes, both ways if wanted, keeping their distance.
 
 ### Populating a scene
 - **Rows and fills** (Landscape page, *Draw a spread*): an avenue of trees, lamp posts down a street, cars parked along a kerb; or a wood, a crowd in a square, filling the line drawn. What is spread, how far apart, how much out of line, sizes and facing are in Properties; the spread follows the ground.
@@ -41,7 +41,7 @@ What Lumion, D5 and V-Ray users would miss, added. Every feature of rc4 is kept,
 - **Count the scene** (Scene page, *A large scene*): triangles, objects, shapes, lights, materials, megabytes of pictures, what the 3D view is drawing, and the heaviest things.
 - **Show selection as boxes**: heavy things as plain boxes in the 3D view while you work around them; every render shows them in full.
 - **Lighten the project's models**: levels of detail for the models a project already keeps.
-- **Large projects open with the window alive**: the scene's files are read in the background, with how far it has got.
+- **Large projects open with the window alive**: a project whose own models and pictures come to 48 MB or more is read in the background, with how far it has got.
 - **Eevee and Cycles are handed each shape once**: a model placed two hundred times is written, read and held in memory once, and its pictures (a normal map twenty materials share) once. Draft and Good renders pack the pictures small. A street of library cars and trees went from 235 MB to 12 MB.
 
 ### Fixes
@@ -51,8 +51,8 @@ What Lumion, D5 and V-Ray users would miss, added. Every feature of rc4 is kept,
 - Clicking in the 3D view tests only what the view draws.
 
 ### Tests
-- A lab (`tests/dev/lab.gd`, run by `--script`): scenes built with the program's own tools, rendered by the three renderers and measured: IES beams, the light mixer, haze, weather, wind, relief and light inside, caustics, clouds, the walk-through (on Monado's stand-in headset too), a film with keys, a dissolve, a title and sound, layered materials, a street with a spread and traffic, the live view, a five-million-triangle scene.
-- The headless suites grew from 394 checks to 564; the module suite alone tripled, to 178.
+- A lab (`tests/dev/lab.gd`, run by `--script`): scenes built with the program's own tools, rendered by the three renderers and measured: model formats, IES beams, the light mixer, haze, weather, wind, relief and light inside, caustics, clouds, the walk-through (on Monado's stand-in headset too), a film with keys, a dissolve, a title and sound, layered materials, a street with a spread and traffic, the live view, a five-million-triangle scene. Run from the source and again from the AppImage itself (`reports/LAB_RESULTS.md`).
+- The headless suites grew from 419 checks to 564; the module suite alone tripled, to 178.
 
 ## 1.0.0-rc4 (Oriel)
 

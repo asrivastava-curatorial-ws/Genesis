@@ -77,6 +77,13 @@ static func run(main: Node, args: PackedStringArray) -> int:
 	return _fails
 
 
+## Where the test files are (tests/app/fixtures of the source): given by
+## lab.sh when the program run is the built one, which has no tests in it.
+static func _fixtures() -> String:
+	var here := OS.get_environment("ORIEL_LAB_FIXTURES")
+	return here if here != "" else ProjectSettings.globalize_path("res://tests/app/fixtures")
+
+
 static func check(ok: bool, text: String) -> void:
 	print("LAB %s %s" % ["ok  " if ok else "FAIL", text])
 	if not ok:
@@ -185,7 +192,7 @@ static func _ies(main: Node) -> void:
 	f.hung = true
 	f.casts_shadows = false
 	f.kelvin = 3000.0
-	f.ies = ProjectSettings.globalize_path("res://tests/app/fixtures/downlight.ies")
+	f.ies = _fixtures().path_join("downlight.ies")
 	f.position = Vector3(0, 3.2, 0)
 	GnScene.add_node(f, root, "Add a downlight")
 	await _frames(main, 4)
@@ -1484,13 +1491,25 @@ static func _big(main: Node) -> void:
 	check(err2 == "", "big: it opens the plain way in %.1f s, the window still meanwhile" % (plain_ms / 1000.0))
 	App.projects.close()
 	await _frames(main, 6)
+	# (The stones come to 35 MB, under what the program reads ahead for by itself.)
+	main.read_ahead_from_mb = 1.0
 	var t2 := Time.get_ticks_msec()
 	await main.open_project_at(folder)
 	var all_ms := Time.get_ticks_msec() - t2
 	var ra: Dictionary = main.read_ahead_last
 	check(App.projects.is_open() and int(ra.get("files", 0)) >= 14 and int(ra.get("kept", -1)) == int(ra.get("files", 0)) and int(ra.get("frames", 0)) >= 1,
-		"big: opened from the program, its %d files are read in the background (%.1f s, the window drawn %d times meanwhile)" % [int(ra.get("files", 0)), int(ra.get("ms", 0)) / 1000.0, int(ra.get("frames", 0))])
+		"big: opened from the program, its %d files (%.0f MB) are read in the background, one after another (%.1f s, the window drawn %d times meanwhile)" % [
+			int(ra.get("files", 0)), float(ra.get("megabytes", 0.0)), int(ra.get("ms", 0)) / 1000.0, int(ra.get("frames", 0))])
 	check(int(ra.get("open_ms", 1 << 30)) < plain_ms, "big: and the scene is then put together from what was read: %.2f s with the window still, %.2f s the plain way (%.1f s in all)" % [int(ra.get("open_ms", 0)) / 1000.0, plain_ms / 1000.0, all_ms / 1000.0])
+	# Again and again: reading in the background must never leave the program waiting on itself.
+	var times := 0
+	for again_i in 4:
+		App.projects.close()
+		await _frames(main, 3)
+		await main.open_project_at(folder)
+		if App.projects.is_open() and int((main.read_ahead_last as Dictionary).get("kept", -1)) == int((main.read_ahead_last as Dictionary).get("files", 0)):
+			times += 1
+	check(times == 4, "big: closed and opened four times more, read in the background each time (%d of 4)" % times)
 	await _frames(main, 6)
 	root = GnHost.edited_scene_root()
 	var again := 0
@@ -1621,9 +1640,7 @@ static func _formats(main: Node) -> void:
 	check(str(eng.get("kind", "")) == "module", "formats: the built-in engine is here (%s)" % eng.get("label", "none"))
 	if str(eng.get("kind", "")) != "module":
 		return
-	var here := OS.get_environment("ORIEL_LAB_FIXTURES")
-	if here == "":
-		here = ProjectSettings.globalize_path("res://tests/app/fixtures")
+	var here := _fixtures()
 	var fx := _out.path_join("formats")
 	DirAccess.make_dir_recursive_absolute(fx)
 	GnPaths.run(str(eng.path), ["-I", here.path_join("make_model_fixtures.py"), "--", fx], [], true)

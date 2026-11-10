@@ -10,6 +10,8 @@ A whole stroke is one undo step.
 
 ## Rows and fills
 
+![The architecture demo from the air; the row of trees in the foreground is a spread, one drawn line](screenshots/demo_architecture_aerial.jpg)
+
 *Draw a spread* (Landscape page, *Rows and fills*): click points in the 3D view, press Enter. Then, in Properties:
 
 - **Layout**: *Along the line* (an avenue of trees, lamp posts down a street, cars parked along a kerb, a hedge) or *Inside the outline* (a wood, a crowd standing in a square, a car park full).

@@ -32,7 +32,7 @@ Rendered by the program itself, from its two demo projects (Standard quality, so
 |---|---|
 | ![Architecture demo, daylight](docs/screenshots/demo_architecture_day.jpg) | ![Architecture demo, night](docs/screenshots/demo_architecture_night.jpg) |
 | ![Architecture demo, golden hour](docs/screenshots/demo_architecture_golden_hour.jpg) | ![Event production demo, photo pit](docs/screenshots/demo_event_photo_pit.jpg) |
-| ![A frame of the demo film: people walking across the plaza on a drawn path](docs/screenshots/demo_architecture_walk.jpg) | ![Architecture demo, the plaza camera](docs/screenshots/demo_architecture_plaza.jpg) |
+| ![A frame of the demo film: people walking across the plaza on a drawn path, under the film's title](docs/screenshots/demo_architecture_walk.jpg) | ![Architecture demo, the plaza camera](docs/screenshots/demo_architecture_plaza.jpg) |
 
 ## What it does
 

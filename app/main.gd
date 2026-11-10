@@ -350,8 +350,8 @@ func open_project_at(folder: String) -> void:
 var _read_ahead_kept: Array = []
 ## One project is opened at a time (a second click while a large one is being read is not a second opening).
 var _opening := false
-## Fewer files than this are read as fast as the words could be shown.
-const READ_AHEAD_FROM := 12
+## A project whose own files come to less than this (megabytes) is read as fast as the words could be shown.
+var read_ahead_from_mb := 48.0
 
 
 ## What a project's scene is made of (its models, pictures, materials), as
@@ -374,13 +374,28 @@ static func scene_files(folder: String) -> PackedStringArray:
 	return out
 
 
-## Reads what the project's scene needs in the background, with a word on
-## how far it has got, so the window stays alive while a large project
-## opens (opening it then finds everything read already).
+## Reads a large project's own files (its models and pictures) in the
+## background, with how far it has got, so the window stays alive while it
+## opens (opening it then finds them read already).
+##
+## One file at a time, each as a single request: several files read at
+## once stopped the program dead in the built program (the engine's
+## readers waited on each other). Small projects are opened as they always
+## were: they take less time than the words would to show.
 func _read_ahead(folder: String) -> void:
 	read_ahead_last = {}
-	var files := scene_files(folder)
-	if files.size() < READ_AHEAD_FROM or DisplayServer.get_name() == "headless":
+	if DisplayServer.get_name() == "headless":
+		return
+	var files: Array = []
+	var megabytes := 0.0
+	for p in scene_files(folder):
+		if not p.begins_with(folder.simplify_path() + "/"):
+			continue
+		var f := FileAccess.open(p, FileAccess.READ)
+		if f:
+			megabytes += f.get_length() / 1048576.0
+			files.append(p)
+	if files.is_empty() or megabytes < read_ahead_from_mb:
 		return
 	# Over everything, taking the clicks: nothing else is started meanwhile.
 	var veil := ColorRect.new()
@@ -404,28 +419,22 @@ func _read_ahead(folder: String) -> void:
 	card.add_child(box)
 	middle.add_child(card)
 	add_child(veil)
-	var asked: Array = []
-	for p in files:
-		if ResourceLoader.load_threaded_request(p, "", true) == OK:
-			asked.append(p)
 	var started := Time.get_ticks_msec()
 	var frames := 0
-	while true:
-		var done := 0
-		for p in asked:
-			if ResourceLoader.load_threaded_get_status(p) != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-				done += 1
-		bar.value = done
-		words.text = "Opening %s: %d of %d files read…" % [folder.get_file(), done, asked.size()]
-		if done >= asked.size() or Time.get_ticks_msec() - started > 600000:
-			break
-		await get_tree().process_frame
-		frames += 1
-	# Held until the scene itself holds them.
-	for p in asked:
+	for i in files.size():
+		var p: String = files[i]
+		bar.value = i
+		words.text = "Opening %s: %d of %d files read…" % [folder.get_file(), i, files.size()]
+		if ResourceLoader.load_threaded_request(p, "", false) != OK:
+			continue
+		while ResourceLoader.load_threaded_get_status(p) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			await get_tree().process_frame
+			frames += 1
+		# Held until the scene itself holds it.
 		if ResourceLoader.load_threaded_get_status(p) == ResourceLoader.THREAD_LOAD_LOADED:
 			_read_ahead_kept.append(ResourceLoader.load_threaded_get(p))
-	read_ahead_last = {"files": asked.size(), "kept": _read_ahead_kept.size(), "ms": Time.get_ticks_msec() - started, "frames": frames}
+	read_ahead_last = {"files": files.size(), "kept": _read_ahead_kept.size(), "ms": Time.get_ticks_msec() - started, "frames": frames,
+		"megabytes": megabytes}
 	words.text = "Opening %s…" % folder.get_file()
 	bar.value = bar.max_value
 	# One more picture, so the words are on show while the scene is put together.

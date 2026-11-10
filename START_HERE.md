@@ -69,7 +69,7 @@ This delivery has no Windows program. One can be built from the source (section 
    - *Preview* is quick. *Standard* is for most stills. *High* and *Maximum* take 16 and 64 samples.
    - Pictures go to the project's `renders/` folder; *Show the renders folder* opens it.
    - After a still, *AI upscale the last render* sharpens it with Real-ESRGAN. The first time, it downloads the upscaler (about 47 MB).
-8. **Make a film.** *Movie* moves between saved cameras and writes an MP4. This needs FFmpeg (section 5). The pavilion demo already has a film with three people walking across the plaza: press *Play* on the Movie page.
+8. **Make a film.** *Movie* moves between saved cameras and writes an MP4. This needs FFmpeg (section 5). The pavilion demo already has a film of two shots, with three people walking across the plaza, a title and a dissolve: press *Play* on the Movie page, and *View > Timeline* (Ctrl+T) to see how it is put together.
 9. **Run a show.** Open the *Event production demo* from the start screen, go to *Show*, and press **GO** to step through the four cues.
 10. **Save.** Press **Ctrl+S** (or click *Unsaved changes* in the status bar). Oriel also keeps unsaved work every few minutes, and keeps the last five saved versions in `backups/`.
 
@@ -90,7 +90,7 @@ What the demos' cameras give at *Standard* quality:
 |---|---|
 | ![Daylight](docs/screenshots/demo_architecture_day.jpg) | ![Night: blue hour, lights on](docs/screenshots/demo_architecture_night.jpg) |
 | ![Interior](docs/screenshots/demo_architecture_interior.jpg) | ![Concert, photo pit](docs/screenshots/demo_event_photo_pit.jpg) |
-| ![A frame of the demo film: people walking across the plaza](docs/screenshots/demo_architecture_walk.jpg) | ![The plaza camera](docs/screenshots/demo_architecture_plaza.jpg) |
+| ![A frame of the demo film: people walking across the plaza, under the film's title](docs/screenshots/demo_architecture_walk.jpg) | ![The plaza camera](docs/screenshots/demo_architecture_plaza.jpg) |
 
 **Render it photoreal.** On the Render page, set *Renderer* to *Eevee* or *Cycles*, pick a quality (*Draft* for a first look) and choose *Render still*. The engines are inside Oriel; the render runs in the background, with the time left, and *Stop rendering* stops it. The picture lands in the project's `renders/` folder next to the real-time ones. The Movie page renders films with the same renderer (a stopped film carries on where it stopped). See [docs/RENDERING.md](docs/RENDERING.md).
 
