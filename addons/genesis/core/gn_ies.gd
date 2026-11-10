@@ -12,6 +12,9 @@ class Profile:
 	var vertical := PackedFloat32Array()   # degrees from straight down (nadir)
 	var candela := PackedFloat32Array()    # averaged round the fitting
 	var lumens := 0.0
+	## The brightest of `candela`, with the file's ballast factors too: what
+	## Cycles' own IES reader makes of the same direction (oriel_render.py).
+	var peak := 0.0
 
 	## Candela at an angle off the axis, interpolated.
 	func at(angle: float) -> float:
@@ -66,6 +69,8 @@ static func load_file(path: String) -> Profile:
 	for h in n_h:
 		for v in n_v:
 			p.candela[v] += nums[i + h * n_v + v] * multiplier / n_h
+	for c in p.candela:
+		p.peak = maxf(p.peak, c * nums[10] * nums[11])
 	# Absolute photometry files (LED) say -1 lumens per lamp: sum the beam.
 	p.lumens = lamps * lm_per_lamp if lm_per_lamp > 0.0 else _integrate(p)
 	return p

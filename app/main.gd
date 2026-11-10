@@ -383,8 +383,7 @@ func _on_files_dropped(files: PackedStringArray) -> void:
 			else:
 				App.notify.error("%s could not be brought in." % f.get_file(), err)
 	if used == 0:
-		App.notify.info("Only models can be dropped here (%s). Plans, skies and videos go in on their pages." %
-			", ".join(GnModelImport.EXTENSIONS.map(func(e): return "." + e)))
+		App.notify.info("Only models can be dropped here (%s). Plans, skies and videos go in on their pages." % GnModelImport.EXTENSIONS_TEXT)
 
 
 func import_plugin_project() -> void:

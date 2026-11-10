@@ -568,6 +568,7 @@ func _models() -> void:
 				fn.free()
 			check(fb.error == "" and absf(fw - 2.0) < 0.05, "blend: when Blender fails, the built-in engine reads the file (%.2f m) %s" % [fw, fb.error])
 			GnHost.set_setting("blender_path", "")
+	_engine_formats(src, dir)
 	# glTF with a texture, made here with the engine's own glTF writer.
 	var scene := Node3D.new()
 	var cube := MeshInstance3D.new()
@@ -614,6 +615,52 @@ func _models() -> void:
 	check(GnModelImport.convert_file(src + "/box.dwg", dir + "/assets").error.contains("can bring in"), "formats: an unknown format says which ones work")
 	var blend := GnModelImport.convert_file(src + "/house.blend", dir + "/assets")
 	check(blend.error != "", "formats: .blend without the file (or Blender) gives a reason")
+
+
+# The formats the built-in engine converts: USD, Alembic, Collada, 3DS, STL,
+# PLY and IFC. Each fixture is a bench 2 m wide, 0.6 m deep and 0.4 m high
+# (the IFC one a 4 m wall, 3 m high, on a slab), so size and which way is up
+# are both checked.
+func _engine_formats(src: String, dir: String) -> void:
+	var GnBlender = load("res://addons/genesis/core/gn_blender.gd")
+	var eng: Dictionary = GnBlender.engine(true)
+	if eng.kind != "module":
+		print("PROJECT_TEST note: the built-in engine is not here, so USD, IFC, Collada, 3DS, STL, PLY and Alembic are not checked")
+		return
+	var fx := src + "/formats"
+	DirAccess.make_dir_recursive_absolute(fx)
+	var here := ProjectSettings.globalize_path("res://tests/app/fixtures")
+	GnPaths.run(str(eng.path), ["-I", here + "/make_model_fixtures.py", "--", fx], [], true)
+	for f in ["wall.ifc", "bench.3ds"]:
+		DirAccess.copy_absolute(here + "/" + f, fx + "/" + f)
+	# [file, up option, width, height, depth]
+	var cases := [["bench.usdc", "y", 2.0, 0.4, 0.6], ["bench.abc", "y", 2.0, 0.4, 0.6], ["bench.dae", "y", 2.0, 0.4, 0.6],
+		["bench.3ds", "y", 2.0, 0.4, 0.6], ["bench.stl", "z", 2.0, 0.4, 0.6], ["bench.ply", "z", 2.0, 0.4, 0.6],
+		["bench.stl", "y", 2.0, 0.6, 0.4], ["wall.ifc", "y", 4.0, 3.2, 3.0]]
+	for c in cases:
+		var file: String = c[0]
+		var r := GnModelImport.convert_file(fx + "/" + file, dir + "/assets", {"up": c[1], "name": "%s_%s_%s" % [file.get_basename(), file.get_extension(), c[1]]})
+		var size := Vector3.ZERO
+		var extra := ""
+		if r.error == "":
+			var n := (load(r.path) as PackedScene).instantiate() as Node3D
+			size = _box_of(n).size
+			if file == "wall.ifc":
+				# Elements keep their names, under their storey, in the model's colours.
+				var wall := n.find_child("North wall", true, false)
+				var mat: Material = (wall as MeshInstance3D).mesh.surface_get_material(0) if wall is MeshInstance3D else null
+				var ok: bool = wall != null and str(wall.get_parent().name) == "Ground floor" and mat is BaseMaterial3D \
+					and mat.resource_name == "Brick" and (mat as BaseMaterial3D).albedo_color.r > (mat as BaseMaterial3D).albedo_color.b
+				check(ok, "ifc: the wall is called North wall, under Ground floor, in the model's brick colour")
+			n.free()
+		var good: bool = r.error == "" and absf(size.x - float(c[2])) < 0.03 and absf(size.y - float(c[3])) < 0.03 and absf(size.z - float(c[4])) < 0.03
+		check(good, "%s (up %s): comes in %.1f m wide, %.1f m high, %.1f m deep (%.2f, %.2f, %.2f) %s" % [
+			file.get_extension(), c[1], c[2], c[3], c[4], size.x, size.y, size.z, r.error])
+	var bad := GnModelImport.convert_file(fx + "/nothing.ifc", dir + "/assets")
+	check(bad.error != "", "ifc: a missing file gives a reason")
+	var junk := fx + "/junk.dae"
+	_write(junk, "this is not a model")
+	check(GnModelImport.convert_file(junk, dir + "/assets").error.contains("could not be read"), "dae: a file that is not a model gives a reason")
 
 
 # ------------------------------------------------------------- live link

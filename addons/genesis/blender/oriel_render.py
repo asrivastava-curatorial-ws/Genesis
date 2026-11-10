@@ -1071,6 +1071,30 @@ def light_power(L):
     return 4.0 * math.pi * math.pi * d * d * e * att
 
 
+# Cycles reads an IES file's candelas as watts per steradian for a D65
+# source: candela x multiplier x ballast factors x 4 pi / 177.83.
+IES_TO_WATTS = 0.0706650768394
+
+
+def _ies_nodes(data, ies):
+    """The light's strength follows the file's distribution, scaled so its
+    brightest direction is 1: how bright the light is stays as the editor
+    set it (the file's lumens are already in its energy)."""
+    data.use_nodes = True
+    nt = data.node_tree
+    for n in list(nt.nodes):
+        nt.nodes.remove(n)
+    outn = nt.nodes.new("ShaderNodeOutputLight")
+    em = nt.nodes.new("ShaderNodeEmission")
+    tex = nt.nodes.new("ShaderNodeTexIES")
+    tex.mode = "EXTERNAL"
+    tex.filepath = str(ies["file"])
+    peak = float(ies.get("peak", 0.0)) * IES_TO_WATTS
+    tex.inputs["Strength"].default_value = 1.0 / peak if peak > 1e-9 else 1.0
+    nt.links.new(out(tex, "Fac"), em.inputs["Strength"])
+    nt.links.new(em.outputs[0], outn.inputs["Surface"])
+
+
 def clear_lights():
     for o in _LIGHTS:
         try:
@@ -1089,18 +1113,39 @@ def build_lights(lights):
         t = L.get("type", "point")
         if t not in kinds:
             continue
-        data = bpy.data.lights.new("oriel_light_%d" % i, kinds[t])
+        ies = L.get("ies") if t == "spot" else None
+        # A fixture with an IES file is a point light in Cycles: the file gives
+        # the beam its shape, all the way round.
+        use_ies = bool(ies) and ENGINE == "cycles" and os.path.exists(str(ies.get("file", "")))
+        data = bpy.data.lights.new("oriel_light_%d" % i, "POINT" if use_ies else kinds[t])
         data.color = col3(L.get("color"))
         data.energy = light_power(L) * float(L.get("scale", 1.0))
+        if use_ies:
+            try:
+                _ies_nodes(data, ies)
+            except Exception as e:
+                use_ies = False
+                warn_once("ies", "an IES file could not be used (%s); its light is a plain spot" % e)
+                bpy.data.lights.remove(data)
+                data = bpy.data.lights.new("oriel_light_%d" % i, "SPOT")
+                data.color = col3(L.get("color"))
+                data.energy = light_power(L) * float(L.get("scale", 1.0))
         try:
             data.use_shadow = bool(L.get("shadow", True))
         except Exception:
             pass
         if t in ("point", "spot"):
             data.shadow_soft_size = max(float(L.get("radius", 0.05)), 0.0)
-        if t == "spot":
+        if t == "spot" and not use_ies:
             data.spot_size = max(min(float(L.get("spot_angle", 45.0)) * 2.0, 180.0), 1.0) * math.pi / 180.0
             data.spot_blend = max(0.0, min(1.0, float(L.get("spot_blend", 0.3))))
+            if ies:
+                # No light nodes in Eevee: a cone from the file's own angles,
+                # full to where the beam is at half its peak, out at its edge.
+                edge = max(float(ies.get("edge", 45.0)), 1.0)
+                half = min(float(ies.get("half", edge * 0.6)), edge)
+                data.spot_size = min(edge * 2.0, 180.0) * math.pi / 180.0
+                data.spot_blend = max(0.05, min(1.0, 1.0 - half / edge))
             try:
                 data.show_cone = False
             except Exception:

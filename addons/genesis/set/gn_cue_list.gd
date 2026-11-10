@@ -30,7 +30,7 @@ signal sent(result: String)
 const GROUP := &"gn_cue_lists"
 # What a cue remembers of each kind of show object.
 const RECORDED := {
-	"fixture": ["visible", "colour", "dimmer", "pan", "tilt", "beam_degrees"],
+	"fixture": ["visible", "colour", "kelvin", "dimmer", "pan", "tilt", "beam_degrees"],
 	"screen": ["visible", "brightness", "content", "live_source"],
 	"effect": ["visible", "amount"],
 	"crowd": ["visible"],

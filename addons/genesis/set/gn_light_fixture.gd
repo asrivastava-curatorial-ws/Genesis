@@ -12,11 +12,16 @@ extends Node3D
 
 const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const GnIes := preload("res://addons/genesis/core/gn_ies.gd")
+const GnLightUnits := preload("res://addons/genesis/core/gn_light_units.gd")
 
 @export_enum("Beam (moving head)", "Wash", "Downlight", "Bulb") var kind: String = "Beam (moving head)":
 	set(v): kind = v; _queue()
 @export var colour: Color = Color(1.0, 0.95, 0.85):
 	set(v): colour = v; _tune()
+## Colour temperature instead of a colour (0 uses the colour above): 2700 is
+## a warm lamp, 4000 neutral white, 6500 daylight.
+@export_range(0.0, 12000.0, 100.0) var kelvin: float = 0.0:
+	set(v): kelvin = v; _tune()
 ## Luminous output in lumens.
 @export_range(50.0, 50000.0, 50.0, "exp") var lumens: float = 12000.0:
 	set(v): lumens = v; _tune()
@@ -74,7 +79,8 @@ func _tune() -> void:
 	if _pending or not is_instance_valid(_light):
 		_queue()
 		return
-	_light.light_color = colour
+	var lit := light_colour()
+	_light.light_color = lit
 	var out := _ies_lumens if _ies_lumens > 0.0 else lumens
 	_light.light_energy = out / 1500.0 * dimmer
 	_light.visible = dimmer > 0.001
@@ -85,8 +91,8 @@ func _tune() -> void:
 	elif _light is OmniLight3D:
 		(_light as OmniLight3D).omni_range = sqrt(lumens) * 0.35
 	if _lens_mat:
-		_lens_mat.albedo_color = colour.lightened(0.3) * lerpf(0.15, 1.0, dimmer)
-		_lens_mat.emission = colour
+		_lens_mat.albedo_color = lit.lightened(0.3) * lerpf(0.15, 1.0, dimmer)
+		_lens_mat.emission = lit
 		_lens_mat.emission_energy_multiplier = 4.0 * dimmer
 	_yoke.rotation_degrees = Vector3(0, pan, 0)
 	_head.rotation_degrees = Vector3(tilt, 0, 0)
@@ -110,8 +116,19 @@ func _validate_property(property: Dictionary) -> void:
 		property.hint_string = ",".join(GnAssets.of_kind("lighting", []).map(func(a): return a.path))
 
 
+## The light's colour: the colour, or a black body at `kelvin`.
+func light_colour() -> Color:
+	return colour if kelvin <= 0.0 else GnLightUnits.kelvin_colour(kelvin)
+
+
+## The IES file in use and the lumens it gave, or "" (for the renderers).
+func ies_in_use() -> String:
+	return ies if _ies_lumens > 0.0 else ""
+
+
 func _rebuild() -> void:
 	_pending = false
+	var lit := light_colour()
 	for c in get_children():
 		if c.has_meta(&"gn_generated"):
 			remove_child(c)
@@ -126,9 +143,9 @@ func _rebuild() -> void:
 	_ies_lumens = 0.0
 	var lens_mat := StandardMaterial3D.new()
 	lens_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	lens_mat.albedo_color = colour.lightened(0.3)
+	lens_mat.albedo_color = lit.lightened(0.3)
 	lens_mat.emission_enabled = true
-	lens_mat.emission = colour
+	lens_mat.emission = lit
 	lens_mat.emission_energy_multiplier = 4.0
 
 	# The head: pans about Y, tilts about its own X. The light points down
@@ -177,13 +194,13 @@ func _rebuild() -> void:
 			light.spot_range = sqrt(profile.lumens) * 0.5
 			_ies_lumens = profile.lumens
 	light.visible = dimmer > 0.001
-	lens_mat.albedo_color = colour.lightened(0.3) * lerpf(0.15, 1.0, dimmer)
+	lens_mat.albedo_color = lit.lightened(0.3) * lerpf(0.15, 1.0, dimmer)
 	lens_mat.emission_energy_multiplier = 4.0 * dimmer
 	_light = light
 	_lens_mat = lens_mat
 	_yoke = yoke
 	_head = head
-	light.light_color = colour
+	light.light_color = lit
 	light.shadow_enabled = casts_shadows
 	# Godot's volumetric fog needs a strong push to show a narrow beam: 30
 	# was the value where an 8-degree beam read clearly in tests.

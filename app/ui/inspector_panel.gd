@@ -13,6 +13,8 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnIcons := preload("res://addons/genesis/ui/gn_icons.gd")
 const GnUi := preload("res://addons/genesis/ui/gn_ui.gd")
 const NodeKinds := preload("res://app/ui/node_kinds.gd")
+const GnLightUnits := preload("res://addons/genesis/core/gn_light_units.gd")
+const GnPathField := preload("res://addons/genesis/ui/gn_path_field.gd")
 
 ## Built-in properties shown per kind of node, in this order.
 const SECTIONS := [
@@ -40,6 +42,8 @@ const SCRIPT_LABELS := {
 	"shape": ["Shape", ""], "size": ["Size (m)", "Width and height of the panel (a disc uses the width)"],
 	"colour": ["Colour", ""], "kelvin": ["Colour temp (K)", "Colour temperature in kelvin; 0 uses the colour above"],
 	"lumens": ["Output (lumens)", "A 60 × 60 cm office panel is about 3,600"],
+	"gn_light_fixture:kelvin": ["Colour temp (K)", "2700 is a warm lamp, 4000 neutral white, 6500 daylight; 0 uses the colour above"],
+	"gn_light_fixture:lumens": ["Output (lumens)", "A domestic downlight is about 700, a moving-head beam 17,000"],
 	"dimmer": ["Dimmer", "0 is out, 1 is full: what a show's cues fade"],
 	"two_sided": ["Both faces lit", "Light both ways, as a hanging panel lit on both faces"], "show_panel": ["Show the panel", ""],
 	"casts_shadows": ["Casts shadows", ""], "reach": ["Reach (m)", "How far the light carries"],
@@ -204,6 +208,8 @@ func inspect(node: Node, count := 1) -> void:
 			_section(s[1])
 			for p in s[2]:
 				_property(p)
+			if s[0] == "Light3D" and not node is DirectionalLight3D:
+				_light_units()
 	if node.get_script():
 		_script_properties()
 	_about()
@@ -374,6 +380,8 @@ func _editor_for(info: Dictionary, label: String) -> void:
 		TYPE_STRING, TYPE_STRING_NAME:
 			if hint == PROPERTY_HINT_ENUM:
 				_enum(prop, label, hint_string, true)
+			elif hint in [PROPERTY_HINT_FILE, PROPERTY_HINT_GLOBAL_FILE]:
+				_file(prop, label, hint_string)
 			else:
 				_text(prop, label, hint == PROPERTY_HINT_MULTILINE_TEXT)
 		TYPE_COLOR:
@@ -451,6 +459,60 @@ func _text(prop: String, label: String, multiline: bool) -> void:
 	_editors[prop] = func(): if not le.has_focus(): le.text = str(target.get(prop))
 	_editors[prop].call()
 	_row(label, le)
+
+
+## A file: typed, picked with Browse…, or dropped on the window.
+func _file(prop: String, label: String, patterns: String) -> void:
+	var field := GnPathField.new()
+	field.purpose = prop
+	field.title = label
+	if patterns != "":
+		field.filters = PackedStringArray([", ".join(Array(patterns.split(",")).map(func(e): return str(e).strip_edges()))])
+	field.path_changed.connect(func(p): _apply(prop, p))
+	_editors[prop] = func(): field.path = str(target.get(prop))
+	_editors[prop].call()
+	# Under its label: a path needs the panel's whole width.
+	var l := Label.new()
+	l.text = label
+	l.theme_type_variation = &"NoteLabel"
+	var holder: Control = _current if _current else _box
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	col.add_child(l)
+	col.add_child(field)
+	holder.add_child(col)
+
+
+## A plain light in a lighting designer's units: lumens for how much (the
+## same scale the set's fixtures use) and kelvin for how warm.
+func _light_units() -> void:
+	var lm := SpinBox.new()
+	lm.min_value = 0.0
+	lm.max_value = 200000.0
+	lm.step = 10.0
+	lm.allow_greater = true
+	lm.value_changed.connect(func(v):
+		if not _building and is_instance_valid(target):
+			GnScene.set_props("Change output of %s" % target.name, [[target, "light_energy", GnLightUnits.energy_for(v)]]))
+	_editors["gn_lumens"] = func(): lm.set_value_no_signal(roundf(GnLightUnits.lumens_of(target)))
+	_editors["gn_lumens"].call()
+	_row("Output (lumens)", lm)
+	_tip(lm.get_parent(), "The same light as Brightness, in lumens: a domestic lamp is about 800, an office panel 3,600")
+	var k := SpinBox.new()
+	k.min_value = 0.0
+	k.max_value = 12000.0
+	k.step = 100.0
+	k.value_changed.connect(func(v):
+		if _building or not is_instance_valid(target):
+			return
+		var changes: Array = [[target, "metadata/" + GnLightUnits.KELVIN_META, v if v > 0.0 else null]]
+		if v > 0.0:
+			changes.append([target, "light_color", GnLightUnits.kelvin_colour(v)])
+		GnScene.set_props("Change colour temperature of %s" % target.name, changes))
+	_editors["gn_kelvin"] = func(): k.set_value_no_signal(GnLightUnits.kelvin_of(target))
+	_editors["gn_kelvin"].call()
+	_row("Colour temp (K)", k)
+	_tip(k.get_parent(), "2700 is a warm lamp, 4000 neutral white, 6500 daylight; 0 keeps the colour above")
 
 
 func _colour(prop: String, label: String) -> void:

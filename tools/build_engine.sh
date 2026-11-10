@@ -12,6 +12,8 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-$HERE/build/engine}"
 PY_VERSION=3.13          # the Python bpy 5.2 is built for
 BPY_VERSION=5.2.3        # Blender 5.2 LTS
+ASSIMP_PY_VERSION=1.2.0  # Assimp's readers (BSD-3-Clause), Python bindings (MIT)
+IFCOPENSHELL_VERSION=0.9.0.post1   # IFC reader and geometry (LGPL-3.0-or-later)
 uv python install "$PY_VERSION" >/dev/null
 PBS="$(ls -d "$(uv python dir)"/cpython-"$PY_VERSION".*-linux-x86_64-gnu | sort -V | tail -1)"
 echo "Python: $PBS"
@@ -20,6 +22,11 @@ mkdir -p "$OUT"
 cp -a "$PBS" "$OUT/python"
 PY="$OUT/python/bin/python3"
 uv pip install --quiet --python "$PY" --break-system-packages "bpy==$BPY_VERSION"
+# Readers for the model formats Blender does not read itself: Assimp (Collada,
+# 3DS and others) and IfcOpenShell (IFC). Only their own packages: reading
+# needs nothing else that is not already here.
+uv pip install --quiet --python "$PY" --break-system-packages --no-deps \
+	"assimp-py==$ASSIMP_PY_VERSION" "ifcopenshell==$IFCOPENSHELL_VERSION"
 # Not needed to render: Python's tests, its IDE and Tk, headers, the static
 # library, bpy's build-time Cython, and compiled caches.
 LIB="$OUT/python/lib/python$PY_VERSION"
@@ -33,8 +40,9 @@ find "$OUT" -name __pycache__ -type d -prune -exec rm -rf {} +
 mkdir -p "$OUT/LICENSES"
 cp /usr/share/common-licenses/GPL-3 "$OUT/LICENSES/Blender-GPL-3.0.txt"
 cp "$LIB/LICENSE.txt" "$OUT/LICENSES/Python-PSF-2.0.txt"
+cp /usr/share/common-licenses/LGPL-3 "$OUT/LICENSES/IfcOpenShell-LGPL-3.0.txt"
 for d in "$LIB"/site-packages/*.dist-info; do
-	for f in "$d"/licenses/* "$d"/LICENSE*; do
+	for f in "$d"/licenses/* "$d"/licenses/*/* "$d"/LICENSE*; do
 		[ -f "$f" ] && cp "$f" "$OUT/LICENSES/$(basename "$d" .dist-info)-$(basename "$f").txt"
 	done
 done
@@ -51,10 +59,22 @@ python/lib/python$PY_VERSION/site-packages/bpy/
                              https://projects.blender.org/blender/blender (tag v$BPY_VERSION)
                            and the libraries it uses, with their licences, are listed at
                              https://projects.blender.org/blender/blender/src/tag/v$BPY_VERSION/release/license
+python/lib/python$PY_VERSION/site-packages/ifcopenshell/
+                           IfcOpenShell $IFCOPENSHELL_VERSION (from PyPI, unmodified), which reads IFC building
+                           models: GNU LGPL version 3 or later (IfcOpenShell-LGPL-3.0.txt, with
+                           Blender-GPL-3.0.txt, which the LGPL adds to). It carries Open CASCADE
+                           Technology (LGPL-2.1 with an exception), CGAL (GPL/LGPL), Boost and others.
+                           Source: https://github.com/IfcOpenShell/IfcOpenShell (tag v${IFCOPENSHELL_VERSION%.post*})
+python/lib/python$PY_VERSION/site-packages/assimp_py/
+                           assimp-py $ASSIMP_PY_VERSION (MIT) with the Open Asset Import Library, Assimp
+                           (BSD-3-Clause), which reads Collada, 3DS and other model formats.
+                           Source: https://github.com/ranjian0/assimp_py and https://github.com/assimp/assimp
 python/lib/python$PY_VERSION/site-packages/*
                            the Python packages bpy needs, each with its licence here.
 
 Oriel runs these as a separate program; Oriel's own code is under the MIT licence.
 TXT
 "$PY" -I -c "import bpy, sys; print('Engine ready: Blender', bpy.app.version_string, 'on Python', sys.version.split()[0])"
+"$PY" -I -c "import assimp_py, ifcopenshell; print('Model readers: Assimp (assimp-py), IfcOpenShell', ifcopenshell.version)" 2>&1 | grep -v "No stream support"
+find "$OUT" -name __pycache__ -type d -prune -exec rm -rf {} +
 du -sh "$OUT"

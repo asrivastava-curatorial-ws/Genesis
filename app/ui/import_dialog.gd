@@ -25,7 +25,9 @@ func _init() -> void:
 	col.add_theme_constant_override("separation", 8)
 	add_child(col)
 	var l := Label.new()
-	l.text = "Model file (.glb, .gltf, .fbx, .obj or .blend); you can also drop it here"
+	l.text = "Model file (%s); you can also drop it here" % GnModelImport.EXTENSIONS_TEXT
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size.x = 500
 	col.add_child(l)
 	_file = GnPathField.new()
 	_file.purpose = "model"
@@ -52,7 +54,7 @@ func _init() -> void:
 	_up.add_item("Z (SketchUp, Revit, Rhino, AutoCAD)")
 	grid.add_child(_up)
 	var note := Label.new()
-	note.text = "Re-exports of the same file come in by themselves, with the same settings."
+	note.text = "IFC, USD, Collada and .blend files say their own unit and which way is up: leave these as they are. Re-exports of the same file come in by themselves, with the same settings."
 	note.theme_type_variation = &"SmallLabel"
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	# Measured at this width, not a word to a line (which makes the dialog

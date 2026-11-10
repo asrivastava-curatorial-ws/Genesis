@@ -16,13 +16,25 @@ extends RefCounted
 #   .obj           read here: geometry, normals, texture coordinates, groups,
 #                  and the colours and colour maps of its .mtl
 #   .blend         Blender, run in the background, writes a .glb first
+#   .usd .usda .usdc .usdz, .abc, .ply, .stl
+#                  the built-in Blender engine reads them and writes a .glb
+#   .ifc           buildings from Revit, Archicad, Allplan...: the built-in
+#                  engine with IfcOpenShell; every element its own object,
+#                  under its storey, in the model's colours
+#   .dae .3ds and the other formats Assimp reads: the built-in engine with Assimp
 #
 # Options: a uniform scale (centimetre models are common) and which way is up.
 
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
-const EXTENSIONS := ["glb", "gltf", "fbx", "obj", "blend"]
+const EXTENSIONS := ["glb", "gltf", "fbx", "obj", "blend", "ifc", "usd", "usda", "usdc", "usdz", "dae", "3ds",
+	"stl", "ply", "abc", "3mf", "lwo", "ase", "x", "off", "ac", "ms3d"]
+## Read by the built-in engine (oriel_convert.py), which writes a .glb.
+const ENGINE_EXTENSIONS := ["ifc", "usd", "usda", "usdc", "usdz", "dae", "3ds", "stl", "ply", "abc", "3mf", "lwo",
+	"ase", "x", "off", "ac", "ms3d"]
+## The formats for a message, the common ones first.
+const EXTENSIONS_TEXT := "GLB, glTF, FBX, OBJ, IFC, USD, Collada (DAE), 3DS, STL, PLY, Alembic or .blend"
 const OPTIONS_META := &"gn_import_options"
 const DEFAULT_OPTIONS := {"scale": 1.0, "up": "y", "name": ""}
 
@@ -34,7 +46,7 @@ static func convert_file(source: String, dest_dir: String, options := {}) -> Dic
 	opts.merge(options, true)
 	var ext := source.get_extension().to_lower()
 	if not ext in EXTENSIONS:
-		return _fail("Oriel can bring in %s files." % ", ".join(EXTENSIONS))
+		return _fail("Oriel can bring in %s files." % EXTENSIONS_TEXT)
 	if not FileAccess.file_exists(source):
 		return _fail("%s does not exist." % source)
 	var root: Node3D
@@ -62,9 +74,25 @@ static func convert_file(source: String, dest_dir: String, options := {}) -> Dic
 			root = r.node
 			err = r.error
 			DirAccess.remove_absolute(glb.path)
+		_:
+			# Everything else goes through the built-in engine. STL and PLY
+			# are stood up there (they do not say which way is up).
+			var glb := engine_to_glb(source, str(opts.up))
+			if glb.error != "":
+				return _fail(glb.error)
+			var r := _read_gltf(glb.path, GLTFDocument.new(), GLTFState.new())
+			root = r.node
+			err = r.error
+			DirAccess.remove_absolute(glb.path)
 	if err != "" or root == null:
 		return _fail(err if err != "" else "%s could not be read." % source.get_file())
-	_apply_options(root, opts)
+	# A file that says which way is up (IFC, USD, Collada, a .blend) or was
+	# stood up by the engine (STL, PLY) is not turned again.
+	var turned := opts.duplicate()
+	if ext in ENGINE_EXTENSIONS or ext == "blend":
+		turned["up"] = "y"
+	_apply_options(root, turned)
+	root.set_meta(OPTIONS_META, opts)
 	var base: String = str(opts.name) if str(opts.name) != "" else source.get_file().get_basename()
 	root.name = base.validate_node_name().to_pascal_case() if base.validate_node_name() != "" else "Model"
 	_pack_textures(root)
@@ -217,6 +245,48 @@ static func blend_to_glb(source: String) -> Dictionary:
 	if c != 0 or not FileAccess.file_exists(out):
 		return _fail("The built-in Blender engine could not read %s (exit %d). %s" % [source.get_file(), c, "\n".join(heard).right(400)])
 	return {"path": out, "error": ""}
+
+
+## Writes `source` as a .glb with the built-in engine: USD, Alembic, PLY and
+## STL through Blender's readers, IFC through IfcOpenShell, Collada, 3DS and
+## others through Assimp. `up` ("y" or "z") is for files that do not say.
+## Returns {"path": the .glb, "error": ""}.
+static func engine_to_glb(source: String, up := "y") -> Dictionary:
+	var GnBlender = load("res://addons/genesis/core/gn_blender.gd")
+	var eng: Dictionary = GnBlender.engine()
+	var ext := source.get_extension().to_lower()
+	if eng.kind == "":
+		return _fail("%s files are read by Oriel's built-in Blender engine, which was not found. Reinstall Oriel, or export the model as GLB." % ext.to_upper())
+	var blender_reads := ext in ["usd", "usda", "usdc", "usdz", "abc", "ply", "stl"]
+	if eng.kind != "module" and not blender_reads:
+		return _fail("%s files need Oriel's built-in engine (this copy of Oriel is using a Blender on the computer instead). Export the model as GLB, FBX or USD." % ext.to_upper())
+	var dir := GnPaths.cache_dir("blend")
+	var stem := "%s_%d" % [source.get_file().get_basename().validate_filename(), Time.get_ticks_msec()]
+	var out := dir.path_join(stem + ".glb")
+	var script := dir.path_join(stem + "_convert.py")
+	var params := dir.path_join(stem + "_params.json")
+	var result := dir.path_join(stem + "_result.json")
+	var sf := FileAccess.open(script, FileAccess.WRITE)
+	var pf := FileAccess.open(params, FileAccess.WRITE)
+	if sf == null or pf == null:
+		return _fail("Could not write to %s." % dir)
+	sf.store_string(FileAccess.get_file_as_string(GnBlender.CONVERT))
+	sf.close()
+	pf.store_string(JSON.stringify({"mode": "model", "input": source, "output": out, "up": up, "result": result}))
+	pf.close()
+	var heard := []
+	var args: Array = ["-I", script, "--", params] if eng.kind == "module" \
+		else ["-b", "--factory-startup", "--python", script, "--", params]
+	var code := GnPaths.run(str(eng.path), args, heard, true)
+	var res: Variant = JSON.parse_string(FileAccess.get_file_as_string(result)) if FileAccess.file_exists(result) else null
+	for f in [script, params, result]:
+		DirAccess.remove_absolute(f)
+	if res is Dictionary and str(res.get("error", "")) == "" and FileAccess.file_exists(out):
+		return {"path": out, "error": "", "info": res}
+	var why := str((res as Dictionary).get("error", "")) if res is Dictionary else ""
+	if why == "":
+		why = "\n".join(heard).strip_edges().right(300)
+	return _fail("%s could not be read (%s)." % [source.get_file(), why if why != "" else "exit %d" % code])
 
 
 # --------------------------------------------------------------------- OBJ

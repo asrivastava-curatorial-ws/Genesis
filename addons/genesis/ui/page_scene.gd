@@ -158,8 +158,9 @@ func _pick_building() -> void:
 		return
 	if _dialog == null:
 		_dialog = GnHost.make_file_dialog("Bring in a building")
-		for ext in GnImport.EXTENSIONS:
-			_dialog.add_filter("*.%s" % ext)
+		# One entry for every kind of model, so none is hidden behind a list.
+		var kinds: Array = GnImport.EXTENSIONS if GnHost.supports("editor_import") else GnModelImport.EXTENSIONS
+		_dialog.add_filter(", ".join(kinds.map(func(e): return "*." + e)), "Models")
 		_dialog.file_selected.connect(_import)
 		add_child(_dialog)
 	GnUi.pick(_dialog)

@@ -25,6 +25,8 @@ const GnStaging := preload("res://addons/genesis/core/gn_staging.gd")
 const CLOUD_SKY := preload("res://addons/genesis/core/gn_cloud_sky.gdshader")
 const WATER := preload("res://addons/genesis/set/gn_water.gdshader")
 const AreaLight := preload("res://addons/genesis/set/gn_area_light.gd")
+const LightFixture := preload("res://addons/genesis/set/gn_light_fixture.gd")
+const GnIes := preload("res://addons/genesis/core/gn_ies.gd")
 const Terrain := preload("res://addons/genesis/set/gn_terrain.gd")
 
 const TONEMAPS := ["linear", "reinhard", "filmic", "aces", "agx"]
@@ -517,6 +519,7 @@ static func _light(ctx: Ctx, l: Light3D) -> void:
 		spec["spot_angle"] = s.spot_angle
 		spec["spot_blend"] = clampf(s.spot_angle_attenuation * 0.5, 0.05, 1.0)
 		spec["d_ref"] = _reach(ctx, l.global_position, -l.global_transform.basis.z, s.spot_range)
+		_ies(l, spec)
 	elif l is OmniLight3D:
 		var o := l as OmniLight3D
 		spec["type"] = "point"
@@ -526,6 +529,26 @@ static func _light(ctx: Ctx, l: Light3D) -> void:
 	else:
 		return
 	ctx.lights.append(spec)
+
+
+## A fixture with a manufacturer's IES file: Cycles shapes the beam from the
+## file itself; Eevee, which cannot, gets a cone that falls off between the
+## angles where the beam is at half and at a twentieth of its peak.
+static func _ies(l: Light3D, spec: Dictionary) -> void:
+	var n: Node = l.get_parent()
+	while n != null and n.get_script() != LightFixture:
+		n = n.get_parent()
+	if n == null:
+		return
+	var file := str(n.call("ies_in_use"))
+	if file == "" or not FileAccess.file_exists(file):
+		return
+	var profile := GnIes.load_file(file)
+	if profile == null or profile.peak <= 0.0:
+		return
+	var edge := clampf(profile.cutoff(), 2.0, 89.0)
+	var half := clampf(profile.cutoff(0.5), 1.0, edge)
+	spec["ies"] = {"file": ProjectSettings.globalize_path(file), "peak": profile.peak, "edge": edge, "half": half}
 
 
 ## How far a light mostly reaches: to the first surface along its beam (or

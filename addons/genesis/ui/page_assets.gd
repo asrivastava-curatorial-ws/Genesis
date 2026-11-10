@@ -316,8 +316,7 @@ func _toggle_line() -> void:
 func _add_own() -> void:
 	if _own_dialog == null:
 		_own_dialog = GnHost.make_file_dialog("Add a model to your library")
-		for ext in GnModelImport.EXTENSIONS:
-			_own_dialog.add_filter("*.%s" % ext)
+		_own_dialog.add_filter(", ".join(GnModelImport.EXTENSIONS.map(func(e): return "*." + e)), "Models")
 		_own_dialog.file_selected.connect(_ask_details)
 		add_child(_own_dialog)
 	GnUi.pick(_own_dialog)
