@@ -1,30 +1,54 @@
 # Lab results (1.0.0-rc5)
 
-Each check builds a scene with the program's own tools (the same calls the pages make), renders it with the renderers named, and measures the pictures. They are in `tests/dev/lab.gd` and run from the source with:
+Each check builds a scene with the program's own tools (the same calls the pages make), renders it with the renderers named, and measures the pictures. They are in `tests/dev/lab.gd`:
 
 ```bash
-godot --path . -- --script tests/dev/lab.gd <check> <out folder> [godot] [eevee] [cycles]
+godot --path . -- --script tests/dev/lab.gd <check> <out folder> [godot] [eevee] [cycles]        # from the source
+./Oriel-1.0.0-rc5-x86_64.AppImage -- --script /path/to/tests/dev/lab.gd <check> <out folder> [...]   # from the AppImage, with its own engines
+bash tests/dev/lab_all.sh                                                                             # all of them, one after another
 ```
 
-Run on the build machine (two processor cores, software rendering, no graphics card; Eevee on Mesa's llvmpipe, Cycles on the processor), against the source of this release, with the built-in engines (Blender 5.2.3 LTS).
+Run on the build machine (two processor cores, software rendering, no graphics card: the real-time renderer on Mesa's lavapipe, Eevee on Mesa's llvmpipe, Cycles on the processor) with the built-in engines (Blender 5.2.3 LTS): against the source as the work went on, then all of them again **from the rc5 AppImage itself**.
 
-| Check | Renderers | Result |
-|---|---|---|
-| IES beams | real-time, eevee, cycles | Passed: 13 checks passed |
-| Passes and the light mixer | cycles | Passed: 22 checks passed |
-| Stage haze | real-time, eevee, cycles | Passed: 4 checks passed |
-| Wet surfaces, puddles and snow | real-time, eevee, cycles | Passed: 12 checks passed |
-| Wind | real-time | Passed: 5 checks passed |
-| Relief and light inside | real-time, eevee, cycles | Passed: 12 checks passed |
-| Solid glass and caustics | cycles | Passed: 3 checks passed |
-| Volumetric clouds | real-time, eevee, cycles | Passed: 12 checks passed |
-| Walking through, on the screen | real-time | Passed: 11 checks passed |
-| Walking through, on a headset | real-time | Passed: 11 checks passed |
-| Keys, the timeline and the edit | real-time | Passed: 10 checks passed |
-| Layered materials | real-time, cycles | Passed: 6 checks passed |
-| A spread and traffic | real-time, cycles | Passed: 6 checks passed |
-| Cycles in the 3D view | cycles | Passed: 8 checks passed |
-| A large scene | real-time, eevee, cycles | Passed: 17 checks passed |
+After the last change to the program, which made plants that sway share their shaders, the checks it touches (wind, the street, both walk-throughs), the large scene and the model formats were run again from the source, and all sixteen from the AppImage built after it. Every check ran inside a memory limit of 6,000 MiB, so that one that ran away would be stopped rather than the build machine (8 GB), except the large scene, which ran inside 7,000 MiB: its Eevee render draws five million triangles in software, and the engine held 4,241 MiB beside the program's own 1,985 MiB. Inside 6,000 MiB that render got through in two runs and was stopped for want of memory in a third.
+
+| Check | Renderers | From the source | From the AppImage |
+|---|---|---|---|
+| Model formats | none: the import is what is checked | Passed: 8 checks | Passed: 8 checks |
+| IES beams | real-time, Eevee, Cycles | Passed: 13 checks | Passed: 13 checks |
+| Passes and the light mixer | Cycles | Passed: 22 checks | Passed: 22 checks |
+| Stage haze | real-time, Eevee, Cycles | Passed: 4 checks | Passed: 4 checks |
+| Wet surfaces, puddles and snow | real-time, Eevee, Cycles | Passed: 12 checks | Passed: 12 checks |
+| Wind | real-time | Passed: 5 checks | Passed: 5 checks |
+| Relief and light inside | real-time, Eevee, Cycles | Passed: 12 checks | Passed: 12 checks |
+| Solid glass and caustics | Cycles | Passed: 3 checks | Passed: 3 checks |
+| Volumetric clouds | real-time, Eevee, Cycles | Passed: 12 checks | Passed: 12 checks |
+| Walking through, on the screen | real-time | Passed: 11 checks | Passed: 11 checks |
+| Walking through, on a headset | real-time | Passed: 11 checks | Passed: 11 checks |
+| Keys, the timeline and the edit | real-time | Passed: 10 checks | Passed: 10 checks |
+| Layered materials | real-time, Cycles | Passed: 6 checks | Passed: 6 checks |
+| A spread and traffic | real-time, Cycles | Passed: 6 checks | Passed: 6 checks |
+| Cycles in the 3D view | Cycles | Passed: 8 checks | Passed: 8 checks |
+| A large scene | real-time, Eevee, Cycles | Passed: 18 checks | Passed: 18 checks |
+
+16 of 16 pass from the source; 16 of 16 from the AppImage.
+
+The measurements below are the run from the source. "ok" lines are checks; the others are what was measured.
+
+## Model formats
+
+The formats the built-in engine reads: a bench 2 m wide, 0.4 m high and 0.6 m deep in USD, Alembic, Collada, 3DS, STL and PLY, and a wall 4 m long in IFC, each brought in and measured.
+
+```
+ok   formats: the built-in engine is here (Built-in engines (Blender 5.2.3 LTS))
+ok   formats: USDC comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 1.6 s 
+ok   formats: ABC comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 1.9 s 
+ok   formats: DAE comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 1.2 s 
+ok   formats: 3DS comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 1.3 s 
+ok   formats: STL comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 1.3 s 
+ok   formats: PLY comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 1.4 s 
+ok   formats: IFC comes in 4.0 m wide, 3.2 m high, 3.0 m deep (4.00, 3.20, 3.00) in 1.5 s 
+```
 
 ## IES beams
 
@@ -229,10 +253,10 @@ The architecture demo started as the walk-through is (`--walk`): the project sho
 ```
 ok   walk: the program opened the project as a walkthrough
 ok   walk: without the workspace
-ok   walk: it says it is running ({ "message": "", "pid": 24702.0, "state": "running", "vr": false })
+ok   walk: it says it is running ({ "message": "", "pid": 7499.0, "state": "running", "vr": false })
 ok   walk: the scene is on show from the first camera
 ok   walk: standing where the first saved camera is
-ok   walk: W walks forwards at walking pace (0.22 m in 0.14 s of the program's clock)
+ok   walk: W walks forwards at walking pace (0.24 m in 0.15 s of the program's clock)
 ok   walk: E turns thirty degrees to the right
 ok   walk: T shows where pointing lands
 ok   walk: letting go jumps there (2.6 m)
@@ -247,13 +271,13 @@ The same with `--xr-mode on` and `--vr`, through OpenXR, on Monado's stand-in he
 ```
 ok   walk: the program opened the project as a walkthrough
 ok   walk: without the workspace
-ok   walk: it says it is running ({ "message": "", "pid": 27028.0, "state": "running", "vr": true })
+ok   walk: it says it is running ({ "message": "", "pid": 7631.0, "state": "running", "vr": true })
 walk: headset in use; 
 ok   walk: asked for a headset, it is on one, or says why not and carries on
 ok   headset: OpenXR is running and the view goes to the headset
 ok   headset: both hands have their controller
-headset: the head is 1.65 m up in its room, at (0.02771, 1.648909, 0.0)
-ok   headset: the head's height is the wearer's own (1.65 m)
+headset: the head is 1.55 m up in its room, at (0.005695, 1.553743, 0.0)
+ok   headset: the head's height is the wearer's own (1.55 m)
 ok   headset: going to a saved camera puts the wearer's head where it is
 ok   headset: the stick walks the wearer through the scene (1.6 m)
 ok   headset: there is a picture on its way to the headset
@@ -269,7 +293,7 @@ ok   timeline: View > Timeline opens it under the 3D view
 ok   timeline: Key the selection at two moments makes a track with two keys
 ok   timeline: moving through the film moves the box (at 1 s it is at 0.00)
 ok   timeline: the film, the titles and the box each have a row (["Film", "Titles", "Runner  place"])
-film: rendered in 179.2 s -> /tmp/claude-0/-home-claude/294e9e57-28d4-5121-a481-cb185f2feb74/scratchpad/lab/film/Film check/renders/lab_film.mp4
+film: rendered in 179.2 s -> lab/film/Film check/renders/lab_film.mp4
 ok   film: four seconds at ten frames a second is forty frames (40)
 ok   film: the box is further right at 1.4 s than at the start (0.30, 0.61 of the picture's width)
 ok   film: the title is on the picture during its time (1584 white pixels, 0 before it)
@@ -304,8 +328,8 @@ ok   street: the path tool draws a spread
 ok   street: and traffic
 street: 26 trees, 16 vehicles
 ok   street: thirteen trees a side and sixteen vehicles
-rendered street with godot in 65.7 s
-rendered street with cycles in 51.4 s
+rendered street with godot in 60.5 s
+rendered street with cycles in 53.1 s
 ok   street godot: the avenue's trees stand against the sky (27% of the upper picture is green)
 ok   street cycles: the avenue's trees stand against the sky (27% of the upper picture is green)
 ok   street: a second later the traffic is further on, the trees where they were (0.0552 on the road, 0.0000 above)
@@ -333,23 +357,224 @@ Fourteen heavy models, each its own file, and twenty more of the first: thirty-f
 ```
 big: fourteen stones written and brought in, 5.1 s
 ok   big: every heavy model brought in has lighter versions of itself (14 of 14)
-ok   big: the scene is counted: 5.0 million triangles in 36 objects (16 different shapes), 1 light, 16 materials, about 3 MB of pictures. The 3D view is drawing 4664 of the triangles in 18 batches, 2 times a second. Heaviest: Twin 2 (148 thousand), Twin 3 
+ok   big: the scene is counted: 5.0 million triangles in 36 objects (16 different shapes), 1 light, 16 materials, about 3 MB of pictures. The 3D view is drawing 4664 of the triangles in 18 batches, once a second or less. Heaviest: Twin 2 (148 thousand), Tw
 ok   big: close to a stone the view draws 90740 triangles; from 700 m, all thirty-four in 3800 (of 5039630)
 ok   big: all thirty-four are marked to be shown as boxes
 ok   big: as boxes the view draws 824 triangles (21808 in full)
-rendered big with godot in 49.8 s
-rendered big with eevee in 66.8 s
-rendered big with cycles in 58.3 s
+rendered big with godot in 50.7 s
+rendered big with eevee in 65.1 s
+rendered big with cycles in 48.8 s
 ok   big godot: the render shows the stones in full, as before they were boxes (the pictures differ by 0.0000)
 ok   big eevee: all the stones are in the picture, the twenty copies where they stand (8% of it is stone, 8% in the editor's; 99% of that in the same places)
 ok   big cycles: all the stones are in the picture, the twenty copies where they stand (8% of it is stone, 8% in the editor's; 97% of that in the same places)
 ok   big: the scene for Eevee and Cycles holds each shape once: 16 shapes in the file (16 MB), 20 copies named
 ok   big: the project is saved; its scene is made of 15 files and is itself 24 KB (the stones are in their own files, once)
 ok   big: it opens the plain way in 0.6 s, the window still meanwhile
-ok   big: opened from the program, its 15 files are read in the background (1.0 s, the window drawn 22 times meanwhile)
-ok   big: and the scene is then put together from what was read: 0.25 s with the window still, 0.57 s the plain way (1.3 s in all)
+ok   big: opened from the program, its 14 files (33 MB) are read in the background, one after another (1.4 s, the window drawn 41 times meanwhile)
+ok   big: and the scene is then put together from what was read: 0.22 s with the window still, 0.62 s the plain way (1.7 s in all)
+ok   big: closed and opened four times more, read in the background each time (4 of 4)
 ok   big: the scene is as it was saved: thirty-four stones, shown as boxes (34, 20 of them the copies)
 ok   big: each with its shape and its lighter versions, from its own file (34 of 34)
 ok   big: and the view draws 824 triangles of it
 ok   big: shown in full again
+```
+
+## From the AppImage
+
+The same checks, started from `Oriel-1.0.0-rc5-x86_64.AppImage` (mounted with FUSE, as on a desktop), on an empty profile, with the engines inside it.
+
+```
+== Model formats: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   formats: the built-in engine is here (Built-in engines (Blender 5.2.3 LTS))
+   ok   formats: USDC comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 3.6 s 
+   ok   formats: ABC comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 3.5 s 
+   ok   formats: DAE comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 3.6 s 
+   ok   formats: 3DS comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 4.0 s 
+   ok   formats: STL comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 3.5 s 
+   ok   formats: PLY comes in 2.0 m wide, 0.4 m high, 0.6 m deep (2.00, 0.40, 0.60) in 3.5 s 
+   ok   formats: IFC comes in 4.0 m wide, 3.2 m high, 3.0 m deep (4.00, 3.20, 3.00) in 3.8 s 
+== IES beams: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   ies: the fixture took its beam from the file
+   ok   ies godot: the floor under the light is lit (+0.075)
+   ok   ies godot: the beam falls off as the file says (29 % of the centre at 15 degrees)
+   ok   ies godot: no light past the beam's edge (+0.000 at 39 degrees)
+   ok   ies godot: 3000 K warms the blue night (393247 against 182342)
+   ok   ies eevee: the floor under the light is lit (+0.062)
+   ok   ies eevee: the beam falls off as the file says (75 % of the centre at 15 degrees)
+   ok   ies eevee: no light past the beam's edge (+-0.000 at 39 degrees)
+   ok   ies eevee: 3000 K warms the blue night (342e42 against 17213d)
+   ok   ies cycles: the floor under the light is lit (+0.080)
+   ok   ies cycles: the beam falls off as the file says (54 % of the centre at 15 degrees)
+   ok   ies cycles: no light past the beam's edge (+-0.000 at 39 degrees)
+   ok   ies cycles: 3000 K warms the blue night (3a3143 against 16203c)
+== Passes and the light mixer: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   mix: the render for the mixer is made (done )
+   ok   passes: depth is written
+   ok   passes: normal is written
+   ok   passes: id is written
+   ok   passes: mask is written
+   ok   passes: clay is written
+   ok   passes: ao is written
+   ok   passes: diffuse is written
+   ok   passes: reflection is written
+   ok   passes: emission is written
+   ok   passes: albedo is written
+   ok   passes: one EXR file holds every pass, with Cryptomatte
+   ok   mix: the camera has a mix
+   ok   mix: the two lamps, the sky and the glowing sign are each a group
+   ok   mix: a mix is made () in 1027 ms
+   ok   mix: with every slider at 100 % the mix is the render (0.570 / 0.774 against 0.570 / 0.774)
+   ok   mix: turning the warm lamp off darkens the floor under it
+   ok   mix: doubling the cool lamp brightens the floor under it
+   ok   mix: a red tint on the cool lamp makes its pool of light red (c72b4b)
+   ok   mix: the full-size mix is saved (Main_Room_20261110_204730_cycles_mix.png)
+   ok   mix: put on the lights, the cool lamp is 6,000 lm and the warm one is out (2 changed, 6000, 1)
+   ok   mix: and that is one undo step
+== Stage haze: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   haze godot: the beam shows in the air (+0.246)
+   ok   haze eevee: the beam shows in the air (+0.636)
+   ok   haze cycles: the beam shows in the air (+0.643)
+   ok   haze: Cycles' beam is as bright as Eevee's (101 %)
+== Wet surfaces, puddles and snow: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   weather godot: wet paving is darker than dry (0.597 against 0.760)
+   ok   weather godot: puddles break up the wet paving (spread 0.0637 against 0.0040 dry)
+   ok   weather godot: snow lies white on the block, on top of the wet (0.920, e7eaf6)
+   ok   weather godot: the block's side is still brick red under the snow (ad413c)
+   ok   weather eevee: wet paving is darker than dry (0.565 against 0.736)
+   ok   weather eevee: puddles break up the wet paving (spread 0.0510 against 0.0016 dry)
+   ok   weather eevee: snow lies white on the block, on top of the wet (0.983, fafbff)
+   ok   weather eevee: the block's side is still brick red under the snow (a83d38)
+   ok   weather cycles: wet paving is darker than dry (0.562 against 0.728)
+   ok   weather cycles: puddles break up the wet paving (spread 0.0496 against 0.0017 dry)
+   ok   weather cycles: snow lies white on the block, on top of the wet (0.978, f9f9ff)
+   ok   weather cycles: the block's side is still brick red under the snow (c95c55)
+== Wind: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   wind: the library has trees to plant
+   ok   wind: the placed tree and the scatter were given their swaying twins (4 surfaces)
+   ok   wind: the trees are in different places at two moments (0.0014)
+   ok   wind: with no wind they hold still (0.0000)
+   ok   wind: the scene's own materials are as they were (nothing to save)
+== Relief and light inside: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   relief: the picture came with its height map ()
+   ok   relief: flat until asked for
+   ok   relief: 4 cm is asked for
+   ok   relief eevee: the face is shaded as if moved (differs by 0.0758)
+   ok   relief cycles: the surface itself moves (the top edge wanders 0.76 px, 0.00 flat)
+   ok   relief: one undo step takes it away
+   ok   relief eevee: a preset with only a normal map renders with relief
+   ok   relief cycles: a preset with only a normal map renders with relief
+   ok   light inside: the slab's material takes light in
+   ok   light inside godot: the wax slab renders (0.108, the plain one 0.109)
+   ok   light inside eevee: the lamp behind shows through the wax slab (0.948 against 0.093)
+   ok   light inside cycles: the lamp behind shows through the wax slab (0.894 against 0.099)
+== Solid glass and caustics: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   glass: the ball is solid glass
+   ok   caustics cycles: the ball gathers the lamp's light into a patch brighter than the lit floor (0.578 against 0.429; 0.452 without caustics)
+   ok   caustics cycles: the water throws patterns of light on the pool's floor (0.053 against 0.007)
+== Volumetric clouds: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   clouds: the sky is the volumetric one
+   ok   clouds: the sky is drawn all the way round (3.2 s)
+   ok   clouds godot: cloud and clear sky are both in the picture (122 blue, 165 cloud of 288)
+   ok   clouds godot: the clouds have light and shade (spread 0.062)
+   ok   clouds eevee: cloud and clear sky are both in the picture (121 blue, 167 cloud of 288)
+   ok   clouds eevee: the clouds have light and shade (spread 0.080)
+   ok   clouds cycles: cloud and clear sky are both in the picture (121 blue, 167 cloud of 288)
+   ok   clouds cycles: the clouds have light and shade (spread 0.080)
+   ok   clouds eevee: the same clouds as the 3D view, in the same places (correlation 0.99)
+   ok   clouds cycles: the same clouds as the 3D view, in the same places (correlation 0.99)
+   ok   clouds: a minute of wind moves them (the sky differs by 0.071)
+   ok   clouds: switched off, the painted sky is back
+== Walking through, on the screen: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   walk: the program opened the project as a walkthrough
+   ok   walk: without the workspace
+   ok   walk: it says it is running ({ "message": "", "pid": 24230.0, "state": "running", "vr": false })
+   ok   walk: the scene is on show from the first camera
+   ok   walk: standing where the first saved camera is
+   ok   walk: W walks forwards at walking pace (0.21 m in 0.13 s of the program's clock)
+   ok   walk: E turns thirty degrees to the right
+   ok   walk: T shows where pointing lands
+   ok   walk: letting go jumps there (2.6 m)
+   ok   walk: N goes to the next saved camera (Interior)
+   ok   walk: nothing in the project was changed
+== Walking through, on a headset: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   walk: the program opened the project as a walkthrough
+   ok   walk: without the workspace
+   ok   walk: it says it is running ({ "message": "", "pid": 24370.0, "state": "running", "vr": true })
+   ok   walk: asked for a headset, it is on one, or says why not and carries on
+   ok   headset: OpenXR is running and the view goes to the headset
+   ok   headset: both hands have their controller
+   ok   headset: the head's height is the wearer's own (1.56 m)
+   ok   headset: going to a saved camera puts the wearer's head where it is
+   ok   headset: the stick walks the wearer through the scene (1.6 m)
+   ok   headset: there is a picture on its way to the headset
+   ok   headset: nothing in the project was changed
+== Keys, the timeline and the edit: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   timeline: View > Timeline opens it under the 3D view
+   ok   timeline: Key the selection at two moments makes a track with two keys
+   ok   timeline: moving through the film moves the box (at 1 s it is at 0.00)
+   ok   timeline: the film, the titles and the box each have a row (["Film", "Titles", "Runner  place"])
+   ok   film: four seconds at ten frames a second is forty frames (40)
+   ok   film: the box is further right at 1.4 s than at the start (0.30, 0.61 of the picture's width)
+   ok   film: the title is on the picture during its time (1584 white pixels, 0 before it)
+   ok   film: at the join the two views are mixed
+   ok   film: the video is made (lab_film.mp4)
+   ok   film: with its soundtrack (video audio 4.000000)
+== Layered materials: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   layers: two layers are drawn into one material in 12.9 s ()
+   ok   layers: at half, the picture is part brick and part concrete (50% and 44%)
+   ok   layers: the picture repeats without a seam (10.66 across the edge, 8.10 at the same place inside)
+   ok   layers cycles: the same patches in the same places as the 3D view (correlation 0.99)
+   ok   layers: a third layer lies in the brick's joints (5% of the picture is green)
+   ok   layers: taken off, the wall is brick again
+== A spread and traffic: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   street: the path tool draws a spread
+   ok   street: and traffic
+   ok   street: thirteen trees a side and sixteen vehicles
+   ok   street godot: the avenue's trees stand against the sky (27% of the upper picture is green)
+   ok   street cycles: the avenue's trees stand against the sky (27% of the upper picture is green)
+   ok   street: a second later the traffic is further on, the trees where they were (0.0552 on the road, 0.0000 above)
+== Cycles in the 3D view: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   live: cycles's picture of the view is laid over it, 11.5 s after switching on
+   ok   live: it shows what the view shows (the red box at 0.41, 0.40 in the view)
+   ok   live: left alone it is refined to the last step (Cycles, step 4 of 4)
+   ok   live: finer, and larger (806 px wide after 240)
+   ok   live: when the view turns, the 3D view itself shows
+   ok   live: and a new picture is made of the new view
+   ok   live: a thing moved in the scene is moved in the live view (0.28, 0.50 before)
+   ok   live: switched off, the picture is gone and so is the engine
+== A large scene: passed
+   engine Built-in engines (Blender 5.2.3 LTS)
+   ok   big: every heavy model brought in has lighter versions of itself (14 of 14)
+   ok   big: the scene is counted: 5.0 million triangles in 36 objects (16 different shapes), 1 light, 16 materials, about 3 MB of pictures. The 3D view is drawing 4664 of the triangles in 18 batches, 2 times a second. Heaviest: Twin 2 (148 thousand), Twin 3 
+   ok   big: close to a stone the view draws 90740 triangles; from 700 m, all thirty-four in 3800 (of 5039630)
+   ok   big: all thirty-four are marked to be shown as boxes
+   ok   big: as boxes the view draws 824 triangles (21808 in full)
+   ok   big godot: the render shows the stones in full, as before they were boxes (the pictures differ by 0.0000)
+   ok   big eevee: all the stones are in the picture, the twenty copies where they stand (8% of it is stone, 8% in the editor's; 99% of that in the same places)
+   ok   big cycles: all the stones are in the picture, the twenty copies where they stand (8% of it is stone, 8% in the editor's; 97% of that in the same places)
+   ok   big: the scene for Eevee and Cycles holds each shape once: 16 shapes in the file (16 MB), 20 copies named
+   ok   big: the project is saved; its scene is made of 15 files and is itself 23 KB (the stones are in their own files, once)
+   ok   big: it opens the plain way in 0.5 s, the window still meanwhile
+   ok   big: opened from the program, its 14 files (33 MB) are read in the background, one after another (1.5 s, the window drawn 42 times meanwhile)
+   ok   big: and the scene is then put together from what was read: 0.20 s with the window still, 0.47 s the plain way (1.7 s in all)
+   ok   big: closed and opened four times more, read in the background each time (4 of 4)
+   ok   big: the scene is as it was saved: thirty-four stones, shown as boxes (34, 20 of them the copies)
+   ok   big: each with its shape and its lighter versions, from its own file (34 of 34)
+   ok   big: and the view draws 824 triangles of it
+   ok   big: shown in full again
 ```

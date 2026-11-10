@@ -1,6 +1,6 @@
 # End-to-end test, phase: build
 
-Oriel 1.0.0-rc4 on Linux, 2026-11-10T03:56:28
+Oriel 1.0.0-rc5 on Linux, 2026-11-10T21:39:36
 
 | Step | What | Result |
 |---|---|---|
@@ -19,7 +19,7 @@ Oriel 1.0.0-rc4 on Linux, 2026-11-10T03:56:28
 | 7 | Add furniture from the library | passed |
 | 8 | Add human figures | passed |
 | 8b | Add a model of your own to your library (an OBJ made in centimetres, with its licence) and place it; the project gets its own copy  | passed |
-| 9 | Paint vegetation with the brush (45 trees) | passed |
+| 9 | Paint vegetation with the brush (44 trees) | passed |
 | 10 | Configure sunlight (real sun, Bangalore, 16:30) | passed |
 | 11 | Configure an HDRI sky: your own HDR panorama, added to your skies; the sun goes where the photo's sun is (0.999)  | passed |
 | 12 | Add artificial lighting | passed |

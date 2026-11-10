@@ -8,8 +8,12 @@ CHECK="$1"; shift
 LAB=$S/lab; [ -n "${ORIEL_BIN:-}" ] && LAB=$S/lab_app
 OUT=$LAB/$CHECK
 rm -rf "$OUT" "$LAB/prof_$CHECK"; mkdir -p "$OUT" "$LAB/prof_$CHECK"
-CG=/sys/fs/cgroup/memory/e2e
-[ -d "$CG" ] || { mkdir -p "$CG" && echo $((6000*1024*1024)) > "$CG/memory.limit_in_bytes"; }
+# Inside a memory limit, so that a check that runs away is stopped rather than the machine (8 GB):
+# 6000 MiB, or ORIEL_LAB_MIB (the large scene's Eevee render in software needs more: the engine
+# alone holds 4 GB of five million triangles, beside the program drawing them in software too).
+MIB="${ORIEL_LAB_MIB:-6000}"
+CG=/sys/fs/cgroup/memory/lab$MIB
+mkdir -p "$CG" && echo $((MIB*1024*1024)) > "$CG/memory.limit_in_bytes"
 echo $$ > "$CG/cgroup.procs"
 export XDG_DATA_HOME=$LAB/prof_$CHECK XDG_CONFIG_HOME=$LAB/prof_$CHECK ORIEL_LAB_FIXTURES=$G/tests/app/fixtures
 if [ -n "${ORIEL_BIN:-}" ]; then

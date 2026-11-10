@@ -19,6 +19,9 @@ run() {
 		r=$(bash $G/tests/dev/lab_walk.sh 2>&1)
 	elif [ "$name" = "walk_vr" ]; then
 		r=$(bash $G/tests/dev/lab_walk_xr.sh 2>&1)
+	elif [ "$name" = "big" ]; then
+		# Five million triangles drawn in software by the program and by Eevee at once: inside 7000 MiB (see lab.sh).
+		r=$(ORIEL_LAB_MIB="${ORIEL_LAB_MIB:-7000}" bash $G/tests/dev/lab.sh "$name" "$@" 2>&1)
 	else
 		r=$(bash $G/tests/dev/lab.sh "$name" "$@" 2>&1)
 	fi

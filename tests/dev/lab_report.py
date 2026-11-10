@@ -3,6 +3,8 @@
 import re, sys
 src, dest = sys.argv[1], sys.argv[2]
 app_src = sys.argv[3] if len(sys.argv) > 3 else ""
+# What was run again from the source after the last change to the program, in words (argument 4).
+RERUN = sys.argv[4] if len(sys.argv) > 4 else ""
 TITLES = {
     "formats": ("Model formats", "The formats the built-in engine reads: a bench 2 m wide, 0.4 m high and 0.6 m deep in USD, Alembic, Collada, 3DS, STL and PLY, and a wall 4 m long in IFC, each brought in and measured."),
     "ies": ("IES beams", "A downlight 3 m over a floor, seen from straight above. Its IES file is 1000 cd on the axis, half that at 15 degrees and nothing past 40: the pool of light must be brightest in the middle, fall off, and be dark 3 m out, in every renderer; and 3000 K must warm it."),
@@ -43,6 +45,8 @@ def result(b):
 
 
 def renderers(b):
+    if b["name"] == "formats":
+        return "none: the import is what is checked"
     return b["engines"].replace("godot", "real-time").replace("eevee", "Eevee").replace("cycles", "Cycles").replace(" ", ", ") or "real-time"
 
 
@@ -54,8 +58,9 @@ out = ["# Lab results (1.0.0-rc5)", "",
        "./Oriel-1.0.0-rc5-x86_64.AppImage -- --script /path/to/tests/dev/lab.gd <check> <out folder> [...]   # from the AppImage, with its own engines",
        "bash tests/dev/lab_all.sh                                                                             # all of them, one after another",
        "```", "",
-       "Run on the build machine (two processor cores, software rendering, no graphics card: the real-time renderer on Mesa's lavapipe, Eevee on Mesa's llvmpipe, Cycles on the processor) with the built-in engines (Blender 5.2.3 LTS): first against the source of this release, then again **from the rc5 AppImage itself**%s." % (
-           "" if len(from_app) >= len(blocks) else " for the checks that depend most on how the program is packed (its own engines, the library and the presets inside it, the noise the clouds are made of)"), "",
+       "Run on the build machine (two processor cores, software rendering, no graphics card: the real-time renderer on Mesa's lavapipe, Eevee on Mesa's llvmpipe, Cycles on the processor) with the built-in engines (Blender 5.2.3 LTS): against the source as the work went on, then all of them again **from the rc5 AppImage itself**%s." % (
+           "" if len(from_app) >= len(blocks) else " for the checks that depend most on how the program is packed (its own engines, the library and the presets inside it, the noise the clouds are made of)"),
+       "", RERUN, "",
        "| Check | Renderers | From the source | From the AppImage |", "|---|---|---|---|"]
 for b in blocks:
     title = TITLES.get(b["name"], (b["name"], ""))[0]
@@ -72,7 +77,7 @@ for b in blocks:
     for l in b["lines"]:
         if l.startswith("LAB engine"):
             continue
-        out.append(re.sub(r"^LAB ", "", l)[:400])
+        out.append(re.sub(r"/\S*/scratchpad/", "", re.sub(r"^LAB ", "", l))[:400])
     out += ["```", ""]
 if from_app:
     out += ["## From the AppImage", "", "The same checks, started from `Oriel-1.0.0-rc5-x86_64.AppImage` (mounted with FUSE, as on a desktop), on an empty profile, with the engines inside it.", "", "```"]
@@ -80,7 +85,7 @@ if from_app:
         out.append("== %s: %s" % (TITLES.get(b["name"], (b["name"], ""))[0], "passed" if b["state"] == "PASS" else "FAILED"))
         for l in b["lines"]:
             if l.startswith("LAB ok") or l.startswith("LAB FAIL") or l.startswith("LAB engine"):
-                out.append("   " + re.sub(r"^LAB ", "", l)[:300])
+                out.append("   " + re.sub(r"/\S*/scratchpad/", "", re.sub(r"^LAB ", "", l))[:300])
     out += ["```", ""]
 open(dest, "w", encoding="utf-8").write("\n".join(out).rstrip("\n") + "\n")
 print("wrote", dest, "source %d/%d" % (n_ok, len(blocks)), "app %d/%d" % (a_ok, len(from_app)))
