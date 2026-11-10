@@ -4,7 +4,8 @@
 #   ORIEL_BIN=/path/to/Oriel.x86_64 lab_walk_xr.sh    the built program
 S=/tmp/claude-0/-home-claude/294e9e57-28d4-5121-a481-cb185f2feb74/scratchpad
 G=/home/claude/work/genesis
-OUT=$S/lab/walk_xr
+LAB=$S/lab; [ -n "${ORIEL_BIN:-}" ] && LAB=$S/lab_app
+OUT=$LAB/walk_xr
 export DISPLAY=:77 XDG_RUNTIME_DIR=$S/xr/run
 mkdir -p $S/xr/run; chmod 700 $S/xr/run
 # A display of its own (nothing of it may hold this script's output open).
@@ -20,11 +21,11 @@ if ! pgrep -x monado-service > /dev/null; then
 	for i in $(seq 1 60); do [ -S $S/xr/run/monado_comp_ipc ] && break; sleep 0.25; done
 	sleep 3
 fi
-rm -rf "$OUT" "$S/lab/prof_walkxr"; mkdir -p "$OUT" "$S/lab/prof_walkxr"
+rm -rf "$OUT" "$LAB/prof_walkxr"; mkdir -p "$OUT" "$LAB/prof_walkxr"
 cp -r "$G/build/AppDir/usr/lib/oriel/demos/architecture" "$OUT/project"
 RUN=(/home/claude/work/godot/Godot_v4.7.2-stable_linux.x86_64 --path $G)
 [ -n "${ORIEL_BIN:-}" ] && RUN=("$ORIEL_BIN")
-XR_RUNTIME_JSON=/usr/share/openxr/1/openxr_monado.json XDG_DATA_HOME=$S/lab/prof_walkxr XDG_CONFIG_HOME=$S/lab/prof_walkxr \
+XR_RUNTIME_JSON=/usr/share/openxr/1/openxr_monado.json XDG_DATA_HOME=$LAB/prof_walkxr XDG_CONFIG_HOME=$LAB/prof_walkxr \
 	timeout 400 "${RUN[@]}" --resolution 1280x720 --xr-mode on -- \
 	--walk "$OUT/project" --vr --script $G/tests/dev/lab.gd walk "$OUT" vr > "$OUT/log.txt" 2>&1
 echo "lab walk on a headset: exit $?"

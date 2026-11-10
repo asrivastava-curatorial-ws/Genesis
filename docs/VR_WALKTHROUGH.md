@@ -41,14 +41,28 @@ Esc on the computer, closing its window, or ending the session from the headset 
 
 A computer with a graphics card able to draw the scene twice at the headset's rate, and an **OpenXR runtime**: the program that connects a headset to applications. Oriel uses whichever is set as the system's active runtime.
 
-**Meta Quest 2, 3, 3S, Pro (and Pico, HTC Focus) on Linux: WiVRn.** Free and open source; it streams from the computer to the headset over Wi-Fi or a USB cable, and is its own OpenXR runtime (no SteamVR needed).
+**Meta Quest 2, 3, 3S, Pro (and Pico, HTC Focus) on Linux: WiVRn.** Free and open source; it streams from the computer to the headset over Wi-Fi or a USB cable, and is its own OpenXR runtime (no SteamVR needed). In short, from WiVRn's own instructions (<https://github.com/WiVRn/WiVRn>):
 
-1. On the computer: `flatpak install flathub io.github.wivrn.wivrn` (or your distribution's package). Start *WiVRn*; it sets itself as the active OpenXR runtime while it runs.
-2. On the headset: install the *WiVRn* app, from the Meta Horizon Store or with SideQuest (the version must match the computer's; WiVRn's window shows which, and can install it over USB).
-3. Put the headset on, start WiVRn in it, and pick the computer.
-4. In Oriel: *View > Walk Through on a Headset (VR)*.
+```bash
+flatpak install -y flathub io.github.wivrn.wivrn     # or its Ubuntu PPA: see WiVRn's page
+sudo systemctl enable --now avahi-daemon             # how the headset finds the computer (Kubuntu has it running already)
+flatpak run io.github.wivrn.wivrn                    # the WiVRn window; leave it open
+```
 
-On a computer with an NVIDIA card, WiVRn encodes the picture on the card (NVENC); a 5 GHz or 6 GHz Wi-Fi link close to the router, or a USB 3 cable, keeps it sharp.
+1. WiVRn's window walks through the headset's side: for a Meta Quest it leads to the *WiVRn* app in the Meta Horizon Store. The app in the headset and WiVRn on the computer must be the same version.
+2. Put the headset on, start WiVRn in it, and pick the computer. When the headset connects, WiVRn makes itself the system's OpenXR runtime (and puts things back when it disconnects).
+3. In Oriel: *View > Walk Through on a Headset (VR)*.
+
+Over a USB cable instead of Wi-Fi (with the headset's developer mode on, as SideQuest needs anyway; WiVRn says to turn the headset's Wi-Fi off for this):
+
+```bash
+adb reverse tcp:9757 tcp:9757
+adb shell am start -a android.intent.action.VIEW -d "wivrn+tcp://localhost" org.meumeu.wivrn
+```
+
+(The last word is the app's package name: `org.meumeu.wivrn` from the store, `org.meumeu.wivrn.github` when installed from WiVRn's GitHub release with SideQuest.)
+
+On a computer with an NVIDIA card WiVRn encodes the picture on the card (NVENC). On Wi-Fi, a 5 GHz or 6 GHz link close to the router keeps it sharp.
 
 **ALVR with SteamVR** is the other free route for Quest headsets: install Steam and SteamVR, then ALVR on the computer and in the headset (SideQuest), set SteamVR as the OpenXR runtime (SteamVR > Settings > OpenXR), and start Oriel's headset walk with SteamVR running.
 
@@ -58,7 +72,9 @@ On a computer with an NVIDIA card, WiVRn encodes the picture on the card (NVENC)
 
 ### If nothing shows in the headset
 
-Oriel says so and carries on as a walk on the screen. The usual causes: no OpenXR runtime is running (start WiVRn or SteamVR first); the headset is not connected to it yet; or another runtime is the active one (`~/.config/openxr/1/active_runtime.json` on Linux names it).
+Oriel says so and carries on as a walk on the screen. The usual causes: no OpenXR runtime is running (start WiVRn or SteamVR first); the headset is not connected to it yet (WiVRn becomes the runtime only once the headset has connected); or another runtime is the active one (`~/.config/openxr/1/active_runtime.json` on Linux names it).
+
+If WiVRn shows the headset connected and Oriel still says no headset answered, try WiVRn from its Ubuntu PPA in place of the Flathub one: Oriel's AppImage runs outside Flatpak and loads WiVRn's runtime library straight from where the system's OpenXR settings point, and a library built for Flatpak's own base system may not load there. (This is a guess at the likeliest snag, not something that was seen: no headset was at hand.) Starting Oriel from a terminal shows what OpenXR says.
 
 From a terminal the same walk is `Oriel-1.0.0-rc5-x86_64.AppImage --xr-mode on -- --walk "/path/to/project" --vr` (leave out `--xr-mode on` and `--vr` for the screen; `--from "Camera name"` starts at a camera).
 

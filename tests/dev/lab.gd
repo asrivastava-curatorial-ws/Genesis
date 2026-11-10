@@ -66,6 +66,8 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _live(main)
 		"big":
 			await _big(main)
+		"formats":
+			await _formats(main)
 		"bigopen":
 			await _bigopen(main, args)
 		_:
@@ -1606,4 +1608,57 @@ static func _bigopen(main: Node, args: PackedStringArray) -> void:
 	print("LAB bigopen: the project opened with everything in memory: %d ms (%s)" % [Time.get_ticks_msec() - t, err])
 	await _frames(main, 2)
 	print("LAB bigopen: two pictures later: %d ms" % (Time.get_ticks_msec() - t))
+
+
+# ------------------------------------------------------------------ model formats
+# The formats the built-in engine reads (USD, Alembic, Collada, 3DS, STL,
+# PLY, IFC), brought in by whatever program runs this: from the AppImage,
+# that is its own engine with IfcOpenShell and Assimp inside. A bench 2 m
+# wide in each (a 4 m wall for IFC) must come in at its size, the right way up.
+static func _formats(main: Node) -> void:
+	var GnModelImport = load("res://addons/genesis/core/gn_model_import.gd")
+	var eng: Dictionary = GnBlender.engine(true)
+	check(str(eng.get("kind", "")) == "module", "formats: the built-in engine is here (%s)" % eng.get("label", "none"))
+	if str(eng.get("kind", "")) != "module":
+		return
+	var here := OS.get_environment("ORIEL_LAB_FIXTURES")
+	if here == "":
+		here = ProjectSettings.globalize_path("res://tests/app/fixtures")
+	var fx := _out.path_join("formats")
+	DirAccess.make_dir_recursive_absolute(fx)
+	GnPaths.run(str(eng.path), ["-I", here.path_join("make_model_fixtures.py"), "--", fx], [], true)
+	for f in ["wall.ifc", "bench.3ds"]:
+		DirAccess.copy_absolute(here.path_join(f), fx.path_join(f))
+	for c in [["bench.usdc", "y", 2.0, 0.4, 0.6], ["bench.abc", "y", 2.0, 0.4, 0.6], ["bench.dae", "y", 2.0, 0.4, 0.6],
+			["bench.3ds", "y", 2.0, 0.4, 0.6], ["bench.stl", "z", 2.0, 0.4, 0.6], ["bench.ply", "z", 2.0, 0.4, 0.6], ["wall.ifc", "y", 4.0, 3.2, 3.0]]:
+		var file: String = c[0]
+		var t0 := Time.get_ticks_msec()
+		var r: Dictionary = GnModelImport.convert_file(fx.path_join(file), _out.path_join("assets"), {"up": c[1], "name": "%s_%s" % [file.get_basename(), file.get_extension()]})
+		var size := Vector3.ZERO
+		if str(r.error) == "":
+			var n := (load(str(r.path)) as PackedScene).instantiate() as Node3D
+			var box := AABB()
+			var first := true
+			for mi: MeshInstance3D in n.find_children("*", "MeshInstance3D", true, false) + ([n] if n is MeshInstance3D else []):
+				var b: AABB = _to_root(mi, n) * mi.get_aabb()
+				box = b if first else box.merge(b)
+				first = false
+			size = box.size
+			n.free()
+		var good: bool = str(r.error) == "" and absf(size.x - float(c[2])) < 0.03 and absf(size.y - float(c[3])) < 0.03 and absf(size.z - float(c[4])) < 0.03
+		check(good, "formats: %s comes in %.1f m wide, %.1f m high, %.1f m deep (%.2f, %.2f, %.2f) in %.1f s %s" % [
+			file.get_extension().to_upper(), c[2], c[3], c[4], size.x, size.y, size.z, (Time.get_ticks_msec() - t0) / 1000.0, r.error])
+	await _frames(main, 2)
+
+
+## A node's place in its model (neither is in the scene).
+static func _to_root(node: Node3D, root: Node3D) -> Transform3D:
+	var t := Transform3D.IDENTITY
+	var n: Node = node
+	while n != null and n is Node3D:
+		t = (n as Node3D).transform * t
+		if n == root:
+			break
+		n = n.get_parent()
+	return t
 

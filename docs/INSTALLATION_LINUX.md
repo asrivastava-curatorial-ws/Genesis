@@ -7,8 +7,8 @@ Tested on Ubuntu 24.04 (x86_64), the base of Kubuntu 24.04. Other current distri
 Oriel comes as one file, an AppImage. Make it runnable and start it:
 
 ```bash
-chmod +x Oriel-1.0.0-rc3-x86_64.AppImage
-./Oriel-1.0.0-rc3-x86_64.AppImage
+chmod +x Oriel-1.0.0-rc5-x86_64.AppImage
+./Oriel-1.0.0-rc5-x86_64.AppImage
 ```
 
 (In Dolphin: right-click the file > Properties > Permissions > *Is executable*, then double-click it.)
@@ -19,20 +19,20 @@ An AppImage mounts itself with FUSE. Ubuntu 24.04 and Kubuntu 24.04 have what it
 
 ```bash
 sudo apt install fuse3
-./Oriel-1.0.0-rc3-x86_64.AppImage --appimage-extract-and-run
+./Oriel-1.0.0-rc5-x86_64.AppImage --appimage-extract-and-run
 ```
 
 A project folder given after the file name opens straight away:
 
 ```bash
-./Oriel-1.0.0-rc3-x86_64.AppImage "$HOME/Documents/Oriel Projects/Museum hall"
+./Oriel-1.0.0-rc5-x86_64.AppImage "$HOME/Documents/Oriel Projects/Museum hall"
 ```
 
 ## 2. A menu entry (optional)
 
 ```bash
-./Oriel-1.0.0-rc3-x86_64.AppImage --install-shortcut   # adds Oriel to the applications menu
-./Oriel-1.0.0-rc3-x86_64.AppImage --remove-shortcut    # takes it off again
+./Oriel-1.0.0-rc5-x86_64.AppImage --install-shortcut   # adds Oriel to the applications menu
+./Oriel-1.0.0-rc5-x86_64.AppImage --remove-shortcut    # takes it off again
 ```
 
 This writes two files, `~/.local/share/applications/oriel.desktop` and `~/.local/share/icons/hicolor/256x256/apps/oriel.png`. If you move the AppImage, run `--install-shortcut` again.

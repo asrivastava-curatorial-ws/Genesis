@@ -29,6 +29,14 @@ if [ "${NO_ASSETS:-0}" != 1 ] && [ ! -f "$HERE/genesis_data/materials/concrete.t
 	"$GODOT" --headless --path "$HERE" -s res://tools/make_materials.gd > "$OUT/materials.log" 2>&1 || { tail -20 "$OUT/materials.log"; exit 1; }
 fi
 
+# The library's glTF models keep their geometry in .bin files beside them. The
+# program reads the imported models, not these: a filter that packs every
+# .bin would put a hundred megabytes into the program a second time.
+if grep -Eq 'include_filter=.*[" ]\*\.bin' "$HERE/export_presets.cfg"; then
+	echo "export_presets.cfg packs every .bin file (the models' buffers too). Name the folder: addons/genesis/core/*.bin"
+	exit 1
+fi
+
 # Keep Godot's import cache (.godot) between builds: the library is imported once.
 mkdir -p "$TREE"
 find "$TREE" -mindepth 1 -maxdepth 1 ! -name .godot -exec rm -rf {} +

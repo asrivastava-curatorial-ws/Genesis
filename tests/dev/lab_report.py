@@ -2,7 +2,9 @@
 """Writes reports/LAB_RESULTS.md from the lab run (scratchpad/lab/ALL_rc5.txt)."""
 import re, sys
 src, dest = sys.argv[1], sys.argv[2]
+app_src = sys.argv[3] if len(sys.argv) > 3 else ""
 TITLES = {
+    "formats": ("Model formats", "The formats the built-in engine reads: a bench 2 m wide, 0.4 m high and 0.6 m deep in USD, Alembic, Collada, 3DS, STL and PLY, and a wall 4 m long in IFC, each brought in and measured."),
     "ies": ("IES beams", "A downlight 3 m over a floor, seen from straight above. Its IES file is 1000 cd on the axis, half that at 15 degrees and nothing past 40: the pool of light must be brightest in the middle, fall off, and be dark 3 m out, in every renderer; and 3000 K must warm it."),
     "mix": ("Passes and the light mixer", "A room at night with a warm lamp on the left, a cool one on the right and a glowing sign. Rendered once with Cycles for the mixer and with every pass; then the mixer turns the warm lamp off and the cool one up, and the pictures are measured."),
     "haze": ("Stage haze", "A moving-head beam across a hazy stage at night, seen from the side: the beam must show in the air in every renderer, about as bright in each."),
@@ -19,29 +21,51 @@ TITLES = {
     "live": ("Cycles in the 3D view", "Switched on, Cycles' picture of the view is laid over it; it gets finer while the view is left alone; turning the view takes the picture off until a new one is made; moving a thing in the scene is seen; switched off, the engine is gone."),
     "big": ("A large scene", "Fourteen heavy models, each its own file, and twenty more of the first: thirty-four stones of 148,000 triangles, five million in all. Each must get lighter versions of itself, so that from afar the 3D view draws a fraction of the triangles; shown as boxes the view draws next to nothing while every render shows them in full; Eevee and Cycles are handed the twenty copies as copies; the scene file stays small; and the project, closed and opened again, is read in the background with the window alive."),
 }
-blocks, cur = [], None
-for line in open(src, encoding="utf-8"):
-    line = line.rstrip("\n")
-    m = re.match(r"^=== (\w+) (PASS|FAIL) \((.*)\) (\d\d:\d\d)$", line)
-    if m:
-        cur = {"name": m.group(1), "state": m.group(2), "engines": m.group(3).strip(), "lines": []}
-        blocks.append(cur)
-    elif cur is not None and (line.startswith("LAB ") or "SCRIPT ERROR" in line) and not line.startswith("LAB_ALL"):
-        cur["lines"].append(line)
-order = list(TITLES)
-blocks.sort(key=lambda b: order.index(b["name"]) if b["name"] in order else 99)
-out = ["# Lab results (1.0.0-rc5)", "",
-       "Each check builds a scene with the program's own tools (the same calls the pages make), renders it with the renderers named, and measures the pictures. They are in `tests/dev/lab.gd` and run from the source with:", "",
-       "```bash", "godot --path . -- --script tests/dev/lab.gd <check> <out folder> [godot] [eevee] [cycles]", "```", "",
-       "Run on the build machine (two processor cores, software rendering, no graphics card; Eevee on Mesa's llvmpipe, Cycles on the processor), against the source of this release, with the built-in engines (Blender 5.2.3 LTS).", "",
-       "| Check | Renderers | Result |", "|---|---|---|"]
-for b in blocks:
-    title = TITLES.get(b["name"], (b["name"], ""))[0]
+def parse(path):
+    blocks, cur = [], None
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        m = re.match(r"^=== (\w+) (PASS|FAIL) \((.*)\) (\d\d:\d\d)$", line)
+        if m:
+            cur = {"name": m.group(1), "state": m.group(2), "engines": m.group(3).strip(), "lines": []}
+            blocks.append(cur)
+        elif cur is not None and (line.startswith("LAB ") or "SCRIPT ERROR" in line) and not line.startswith("LAB_ALL"):
+            cur["lines"].append(line)
+    order = list(TITLES)
+    blocks.sort(key=lambda b: order.index(b["name"]) if b["name"] in order else 99)
+    return blocks
+
+
+def result(b):
     oks = sum(1 for l in b["lines"] if l.startswith("LAB ok"))
     fails = sum(1 for l in b["lines"] if l.startswith("LAB FAIL"))
-    eng = b["engines"].replace("godot", "real-time").replace(" ", ", ") or "real-time"
-    out.append("| %s | %s | %s: %d checks passed%s |" % (title, eng, "Passed" if b["state"] == "PASS" else "**Failed**", oks, ", %d failed" % fails if fails else ""))
+    return "%s: %d checks%s" % ("Passed" if b["state"] == "PASS" else "**Failed**", oks, ", %d failed" % fails if fails else "")
+
+
+def renderers(b):
+    return b["engines"].replace("godot", "real-time").replace("eevee", "Eevee").replace("cycles", "Cycles").replace(" ", ", ") or "real-time"
+
+
+blocks = parse(src)
+from_app = {b["name"]: b for b in parse(app_src)} if app_src else {}
+out = ["# Lab results (1.0.0-rc5)", "",
+       "Each check builds a scene with the program's own tools (the same calls the pages make), renders it with the renderers named, and measures the pictures. They are in `tests/dev/lab.gd`:", "",
+       "```bash", "godot --path . -- --script tests/dev/lab.gd <check> <out folder> [godot] [eevee] [cycles]        # from the source",
+       "./Oriel-1.0.0-rc5-x86_64.AppImage -- --script /path/to/tests/dev/lab.gd <check> <out folder> [...]   # from the AppImage, with its own engines",
+       "bash tests/dev/lab_all.sh                                                                             # all of them, one after another",
+       "```", "",
+       "Run on the build machine (two processor cores, software rendering, no graphics card: the real-time renderer on Mesa's lavapipe, Eevee on Mesa's llvmpipe, Cycles on the processor) with the built-in engines (Blender 5.2.3 LTS): first against the source of this release, then again **from the rc5 AppImage itself**%s." % (
+           "" if len(from_app) >= len(blocks) else " for the checks that depend most on how the program is packed (its own engines, the library and the presets inside it, the noise the clouds are made of)"), "",
+       "| Check | Renderers | From the source | From the AppImage |", "|---|---|---|---|"]
+for b in blocks:
+    title = TITLES.get(b["name"], (b["name"], ""))[0]
+    app = from_app.get(b["name"])
+    out.append("| %s | %s | %s | %s |" % (title, renderers(b), result(b), result(app) if app else "not run"))
 out.append("")
+n_ok = sum(1 for b in blocks if b["state"] == "PASS")
+a_ok = sum(1 for b in from_app.values() if b["state"] == "PASS")
+out += ["%d of %d pass from the source%s." % (n_ok, len(blocks), "; %d of %d from the AppImage" % (a_ok, len(from_app)) if from_app else ""), "",
+        "The measurements below are the run from the source. \"ok\" lines are checks; the others are what was measured.", ""]
 for b in blocks:
     title, what = TITLES.get(b["name"], (b["name"], ""))
     out += ["## %s" % title, "", what, "", "```"]
@@ -50,5 +74,13 @@ for b in blocks:
             continue
         out.append(re.sub(r"^LAB ", "", l)[:400])
     out += ["```", ""]
+if from_app:
+    out += ["## From the AppImage", "", "The same checks, started from `Oriel-1.0.0-rc5-x86_64.AppImage` (mounted with FUSE, as on a desktop), on an empty profile, with the engines inside it.", "", "```"]
+    for b in from_app.values():
+        out.append("== %s: %s" % (TITLES.get(b["name"], (b["name"], ""))[0], "passed" if b["state"] == "PASS" else "FAILED"))
+        for l in b["lines"]:
+            if l.startswith("LAB ok") or l.startswith("LAB FAIL") or l.startswith("LAB engine"):
+                out.append("   " + re.sub(r"^LAB ", "", l)[:300])
+    out += ["```", ""]
 open(dest, "w", encoding="utf-8").write("\n".join(out).rstrip("\n") + "\n")
-print("wrote", dest, len(blocks), "checks")
+print("wrote", dest, "source %d/%d" % (n_ok, len(blocks)), "app %d/%d" % (a_ok, len(from_app)))
