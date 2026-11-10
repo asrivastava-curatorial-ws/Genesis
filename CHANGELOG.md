@@ -52,7 +52,7 @@ What Lumion, D5 and V-Ray users would miss, added. Every feature of rc4 is kept,
 
 ### Tests
 - A lab (`tests/dev/lab.gd`, run by `--script`): scenes built with the program's own tools, rendered by the three renderers and measured: model formats, IES beams, the light mixer, haze, weather, wind, relief and light inside, caustics, clouds, the walk-through (on Monado's stand-in headset too), a film with keys, a dissolve, a title and sound, layered materials, a street with a spread and traffic, the live view, a five-million-triangle scene. Run from the source and again from the AppImage itself (`reports/LAB_RESULTS.md`).
-- The headless suites grew from 419 checks to 565; the module suite alone tripled, to 179.
+- The headless suites grew from 419 checks to 572; the module suite alone tripled, to 186.
 
 ## 1.0.0-rc4 (Oriel)
 

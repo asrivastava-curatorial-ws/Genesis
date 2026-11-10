@@ -188,7 +188,7 @@ curl.exe -L -o LICENSE.txt https://raw.githubusercontent.com/xinntao/Real-ESRGAN
 4. *media* covers upscaling (which needs the internet the first time), the film (which needs FFmpeg) and the concert.
 5. *walk* draws a path with the path tool, puts two walkers on it from the Movie page, renders a short film and checks in its frames that they move and step.
 
-Each launch starts the program afresh. With software rendering all graphics memory is the computer's own, and one launch doing every kind of picture needed more than the 6 GB of the build machine.
+Each launch starts the program afresh. With software rendering all graphics memory is the computer's own, and one launch doing every kind of picture needed more than the build machine has (8 GB; the launches ran inside a limit of 7,000 MiB).
 
 ```bash
 for phase in build verify views media walk; do ./Oriel-1.0.0-rc5-x86_64.AppImage -- --e2e $phase ~/genesis-e2e; done
@@ -266,7 +266,7 @@ bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genes
 
 **Tested** on Ubuntu 24.04 with software Vulkan (lavapipe):
 
-- 565 headless checks in five suites, and a smoke tour of the whole program.
+- 572 headless checks in five suites, and a smoke tour of the whole program.
 - The built program's own smoke tour, with the bundled library and the material presets.
 - The end-to-end test in five launches with real renders: 1080p, 4K, 360° (mono, stereo and a virtual tour), photo match, a sun study, render passes, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
 - Importing glTF, OBJ, FBX and `.blend` (with Ubuntu's Blender 4.0.2), DXF, and PDF plans (as lines and as pictures).

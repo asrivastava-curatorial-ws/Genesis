@@ -38,6 +38,7 @@ Most of the original coupling went through `GnScene` (194 calls in 33 files), so
 - Setting a metadata property to null through `UndoRedo` leaves a mark that says null; marks are set and removed by method.
 - Several `ResourceLoader.load_threaded_request`s running at once stopped the built program dead (the engine's readers waiting on each other; from the source it did not happen). A project is read ahead one file at a time, each a single request without sub-threads (`app/main.gd`).
 - The source tree and the built program do not hold the library's pictures the same way (the build's are packed for the graphics card and a little weaker): what measures a picture's content, as the joints of a layered material do, is tested from the build as well (`ORIEL_BIN=… tests/dev/lab.sh`).
+- What is made on the rendering server by hand (a shader, a material, a copy of a mesh) is freed by nobody else. The wind's twins had a shader each and were never let go: every scene opened in a session left its own behind, and under software rendering, where a shader is compiled for the processor, the test scene's two cost 224 MiB. Such things are shared by kind (one shader per kind of material, as Godot's own materials do), kept by a weak reference to what they stand in for, and let go when that is gone (`GnWind.tidy`).
 - `PackedArray`s kept inside an `Array` are copies when read back; a shader's globals and anything that waits on `RenderingServer.frame_post_draw` need a display, so code that draws to make a picture is skipped in headless runs.
 
 ## What rc5 added, and where it lives
@@ -47,7 +48,7 @@ Most of the original coupling went through `GnScene` (194 calls in 33 files), so
 | More model formats | `addons/genesis/blender/oriel_convert.py` (mode "model"), `gn_model_import.gd` |
 | Lumens, kelvin, IES | `gn_light_units.gd`, `gn_ies.gd`, `set/gn_light_fixture.gd`; the engine side in `oriel_render.py` |
 | Light mixer, passes, EXR | `gn_light_mix.gd`, `ui/gn_light_mix_dialog.gd`; light groups and the mix (numpy only) in `oriel_render.py` |
-| Wind; wet, puddles, snow | `gn_wind.gd` (twin materials through the rendering server), `gn_weather.gd` (three decals; one node group in front of every Blender material) |
+| Wind; wet, puddles, snow | `gn_wind.gd` (twin materials through the rendering server, one shader per kind), `gn_weather.gd` (three decals; one node group in front of every Blender material) |
 | Relief, light inside, solid glass, caustics | `gn_materials.gd`; `apply_relief`, `apply_caustics` in `oriel_render.py` |
 | Volumetric clouds | `gn_clouds.gd`, `gn_volume_sky.gdshader`, `gn_clouds.gdshaderinc`, `gn_sky_bake.gdshader`; noise from `tools/make_cloud_noise.py` |
 | Layered materials | `gn_material_layers.gd` and `.gdshader`: baked into an ordinary material |
