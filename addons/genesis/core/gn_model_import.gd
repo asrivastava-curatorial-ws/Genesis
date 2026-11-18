@@ -149,7 +149,11 @@ static func _apply_options(root: Node3D, opts: Dictionary) -> void:
 # of flat colour, where a neighbour's colour must not run in.
 static func _pack_textures(root: Node) -> void:
 	var done := {}
-	for mi in root.find_children("*", "MeshInstance3D", true, false):
+	# (A model that is one shape is its own top node.)
+	var shapes: Array = root.find_children("*", "MeshInstance3D", true, false)
+	if root is MeshInstance3D:
+		shapes.append(root)
+	for mi in shapes:
 		var mesh: Mesh = (mi as MeshInstance3D).mesh
 		if mesh == null:
 			continue

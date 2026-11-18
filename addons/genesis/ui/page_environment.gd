@@ -101,6 +101,7 @@ func _init() -> void:
 	_controls.exposure.tooltip_text = "How bright the picture is. A room lit through its windows wants about +3 EV when light bounces (below)."
 	_controls.ambient = GnUi.slider(_body, "Sky light", 0.0, 2.0, 0.05,
 		func(v): GnEnvironment.apply("ambient", v), func(v): return "%.2f" % v)
+	_controls.ambient.tooltip_text = "How much light the sky gives. In a closed room lit by lamps or by panes that glow, turn it down: with light that bounces, some of the sky comes through thin walls."
 	_bounce = CheckBox.new()
 	_bounce.text = "Light bounces (for rooms)"
 	_bounce.tooltip_text = "The sun and the sky light a surface only where they can reach it, and light goes on from surface to surface: a room is lit by its windows, by its lamps and by whatever glows in it, as in Eevee, Cycles and a baked web walkthrough. A room lit by daylight alone is as dark as in life: raise the exposure. In a scene up to some 40 m across the light is worked out again a moment after the scene has changed (the program stands still for a second or a few); a wider scene is lit a simpler way, which glowing surfaces take no part in. Asks more of the graphics card."

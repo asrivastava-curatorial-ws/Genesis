@@ -28,6 +28,8 @@ const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
 const GnFfmpeg := preload("res://addons/genesis/core/gn_ffmpeg.gd")
 const GnSite := preload("res://addons/genesis/core/gn_site.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
+const GnRoomLight := preload("res://addons/genesis/core/gn_room_light.gd")
+const Picker := preload("res://app/runtime/picker.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const E2E := preload("res://app/e2e.gd")
 
@@ -996,13 +998,7 @@ func _web_walkthrough(root: Node) -> void:
 	check(str(GnWebServe.certificate().cert) == str(cert.cert), "web: and used again the next time")
 	var none: Dictionary = GnWebServe.start(base.path_join("new"), false)
 	check(str(none.error) != "", "web: a folder with no walkthrough in it is not served (\"%s\")" % none.error)
-	# Light that bounces, for rooms.
-	GnEnvironment.set_up()
-	var env: Environment = GnEnvironment.world().environment
-	GnEnvironment.apply("bounce", true)
-	check(env.sdfgi_enabled and env.sdfgi_use_occlusion and bool(GnEnvironment.value("bounce")), "environment: light that bounces is switched on for a room")
-	GnHost.undo_redo().undo()
-	check(not env.sdfgi_enabled and not bool(GnEnvironment.value("bounce")), "environment: and off again in one undo step")
+	_bounced_light(root)
 	# A model's pictures are kept as WebP inside its scene file, and come back whole.
 	var img := Image.create(256, 128, false, Image.FORMAT_RGB8)
 	for y in 128:
@@ -1039,6 +1035,138 @@ func _web_walkthrough(root: Node) -> void:
 		c.get_parent().remove_child(c)
 		c.free()
 	root.remove_meta(GnWebWalk.META)
+
+
+# Light that bounces: voxel light worked out from a compact scene (a room),
+# kept in step with it and never saved; SDFGI for a scene too wide for that.
+func _bounced_light(_root: Node) -> void:
+	var scene := GnHost.edited_scene_root()
+	GnEnvironment.set_up()
+	var env: Environment = GnEnvironment.world().environment
+	var room := Node3D.new()
+	room.name = "Room"
+	scene.add_child(room)
+	room.owner = scene
+	var parts := {}
+	for spec in [["Floor", Vector3(5, 0.2, 4), Vector3(0, -0.1, 0)], ["Ceiling", Vector3(5, 0.2, 4), Vector3(0, 2.8, 0)], ["Back", Vector3(5, 2.7, 0.2), Vector3(0, 1.35, -2)],
+			["Left", Vector3(0.2, 2.7, 4), Vector3(-2.5, 1.35, 0)], ["Right", Vector3(0.2, 2.7, 4), Vector3(2.5, 1.35, 0)], ["Pane", Vector3(1.2, 1.2, 0.02), Vector3(0, 1.5, 1.9)]]:
+		var mi := MeshInstance3D.new()
+		mi.name = spec[0]
+		var box := BoxMesh.new()
+		box.size = spec[1]
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.8, 0.8, 0.78)
+		box.material = mat
+		mi.mesh = box
+		mi.position = spec[2]
+		room.add_child(mi)
+		mi.owner = scene
+		parts[spec[0]] = mi
+	var glow := (parts.Pane as MeshInstance3D).mesh.surface_get_material(0) as StandardMaterial3D
+	glow.emission_enabled = true
+	glow.emission = Color.WHITE
+	glow.emission_energy_multiplier = 12.0
+	# The lawn is surroundings: it does not decide how far the light is worked out.
+	var box_now := GnRoomLight.bounds(scene)
+	check(box_now.size.x >= 5.2 and box_now.size.x < 40.0 and box_now.size.z < 40.0 and GnRoomLight.fits(scene),
+		"room light: the box round what is built leaves the lawn out (%s)" % box_now.size)
+	check(not GnEnvironment.bounce_is_stale() and GnRoomLight.node() == null, "room light: nothing is made, and nothing is missing, while light does not bounce")
+	GnEnvironment.apply("bounce", true)
+	var gi := GnRoomLight.node()
+	check(gi != null and gi.data != null and GnRoomLight.is_on() and not env.sdfgi_enabled and bool(GnEnvironment.value("bounce")),
+		"room light: switched on, a compact scene gets voxel light (and not the other kind)")
+	if gi:
+		check(gi.size.is_equal_approx(box_now.grow(GnRoomLight.MARGIN).size) and gi.global_position.is_equal_approx(box_now.get_center()) and gi.subdiv == VoxelGI.SUBDIV_128,
+			"room light: its box is the scene's, with a little air, in cubes of %.0f mm" % (gi.size[gi.size.max_axis_index()] / 128.0 * 1000.0))
+		check(gi.owner == null and gi.get_parent() == GnEnvironment.world() and not Picker.is_user_level(gi, scene), "room light: it is not the scene's own: not saved, not listed")
+		check(is_equal_approx(gi.data.dynamic_range, GnRoomLight.RANGE) and gi.data.use_two_bounces and not gi.data.interior,
+			"room light: light goes on twice from surface to surface, and the sky gets in where there is an opening")
+	check(not GnEnvironment.bounce_is_stale() and GnEnvironment.keep_bounce() == "kept" and GnRoomLight.node() == gi, "room light: asked again with nothing changed, it is kept as it is")
+	# What is built changes: stale, and made again; a lamp or a camera moving changes nothing.
+	(parts.Right as MeshInstance3D).position.x = 3.0
+	check(GnEnvironment.bounce_is_stale(), "room light: a wall moved makes it out of date")
+	check(GnEnvironment.keep_bounce() == "made" and not GnEnvironment.bounce_is_stale() and GnRoomLight.node().size.x > 5.7, "room light: and it is worked out again, for the scene as it now is")
+	var lamp := OmniLight3D.new()
+	scene.add_child(lamp)
+	lamp.owner = scene
+	lamp.position = Vector3(0, 2, 0)
+	check(not GnEnvironment.bounce_is_stale(), "room light: a lamp added or moved leaves it as it is (lamps are followed as they are)")
+	glow.emission_energy_multiplier = 3.0
+	check(GnEnvironment.bounce_is_stale(), "room light: a surface that glows differently makes it out of date")
+	GnEnvironment.keep_bounce()
+	# A helper drawn only for the view takes no part, and is itself again afterwards.
+	var helper := MeshInstance3D.new()
+	helper.mesh = BoxMesh.new()
+	helper.layers = 1 << (GnHost.VIEW_ONLY_LAYER - 1)
+	scene.add_child(helper)
+	helper.position = Vector3(200, 0, 0)
+	check(GnRoomLight.fits(scene) and not GnEnvironment.bounce_is_stale() and helper.gi_mode == GeometryInstance3D.GI_MODE_STATIC, "room light: a helper of the view is not part of what is built")
+	scene.remove_child(helper)
+	helper.free()
+	# Glass is left out of the cubes (it would be a wall there); a window that is
+	# frame and glass in one shape is stood in for by its frame while they are made.
+	var glass := StandardMaterial3D.new()
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.albedo_color = Color(0.8, 0.9, 1.0, 0.2)
+	var frosted := StandardMaterial3D.new()
+	frosted.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	frosted.albedo_color = Color(1, 1, 1, 0.9)
+	check(GnRoomLight.see_through(glass) and not GnRoomLight.see_through(frosted) and not GnRoomLight.see_through(glow) and not GnRoomLight.see_through(null),
+		"room light: clear glass lets light through; a material that is nearly solid does not")
+	var window := MeshInstance3D.new()
+	window.name = "Window"
+	var both := ArrayMesh.new()
+	var pane := BoxMesh.new()
+	pane.size = Vector3(1, 1, 0.05)
+	both.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, pane.get_mesh_arrays())
+	both.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, pane.get_mesh_arrays())
+	both.surface_set_material(0, StandardMaterial3D.new())
+	both.surface_set_material(1, glass)
+	window.mesh = both
+	scene.add_child(window)
+	window.owner = scene
+	window.position = Vector3(-2.5, 1.5, 0)
+	check(GnEnvironment.bounce_is_stale() and GnEnvironment.keep_bounce() == "made", "room light: a window put in makes it out of date, and it is made again")
+	check(window.gi_mode == GeometryInstance3D.GI_MODE_STATIC and scene.find_children("RoomLightStandIn*", "", true, false).is_empty() and window.get_parent() == scene,
+		"room light: the window is as it was afterwards, and nothing is left beside it")
+	scene.remove_child(window)
+	window.free()
+	GnEnvironment.keep_bounce()
+	# Saved: the setting, not the cubes.
+	var packed := PackedScene.new()
+	packed.pack(scene)
+	var copy := packed.instantiate()
+	var held := copy.find_children("*", "VoxelGI", true, false)
+	var we2 := copy.find_children("*", "WorldEnvironment", true, false)
+	check(held.is_empty() and not we2.is_empty() and bool((we2[0] as Node).get_meta("gn_bounce", false)), "room light: the scene is saved with the setting, without the cubes")
+	copy.free()
+	# On a headset it is left out, whatever the scene says.
+	GnEnvironment.bounce_held = true
+	check(GnEnvironment.bounce_is_stale() and GnEnvironment.keep_bounce() == "removed" and GnRoomLight.node() == null and not env.sdfgi_enabled and not GnEnvironment.bounce_is_stale(),
+		"room light: held back (for a headset), it is taken away and stays away")
+	GnEnvironment.bounce_held = false
+	check(GnEnvironment.bounce_is_stale() and GnEnvironment.keep_bounce() == "made", "room light: and comes back when no longer held")
+	# A scene too wide for small cubes: the other kind of bounced light.
+	var far := MeshInstance3D.new()
+	far.name = "Far"
+	far.mesh = BoxMesh.new()
+	scene.add_child(far)
+	far.owner = scene
+	far.position = Vector3(60, 0.5, 0)
+	check(not GnRoomLight.fits(scene) and GnEnvironment.bounce_is_stale(), "room light: a scene grown wider than %.0f m no longer fits" % GnRoomLight.MAX_SPAN)
+	check(GnEnvironment.keep_bounce() == "wide" and GnRoomLight.node() == null and env.sdfgi_enabled and env.sdfgi_use_occlusion, "room light: it gets the other kind of bounced light (SDFGI)")
+	scene.remove_child(far)
+	far.free()
+	check(GnEnvironment.bounce_is_stale() and GnEnvironment.keep_bounce() == "made" and not env.sdfgi_enabled, "room light: and voxel light again when it is compact again")
+	# Off: in one undo step, with the cubes gone a moment later (as the program does after every change).
+	GnEnvironment.apply("bounce", false)
+	check(GnRoomLight.node() == null and not env.sdfgi_enabled and not bool(GnEnvironment.value("bounce")), "room light: switched off, the cubes are gone")
+	GnHost.undo_redo().undo()
+	check(bool(GnEnvironment.value("bounce")) and GnEnvironment.bounce_is_stale() and GnEnvironment.keep_bounce() == "made", "room light: undone, it is wanted again, and made")
+	GnEnvironment.apply("bounce", false)
+	for n in [room, lamp]:
+		scene.remove_child(n)
+		n.free()
 
 
 func _large_scenes(root: Node) -> void:

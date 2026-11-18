@@ -6,6 +6,24 @@ ENVIRONMENT section: time of day; sun direction; **real sun** for a place and da
 
 The photographed skies of the downloaded library come from Poly Haven via `tools/setup.py`.
 
+## Light that bounces (for rooms)
+
+*Light bounces (for rooms)*, under *Light* on the Environment page. Without it the 3D view lights every surface with the whole sky, indoors as out: a room looks flat, and nothing in it is lit by its windows. With it, light goes on from surface to surface and what glows lights what is near it, as in Eevee and Cycles. At one exposure the 3D view and a Cycles render then come out about equally bright: in the rooms of the Interiors demo, BRIGHTNESS_MATCH.
+
+There are two kinds, and Oriel picks:
+
+- **A scene up to about 40 m across** (a room, a flat, a house and its garden) gets *voxel light*. What is built is turned into small cubes (6 to 10 cm in a room, up to 16 cm in a house) that remember their colour and their glow. That takes a second or a few, when the scene opens and a moment after it has changed; the status bar says *Working out the room's light…*, and the program stands still meanwhile. The sun and the lamps move freely: they are followed as they are.
+- **A wider scene** gets Godot's SDFGI, which needs no preparing and takes a moment to settle after each change. Glowing surfaces take no part in it, and a room is as dark as in life: raise *Exposure* by three stops or so.
+
+Things to know about voxel light:
+
+- **Panes that glow.** A room lit as its author lit it for a path tracer, with a bright pane in each window, is lit by them in the view too.
+- **Glass** is left out of the cubes, so that it does not hold light back (a window whose glass and frame are one object included). Glass with no transparency in its material is a wall.
+- **Sky light.** A wall thinner than a cube cannot hold all of the sky back, so some of its light reaches the middle of every room. In a closed room lit by lamps or by glowing panes, turn *Sky light* down, to 0.15 or so; a room lit by daylight through real openings wants it as it is.
+- **What moves** in a film (people walking, traffic) casts its bounced light from where it stood when the light was worked out.
+- **On a headset** (Shift+F9) bounced light is left out, as two eyes at ninety pictures a second cannot afford it; the sky's light is turned down instead. For a room in VR, a web walkthrough with baked light is the better way (`docs/WEB_WALKTHROUGH.md`).
+- It asks more of the graphics card. How much has not been measured: there is none where Oriel is built.
+
 ## Wind, wet, puddles and snow
 
 Under *Weather* on the Environment page:

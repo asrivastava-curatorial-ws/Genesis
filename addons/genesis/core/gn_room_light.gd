@@ -26,11 +26,17 @@ const NODE := "RoomLight"
 const MAX_SPAN := 42.0
 ## Air left round what is built, metres.
 const MARGIN := 0.3
-## The side of a cube that is fine enough, metres: the fewest cubes that
-## reach it are used (finer costs time and memory for little).
-const FINE := 0.08
-## How bright a glowing surface may be before it is clipped (in units of a
-## white surface in full light). Higher lights more but bands in the dark.
+## How many cubes along the longest side, by how long it is (metres): cubes
+## of 6 to 10 cm in a room, up to 16 cm in a house. Finer is not better: a
+## window pane that glows is one cube thick, and the thinner the cube the
+## less of its light carries across a room (a hall 11 m long, lit from a
+## skylight 7 m up, was dark with cubes of 4 cm and right with 8).
+const SPAN_64 := 4.0
+const SPAN_128 := 12.8
+## How bright a surface may be before it is clipped, in units of a white
+## surface in full light. The light is kept in 256 steps of this: a wider
+## range (tried: 16 and 32, for window panes that glow at 14 to 30) lights a
+## room no more, and stains its ceiling with bands of colour.
 const RANGE := 4.0
 ## Roles whose shapes are surroundings, not building: they bounce light where
 ## they are near, but do not decide how far the light is worked out.
@@ -98,13 +104,21 @@ static func fits(root: Node) -> bool:
 	return box.size != Vector3.ZERO and box.get_longest_axis_size() + 2.0 * MARGIN <= MAX_SPAN
 
 
-## How many cubes along the longest side: the fewest that are fine enough.
 static func _subdiv(span: float) -> int:
-	if span <= 64.0 * FINE:
+	if span <= SPAN_64:
 		return VoxelGI.SUBDIV_64
-	if span <= 128.0 * FINE:
-		return VoxelGI.SUBDIV_128
-	return VoxelGI.SUBDIV_256
+	return VoxelGI.SUBDIV_128 if span <= SPAN_128 else VoxelGI.SUBDIV_256
+
+
+## Whether light goes through a material (glass, a net curtain): such a
+## surface is left out of the cubes, where it would be a wall.
+static func see_through(mat: Material) -> bool:
+	var m := mat as BaseMaterial3D
+	if m == null:
+		return false
+	if m.refraction_enabled:
+		return true
+	return m.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA and m.albedo_color.a < 0.6
 
 
 ## A number that changes when the cubes would: which shapes there are, where,
@@ -118,7 +132,7 @@ static func signature(root: Node) -> int:
 			if mat is BaseMaterial3D:
 				var m := mat as BaseMaterial3D
 				h = hash([h, m.albedo_color, m.albedo_texture.get_rid().get_id() if m.albedo_texture else 0,
-					m.emission_enabled, m.emission, m.emission_energy_multiplier,
+					m.transparency, m.refraction_enabled, m.emission_enabled, m.emission, m.emission_energy_multiplier,
 					m.emission_texture.get_rid().get_id() if m.emission_texture else 0])
 			else:
 				h = hash([h, mat.get_rid().get_id() if mat else 0])
@@ -154,15 +168,31 @@ static func sync(want: bool) -> String:
 	have.size = box.size
 	have.global_position = box.get_center()
 	have.subdiv = _subdiv(box.get_longest_axis_size())
-	# Helpers drawn only for the view are shapes too: they sit this out.
+	# Helpers drawn only for the view are shapes too: they sit this out. So
+	# does what light goes through; a shape that is part glass (a window with
+	# its frame) is stood in for by its other surfaces.
 	var aside: Array = []
+	var stand_ins: Array = []
 	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
-		if mi.gi_mode == GeometryInstance3D.GI_MODE_STATIC and _view_only(mi):
-			mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-			aside.append(mi)
+		if mi.gi_mode != GeometryInstance3D.GI_MODE_STATIC or mi.mesh == null or not mi.is_visible_in_tree():
+			continue
+		var clear: Array = []
+		if not _view_only(mi):
+			for i in mi.mesh.get_surface_count():
+				if see_through(mi.get_active_material(i)):
+					clear.append(i)
+			if clear.is_empty():
+				continue
+			if clear.size() < mi.mesh.get_surface_count():
+				stand_ins.append(_without(mi, clear))
+		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+		aside.append(mi)
 	have.bake(root, false)
 	for mi: MeshInstance3D in aside:
 		mi.gi_mode = GeometryInstance3D.GI_MODE_STATIC
+	for n: Node in stand_ins:
+		n.get_parent().remove_child(n)
+		n.free()
 	var data := have.data
 	if data == null:
 		we.remove_child(have)
@@ -176,6 +206,29 @@ static func sync(want: bool) -> String:
 	data.interior = false
 	have.set_meta(&"gn_signature", mark)
 	return "made"
+
+
+# A shape as `mi` without the surfaces listed, beside it for the time the
+# cubes are made (never saved, never drawn: it is gone before the next frame).
+static func _without(mi: MeshInstance3D, surfaces: Array) -> MeshInstance3D:
+	var mesh := ArrayMesh.new()
+	var twin := MeshInstance3D.new()
+	twin.name = "RoomLightStandIn"
+	twin.set_meta(&"gn_generated", true)
+	for i in mi.mesh.get_surface_count():
+		if i in surfaces:
+			continue
+		if mi.mesh is ArrayMesh and (mi.mesh as ArrayMesh).surface_get_primitive_type(i) != Mesh.PRIMITIVE_TRIANGLES:
+			continue
+		var arrays := mi.mesh.surface_get_arrays(i)
+		if arrays.is_empty() or arrays[Mesh.ARRAY_VERTEX] == null:
+			continue
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		mesh.surface_set_material(mesh.get_surface_count() - 1, mi.get_active_material(i))
+	twin.mesh = mesh
+	mi.get_parent().add_child(twin)
+	twin.transform = mi.transform
+	return twin
 
 
 ## Takes the cubes away (the scene keeps its setting).

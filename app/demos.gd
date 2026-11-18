@@ -135,7 +135,7 @@ const ROOMS := [
 			[Vector3(-1.2, 1.0, -2.2), "Basins", "Two, set in a walnut unit with drawers below."]]},
 	{"file": "wooden-staircase", "scene": "hall", "title": "Hall",
 		"credit": "The Wooden Staircase by Wig42 (CC BY 3.0), from Benedikt Bitterli's rendering resources",
-		"sun": Vector3(0.4, 0.6, -0.7), "ev": 0.25,
+		"sun": Vector3(0.4, 0.6, -0.7), "ev": 1.0,
 		"cameras": [["Hall", Vector3(0.03, 1.53, 4.88), Quaternion(0.023, 0.004, 0.0, 1.0), 42.0],
 			["Staircase", Vector3(-2.3, 1.6, -0.5), Vector3(1.2, 1.5, -2.4), 60.0]],
 		"spots": [[Vector3(1.2, 1.0, -1.4), "Staircase", "Oak, with turned balusters: walk up it (or point at the landing in a headset)."]]},
@@ -203,7 +203,9 @@ static func _interiors(main: Node, out_dir: String) -> int:
 			GnEnvironment.apply("sky", "Photo: high cloud", false)
 		GnEnvironment.apply("exposure", float(room.ev), false)
 		GnEnvironment.apply("fog", 0.0, false)
-		# Light that bounces: the room is lit by its windows in the view too.
+		# Light that bounces: the room is lit by its windows in the view too. The
+		# sky has no way in (the windows are panes that glow), so little of it.
+		GnEnvironment.apply("ambient", 0.15, false)
 		GnEnvironment.apply("bounce", true, false)
 		for spec in room.cameras:
 			var c := Camera3D.new()

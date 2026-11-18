@@ -88,7 +88,8 @@ static func set_setting(key: String, value: Variant) -> void:
 	else:
 		kept[key] = value
 	var ur := GnHost.undo_redo()
-	ur.create_action("Genesis: web walkthrough", UndoRedo.MERGE_ENDS, root)
+	# (Named by the setting, so that typing a title is one undo step and the next setting another.)
+	ur.create_action("Genesis: web walkthrough, %s" % key, UndoRedo.MERGE_ENDS, root)
 	ur.add_do_method(root, &"set_meta", META, kept)
 	ur.add_undo_method(root, &"set_meta", META, root.get_meta(META, {}))
 	ur.commit_action()

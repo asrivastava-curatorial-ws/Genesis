@@ -7,6 +7,7 @@ extends RefCounted
 # and put back afterwards, and none of it touches the undo history.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnRoomLight := preload("res://addons/genesis/core/gn_room_light.gd")
 
 # Frames to wait before capturing, for the screen-space effects to settle.
 const SETTLE_DRAFT := 8
@@ -31,7 +32,9 @@ static func begin_high() -> State:
 		# GI) is deliberately NOT used: tested on the demo, it adds the photo
 		# sky's light to an open field a second time and washes the whole image
 		# out, killing the sun's shadows. Screen-space GI keeps the contrast.
-		_change(st, env, "ssil_enabled", true)
+		# (Where voxel light already carries light from surface to surface,
+		# the screen's own guess at it would count that light twice.)
+		_change(st, env, "ssil_enabled", not GnRoomLight.is_on())
 		_change(st, env, "ssil_intensity", 1.2)
 		_change(st, env, "ssao_enabled", true)
 	if sun:
@@ -45,6 +48,8 @@ static func begin_high() -> State:
 	RenderingServer.environment_set_ssil_quality(RenderingServer.ENV_SSIL_QUALITY_ULTRA, true, 0.5, 4, 50, 300)
 	# A finer haze grid, so narrow stage beams stay crisp instead of smearing.
 	RenderingServer.environment_set_volumetric_fog_volume_size(160, 128)
+	# Voxel light gathered from six directions rather than four.
+	RenderingServer.voxel_gi_set_quality(RenderingServer.VOXEL_GI_QUALITY_HIGH)
 	return st
 
 
@@ -63,6 +68,7 @@ static func end(st: State) -> void:
 	RenderingServer.environment_set_volumetric_fog_volume_size(
 		ProjectSettings.get_setting("rendering/environment/volumetric_fog/volume_size", 64),
 		ProjectSettings.get_setting("rendering/environment/volumetric_fog/volume_depth", 64))
+	RenderingServer.voxel_gi_set_quality(ProjectSettings.get_setting("rendering/global_illumination/voxel_gi/quality", 0))
 
 
 static func _change(st: State, obj: Object, prop: String, value: Variant) -> void:

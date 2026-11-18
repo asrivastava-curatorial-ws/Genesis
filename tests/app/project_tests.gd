@@ -20,6 +20,8 @@ const GnRender := preload("res://addons/genesis/core/gn_render.gd")
 const GnImport := preload("res://addons/genesis/core/gn_import.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
 const GnLiveLink := preload("res://addons/genesis/core/gn_live_link.gd")
+const GnInside := preload("res://addons/genesis/core/gn_inside.gd")
+const GnMaterials := preload("res://addons/genesis/core/gn_materials.gd")
 const GnUpscale := preload("res://addons/genesis/core/gn_upscale.gd")
 const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const GnPlacement := preload("res://addons/genesis/core/gn_placement.gd")
@@ -593,7 +595,9 @@ func _models() -> void:
 	var g_mesh := inst.find_children("*", "MeshInstance3D", true, false)
 	check(not g_mesh.is_empty(), "gltf: its mesh is there")
 	var g_mat: Material = (g_mesh[0] as MeshInstance3D).mesh.surface_get_material(0) if not g_mesh.is_empty() else null
-	check(g_mat is BaseMaterial3D and (g_mat as BaseMaterial3D).albedo_texture is ImageTexture and (g_mat as BaseMaterial3D).albedo_texture.resource_path.contains("::"), "gltf: its texture is packed into the scene, to open anywhere")
+	var g_tex: Texture2D = (g_mat as BaseMaterial3D).albedo_texture if g_mat is BaseMaterial3D else null
+	check(g_tex != null and (g_tex is PortableCompressedTexture2D or g_tex is ImageTexture) and g_tex.resource_path.contains("::"), "gltf: its texture is packed into the scene, to open anywhere")
+	check(g_tex != null and g_tex.get_image() != null and not g_tex.get_image().is_empty() and g_tex.get_width() > 0, "gltf: and can be read back as a picture (%s)" % (g_tex.get_class() if g_tex else "none"))
 	inst.free()
 	# Options: centimetres and Z up.
 	r = GnModelImport.convert_file(src + "/box.obj", dir + "/assets", {"scale": 0.01, "up": "z", "name": "box_cm"})
@@ -657,9 +661,117 @@ func _models() -> void:
 		scenes.save()
 		text = FileAccess.get_file_as_string(dir + "/scenes/main.tscn")
 		check(not text.contains('type="ArrayMesh"'), "one shape: so the next save is small again (%d KB)" % (text.length() / 1024))
+	_inside_models(src, dir)
 	check(GnModelImport.convert_file(src + "/box.dwg", dir + "/assets").error.contains("can bring in"), "formats: an unknown format says which ones work")
 	var blend := GnModelImport.convert_file(src + "/house.blend", dir + "/assets")
 	check(blend.error != "", "formats: .blend without the file (or Blender) gives a reason")
+
+
+# What a scene changes inside a model (a material on a surface, a part
+# hidden, a note on a part) is kept as a list on the model's node, and the
+# model is written as one node: not every part in full, shapes and all.
+func _inside_models(src: String, dir: String) -> void:
+	var house := Node3D.new()
+	house.name = "Shed"
+	for part in [["Wall", Vector3(4, 3, 0.3), Vector3(0, 1.5, 0)], ["Roof", Vector3(4.4, 0.2, 3), Vector3(0, 3.1, 1.2)], ["Door", Vector3(1, 2.1, 0.1), Vector3(0.8, 1.05, 0.2)]]:
+		var mi := MeshInstance3D.new()
+		mi.name = part[0]
+		var ball := SphereMesh.new()   # many points, so that a copy of it would show in the file's size
+		ball.radial_segments = 48
+		ball.rings = 24
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, ball.get_mesh_arrays())
+		mi.mesh = mesh
+		mi.scale = part[1]
+		mi.position = part[2]
+		house.add_child(mi)
+		mi.owner = house
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	doc.append_from_scene(house, state)
+	doc.write_to_filesystem(state, src + "/shed.glb")
+	house.free()
+	check(GnImport.import_runtime(src + "/shed.glb") == "", "inside: a model of three parts is brought in")
+	var shed := scenes.root.get_node_or_null("Shed") as Node3D
+	var file := dir + "/scenes/main.tscn"
+	if shed == null:
+		return
+	scenes.save()
+	var plain := FileAccess.get_file_as_string(file).length()
+	# As the Materials page does it: the surface's own material, changed (the model is marked as changed inside).
+	var surfaces := GnMaterials.surfaces(shed)
+	var wall_s = surfaces.filter(func(x): return str(x.mesh.name) == "Wall")[0]
+	GnMaterials.set_param(wall_s, "albedo_color", Color(0.7, 0.2, 0.1))
+	var roof := shed.get_node("Roof") as MeshInstance3D
+	roof.visible = false
+	var door := shed.get_node("Door") as MeshInstance3D
+	door.set_meta(&"gn_note", {"opens": "inwards"})
+	check(scenes.root.is_editable_instance(shed), "inside: a material changed on a surface marks the model as changed inside")
+	var list: Dictionary = GnInside.changes(shed, scenes.root)
+	check(list.size() == 3 and list.has("Wall") and (list.Wall as Dictionary).has("surface_material_override/0") and list.get("Roof", {}) == {"visible": false}
+		and (list.get("Door", {}) as Dictionary).has("metadata/gn_note"), "inside: what the scene changed is found by comparing with the model file (%s)" % [list.keys()])
+	scenes.save()
+	var text := FileAccess.get_file_as_string(file)
+	check(not text.contains('type="ArrayMesh"') and text.contains("gn_inside") and not text.contains("[editable") and text.length() < plain + 4000,
+		"inside: the scene is saved with the list, and without the model's shapes (%d bytes more than before)" % (text.length() - plain))
+	check(not shed.has_meta(GnInside.META) and scenes.root.is_editable_instance(shed) and (shed.get_node("Wall") as MeshInstance3D).mesh != null,
+		"inside: the scene that is open is as it was")
+	projects.close()
+	check(projects.open(dir) == "", "inside: the project opens again")
+	shed = scenes.root.get_node_or_null("Shed") as Node3D
+	var wall := shed.get_node_or_null("Wall") as MeshInstance3D if shed else null
+	roof = shed.get_node_or_null("Roof") as MeshInstance3D if shed else null
+	door = shed.get_node_or_null("Door") as MeshInstance3D if shed else null
+	var mat := wall.get_surface_override_material(0) as BaseMaterial3D if wall else null
+	check(mat != null and mat.albedo_color.is_equal_approx(Color(0.7, 0.2, 0.1)), "inside: the wall has its material")
+	check(roof != null and not roof.visible and door != null and door.get_meta(&"gn_note", {}) == {"opens": "inwards"}, "inside: the roof is hidden, the door has its note")
+	check(wall != null and wall.mesh.resource_path.begins_with(dir + "/assets/shed.scn::") and not shed.has_meta(GnInside.META), "inside: and the shapes are the model file's own")
+	# Undone: nothing is listed, and nothing is written.
+	if wall and roof and door:
+		wall.set_surface_override_material(0, null)
+		roof.visible = true
+		door.remove_meta(&"gn_note")
+		check(GnInside.changes(shed, scenes.root).is_empty(), "inside: a model put back as its file has it has nothing listed")
+		roof.visible = false
+	# A scene as earlier versions saved it: every part in full.
+	scenes.root.set_editable_instance(shed, true)
+	var old_way := PackedScene.new()
+	old_way.pack(scenes.root)
+	SceneService.write_scene(old_way, file, dir)
+	var heavy := FileAccess.get_file_as_string(file)
+	check(heavy.count('type="ArrayMesh"') >= 3 and heavy.length() > text.length() * 5, "inside: (a scene saved the old way holds every shape of the model: %d KB)" % (heavy.length() / 1024))
+	projects.close()
+	check(projects.open(dir) == "", "inside: such a scene opens")
+	shed = scenes.root.get_node_or_null("Shed") as Node3D
+	wall = shed.get_node_or_null("Wall") as MeshInstance3D if shed else null
+	roof = shed.get_node_or_null("Roof") as MeshInstance3D if shed else null
+	check(wall != null and wall.mesh.resource_path.begins_with(dir + "/assets/shed.scn::") and roof != null and not roof.visible,
+		"inside: its parts are given the model file's own shapes again, and keep what was changed")
+	scenes.mark_dirty()
+	scenes.save()
+	text = FileAccess.get_file_as_string(file)
+	check(not text.contains('type="ArrayMesh"') and not text.contains("[editable"), "inside: so the next save is small (%d KB)" % (text.length() / 1024))
+	# The model comes in again from its source: what was changed inside stays.
+	if shed and roof:
+		(shed.get_node("Door") as Node).set_meta(&"gn_note", {"opens": "outwards"})
+		var again := GnLiveLink.replace_instance(shed, shed.scene_file_path)
+		var roof2 := again.get_node_or_null("Roof") as MeshInstance3D
+		check(again != shed and roof2 != null and not roof2.visible and (again.get_node("Door") as Node).get_meta(&"gn_note", {}) == {"opens": "outwards"},
+			"inside: a model that comes in again keeps its hidden part and its note")
+	# A model that is one shape, with another material on it.
+	var pebble := scenes.root.get_node_or_null("Pebble") as MeshInstance3D
+	if pebble:
+		var blue := StandardMaterial3D.new()
+		blue.albedo_color = Color(0.1, 0.2, 0.9)
+		pebble.set_surface_override_material(0, blue)
+		scenes.mark_dirty()
+		scenes.save()
+		projects.close()
+		projects.open(dir)
+		pebble = scenes.root.get_node_or_null("Pebble") as MeshInstance3D
+		var kept := pebble.get_surface_override_material(0) as BaseMaterial3D if pebble else null
+		check(kept != null and kept.albedo_color.is_equal_approx(Color(0.1, 0.2, 0.9)) and pebble.mesh.resource_path.contains("pebble.scn::"),
+			"inside: a model that is one shape keeps the material put on it")
 
 
 # The formats the built-in engine converts: USD, Alembic, Collada, 3DS, STL,
