@@ -3,7 +3,7 @@
 // instances), texts, and what a visitor's feet and pointer meet.
 
 import {
-	AmbientLight, Box3, BufferAttribute, BufferGeometry, CanvasTexture, Color, DirectionalLight, DoubleSide,
+	AmbientLight, Box3, BufferAttribute, BufferGeometry, CanvasTexture, Color, CubeCamera, DirectionalLight, DoubleSide, HalfFloatType, WebGLCubeRenderTarget,
 	EquirectangularReflectionMapping, FogExp2, Group, InstancedMesh, LinearFilter, LinearSRGBColorSpace, Matrix4, Mesh,
 	MeshBasicMaterial, PlaneGeometry, PMREMGenerator, PointLight, SRGBColorSpace, SpotLight, TextureLoader, Vector3,
 	ACESFilmicToneMapping, AgXToneMapping, LinearToneMapping, ReinhardToneMapping, CineonToneMapping,
@@ -57,6 +57,7 @@ export class World {
 		this.baked = !!(this.data.bake && this.data.bake.objects);
 		this.bounds = new Box3();
 		this.pending = [];
+		this.probes = [];
 		this.root = new Group();
 		this.root.name = 'oriel';
 		app.scene.add(this.root);
@@ -142,8 +143,110 @@ export class World {
 		const lm = this.baked ? this.data.bake.objects[objectName] : null;
 		const base = this.mats.get(mesh.userData.oMat ?? mesh.material.name);
 		mesh.userData.oMat = base.name;
+		if (lm && lm.vertex) {
+			// Light baked at the shape's corners travels with it, as its colours.
+			mesh.material = mesh.geometry.attributes.color ? this.mats.forCorners(base, lm, this.data.bake.vertex_range ?? 1) : base;
+			return;
+		}
 		mesh.material = lm ? this.mats.forBaked(base, lm) : base;
 		if (lm && !mesh.geometry.attributes['uv' + (lm.uv ?? 1)]) mesh.material = base;
+	}
+
+	// As dress(), and mirroring the place the object was found to stand in.
+	dressed(mesh, objectName) {
+		this.dress(mesh, objectName);
+		const probe = this.probes[mesh.userData.oProbe];
+		if (probe) mesh.material = this.mats.forProbe(mesh.material, probe);
+	}
+
+	// ------------------------------------------------------------ reflections of the place itself
+	// A polished floor in a room mirrors the room, not the open sky, and a metal lamp shows the walls
+	// round it. So the scene is looked at all the way round from a few places (where the saved views
+	// stand), and every object mirrors the nearest of those places that it can see; one that sees none
+	// keeps the sky. Only with baked light: what is seen from those places then has the room's own
+	// light in it.
+	probePlaces(max) {
+		const out = [];
+		for (const v of this.data.views || []) {
+			const p = new Vector3(...v.position);
+			if (out.every((q) => q.distanceTo(p) > 2.5)) out.push(p);
+		}
+		if (!out.length) {
+			const c = this.bounds.getCenter(new Vector3());
+			out.push(new Vector3(c.x, this.bounds.min.y + 1.5, c.z));
+		}
+		return out.slice(0, max);
+	}
+
+	async reflect(onProgress) {
+		const { app } = this;
+		if (!this.baked || app.noProbes) return;
+		const renderer = app.renderer;
+		const places = this.probePlaces(app.light ? 2 : 6);
+		const size = app.light ? 64 : 128;
+		const target = new WebGLCubeRenderTarget(size, { type: HalfFloatType });
+		const cam = new CubeCamera(0.05, 2000, target);
+		const pmrem = new PMREMGenerator(renderer);
+		this.root.updateMatrixWorld(true);
+		const take = (probe) => {
+			cam.position.copy(probe.at);
+			cam.update(renderer, app.scene);
+			const old = probe.texture;
+			probe.texture = pmrem.fromCubemap(target.texture).texture;
+			for (const m of probe.materials) m.envMap = probe.texture;
+			if (old) old.dispose();
+		};
+		const probes = places.map((at, index) => ({ at, index, texture: null, materials: [] }));
+		// Twice: the second look sees polished things already mirroring the place.
+		for (let pass = 0; pass < 2; pass++) {
+			for (const probe of probes) {
+				take(probe);
+				if (onProgress) onProgress((pass * probes.length + probe.index + 1) / (probes.length * 2));
+				await new Promise((r) => setTimeout(r, 0));
+			}
+			if (pass === 0) {
+				this.probes = probes;
+				this.place();
+			}
+		}
+		target.dispose();
+		pmrem.dispose();
+	}
+
+	// Which place each object mirrors.
+	place() {
+		const box = new Box3(), centre = new Vector3(), dir = new Vector3(), size = new Vector3();
+		const pick = (mesh) => {
+			box.setFromObject(mesh);
+			if (box.isEmpty()) return -1;
+			box.getCenter(centre);
+			const radius = box.getSize(size).length() * 0.5;
+			let best = -1, bestD = Infinity;
+			for (const probe of this.probes) {
+				const d = probe.at.distanceTo(centre);
+				if (d >= bestD) continue;
+				if (d > radius) {
+					dir.copy(centre).sub(probe.at).normalize();
+					const hit = this.app.nav.cast(probe.at, dir, d);
+					// Something in the way that is not the object's own near side.
+					if (hit && hit.distance < d - radius * 1.05 - 0.05) continue;
+				}
+				best = probe.index;
+				bestD = d;
+			}
+			return best;
+		};
+		for (const [name, parts] of this.meshes) {
+			for (const mesh of parts) {
+				mesh.userData.oProbe = pick(mesh);
+				this.dressed(mesh, name);
+			}
+		}
+		this.root.traverse((o) => {
+			if (!o.isInstancedMesh) return;
+			const probe = this.probes[pick(o)];
+			if (probe) o.material = this.mats.forProbe(o.material, probe);
+		});
 	}
 
 	build(gltf) {
@@ -399,7 +502,7 @@ export class World {
 			if (!mesh) continue;
 			if (mesh.userData.oFirst === undefined) mesh.userData.oFirst = mesh.userData.oMat;
 			mesh.userData.oMat = index < 0 ? mesh.userData.oFirst : choice.options[index].material;
-			this.dress(mesh, name);
+			this.dressed(mesh, name);
 		}
 		choice.chosen = index;
 	}

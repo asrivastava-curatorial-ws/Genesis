@@ -10,6 +10,7 @@ const EVERY = 0.3;                    // seconds between looks (longer in a head
 const STRENGTH = 0.8;                 // how far it evens the light out (1: all the way)
 const SLACK = 1.5;                    // within this much of the reference nothing changes
 const DARKEST = 0.6, BRIGHTEST = 8;   // the limits of what it does to the exposure
+const GLARE = 1.5;                    // ... and closes down when the picture is this many times brighter than that
 const KEY = 0.45;                     // a picture this bright on average is bright enough: it never opens up beyond it
 const TAU_UP = 0.9, TAU_DOWN = 0.4;   // seconds: slower getting used to the dark than to the light
 
@@ -94,6 +95,9 @@ export class Eye {
 				// raised in Oriel for a room is left as it is).
 				want = Math.min(Math.pow(ratio / SLACK, STRENGTH), Math.max(1, KEY / Math.max(this.base * lum, 1e-5)));
 			} else if (ratio < 1 / SLACK) want = Math.pow(ratio * SLACK, STRENGTH);
+			// A picture washed out by the exposure it was given (a white room in full sun) is held back.
+			const shown = this.base * lum;
+			if (shown > KEY * GLARE) want = Math.min(want, Math.pow(KEY * GLARE / shown, STRENGTH));
 			this.want = Math.min(Math.max(want, DARKEST), BRIGHTEST);
 		};
 		if (renderer.readRenderTargetPixelsAsync && !renderer.xr.isPresenting && !this.sync) {

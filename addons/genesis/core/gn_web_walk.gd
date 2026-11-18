@@ -54,6 +54,8 @@ const DEFAULTS := {
 	"minimap": true,
 	"measure": true,
 	"vr": true,
+	# The picture's exposure follows the light, as a camera's on automatic: brighter in a room, held back in full sun.
+	"auto_exposure": true,
 	"eye_height": 1.6,
 	"walk_speed": 1.4,
 	"accent": "#58a6ff",
@@ -178,7 +180,7 @@ static func export_web(out_dir: String, options: Dictionary, host: Node, progres
 		"bake": bake,
 		"options": {
 			"start_view": str(opt.start_view), "auto_tour": bool(opt.auto_tour), "idle_tour_s": float(opt.idle_tour_s),
-			"minimap": bool(opt.minimap), "measure": bool(opt.measure), "vr": bool(opt.vr),
+			"minimap": bool(opt.minimap), "measure": bool(opt.measure), "vr": bool(opt.vr), "auto_exposure": bool(opt.auto_exposure),
 			"eye_height": float(opt.eye_height), "walk_speed": float(opt.walk_speed), "accent": str(opt.accent),
 		},
 	}

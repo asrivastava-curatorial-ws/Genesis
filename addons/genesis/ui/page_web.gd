@@ -28,6 +28,7 @@ var _plan: CheckBox
 var _measure: CheckBox
 var _vr: CheckBox
 var _tour: CheckBox
+var _eye: CheckBox
 var _idle: HSlider
 var _write: Button
 var _stop: Button
@@ -78,6 +79,7 @@ func _init() -> void:
 	_plan = _tick("A plan in the corner", "A small plan from above that shows where the visitor is; a click on it goes there", "minimap")
 	_measure = _tick("Measuring", "Visitors can measure between two points", "measure")
 	_vr = _tick("VR button", "Shown in a headset's browser, and wherever a headset is connected", "vr")
+	_eye = _tick("The eye adjusts to the light", "As a camera left on automatic: the picture brightens on stepping into a room and is held back in full sun, within limits round the exposure set under Environment", "auto_exposure")
 	_tour = _tick("Start with the tour", "The walkthrough goes from camera to camera by itself until the visitor does something", "auto_tour")
 	_idle = GnUi.slider(self, "Tour when left alone", 0.0, 180.0, 5.0, func(v): if not _filling: GnWebWalk.set_setting("idle_tour_s", v),
 		func(v): return "never" if v < 1.0 else "after %d s" % int(v))
@@ -215,6 +217,7 @@ func refresh() -> void:
 	_measure.button_pressed = bool(s.measure)
 	_vr.button_pressed = bool(s.vr)
 	_tour.button_pressed = bool(s.auto_tour)
+	_eye.button_pressed = bool(s.auto_exposure)
 	GnUi.show_value(_idle, float(s.idle_tour_s))
 	_light_words()
 	_refresh_written()

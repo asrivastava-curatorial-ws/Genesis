@@ -82,6 +82,9 @@ class App {
 			const wait = () => (open <= 0 ? resolve() : setTimeout(wait, 40));
 			wait();
 		});
+		this.noProbes = params.get('probes') === '0';
+		this.ui.progress(1, 'Looking round…');
+		await this.world.reflect();
 		this.ui.build();
 		await this.xr.init();
 		this.place(views);

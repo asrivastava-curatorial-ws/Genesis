@@ -143,7 +143,10 @@ static func _apply_options(root: Node3D, opts: Dictionary) -> void:
 
 
 # Every texture in the model, kept inside the scene so it opens anywhere.
-# Very large images are brought down to 4K.
+# Very large images are brought down to 4K. They are kept as WebP (a
+# photograph kept raw is a dozen megabytes a time, and a furnished room has
+# dozens): with a little loss for pictures, without any for small swatches
+# of flat colour, where a neighbour's colour must not run in.
 static func _pack_textures(root: Node) -> void:
 	var done := {}
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
@@ -158,11 +161,15 @@ static func _pack_textures(root: Node) -> void:
 					if tex is Texture2D and tex.resource_path == "":
 						var key: int = tex.get_instance_id()
 						if not done.has(key):
-							done[key] = _inline(tex)
+							done[key] = _inline(tex, p == "normal_texture")
 						mat.set(p, done[key])
 
 
-static func _inline(tex: Texture2D) -> Texture2D:
+## Pictures of no more pixels than this are kept without loss.
+const SWATCH_PIXELS := 16384
+
+
+static func _inline(tex: Texture2D, normal_map := false) -> Texture2D:
 	var img := tex.get_image()
 	if img == null or img.is_empty():
 		return tex
@@ -173,7 +180,17 @@ static func _inline(tex: Texture2D) -> Texture2D:
 		img.resize(roundi(img.get_width() * s), roundi(img.get_height() * s), Image.INTERPOLATE_LANCZOS)
 	if not img.has_mipmaps():
 		img.generate_mipmaps()
-	return ImageTexture.create_from_image(img)
+	var packed := PortableCompressedTexture2D.new()
+	# (Outside the editor the WebP is let go once the picture is on the
+	# graphics card, and the scene would be saved without it: it is kept.)
+	packed.keep_compressed_buffer = true
+	var swatch := img.get_width() * img.get_height() <= SWATCH_PIXELS
+	packed.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS if swatch else PortableCompressedTexture2D.COMPRESSION_MODE_LOSSY,
+		normal_map, 0.95 if normal_map else 0.9)
+	if packed.get_width() != img.get_width():
+		# (Should the picture not take: as it was kept before.)
+		return ImageTexture.create_from_image(img)
+	return packed
 
 
 # ------------------------------------------------------------------- Blender

@@ -180,6 +180,39 @@ export class Materials {
 		return m;
 	}
 
+	// The same material mirroring one of the places the scene was looked round from (world.js, reflect).
+	forProbe(material, probe) {
+		if (!material.isMeshStandardMaterial) return material;
+		const key = material.uuid + '|probe|' + probe.index;
+		let m = this.baked.get(key);
+		if (m) return m;
+		m = material.clone();
+		m._oLm = material._oLm;
+		m._oVRange = material._oVRange;
+		m.envMap = probe.texture;
+		m.envMapIntensity = 1;
+		patch(m, material.userData.flags || {});
+		if (material.userData.water) this.water.push(m);
+		probe.materials.push(m);
+		this.baked.set(key, m);
+		return m;
+	}
+
+	// The material for a shape whose baked light is at its corners (its colours: the square root of the light, over `range`).
+	forCorners(material, lm, range) {
+		if (!material.isMeshStandardMaterial) return material;
+		const key = material.uuid + '|corners|' + (lm.env ?? 1);
+		let m = this.baked.get(key);
+		if (m) return m;
+		m = material.clone();
+		m.vertexColors = true;
+		m._oVRange = range * Math.PI;
+		m.envMapIntensity = (material.envMapIntensity ?? 1) * (lm.env ?? 1);
+		patch(m, { ...(material.userData.flags || {}), baked: true, corners: true });
+		this.baked.set(key, m);
+		return m;
+	}
+
 	// The same material for one object's patch of baked light: a copy that
 	// shares the pictures and the program, with the patch's place in its atlas.
 	forBaked(material, lm) {
@@ -294,6 +327,7 @@ uniform vec4 oMetalCh;
 uniform vec4 oAoCh;
 #ifdef ORIEL_BAKED
 	uniform vec4 oLm;
+	uniform float oVRange;
 #endif
 #ifdef ORIEL_TRI
 	varying vec3 oWPos;
@@ -352,11 +386,22 @@ const NORMAL_TRI = /* glsl */`
 #else
 `;
 
+const ALPHA_TEST = /* glsl */`
+#ifdef USE_ALPHATEST
+	#ifdef ALPHA_TO_COVERAGE
+		diffuseColor.a = clamp( ( diffuseColor.a - alphaTest ) / max( fwidth( diffuseColor.a ), 0.0001 ) + 0.5, 0.0, 1.0 );
+		if ( diffuseColor.a == 0.0 ) discard;
+	#else
+		if ( diffuseColor.a < alphaTest ) discard;
+	#endif
+#endif
+`;
+
 // Adjusts the standard material's shader for what `flags` asks. Materials
 // asking for the same things share one program.
 export function patch(material, flags) {
 	material.userData.flags = flags;
-	const key = ['o', flags.tri ? 1 : 0, flags.triWorld ? 1 : 0, flags.baked ? 1 : 0, flags.water ? 1 : 0].join('');
+	const key = ['o', flags.tri ? 1 : 0, flags.triWorld ? 1 : 0, flags.baked ? 1 : 0, flags.water ? 1 : 0, flags.corners ? 1 : 0].join('');
 	material.customProgramCacheKey = () => key;
 	material.onBeforeCompile = (shader) => {
 		const tri = material.userData.tri || { scale: [1, 1, 1], offset: [0, 0, 0], sharpness: 1 };
@@ -369,8 +414,9 @@ export function patch(material, flags) {
 		shader.uniforms.oTriSharp = { value: tri.sharpness ?? 1 };
 		shader.uniforms.oTime = { value: 0 };
 		shader.uniforms.oLm = { value: material._oLm || new Vector4(0, 0, 1, 1) };
+		shader.uniforms.oVRange = { value: material._oVRange ?? 1 };
 		const defs = (f.tri ? '#define ORIEL_TRI\n' : '') + (f.triWorld ? '#define ORIEL_TRI_WORLD\n' : '')
-			+ (f.baked ? '#define ORIEL_BAKED\n' : '') + (f.water ? '#define ORIEL_WATER\n' : '');
+			+ (f.baked ? '#define ORIEL_BAKED\n' : '') + (f.water ? '#define ORIEL_WATER\n' : '') + (f.corners ? '#define ORIEL_CORNERS\n' : '');
 		let v = shader.vertexShader;
 		v = swap(v, '#include <common>', '#include <common>\n' + VERT_PARS, 'common');
 		v = swap(v, '#include <project_vertex>', VERT_MAIN + '\n#include <project_vertex>', 'project');
@@ -394,7 +440,14 @@ export function patch(material, flags) {
 		let lm = swap(ShaderChunk.lights_fragment_maps, 'texture2D( lightMap, vLightMapUv )',
 			'texture2D( lightMap, clamp( vLightMapUv, 0.0, 1.0 ) * oLm.zw + oLm.xy )', 'lightmap');
 		lm = swap(lm, '#if defined( USE_ENVMAP ) && defined( ENVMAP_TYPE_PMREM )', '#if defined( USE_ENVMAP ) && defined( ENVMAP_TYPE_PMREM ) && ! defined( ORIEL_BAKED )', 'ibl');
+		// Baked light at the corners: the shape's colours are light here, not paint.
+		lm = swap(lm, '#ifdef USE_LIGHTMAP', '#ifdef ORIEL_CORNERS\n\t\tirradiance += vColor.rgb * vColor.rgb * oVRange;\n\t#endif\n\t#ifdef USE_LIGHTMAP', 'corner light');
+		if (f.corners) s = swap(s, '#include <color_fragment>', '', 'colours');
 		s = swap(s, '#include <lights_fragment_maps>', f.baked ? lm : ShaderChunk.lights_fragment_maps, 'lights chunk');
+		// Cut-outs with smoothed edges: three.js's own way of doing it asks for a smoothstep between two equal
+		// numbers wherever a picture's alpha is even (GLSL leaves the answer open, and some drivers answer
+		// "nothing here"). The same edge, worked out so that it is always defined.
+		s = swap(s, '#include <alphatest_fragment>', ALPHA_TEST, 'alpha test');
 		if (f.baked) {
 			// The lamps' and the sun's direct light is in the bake; their glints stay.
 			s = swap(s, 'vec3 totalDiffuse = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;', 'vec3 totalDiffuse = reflectedLight.indirectDiffuse;', 'total diffuse');

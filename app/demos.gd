@@ -1,10 +1,18 @@
 extends RefCounted
 
-# Builds the two demonstration projects, inside the program, with the same
+# Builds the demonstration projects, inside the program, with the same
 # tools a user has, and renders their sample pictures:
 #
 #   Genesis -- --make-demos <folder>
 #
+#   Interiors demo           five furnished rooms, each a scene: a living
+#                            room, a kitchen, a bedroom, a bathroom and a
+#                            hall with a staircase; lit through their windows
+#                            with bounced light, cameras in each, and a web
+#                            walkthrough set up with hotspots and credits.
+#                            The rooms are the work of others (see ROOMS);
+#                            tools/fetch_demo_assets.sh fetches them, and
+#                            without them this demo is left out.
 #   Architecture demo        a small museum pavilion: concrete, wood, glass and
 #                            paving; trees, furniture, people, cars; an avenue
 #                            along the street; a breeze; people walking a
@@ -16,7 +24,7 @@ extends RefCounted
 #                            arrays, moving heads, audience, effects, haze, and
 #                            four show cues
 #
-# Everything in them is generated here or comes from the CC0 library.
+# Everything in the last two is generated here or comes from the CC0 library.
 
 const App := preload("res://app/core/app.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
@@ -44,6 +52,8 @@ const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const Spread := preload("res://addons/genesis/set/gn_spread.gd")
 const GnFilm := preload("res://addons/genesis/core/gn_film.gd")
 const GnWeather := preload("res://addons/genesis/core/gn_weather.gd")
+const GnWebWalk := preload("res://addons/genesis/core/gn_web_walk.gd")
+const GnWebSpots := preload("res://addons/genesis/core/gn_web_spots.gd")
 
 const RENDER_SIZE := Vector2i(1920, 1080)
 ## --render-samples --quality <name>: samples per pixel, as on the Render page.
@@ -56,6 +66,7 @@ const FILM_FPS := 12
 static func run(main: Node, out_dir: String) -> int:
 	var failures := 0
 	DirAccess.make_dir_recursive_absolute(out_dir)
+	failures += await _interiors(main, out_dir)
 	failures += await _architecture(main, out_dir)
 	failures += await _event(main, out_dir)
 	App.projects.close()
@@ -64,6 +75,148 @@ static func run(main: Node, out_dir: String) -> int:
 
 static func _say(text: String) -> void:
 	print("GENESIS_DEMO %s" % text)
+
+
+# --------------------------------------------------------------- interiors
+## Where tools/fetch_demo_assets.sh puts the rooms (plain glTF, in metres).
+const ROOMS_DIR := "res://genesis_data/external/demo_rooms"
+
+## The rooms, each a scene of the project. They come from Benedikt Bitterli's
+## rendering resources (https://benedikt-bitterli.me/resources/), as glTF by
+## Garrett Johnson (github.com/gkjohnson/3d-demo-data); who modelled each, and
+## under which licence, is in "credit" and goes with the scene wherever it
+## goes (the walkthrough shows it; the project's CREDITS.txt lists it).
+##   sun      where the sun stands, seen from the room
+##   ev       the exposure a room lit through its windows wants
+##   cameras  [name, where from, looking at, field of view] ("" for the
+##            look-at: the camera the room came with, by its rotation)
+##   spots    hotspots of the web walkthrough: [where, title, text]
+const ROOMS := [
+	{"file": "white-room", "scene": "main", "title": "Living room",
+		"credit": "The White Room by Jay-Artist (CC BY 3.0), from Benedikt Bitterli's rendering resources",
+		"sun": Vector3(0.3, 0.5, -0.8), "ev": 1.6,
+		"cameras": [["Living room", Vector3(2.25, 1.31, 6.18), Quaternion(-0.018, 0.223, 0.004, 0.975), 58.7],
+			["From the window", Vector3(0.2, 1.45, 1.5), Vector3(0.6, 0.9, 5.2), 62.0],
+			["Fireplace", Vector3(1.9, 1.35, 4.9), Vector3(-2.0, 1.0, 2.9), 50.0]],
+		"spots": [[Vector3(0.5, 0.75, 4.2), "Sofa", "Three seats in white leather, with two armchairs to match."],
+			[Vector3(-1.75, 1.0, 2.9), "Fireplace", "Cast iron in a painted surround; the room's first source of heat, long before the radiator."],
+			[Vector3(0.4, 2.2, 0.75), "Bay window", "Three sashes facing south-east: the room is lit by them alone."]]},
+	{"file": "country-kitchen", "scene": "kitchen", "title": "Kitchen",
+		"credit": "Country Kitchen by Jay-Artist (CC BY 3.0), from Benedikt Bitterli's rendering resources",
+		"sun": Vector3(0.25, 0.55, -0.8), "ev": 1.6,
+		"cameras": [["Kitchen", Vector3(1.21, 1.8, 3.85), Quaternion(-0.02, 0.225, 0.005, 0.974), 36.0],
+			["Dining table", Vector3(2.6, 1.5, 0.8), Vector3(0.4, 0.9, -1.8), 55.0],
+			["Worktop", Vector3(1.7, 1.5, 2.0), Vector3(-2.0, 1.0, 0.0), 55.0]],
+		"spots": [[Vector3(-1.9, 1.05, 0.1), "Range cooker", "Five burners on gas, under an extractor hood."],
+			[Vector3(0.6, 0.95, -1.6), "Dining table", "Seats four, by the window."]]},
+	{"file": "bedroom", "scene": "bedroom", "title": "Bedroom",
+		"credit": "Bedroom by SlykDrako (CC0), from Benedikt Bitterli's rendering resources",
+		"sun": Vector3(-0.2, 0.5, -0.85), "ev": 1.6,
+		"cameras": [["Bedroom", Vector3(3.46, 1.21, 3.3), Quaternion(-0.008, 0.416, 0.004, 0.909), 39.4],
+			["From the wardrobe", Vector3(-2.0, 1.5, 3.3), Vector3(0.8, 0.7, -0.4), 58.0],
+			["Bedside", Vector3(2.4, 1.3, 1.6), Vector3(0.0, 0.6, -0.5), 50.0]],
+		"spots": [[Vector3(0.0, 0.8, 0.2), "Bed", "A double bed in beech, between the two windows."]]},
+	{"file": "contemporary-bathroom", "scene": "bathroom", "title": "Bathroom",
+		"credit": "Contemporary Bathroom by Mareck (CC0), from Benedikt Bitterli's rendering resources",
+		"sun": Vector3(-0.85, 0.5, -0.2), "ev": 1.6,
+		"cameras": [["Bathroom", Vector3(0.01, 0.91, -0.23), Quaternion(0.007, 0.413, -0.003, 0.911), 55.0],
+			["Bath", Vector3(1.6, 1.5, -0.45), Vector3(-1.6, 0.6, -0.8), 58.0],
+			["Basins", Vector3(0.7, 1.5, -0.6), Vector3(-1.3, 1.0, -2.3), 55.0]],
+		"spots": [[Vector3(-1.6, 0.75, -0.6), "Bath", "Free-standing, in cast acrylic."],
+			[Vector3(-1.2, 1.0, -2.2), "Basins", "Two, set in a walnut unit with drawers below."]]},
+	{"file": "wooden-staircase", "scene": "hall", "title": "Hall",
+		"credit": "The Wooden Staircase by Wig42 (CC BY 3.0), from Benedikt Bitterli's rendering resources",
+		"sun": Vector3(0.4, 0.6, -0.7), "ev": 1.6,
+		"cameras": [["Hall", Vector3(0.03, 1.53, 4.88), Quaternion(0.023, 0.004, 0.0, 1.0), 42.0],
+			["Staircase", Vector3(-2.3, 1.6, -0.5), Vector3(1.2, 1.5, -2.4), 60.0]],
+		"spots": [[Vector3(1.2, 1.0, -1.4), "Staircase", "Oak, with turned balusters: walk up it (or point at the landing in a headset)."]]},
+]
+
+
+static func _interiors(main: Node, out_dir: String) -> int:
+	var dir := ProjectSettings.globalize_path(ROOMS_DIR)
+	var have: Array = ROOMS.filter(func(r): return FileAccess.file_exists(dir.path_join(str(r.file) + ".glb")))
+	if have.is_empty():
+		_say("note interiors: no rooms in %s (tools/fetch_demo_assets.sh fetches them); left out" % ROOMS_DIR)
+		return 0
+	var err: String = App.projects.create(out_dir, "Interiors demo")
+	if err != "":
+		_say("FAIL interiors: %s" % err)
+		return 1
+	await _frames(main, 3)
+	var failures := 0
+	var credits := PackedStringArray(["Interiors demo: the rooms and who made them", ""])
+	var first := true
+	for room in have:
+		if not first:
+			# A scene of its own beside the others, with sun, sky and ground as a new project has.
+			GnHost.new_scene(str(room.scene))
+			GnEnvironment.set_up()
+			await _frames(main, 2)
+		first = false
+		var root := GnHost.edited_scene_root()
+		err = GnImport.import_runtime(dir.path_join(str(room.file) + ".glb"))
+		if err != "":
+			_say("FAIL interiors %s: %s" % [room.title, err])
+			failures += 1
+			continue
+		var model: Node3D = root.get_child(root.get_child_count() - 1)
+		model.name = str(room.title)
+		# The lawn outside lies just under the floor, not in it.
+		var ground := GnScene.find_role("ground") as Node3D
+		if ground:
+			ground.position.y = -0.08
+		# The sun where the room's windows want it: the heading and the hour that come nearest.
+		var want: Vector3 = (room.sun as Vector3).normalized()
+		var best := -2.0
+		var pick := [0.0, 12.0]
+		for h in range(0, 360, 5):
+			for t in [8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0]:
+				GnEnvironment.apply("heading", float(h), false)
+				GnEnvironment.apply("time_of_day", t, false)
+				var d: float = GnEnvironment.sun().global_transform.basis.z.dot(want)
+				if d > best:
+					best = d
+					pick = [float(h), t]
+		GnEnvironment.apply("heading", pick[0], false)
+		GnEnvironment.apply("time_of_day", pick[1], false)
+		# A room is lit by its windows: light bounces, and the exposure is a room's.
+		GnEnvironment.apply("bounce", true, false)
+		GnEnvironment.apply("exposure", float(room.ev), false)
+		GnEnvironment.apply("fog", 0.0, false)
+		for spec in room.cameras:
+			var c := Camera3D.new()
+			c.name = spec[0]
+			c.fov = spec[3]
+			GnCameras.add(c)
+			if spec[2] is Quaternion:
+				c.global_transform = Transform3D(Basis(spec[2] as Quaternion), spec[1])
+			else:
+				c.look_at_from_position(spec[1], spec[2])
+			GnLook.apply_preset(c, GnLook.PRESETS["Natural"])
+		# The web walkthrough: baked light, who made the room, and a few things to point at.
+		GnWebWalk.set_setting("title", str(room.title))
+		GnWebWalk.set_setting("subtitle", "Interiors demo")
+		GnWebWalk.set_setting("credit", str(room.credit))
+		GnWebWalk.set_setting("bake", "Good")
+		GnWebWalk.set_setting("eye_height", 1.55)
+		for spot in room.get("spots", []):
+			var hs := GnWebSpots.add_hotspot(spot[0], spot[1])
+			GnWebSpots.set_hotspot(hs, "text", spot[2])
+		credits.append("%s (scenes/%s.tscn): %s" % [room.title, room.scene, room.credit])
+		App.scenes.save()
+		_say("ok   interiors: %s" % room.title)
+	credits.append_array(["", "CC BY 3.0: https://creativecommons.org/licenses/by/3.0/   CC0: https://creativecommons.org/publicdomain/zero/1.0/",
+		"The rooms were converted to glTF by Garrett Johnson (https://github.com/gkjohnson/3d-demo-data) from the versions at",
+		"https://benedikt-bitterli.me/resources/ and are used here unchanged but for a maker's mark removed from a radio.",
+		"If you publish pictures, films or walkthroughs of the CC BY rooms, credit their authors as above."])
+	var f := FileAccess.open(App.projects.folder.path_join("CREDITS.txt"), FileAccess.WRITE)
+	if f:
+		f.store_string("\n".join(credits) + "\n")
+		f.close()
+	App.scenes.open(App.projects.folder.path_join("scenes/main.tscn"))
+	_say("ok   built %s" % App.projects.folder)
+	return failures
 
 
 # ------------------------------------------------------------ architecture

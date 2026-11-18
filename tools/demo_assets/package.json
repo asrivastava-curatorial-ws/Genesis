@@ -1,0 +1,11 @@
+{
+  "name": "oriel-demo-assets",
+  "private": true,
+  "description": "What tools/fetch_demo_assets.sh needs to turn the demo rooms into plain glTF.",
+  "type": "module",
+  "dependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "draco3dgltf": "1.5.9"
+  }
+}
