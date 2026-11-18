@@ -6,7 +6,7 @@ extends RefCounted
 #
 #   Oriel -- --script tests/dev/lab.gd <check> <out folder> [engines...]
 #
-# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film, layers, street, live. Engines: godot, eevee, cycles (all three when none is named).
+# Checks: ies, mix, haze, weather, wind, surfaces, caustics, clouds, walk (started with --walk <project>), film, layers, street, live, web. Engines: godot, eevee, cycles (all three when none is named).
 # Prints LAB lines; the program's exit code is the number of failed checks.
 
 const App := preload("res://app/core/app.gd")
@@ -70,6 +70,8 @@ static func run(main: Node, args: PackedStringArray) -> int:
 			await _formats(main)
 		"bigopen":
 			await _bigopen(main, args)
+		"web":
+			await _web(main)
 		_:
 			print("LAB unknown check %s" % args[0])
 			return 1
@@ -1679,3 +1681,253 @@ static func _to_root(node: Node3D, root: Node3D) -> Transform3D:
 		n = n.get_parent()
 	return t
 
+
+
+# ------------------------------------------------------------------ web walkthrough
+# A room with a doorway, a staircase, a finely made ball, a box modelled
+# inside out, a lamp, a hotspot, a floor with two materials to choose from
+# and two chairs that are alternatives; written out as a web walkthrough,
+# plain and with baked light, and walked through in a browser without a
+# screen (tests/web/walkthrough_check.cjs: Chromium through Playwright, and
+# Meta's headset emulator for VR, where they are installed).
+static func _web(main: Node) -> void:
+	var GnWebWalk = load("res://addons/genesis/core/gn_web_walk.gd")
+	var GnWebSpots = load("res://addons/genesis/core/gn_web_spots.gd")
+	var GnWebServe = load("res://addons/genesis/core/gn_web_serve.gd")
+	var root := await _studio(main, "Web check", false)
+	if root == null:
+		return
+	GnEnvironment.apply("time_of_day", 11.0, false)
+	var white := Color(0.85, 0.84, 0.8)
+	var floor := _box(root, "Floor", Vector3(6.4, 0.2, 4.4), Vector3(0, -0.1, 0), Color(0.6, 0.45, 0.3))
+	_box(root, "Ceiling", Vector3(6.4, 0.2, 4.4), Vector3(0, 2.9, 0), white)
+	_box(root, "Wall east", Vector3(0.2, 2.8, 4.4), Vector3(3.1, 1.4, 0), white)
+	_box(root, "Wall west", Vector3(0.2, 2.8, 4.4), Vector3(-3.1, 1.4, 0), white)
+	_box(root, "Wall south", Vector3(6.0, 2.8, 0.2), Vector3(0, 1.4, 2.1), white)
+	# The north wall has a doorway 1 m wide and 2.1 m high in its middle.
+	_box(root, "Wall north left", Vector3(2.5, 2.8, 0.2), Vector3(-1.75, 1.4, -2.1), white)
+	_box(root, "Wall north right", Vector3(2.5, 2.8, 0.2), Vector3(1.75, 1.4, -2.1), white)
+	_box(root, "Lintel", Vector3(1.0, 0.7, 0.2), Vector3(0, 2.45, -2.1), white)
+	# Ten steps of 0.17 m up to a landing 1.7 m above the floor, along the south wall.
+	for k in 10:
+		_box(root, "Step %d" % (k + 1), Vector3(0.28, 0.17 * (k + 1), 0.9), Vector3(-1.8 + 0.28 * k + 0.14, 0.17 * (k + 1) * 0.5, 1.45), Color(0.5, 0.36, 0.24))
+	_box(root, "Landing", Vector3(1.2, 1.7, 0.9), Vector3(1.6, 0.85, 1.45), Color(0.5, 0.36, 0.24))
+	# A finely made ball: its light is baked at its corners.
+	var ball := MeshInstance3D.new()
+	ball.name = "Ball"
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.3
+	sphere.height = 0.6
+	sphere.radial_segments = 64
+	sphere.rings = 32
+	var ball_mat := StandardMaterial3D.new()
+	ball_mat.albedo_color = Color(0.8, 0.2, 0.15)
+	sphere.material = ball_mat
+	ball.mesh = sphere
+	ball.position = Vector3(2.0, 0.3, -0.4)
+	GnScene.add_node(ball, root, "Add a ball")
+	# A box modelled inside out (as models from some programs are), shown from both sides.
+	var crate := MeshInstance3D.new()
+	crate.name = "Crate"
+	var arrays := BoxMesh.new().get_mesh_arrays()
+	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	for i in range(0, idx.size(), 3):
+		var t := idx[i + 1]
+		idx[i + 1] = idx[i + 2]
+		idx[i + 2] = t
+	arrays[Mesh.ARRAY_INDEX] = idx
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	for i in normals.size():
+		normals[i] = -normals[i]
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	var inside_out := ArrayMesh.new()
+	inside_out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var crate_mat := StandardMaterial3D.new()
+	crate_mat.albedo_color = Color(0.3, 0.5, 0.75)
+	crate_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	inside_out.surface_set_material(0, crate_mat)
+	crate.mesh = inside_out
+	crate.scale = Vector3(0.8, 0.8, 0.8)
+	crate.position = Vector3(2.3, 0.4, -1.4)
+	GnScene.add_node(crate, root, "Add a crate")
+	# A lamp under the ceiling: the room is lit though the sun hardly reaches into it.
+	var lamp: Node3D = Fixture.new()
+	lamp.kind = "Downlight"
+	lamp.name = "Lamp"
+	lamp.lumens = 3000.0
+	lamp.beam_degrees = 100.0
+	lamp.tilt = -90.0
+	lamp.position = Vector3(-0.5, 2.7, -0.3)
+	GnScene.add_node(lamp, root, "Add a lamp")
+	# Two chairs that are alternatives, a hotspot, and a floor in two materials.
+	var chair_a := _box(root, "Chair oak", Vector3(0.5, 0.9, 0.5), Vector3(-2.3, 0.45, -1.3), Color(0.6, 0.4, 0.2))
+	var chair_b := _box(root, "Chair blue", Vector3(0.5, 0.9, 0.5), Vector3(-2.3, 0.45, -1.3), Color(0.2, 0.3, 0.7))
+	GnWebSpots.set_switch([chair_a, chair_b], "Chair")
+	var spot: Node3D = GnWebSpots.add_hotspot(Vector3(0.6, 1.3, -1.6), "The doorway")
+	GnWebSpots.set_hotspot(spot, "text", "One metre wide, 2.1 m high.")
+	var oak := StandardMaterial3D.new()
+	oak.resource_name = "Oak"
+	oak.albedo_color = Color(0.6, 0.45, 0.3)
+	floor.set_surface_override_material(0, oak)
+	GnWebSpots.add_choice(floor, 0, "Oak")
+	var slate := StandardMaterial3D.new()
+	slate.resource_name = "Slate"
+	slate.albedo_color = Color(0.2, 0.22, 0.25)
+	floor.set_surface_override_material(0, slate)
+	GnWebSpots.add_choice(floor, 0, "Slate")
+	floor.set_surface_override_material(0, oak)
+	_camera("Inside", Vector3(-2.2, 1.6, -0.6), Vector3(2.0, 1.2, 0.3), 65.0)
+	_camera("Stairs", Vector3(-2.7, 1.6, 1.45), Vector3(2.0, 1.6, 1.45), 65.0)
+	_camera("Outside", Vector3(0.0, 1.6, -6.0), Vector3(0.0, 1.2, -2.0), 55.0)
+	GnWebWalk.set_setting("title", "Web check")
+	GnWebWalk.set_setting("credit", "A room made by the lab check")
+	App.scenes.save()
+	await _frames(main, 3)
+
+	# ---- written plain
+	var plain := _out.path_join("plain")
+	var t0 := Time.get_ticks_msec()
+	var r: Dictionary = await GnWebWalk.export_web(plain, {"bake": ""}, main)
+	check(str(r.error) == "", "web: written plain in %.1f s: %s %s" % [(Time.get_ticks_msec() - t0) / 1000.0, GnWebWalk.describe(r.stats) if str(r.error) == "" else "", r.error])
+	if str(r.error) != "":
+		return
+	var have := true
+	for f in ["index.html", "serve.py", "README.txt", "app/oriel-walk.js", "app/oriel-walk.css", "app/LICENSES.txt", "scene/scene.json", "scene/scene.glb", "scene/sky.jpg"]:
+		have = have and FileAccess.file_exists(plain.path_join(f))
+	check(have, "web: the folder has its page, its viewer with the licences, its scene and its sky")
+	var page := FileAccess.get_file_as_string(plain.path_join("index.html"))
+	check(page.contains("Web check") and not page.contains("{{"), "web: the page carries the title")
+	var scene = JSON.parse_string(FileAccess.get_file_as_string(plain.path_join("scene/scene.json")))
+	var ok_scene: bool = scene is Dictionary and str(scene.get("format", "")) == GnWebWalk.FORMAT
+	check(ok_scene and (scene.views as Array).size() == 3 and str(scene.views[0].name) == "Inside" and str(scene.credit) == "A room made by the lab check",
+		"web: the scene has its three views, the first of them \"Inside\", and its credit")
+	check(ok_scene and (scene.hotspots as Array).size() == 1 and str(scene.hotspots[0].title) == "The doorway" and absf(float(scene.hotspots[0].position[1]) - 1.3) < 0.01,
+		"web: the hotspot is in it, 1.3 m up, with its note")
+	check(ok_scene and (scene.choices as Array).size() == 1 and (scene.choices[0].options as Array).size() == 2 and str(scene.choices[0].options[1].name) == "Slate",
+		"web: the floor's two materials are a choice (%s)" % [(scene.choices[0].options as Array).map(func(o): return o.name) if ok_scene and (scene.choices as Array).size() == 1 else "none"])
+	check(ok_scene and (scene.switches as Array).size() == 1 and str(scene.switches[0].name) == "Chair" and (scene.switches[0].options as Array).size() == 2,
+		"web: the two chairs are alternatives")
+	var hidden := 0
+	if ok_scene:
+		for o in (scene.objects as Dictionary).values():
+			if bool(o.get("hidden", false)):
+				hidden += 1
+	check(hidden == 1, "web: the chair that is not shown is in the file, hidden (%d hidden)" % hidden)
+	# Written again into the same folder; refused where somebody's own files are.
+	r = await GnWebWalk.export_web(plain, {"bake": ""}, main)
+	check(str(r.error) == "", "web: writing it again replaces it %s" % r.error)
+	var other := _out.path_join("not_mine")
+	DirAccess.make_dir_recursive_absolute(other)
+	var note := FileAccess.open(other.path_join("holiday.txt"), FileAccess.WRITE)
+	note.store_string("somebody's own")
+	note.close()
+	r = await GnWebWalk.export_web(other, {"bake": ""}, main)
+	check(str(r.error) != "" and FileAccess.file_exists(other.path_join("holiday.txt")) and not DirAccess.dir_exists_absolute(other.path_join("scene")),
+		"web: a folder holding other things is refused and left alone (\"%s\")" % r.error)
+
+	# ---- served by the program
+	var served: Dictionary = GnWebServe.start(plain, false)
+	var got := ""
+	if str(served.error) == "":
+		got = await _fetch(main, "127.0.0.1", int(served.port), "/scene/scene.json", false)
+	check(str(served.error) == "" and got.contains(GnWebWalk.FORMAT), "web: Oriel serves the folder on this computer (%s %s)" % [served.local, served.error])
+	GnWebServe.stop(plain)
+	served = GnWebServe.start(plain, true)
+	got = ""
+	if str(served.error) == "":
+		got = await _fetch(main, "127.0.0.1", int(served.port), "/index.html", true)
+	check(str(served.error) == "" and bool(served.https) and got.contains("Web check"), "web: and over https with a certificate of its own making, for a headset (%s %s)" % [served.local, served.error])
+	GnWebServe.stop(plain)
+	check(not GnWebServe.is_running(plain), "web: the server stops when asked")
+
+	# ---- with baked light
+	var baked := _out.path_join("baked")
+	var bake_ok := false
+	if "cycles" in _engines and str(GnBlender.engine().get("kind", "")) != "":
+		t0 = Time.get_ticks_msec()
+		r = await GnWebWalk.export_web(baked, {"bake": "Draft"}, main)
+		check(str(r.error) == "", "web: written with baked light (draft) in %.0f s %s" % [(Time.get_ticks_msec() - t0) / 1000.0, r.error])
+		if str(r.error) == "":
+			var b = JSON.parse_string(FileAccess.get_file_as_string(baked.path_join("scene/scene.json")))
+			var bake: Dictionary = b.get("bake", {}) if b is Dictionary else {}
+			var objects: Dictionary = bake.get("objects", {})
+			var names := {}
+			for k in (b.objects as Dictionary):
+				names[str(b.objects[k].get("path", "")).get_file()] = k
+			var atlases: Array = bake.get("atlases", [])
+			var maps := 0
+			for a in atlases:
+				if str(a.file) != "" and FileAccess.file_exists(baked.path_join("scene").path_join(str(a.file))):
+					maps += 1
+			check(maps >= 1 and objects.size() >= 20, "web: %d lightmaps, baked light for %d objects" % [maps, objects.size()])
+			var e_ball: Dictionary = objects.get(names.get("Ball", ""), {})
+			check(bool(e_ball.get("vertex", false)) and float(bake.get("vertex_range", 0.0)) > 0.0, "web: the ball, finely made, has its light at its corners")
+			var e_wall: Dictionary = objects.get(names.get("Wall east", ""), {})
+			check(e_wall.has("rect") and not e_wall.has("vertex"), "web: a wall has a patch of a lightmap")
+			var e_crate: Dictionary = objects.get(names.get("Crate", ""), {})
+			var e_step: Dictionary = objects.get(names.get("Step 1", ""), {})
+			check(float(e_crate.get("env", 0.0)) > 0.25 * float(e_step.get("env", 1.0)) and float(e_crate.get("env", 0.0)) > 0.04,
+				"web: the crate modelled inside out is lit on the side that faces the room (%.3f of the brightest; a step beside it %.3f)" % [float(e_crate.get("env", 0.0)), float(e_step.get("env", 0.0))])
+			bake_ok = true
+	else:
+		print("LAB note web: no Cycles engine named for this run: baked light not tested")
+
+	# ---- walked through in a browser
+	var script := _fixtures().get_base_dir().get_base_dir().path_join("web/walkthrough_check.cjs")
+	var out: Array = []
+	var code := OS.execute("node", ["--version"], out, true)
+	if code != 0 or not FileAccess.file_exists(script):
+		print("LAB note web: no Node here (or no %s): the walkthrough was not opened in a browser" % script)
+		return
+	for run in ([["plain", plain], ["baked", baked]] if bake_ok else [["plain", plain]]):
+		out = []
+		code = OS.execute("node", [script, run[1], _out.path_join("browser_" + run[0]), "--lab", "--" + run[0]], out, true)
+		var seen := 0
+		for line in "\n".join(out).split("\n"):
+			if line.begins_with("WEB ok") or line.begins_with("XR ok"):
+				check(true, "web (%s, in a browser): %s" % [run[0], line.substr(line.find("ok") + 2).strip_edges()])
+				seen += 1
+			elif line.begins_with("WEB FAIL") or line.begins_with("XR FAIL"):
+				check(false, "web (%s, in a browser): %s" % [run[0], line.substr(line.find("FAIL") + 4).strip_edges()])
+				seen += 1
+			elif line.begins_with("WEB note") or line.begins_with("XR note"):
+				print("LAB note web (%s): %s" % [run[0], line.substr(8).strip_edges()])
+		if seen == 0:
+			print("LAB note web (%s): the browser check gave nothing (exit %d): %s" % [run[0], code, "\n".join(out).left(400)])
+			if not "\n".join(out).contains("skipped"):
+				check(false, "web (%s): the walkthrough opens in a browser" % run[0])
+
+
+## The body of http(s)://host:port/path, "" when it does not come.
+static func _fetch(main: Node, host: String, port: int, path: String, tls: bool) -> String:
+	var client := HTTPClient.new()
+	# The server is a moment in coming up.
+	for attempt in 40:
+		client.close()
+		if client.connect_to_host(host, port, TLSOptions.client_unsafe() if tls else null) != OK:
+			await main.get_tree().create_timer(0.25).timeout
+			continue
+		var waited := 0
+		while client.get_status() in [HTTPClient.STATUS_CONNECTING, HTTPClient.STATUS_RESOLVING] and waited < 80:
+			client.poll()
+			await main.get_tree().create_timer(0.05).timeout
+			waited += 1
+		if client.get_status() == HTTPClient.STATUS_CONNECTED:
+			break
+		await main.get_tree().create_timer(0.25).timeout
+	if client.get_status() != HTTPClient.STATUS_CONNECTED:
+		return ""
+	if client.request(HTTPClient.METHOD_GET, path, PackedStringArray(["Host: localhost"])) != OK:
+		return ""
+	while client.get_status() == HTTPClient.STATUS_REQUESTING:
+		client.poll()
+		await main.get_tree().create_timer(0.02).timeout
+	var body := PackedByteArray()
+	while client.get_status() == HTTPClient.STATUS_BODY:
+		client.poll()
+		var chunk := client.read_response_body_chunk()
+		if chunk.size() > 0:
+			body.append_array(chunk)
+		else:
+			await main.get_tree().create_timer(0.02).timeout
+	return body.get_string_from_utf8()

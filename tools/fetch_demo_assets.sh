@@ -27,6 +27,9 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$HERE/genesis_data/external"
 TMP="$OUT/.fetch"
 mkdir -p "$OUT/demo_rooms" "$OUT/skies" "$OUT/materials" "$TMP"
+# The rooms are only read while the demo is built: Godot is told to leave the
+# folder alone, or it would import them and pack them into the program.
+touch "$OUT/demo_rooms/.gdignore" "$TMP/.gdignore"
 
 fetch() {    # fetch <url> <file> <sha256>
 	if [ -s "$2" ] && echo "$3  $2" | sha256sum -c --quiet - 2>/dev/null; then return 0; fi
@@ -74,6 +77,8 @@ GODOT="https://raw.githubusercontent.com/godotengine/godot-demo-projects/b761b4c
 FILAMENT="https://raw.githubusercontent.com/google/filament/5fba07c8fe24c344ff829622ce08f4ffc68a1ce5/third_party/environments"
 sky() {      # sky <name here> <url> <sha256> <Poly Haven asset>
 	fetch "$2" "$OUT/skies/$1.hdr" "$3"
+	# Imported for the graphics card from the start (a sky kept without loss is five times the size in the program).
+	[ -f "$OUT/skies/$1.hdr.import" ] || printf '[remap]\n\nimporter="texture"\ntype="CompressedTexture2D"\n\n[params]\n\ncompress/mode=2\ncompress/normal_map=2\nmipmaps/generate=true\ndetect_3d/compress_to=0\n' > "$OUT/skies/$1.hdr.import"
 	license "$OUT/skies/$1.hdr" "$4" "Poly Haven (the photographer is named on the asset's page)" "CC0-1.0" "https://polyhaven.com/a/$4" "$2"
 }
 sky high_cloud    "$GK/aristea_wreck_puresky_2k.hdr"          0f01308eb688bf15c8743cb15f9bcb0550472f04a079679d02075a2816d60927 aristea_wreck_puresky

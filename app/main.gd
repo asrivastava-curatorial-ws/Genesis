@@ -711,9 +711,15 @@ func _command_line() -> void:
 	var r := args.find("--render-samples")
 	if r >= 0 and r + 1 < args.size():
 		# --quality preview|standard|high|max (standard when not given).
+		# --engine cycles|eevee [Draft|Good|High|Best]: with the photoreal engine instead (a room wants it).
 		var q := args.find("--quality")
 		var quality: int = Demos.QUALITY.get(args[q + 1] if q >= 0 and q + 1 < args.size() else "standard", 0)
-		var failures: int = await Demos.render_samples(self, args[r + 1], quality)
+		var en := args.find("--engine")
+		var failures := 0
+		if en >= 0 and en + 1 < args.size():
+			failures = await Demos.render_samples_photoreal(self, args[r + 1], args[en + 1], args[en + 2] if en + 2 < args.size() and not args[en + 2].begins_with("--") else "Draft")
+		else:
+			failures = await Demos.render_samples(self, args[r + 1], quality)
 		print("GENESIS_DEMO RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return

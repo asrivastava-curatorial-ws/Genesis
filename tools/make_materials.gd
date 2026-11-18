@@ -21,7 +21,12 @@ const SCAN_WIDTH_M := {
 	"asphalt": 3.0, "metal": 1.0, "grass": 2.0,
 	"earth": 2.5, "gravel": 2.0, "sand": 2.5, "rock": 4.0, "forest_floor": 3.0, "snow": 3.0, "mud": 2.5,
 	"fallen_leaves": 2.0,
+	# Interiors (tools/fetch_demo_assets.sh): a strip floor, a dark veneer,
+	# terrazzo, marble tiles laid in squares, and a worn copper.
+	"wood_floor": 1.6, "wood_dark": 1.2, "terrazzo": 0.8, "marble_tiles": 1.2, "copper": 1.0,
 }
+## The scanned presets that are metals.
+const SCAN_METALS := ["metal", "copper"]
 # Preset name -> scanned folder, where they differ.
 const SCAN_FOLDER := {"grass": "lawn"}
 
@@ -148,8 +153,12 @@ func _save_scanned(name: String) -> bool:
 		m.ao_enabled = true
 		m.ao_texture = _png(stem + "_AmbientOcclusion.jpg")
 		m.ao_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
-	if name == "metal":
+	if name in SCAN_METALS:
 		m.metallic = 1.0
+		if FileAccess.file_exists(stem + "_Metalness.jpg"):
+			_import_settings(stem + "_Metalness.jpg", false)
+			m.metallic_texture = _png(stem + "_Metalness.jpg")
+			m.metallic_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
 	m.uv1_triplanar = true
 	m.uv1_world_triplanar = true
 	m.uv1_triplanar_sharpness = 4.0

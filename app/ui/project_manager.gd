@@ -69,12 +69,11 @@ func _init() -> void:
 		gap3.custom_minimum_size.y = 18
 		start.add_child(gap3)
 		_heading(start, "Try a demo")
-		for demo in demos:
-			var b := _link("", "kind_building" if "rchitect" in demo else "page_set")
-			b.text = demo
-			b.tooltip_text = "Opens a copy of the demo in your projects folder, to change as you like."
-			b.pressed.connect(_open_demo.bind(demos[demo]))
-			start.add_child(b)
+		var names: Array = demos.keys()
+		# Rooms first, then buildings, then the rest: what shows most, soonest.
+		names.sort_custom(func(a, b): return _demo_rank(a) < _demo_rank(b))
+		for demo in names:
+			start.add_child(_demo_button(demo, demos[demo]))
 	var gap2 := Control.new()
 	gap2.custom_minimum_size.y = 18
 	start.add_child(gap2)
@@ -121,6 +120,68 @@ func _action_button(id: String, icon_name := "") -> Button:
 	if icon_name != "":
 		b.icon = GnIcons.get_icon(icon_name, 16)
 	b.custom_minimum_size = Vector2(0, 36)
+	return b
+
+
+static func _demo_rank(demo: String) -> int:
+	return 0 if "nterior" in demo else (1 if "rchitect" in demo else 2)
+
+
+## A demo as a button: its picture when it has one (thumbnail.jpg in its
+## folder), its name, and a line saying what is in it (its manifest's "about").
+func _demo_button(demo: String, folder: String) -> Button:
+	var about := str(ProjectService.manifest_of(folder).get("about", ""))
+	var thumb := folder.path_join("thumbnail.jpg")
+	var picture: Texture2D = null
+	if FileAccess.file_exists(thumb):
+		var img := Image.load_from_file(thumb)
+		if img and not img.is_empty():
+			img.resize(224, 126, Image.INTERPOLATE_LANCZOS)
+			picture = ImageTexture.create_from_image(img)
+	if picture == null and about == "":
+		var plain := _link("", "kind_furniture" if "nterior" in demo else ("kind_building" if "rchitect" in demo else "page_set"))
+		plain.text = demo
+		plain.tooltip_text = "Opens a copy of the demo in your projects folder, to change as you like."
+		plain.pressed.connect(_open_demo.bind(folder))
+		return plain
+	var b := Button.new()
+	b.theme_type_variation = &"ToolButton"
+	b.tooltip_text = "Opens a copy of the demo in your projects folder, to change as you like."
+	b.pressed.connect(_open_demo.bind(folder))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 6)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(row)
+	if picture:
+		var view := TextureRect.new()
+		view.texture = picture
+		view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		view.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		view.custom_minimum_size = Vector2(112, 63)
+		view.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(view)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	words.add_theme_constant_override("separation", 2)
+	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(words)
+	var title := Label.new()
+	title.text = demo
+	title.add_theme_color_override("font_color", Color("#58a6ff"))
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	words.add_child(title)
+	if about != "":
+		var line := Label.new()
+		line.text = about
+		line.theme_type_variation = &"MutedLabel"
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.custom_minimum_size = Vector2(150, 0)
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		words.add_child(line)
+	b.custom_minimum_size = Vector2(300, 76 if picture else 52)
 	return b
 
 

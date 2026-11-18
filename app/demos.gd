@@ -7,9 +7,9 @@ extends RefCounted
 #
 #   Interiors demo           five furnished rooms, each a scene: a living
 #                            room, a kitchen, a bedroom, a bathroom and a
-#                            hall with a staircase; lit through their windows
-#                            with bounced light, cameras in each, and a web
-#                            walkthrough set up with hotspots and credits.
+#                            hall with a staircase; lit by their windows as
+#                            their authors lit them, cameras in each, and a
+#                            web walkthrough set up with hotspots and credits.
 #                            The rooms are the work of others (see ROOMS);
 #                            tools/fetch_demo_assets.sh fetches them, and
 #                            without them this demo is left out.
@@ -87,23 +87,27 @@ const ROOMS_DIR := "res://genesis_data/external/demo_rooms"
 ## under which licence, is in "credit" and goes with the scene wherever it
 ## goes (the walkthrough shows it; the project's CREDITS.txt lists it).
 ##   sun      where the sun stands, seen from the room
-##   ev       the exposure a room lit through its windows wants
-##   cameras  [name, where from, looking at, field of view] ("" for the
-##            look-at: the camera the room came with, by its rotation)
+##   ev       the exposure the room wants (its windows are glowing panes,
+##            as its author lit it: Eevee, Cycles and a baked walkthrough
+##            take their light from them)
+##   cameras  [name, where from, looking at or the camera's own turn, field of view]
 ##   spots    hotspots of the web walkthrough: [where, title, text]
+##   without  glowing panes that are left out (a fill light behind the
+##            author's camera, which a visitor walking about would see): boxes
 const ROOMS := [
 	{"file": "white-room", "scene": "main", "title": "Living room",
 		"credit": "The White Room by Jay-Artist (CC BY 3.0), from Benedikt Bitterli's rendering resources",
-		"sun": Vector3(0.3, 0.5, -0.8), "ev": 1.6,
+		"sun": Vector3(0.3, 0.5, -0.8), "ev": 0.25,
+		"without": [AABB(Vector3(-2.0, 0.8, 8.0), Vector3(4.0, 2.6, 0.3))],
 		"cameras": [["Living room", Vector3(2.25, 1.31, 6.18), Quaternion(-0.018, 0.223, 0.004, 0.975), 58.7],
 			["From the window", Vector3(0.2, 1.45, 1.5), Vector3(0.6, 0.9, 5.2), 62.0],
-			["Fireplace", Vector3(1.9, 1.35, 4.9), Vector3(-2.0, 1.0, 2.9), 50.0]],
+			["Fireplace", Vector3(2.3, 1.4, 5.3), Vector3(-2.0, 1.0, 2.9), 50.0]],
 		"spots": [[Vector3(0.5, 0.75, 4.2), "Sofa", "Three seats in white leather, with two armchairs to match."],
 			[Vector3(-1.75, 1.0, 2.9), "Fireplace", "Cast iron in a painted surround; the room's first source of heat, long before the radiator."],
 			[Vector3(0.4, 2.2, 0.75), "Bay window", "Three sashes facing south-east: the room is lit by them alone."]]},
 	{"file": "country-kitchen", "scene": "kitchen", "title": "Kitchen",
 		"credit": "Country Kitchen by Jay-Artist (CC BY 3.0), from Benedikt Bitterli's rendering resources",
-		"sun": Vector3(0.25, 0.55, -0.8), "ev": 1.6,
+		"sun": Vector3(0.25, 0.55, -0.8), "ev": 0.25,
 		"cameras": [["Kitchen", Vector3(1.21, 1.8, 3.85), Quaternion(-0.02, 0.225, 0.005, 0.974), 36.0],
 			["Dining table", Vector3(2.6, 1.5, 0.8), Vector3(0.4, 0.9, -1.8), 55.0],
 			["Worktop", Vector3(1.7, 1.5, 2.0), Vector3(-2.0, 1.0, 0.0), 55.0]],
@@ -111,22 +115,22 @@ const ROOMS := [
 			[Vector3(0.6, 0.95, -1.6), "Dining table", "Seats four, by the window."]]},
 	{"file": "bedroom", "scene": "bedroom", "title": "Bedroom",
 		"credit": "Bedroom by SlykDrako (CC0), from Benedikt Bitterli's rendering resources",
-		"sun": Vector3(-0.2, 0.5, -0.85), "ev": 1.6,
+		"sun": Vector3(-0.2, 0.5, -0.85), "ev": 0.25,
 		"cameras": [["Bedroom", Vector3(3.46, 1.21, 3.3), Quaternion(-0.008, 0.416, 0.004, 0.909), 39.4],
 			["From the wardrobe", Vector3(-2.0, 1.5, 3.3), Vector3(0.8, 0.7, -0.4), 58.0],
 			["Bedside", Vector3(2.4, 1.3, 1.6), Vector3(0.0, 0.6, -0.5), 50.0]],
 		"spots": [[Vector3(0.0, 0.8, 0.2), "Bed", "A double bed in beech, between the two windows."]]},
 	{"file": "contemporary-bathroom", "scene": "bathroom", "title": "Bathroom",
 		"credit": "Contemporary Bathroom by Mareck (CC0), from Benedikt Bitterli's rendering resources",
-		"sun": Vector3(-0.85, 0.5, -0.2), "ev": 1.6,
+		"sun": Vector3(-0.85, 0.5, -0.2), "ev": 0.25,
 		"cameras": [["Bathroom", Vector3(0.01, 0.91, -0.23), Quaternion(0.007, 0.413, -0.003, 0.911), 55.0],
-			["Bath", Vector3(1.6, 1.5, -0.45), Vector3(-1.6, 0.6, -0.8), 58.0],
+			["Bath", Vector3(1.2, 1.5, -1.2), Vector3(-1.8, 0.5, -0.5), 58.0],
 			["Basins", Vector3(0.7, 1.5, -0.6), Vector3(-1.3, 1.0, -2.3), 55.0]],
 		"spots": [[Vector3(-1.6, 0.75, -0.6), "Bath", "Free-standing, in cast acrylic."],
 			[Vector3(-1.2, 1.0, -2.2), "Basins", "Two, set in a walnut unit with drawers below."]]},
 	{"file": "wooden-staircase", "scene": "hall", "title": "Hall",
 		"credit": "The Wooden Staircase by Wig42 (CC BY 3.0), from Benedikt Bitterli's rendering resources",
-		"sun": Vector3(0.4, 0.6, -0.7), "ev": 1.6,
+		"sun": Vector3(0.4, 0.6, -0.7), "ev": 0.25,
 		"cameras": [["Hall", Vector3(0.03, 1.53, 4.88), Quaternion(0.023, 0.004, 0.0, 1.0), 42.0],
 			["Staircase", Vector3(-2.3, 1.6, -0.5), Vector3(1.2, 1.5, -2.4), 60.0]],
 		"spots": [[Vector3(1.2, 1.0, -1.4), "Staircase", "Oak, with turned balusters: walk up it (or point at the landing in a headset)."]]},
@@ -134,7 +138,8 @@ const ROOMS := [
 
 
 static func _interiors(main: Node, out_dir: String) -> int:
-	var dir := ProjectSettings.globalize_path(ROOMS_DIR)
+	# (The built program has no folder of its own to look in: the build says where the rooms are.)
+	var dir := OS.get_environment("ORIEL_DEMO_ROOMS") if OS.get_environment("ORIEL_DEMO_ROOMS") != "" else ProjectSettings.globalize_path(ROOMS_DIR)
 	var have: Array = ROOMS.filter(func(r): return FileAccess.file_exists(dir.path_join(str(r.file) + ".glb")))
 	if have.is_empty():
 		_say("note interiors: no rooms in %s (tools/fetch_demo_assets.sh fetches them); left out" % ROOMS_DIR)
@@ -162,10 +167,17 @@ static func _interiors(main: Node, out_dir: String) -> int:
 			continue
 		var model: Node3D = root.get_child(root.get_child_count() - 1)
 		model.name = str(room.title)
-		# The lawn outside lies just under the floor, not in it.
+		# A room has no lawn round it.
 		var ground := GnScene.find_role("ground") as Node3D
 		if ground:
-			ground.position.y = -0.08
+			ground.get_parent().remove_child(ground)
+			ground.queue_free()
+		for box: AABB in room.get("without", []):
+			for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
+				var mat := mi.get_active_material(0) as BaseMaterial3D
+				if mat and mat.emission_enabled and box.has_point(mi.global_transform * mi.get_aabb().get_center()):
+					mi.get_parent().remove_child(mi)
+					mi.queue_free()
 		# The sun where the room's windows want it: the heading and the hour that come nearest.
 		var want: Vector3 = (room.sun as Vector3).normalized()
 		var best := -2.0
@@ -180,8 +192,9 @@ static func _interiors(main: Node, out_dir: String) -> int:
 					pick = [float(h), t]
 		GnEnvironment.apply("heading", pick[0], false)
 		GnEnvironment.apply("time_of_day", pick[1], false)
-		# A room is lit by its windows: light bounces, and the exposure is a room's.
-		GnEnvironment.apply("bounce", true, false)
+		# A high, even sky (when the photographic skies are here), no haze, and the room's exposure.
+		if "Photo: high cloud" in GnEnvironment.sky_choices():
+			GnEnvironment.apply("sky", "Photo: high cloud", false)
 		GnEnvironment.apply("exposure", float(room.ev), false)
 		GnEnvironment.apply("fog", 0.0, false)
 		for spec in room.cameras:
@@ -215,8 +228,15 @@ static func _interiors(main: Node, out_dir: String) -> int:
 		f.store_string("\n".join(credits) + "\n")
 		f.close()
 	App.scenes.open(App.projects.folder.path_join("scenes/main.tscn"))
+	_about("Five furnished rooms, lit, with cameras: to render, and to walk through in a browser or a headset.")
 	_say("ok   built %s" % App.projects.folder)
 	return failures
+
+
+## A line about a demo, shown beside it on the Start page.
+static func _about(text: String) -> void:
+	App.projects.manifest["about"] = text
+	App.projects._write_manifest(App.projects.folder, App.projects.manifest)
 
 
 # ------------------------------------------------------------ architecture
@@ -364,6 +384,7 @@ static func _architecture(main: Node, out_dir: String) -> int:
 		GnLook.set_value(cam0, "exposure", variant[5])
 		App.scenes.save_as(App.projects.folder.path_join("scenes/%s.tscn" % variant[0]))
 	App.scenes.open(App.projects.folder.path_join("scenes/main.tscn"))
+	_about("A museum pavilion in its plaza: daylight, golden hour and night, with a short film.")
 	_say("ok   built %s" % App.projects.folder)
 	return failures
 
@@ -446,6 +467,7 @@ static func _event(main: Node, out_dir: String) -> int:
 		cl.record(root, cue[0], 1.5, "Front of house", {})
 	cl.go_to(1, 0.0)
 	App.scenes.save()
+	_about("A concert stage: LED wall, truss, moving lights, an audience, and four show cues.")
 	_say("ok   built %s" % App.projects.folder)
 	return 0
 
@@ -499,6 +521,55 @@ static func render_samples(main: Node, folder: String, quality := 0) -> int:
 				else:
 					failures += 1
 					_say("FAIL %s film (%s)" % [scene.get_file(), film])
+	App.projects.close()
+	return failures
+
+
+## The same with Eevee or Cycles, for a project of rooms (their light is
+## what the engines work out): every camera of the main scene, the first of
+## each other scene, at PHOTOREAL_SIZE.
+##   Genesis -- --render-samples <project folder> --engine cycles [Draft|Good|High|Best]
+const PHOTOREAL_SIZE := Vector2i(1280, 720)
+
+
+static func render_samples_photoreal(main: Node, folder: String, engine: String, quality: String) -> int:
+	var err: String = App.projects.open(folder)
+	if err != "":
+		_say("FAIL %s" % err)
+		return 1
+	var GnPhotoreal = load("res://addons/genesis/core/gn_photoreal.gd")
+	var failures := 0
+	var out: String = App.projects.folder.path_join("renders/samples")
+	DirAccess.make_dir_recursive_absolute(out)
+	var scenes: Array = App.projects.scene_files()
+	scenes.sort_custom(func(a, b): return a.ends_with("main.tscn") or (not b.ends_with("main.tscn") and a < b))
+	for scene in scenes:
+		if App.scenes.path != scene:
+			App.scenes.open(scene)
+		await _frames(main, 4)
+		var cams: Array = GnCameras.cameras()
+		if not scene.ends_with("main.tscn"):
+			cams = cams.slice(0, 1)
+		var wanted: Array = []
+		var dests: Array = []
+		for cam in cams:
+			var dest := out.path_join("%s_%s.png" % [scene.get_file().get_basename(), str(cam.name).to_snake_case()])
+			# A run that was stopped carries on where it left off.
+			if FileAccess.file_exists(dest):
+				_say("ok   %s (already there)" % dest.get_file())
+			else:
+				wanted.append(cam)
+				dests.append(dest)
+		if wanted.is_empty():
+			continue
+		var res: Dictionary = await GnPhotoreal.render_stills(wanted, PHOTOREAL_SIZE, engine, quality, main, func(_t): pass)
+		if str(res.state) != "done":
+			failures += 1
+			_say("FAIL %s with %s: %s" % [scene.get_file(), engine, res.get("error", "")])
+			continue
+		for k in mini(dests.size(), (res.paths as Array).size()):
+			DirAccess.rename_absolute(ProjectSettings.globalize_path(str(res.paths[k])), dests[k])
+			_say("ok   %s" % str(dests[k]).get_file())
 	App.projects.close()
 	return failures
 

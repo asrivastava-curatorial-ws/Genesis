@@ -10,8 +10,10 @@ const EVERY = 0.3;                    // seconds between looks (longer in a head
 const STRENGTH = 0.8;                 // how far it evens the light out (1: all the way)
 const SLACK = 1.5;                    // within this much of the reference nothing changes
 const DARKEST = 0.6, BRIGHTEST = 8;   // the limits of what it does to the exposure
-const GLARE = 1.5;                    // ... and closes down when the picture is this many times brighter than that
-const KEY = 0.45;                     // a picture this bright on average is bright enough: it never opens up beyond it
+const GLARE = 1.6;                    // ... and closes down when the picture is this many times brighter than that
+// A picture whose light (times the exposure) averages this is bright enough: the eye never opens up beyond it.
+// (Through the filmic curve 0.2 comes out as a light mid-grey; twice that already glares.)
+const KEY = 0.2;
 const TAU_UP = 0.9, TAU_DOWN = 0.4;   // seconds: slower getting used to the dark than to the light
 
 export class Eye {

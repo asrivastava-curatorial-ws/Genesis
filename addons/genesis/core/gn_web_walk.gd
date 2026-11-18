@@ -101,13 +101,15 @@ static func folder_for(title: String) -> String:
 
 
 ## Writes the walkthrough into `out_dir` (emptied first if it holds an older
-## one). `options` are DEFAULTS' keys; `progress` gets a line of text as the
-## work goes on. Returns {"error", "dir", "warnings", "stats"}.
+## one). `options` are DEFAULTS' keys, for whatever is to differ from the
+## scene's own settings; `progress` gets a line of text as the work goes on.
+## Returns {"error", "dir", "warnings", "stats"}.
 static func export_web(out_dir: String, options: Dictionary, host: Node, progress := Callable()) -> Dictionary:
 	var root := GnScene.root()
 	if root == null:
 		return _fail("There is no scene open.")
-	var opt := DEFAULTS.duplicate()
+	# The scene's own settings, and over them what this call asks for.
+	var opt := settings()
 	opt.merge(options, true)
 	var say := func(t: String): if progress.is_valid(): progress.call(t)
 	out_dir = ProjectSettings.globalize_path(out_dir) if out_dir.begins_with("res://") or out_dir.begins_with("user://") else out_dir
@@ -434,6 +436,10 @@ static func material_spec(m: BaseMaterial3D, extra: Dictionary, web: Dictionary)
 		if m.emission_texture:
 			s["emissiveMap"] = _texture(m.emission_texture, web, false, false)
 			s["emissiveAdd"] = m.emission_operator == BaseMaterial3D.EMISSION_OP_ADD
+	# Set to let light through, but with nothing in it that does (a paper
+	# lampshade's picture without transparency): solid, and drawn as such.
+	if see_through and m.albedo_color.a >= 0.999 and not bool((web.get("alpha", {}) as Dictionary).get(str(s.get("map", "")), false)):
+		see_through = false
 	if see_through:
 		s["alpha"] = "mask" if cutout else "blend"
 		if cutout:
@@ -503,6 +509,10 @@ static func _texture(t: Texture2D, web: Dictionary, keep_alpha: bool, data: bool
 		web.n -= 1
 		return ""
 	web.bytes += img.get_width() * img.get_height() * (4 if alpha else 3)
+	if alpha:
+		if not web.has("alpha"):
+			web["alpha"] = {}
+		web.alpha[file] = true
 	web.textures[id] = file
 	web.by_content[key] = file
 	return file

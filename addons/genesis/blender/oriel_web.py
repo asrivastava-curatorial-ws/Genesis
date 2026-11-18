@@ -45,9 +45,10 @@ PAD = 3                    # pixels kept free round a patch
 MAX_COPIES = 24
 
 PRESETS = {
-    "Draft": {"density": 10.0, "atlas": 1024, "max_patch": 512, "ground": 1024, "samples": 24, "bounces": 3, "max_atlases": 4},
-    "Good": {"density": 20.0, "atlas": 2048, "max_patch": 1024, "ground": 2048, "samples": 96, "bounces": 5, "max_atlases": 6},
-    "High": {"density": 40.0, "atlas": 4096, "max_patch": 2048, "ground": 4096, "samples": 384, "bounces": 8, "max_atlases": 6},
+    # "ground": the picture of light on the ground round the design (lit from the open sky, it needs half the samples).
+    "Draft": {"density": 10.0, "atlas": 1024, "max_patch": 512, "ground": 512, "samples": 24, "bounces": 3, "max_atlases": 4},
+    "Good": {"density": 20.0, "atlas": 2048, "max_patch": 1024, "ground": 1024, "samples": 96, "bounces": 5, "max_atlases": 6},
+    "High": {"density": 40.0, "atlas": 4096, "max_patch": 2048, "ground": 2048, "samples": 384, "bounces": 8, "max_atlases": 6},
 }
 
 
@@ -858,7 +859,9 @@ def run(G, r):
         img = bpy.data.images.new("oriel_ground_%s" % name, q["ground"], q["ground"], alpha=True, float_buffer=True)
         img.colorspace_settings.name = "Non-Color"
         img.generated_color = (0.0, 0.0, 0.0, 0.0)
+        sc.cycles.samples = max(int(q["samples"]) // 2, 8)
         bake_into([o], img, "the ground")
+        sc.cycles.samples = int(q["samples"])
         index = len(result["atlases"])
         lum, known = finish(img, index, "lm_%d.jpg" % index)
         # The layout was made in Blender's sense (v up the picture); the file's runs down.

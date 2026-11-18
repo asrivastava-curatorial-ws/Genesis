@@ -28,6 +28,7 @@ const GnLiveVideo := preload("res://addons/genesis/core/gn_live_video.gd")
 const GnFfmpeg := preload("res://addons/genesis/core/gn_ffmpeg.gd")
 const GnSite := preload("res://addons/genesis/core/gn_site.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
+const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const E2E := preload("res://app/e2e.gd")
 
 const MIN_CHECKS := 30
@@ -816,6 +817,230 @@ func _spreads_and_traffic(root: Node) -> void:
 
 # A large scene: counting it, levels of detail, stand-ins; the scene file for
 # Eevee and Cycles with each picture once; the live view off until asked for.
+# ------------------------------------------------------------------ web walkthroughs
+# What a scene's walkthrough is made of, without a browser (tests/dev/lab.sh
+# web opens one): its settings, the views its cameras become, hotspots,
+# materials to choose from, alternatives, how a material is described, the
+# folder that is written, and the small server's certificate.
+func _web_walkthrough(root: Node) -> void:
+	var GnWebWalk = load("res://addons/genesis/core/gn_web_walk.gd")
+	var GnWebSpots = load("res://addons/genesis/core/gn_web_spots.gd")
+	var GnWebServe = load("res://addons/genesis/core/gn_web_serve.gd")
+	var GnCameras = load("res://addons/genesis/core/gn_cameras.gd")
+	var GnModelImport = load("res://addons/genesis/core/gn_model_import.gd")
+	# Settings: kept on the scene, only where they differ from the usual.
+	var d: Dictionary = GnWebWalk.settings()
+	check(str(d.bake) == "" and bool(d.minimap) and bool(d.vr) and bool(d.auto_exposure) and int(d.max_px) == 2048, "web: a scene starts with the usual settings (no baking, a plan, VR, pictures of 2048)")
+	GnWebWalk.set_setting("title", "Garden room")
+	GnWebWalk.set_setting("bake", "Good")
+	GnWebWalk.set_setting("minimap", false)
+	GnWebWalk.set_setting("minimap", true)
+	var kept: Dictionary = root.get_meta(GnWebWalk.META, {})
+	check(str(GnWebWalk.settings().title) == "Garden room" and str(GnWebWalk.settings().bake) == "Good" and kept.size() == 2 and not kept.has("minimap"),
+		"web: what is set is kept on the scene, and a setting put back is no longer kept (%s)" % [kept.keys()])
+	GnHost.undo_redo().undo()
+	GnHost.undo_redo().undo()
+	GnHost.undo_redo().undo()
+	check(str(GnWebWalk.settings().bake) == "", "web: a setting is one undo step")
+	GnWebWalk.set_setting("bake", "")
+	check(GnWebWalk.folder_for("My house: plan A").get_file() == "My_house_plan_A" or not GnWebWalk.folder_for("My house: plan A").get_file().contains(" "),
+		"web: a walkthrough's folder is named after its title, without spaces (%s)" % GnWebWalk.folder_for("My house: plan A").get_file())
+	# A folder is written into only when it is empty or a walkthrough's own.
+	var base := ProjectSettings.globalize_path("user://web_test")
+	GnPaths.remove_tree(base)
+	DirAccess.make_dir_recursive_absolute(base.path_join("mine/scene"))
+	DirAccess.make_dir_recursive_absolute(base.path_join("theirs"))
+	for f in [base.path_join("mine/index.html"), base.path_join("theirs/thesis.odt")]:
+		var fa := FileAccess.open(f, FileAccess.WRITE)
+		fa.store_string("x")
+		fa.close()
+	check(GnWebWalk._own_folder(base.path_join("new")) and GnWebWalk._own_folder(base.path_join("mine")) and not GnWebWalk._own_folder(base.path_join("theirs")),
+		"web: a new folder and an earlier walkthrough may be written into; a folder with somebody's file in it may not")
+	# Numbers as the page reads them.
+	var tidy: Dictionary = GnWebWalk._tidy({"a": 2.0, "b": 0.123456789, "c": NAN, "d": [1.0, INF], "e": PackedStringArray(["x"])})
+	check(tidy.a is int and absf(float(tidy.b) - 0.12346) < 1e-9 and float(tidy.c) == 0.0 and float(tidy.d[1]) == 0.0 and tidy.e is Array,
+		"web: numbers are written short and whole where they are whole, and never as NaN")
+	# Cameras become views: where the eyes are, and the turn and tilt of the look.
+	var house := Node3D.new()
+	house.name = "Web house"
+	GnScene.add_node(house, root, "Add a house")
+	var before_cams: int = GnWebWalk.views().size()
+	var north := Camera3D.new()
+	north.name = "Looking north"
+	GnCameras.add(north)
+	north.global_transform = Transform3D(Basis.IDENTITY, Vector3(1, 1.6, 2))
+	var west := Camera3D.new()
+	west.name = "Looking west and down"
+	GnCameras.add(west)
+	west.look_at_from_position(Vector3(0, 2, 0), Vector3(-2, 0, 0))
+	var views: Array = GnWebWalk.views()
+	var v1: Dictionary = views[before_cams]
+	var v2: Dictionary = views[before_cams + 1]
+	check(views.size() == before_cams + 2 and str(v1.name) == "Looking north" and absf(float(v1.yaw)) < 1e-4 and absf(float(v1.pitch)) < 1e-4 and absf(float(v1.position[1]) - 1.6) < 1e-4,
+		"web: a camera looking along -z is a view with no turn and no tilt, eyes where the camera is")
+	check(absf(float(v2.yaw) - PI * 0.5) < 1e-3 and absf(float(v2.pitch) + PI * 0.25) < 1e-3, "web: one looking west and 45° down is a quarter turn to the left, tilted 45° down (%.3f, %.3f)" % [float(v2.yaw), float(v2.pitch)])
+	# Hotspots.
+	var spot: Node3D = GnWebSpots.add_hotspot(Vector3(1, 1.2, -3), "Kitchen")
+	GnWebSpots.set_hotspot(spot, "text", "Units in oak.")
+	GnWebSpots.set_hotspot(spot, "url", "https://example.org/kitchen")
+	var spots: Array = GnWebSpots.hotspots(root)
+	var h: Dictionary = GnWebSpots.hotspot(spot)
+	check(spots.size() == 1 and GnWebSpots.is_hotspot(spot) and str(h.title) == "Kitchen" and str(h.text) == "Units in oak." and str(h.url).begins_with("https://"),
+		"web: a hotspot is a point in the scene with a title, a note and a link")
+	var written: Array = GnWebSpots.export_hotspots(root, base.path_join("spots"))
+	check(written.size() == 1 and absf(float(written[0].position[2]) + 3.0) < 1e-4 and str(written[0].title) == "Kitchen", "web: and is written with its place")
+	var ball_layer := 0
+	for mi in spot.find_children("*", "MeshInstance3D", true, false) + ([spot] if spot is MeshInstance3D else []):
+		ball_layer = (mi as MeshInstance3D).layers
+	check(ball_layer == 1 << (GnHost.VIEW_ONLY_LAYER - 1), "web: its ball shows in the 3D view only, never in a render")
+	check(GnWebSpots.keep_media("https://example.org/a.jpg") == "https://example.org/a.jpg" and GnWebSpots.keep_media("/nowhere/at/all.png") == "",
+		"web: a picture's web address is kept as it is; a file that is not there is not kept")
+	# Materials to choose from, on one surface.
+	var floor := MeshInstance3D.new()
+	floor.name = "Web floor"
+	var slab := BoxMesh.new()
+	slab.size = Vector3(4, 0.2, 4)
+	floor.mesh = slab
+	house.add_child(floor)
+	floor.owner = root
+	var oak := StandardMaterial3D.new()
+	oak.resource_name = "Oak"
+	oak.albedo_color = Color(0.6, 0.45, 0.3)
+	floor.set_surface_override_material(0, oak)
+	var said: String = GnWebSpots.add_choice(floor, 0)
+	var stone := StandardMaterial3D.new()
+	stone.resource_name = "Stone"
+	stone.albedo_color = Color(0.4, 0.4, 0.42)
+	floor.set_surface_override_material(0, stone)
+	GnWebSpots.add_choice(floor, 0, "Grey stone")
+	var list: Array = GnWebSpots.choices(floor, 0)
+	check(list.size() == 2 and said == "" and str(list[0].name) == "Oak" and str(list[1].name) == "Grey stone" and (list[0].material as BaseMaterial3D).albedo_color.is_equal_approx(oak.albedo_color)
+		and list[0].material != oak, "web: what a surface wears is kept as a choice (a copy of it), named after its material or as asked (%s)" % [list.map(func(c): return c.name)])
+	GnWebSpots.rename_choice(floor, 0, 1, "Stone")
+	GnWebSpots.remove_choice(floor, 0, 0)
+	list = GnWebSpots.choices(floor, 0)
+	check(list.size() == 1 and str(list[0].name) == "Stone" and GnWebSpots.all_choices(root).size() == 1, "web: choices are renamed and taken away")
+	GnWebSpots.add_choice(floor, 0, "Stone again")
+	# Alternatives: shown one at a time.
+	var a := MeshInstance3D.new()
+	a.name = "Sofa"
+	a.mesh = BoxMesh.new()
+	var b := MeshInstance3D.new()
+	b.name = "Two chairs"
+	b.mesh = BoxMesh.new()
+	for n in [a, b]:
+		house.add_child(n)
+		n.owner = root
+	GnWebSpots.set_switch([a, b], "Seating")
+	var sets: Dictionary = GnWebSpots.switches(root)
+	check(sets.size() == 1 and (sets["Seating"] as Array).size() == 2 and a.visible and not b.visible and GnWebSpots.switch_of(b) == "Seating",
+		"web: two things made alternatives are one set, the first of them shown")
+	GnWebSpots.show_only(b)
+	check(not a.visible and b.visible, "web: showing the other hides the first")
+	GnHost.undo_redo().undo()
+	check(a.visible and not b.visible, "web: in one undo step")
+	# A material as the viewer reads it.
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.7, 0.8, 0.85, 0.25)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.roughness = 0.05
+	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var spec: Dictionary = GnWebWalk.material_spec(glass, {}, {"dir": base, "max_px": 512, "materials": {}, "textures": {}, "by_content": {}, "n": 0, "bytes": 0})
+	check(str(spec.alpha) == "blend" and str(spec.side) == "double" and absf(float(spec.color[3]) - 0.25) < 1e-4 and absf(float(spec.roughness) - 0.05) < 1e-4,
+		"web: glass is written as see-through, two-sided, with its colour and gloss")
+	check(GnWebWalk._see_through({"m1": spec, "m2": {"color": [1, 1, 1, 1]}}) == ["m1"], "web: and takes no baked light")
+	var shade := StandardMaterial3D.new()
+	shade.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	var solid: Dictionary = GnWebWalk.material_spec(shade, {}, {"dir": base, "max_px": 512, "materials": {}, "textures": {}, "by_content": {}, "n": 0, "bytes": 0})
+	check(not solid.has("alpha"), "web: a material set to be cut out, with nothing in it to cut, is written solid")
+	var world_mapped: Dictionary = GnWebWalk.material_spec(oak, {"triplanar": {"scale": [0.5, 0.5, 0.5], "world": true}}, {"dir": base, "max_px": 512, "materials": {}, "textures": {}, "by_content": {}, "n": 0, "bytes": 0})
+	check(world_mapped.has("triplanar") and bool(world_mapped.triplanar.world), "web: a material laid from three sides in the world's own measure is written so")
+	# The whole folder, without baking (and here without a picture of the sky: there is no screen).
+	GnWebWalk.set_setting("credit", "Rooms by nobody in particular")
+	var out := base.path_join("walk")
+	var r: Dictionary = await GnWebWalk.export_web(out, {"bake": "", "title": "Garden room"}, get_root())
+	check(str(r.error) == "" and str(r.dir) == out, "web: the walkthrough is written %s" % r.error)
+	if str(r.error) == "":
+		var have := true
+		for f in ["index.html", "serve.py", "README.txt", "app/oriel-walk.js", "app/oriel-walk.css", "app/LICENSES.txt", "scene/scene.json", "scene/scene.glb"]:
+			have = have and FileAccess.file_exists(out.path_join(f))
+		check(have and not FileAccess.file_exists(out.path_join("app/index.template.html")), "web: with its page, its viewer and its licences, its scene and its shapes")
+		var page := FileAccess.get_file_as_string(out.path_join("index.html"))
+		check(page.contains("<title>Garden room</title>") and not page.contains("{{"), "web: the page has the title in it")
+		var glb := FileAccess.get_file_as_bytes(out.path_join("scene/scene.glb"))
+		check(glb.size() > 1000 and glb.slice(0, 4).get_string_from_ascii() == "glTF", "web: the shapes are a glTF file")
+		var scene = JSON.parse_string(FileAccess.get_file_as_string(out.path_join("scene/scene.json")))
+		var good: bool = scene is Dictionary and str(scene.format) == GnWebWalk.FORMAT
+		check(good and str(scene.title) == "Garden room" and str(scene.credit) == "Rooms by nobody in particular" and str(scene.made_by).begins_with("Oriel"),
+			"web: the scene says what it is called, whose work it is, and what made it")
+		var names := {}
+		var hidden := 0
+		if good:
+			for k in (scene.objects as Dictionary):
+				names[str(scene.objects[k].get("path", "")).get_file()] = k
+				if bool(scene.objects[k].get("hidden", false)):
+					hidden += 1
+		check(good and names.has("Web floor") and names.has("Sofa") and names.has("Two chairs") and hidden == 1, "web: its objects are in it, the alternative not shown among them, hidden")
+		check(good and (scene.choices as Array).size() == 1 and (scene.choices[0].objects as Array).has(names.get("Web floor", "")) and (scene.choices[0].options as Array).size() == 2
+			and (scene.materials as Dictionary).has(str(scene.choices[0].options[0].material)), "web: the floor's choices name the floor and materials that are in the file")
+		check(good and (scene.switches as Array).size() == 1 and (scene.switches[0].options as Array).size() == 2 and int(scene.switches[0].shown) == 0, "web: the alternatives are a set of two, the first shown")
+		check(good and (scene.views as Array).size() == before_cams + 2 and (scene.hotspots as Array).size() == 1 and bool(scene.options.auto_exposure) and not (scene.bake as Dictionary).has("objects"),
+			"web: with the views, the hotspot and the visitor's options; no baked light, as none was asked for")
+		check(int(r.stats.views) == before_cams + 2 and int(r.stats.triangles) > 30 and not bool(r.stats.baked) and GnWebWalk.describe(r.stats).contains("views"),
+			"web: and the page is told what was written (%s)" % GnWebWalk.describe(r.stats))
+	# The small server: Python to run it, and a certificate of the program's own for https.
+	check(GnWebServe.python() != "" and GnWebServe.addresses() is Array, "web: Python is found to serve a walkthrough with (%s)" % GnWebServe.python().get_file())
+	var cert: Dictionary = GnWebServe.certificate()
+	check(str(cert.error) == "" and FileAccess.get_file_as_string(str(cert.cert)).begins_with("-----BEGIN CERTIFICATE") and FileAccess.get_file_as_string(str(cert.key)).contains("PRIVATE KEY"),
+		"web: a certificate and its key are made for https, once (%s)" % cert.error)
+	check(str(GnWebServe.certificate().cert) == str(cert.cert), "web: and used again the next time")
+	var none: Dictionary = GnWebServe.start(base.path_join("new"), false)
+	check(str(none.error) != "", "web: a folder with no walkthrough in it is not served (\"%s\")" % none.error)
+	# Light that bounces, for rooms.
+	GnEnvironment.set_up()
+	var env: Environment = GnEnvironment.world().environment
+	GnEnvironment.apply("bounce", true)
+	check(env.sdfgi_enabled and env.sdfgi_use_occlusion and bool(GnEnvironment.value("bounce")), "environment: light that bounces is switched on for a room")
+	GnHost.undo_redo().undo()
+	check(not env.sdfgi_enabled and not bool(GnEnvironment.value("bounce")), "environment: and off again in one undo step")
+	# A model's pictures are kept as WebP inside its scene file, and come back whole.
+	var img := Image.create(256, 128, false, Image.FORMAT_RGB8)
+	for y in 128:
+		for x in 256:
+			img.set_pixel(x, y, Color(x / 255.0, y / 127.0, 0.4))
+	var tm := StandardMaterial3D.new()
+	tm.albedo_texture = ImageTexture.create_from_image(img)
+	var tb := BoxMesh.new()
+	tb.material = tm
+	var tn := MeshInstance3D.new()
+	tn.name = "Textured"
+	tn.mesh = tb
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	doc.append_from_scene(tn, state)
+	doc.write_to_filesystem(state, base.path_join("textured.glb"))
+	tn.free()
+	var conv: Dictionary = GnModelImport.convert_file(base.path_join("textured.glb"), base.path_join("assets"))
+	var tex: Texture2D = null
+	if str(conv.error) == "":
+		var model := (ResourceLoader.load(str(conv.path), "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene).instantiate()
+		for mi in model.find_children("*", "MeshInstance3D", true, false) + ([model] if model is MeshInstance3D else []):
+			var mat := (mi as MeshInstance3D).mesh.surface_get_material(0) as BaseMaterial3D
+			if mat and mat.albedo_texture:
+				tex = mat.albedo_texture
+		model.free()
+	check(str(conv.error) == "" and tex is PortableCompressedTexture2D and tex.get_width() == 256 and tex.get_height() == 128,
+		"import: a model's picture is kept packed inside its scene file and comes back whole (%s, %s)" % [tex.get_class() if tex else "none", conv.error])
+	GnPaths.remove_tree(base)
+	for n in [house, spot]:
+		n.get_parent().remove_child(n)
+		n.free()
+	for c in [north, west]:
+		c.get_parent().remove_child(c)
+		c.free()
+	root.remove_meta(GnWebWalk.META)
+
+
 func _large_scenes(root: Node) -> void:
 	var GnBig = load("res://addons/genesis/core/gn_big.gd")
 	var GnSceneExport = load("res://addons/genesis/core/gn_scene_export.gd")
@@ -1109,6 +1334,7 @@ func _run() -> void:
 	await _layered(root)
 	await _spreads_and_traffic(root)
 	await _large_scenes(root)
+	await _web_walkthrough(root)
 	# ------------------------------------------------------------- the rest
 	var deps := Dependencies.check()
 	check(deps.size() == 6 and deps.all(func(d): return d.name != "" and d.how != ""), "dependencies: six tools (the built-in engines among them), each with how to get it")

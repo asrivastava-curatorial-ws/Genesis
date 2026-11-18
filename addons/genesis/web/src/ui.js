@@ -135,6 +135,8 @@ export class UI {
 		];
 		return el('div', { class: 'o-panel o-help', hidden: true }, el('h2', { text: 'How to move' }),
 			el('dl', {}, ...rows.flatMap(([a, b]) => [el('dt', { text: a }), el('dd', { text: b })])),
+			// Whose work the scene is stays within reach after the cover has gone.
+			this.app.data.credit ? el('p', { class: 'o-credit', text: this.app.data.credit }) : null,
 			el('p', { class: 'o-credit', text: (this.app.data.made_by ? 'Made with ' + this.app.data.made_by : '') }));
 	}
 
