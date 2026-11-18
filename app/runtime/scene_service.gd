@@ -5,6 +5,7 @@ extends RefCounted
 # plugin. Only one scene is open at a time for now.
 
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
+const GnInside := preload("res://addons/genesis/core/gn_inside.gd")
 
 ## Shown in place of plants from the downloaded library that are not on this
 ## computer: the bundled stand-ins. Never saved (see _add_stand_ins).
@@ -98,7 +99,10 @@ func open(file: String) -> String:
 	var swapped := _add_stand_ins(scene, records) if not gone.is_empty() else []
 	var healed := own_again(scene)
 	if healed > 0:
-		print("Oriel: %d model%s in %s held a second copy of their shape; the next save leaves it out." % [healed, "" if healed == 1 else "s", file.get_file()])
+		print("Oriel: %d shape%s in %s had a second copy in the scene; the next save leaves it out." % [healed, "" if healed == 1 else "s", file.get_file()])
+	var lost := put_back_inside(scene)
+	if lost > 0:
+		print("Oriel: %d change%s inside models of %s found no part to go to (the model is not as it was)." % [lost, "" if lost == 1 else "s", file.get_file()])
 	_replace(scene, file, gone, records, swapped)
 	return ""
 
@@ -479,10 +483,12 @@ func _write(file: String) -> String:
 ## left out when it opened put back. Also used for autosave copies.
 func write_copy(file: String, root_dir: String) -> Error:
 	_swap_stand_ins(true)
+	var noted := note_inside(root)
 	var lent := set_aside_own(root)
 	var packed := PackedScene.new()
 	var err := packed.pack(root)
 	take_back(lent)
+	forget_inside(root, noted)
 	if err == OK:
 		err = write_scene(packed, file, root_dir, left_out)
 	_swap_stand_ins(false)
@@ -525,32 +531,81 @@ static func take_back(lent: Array) -> void:
 			(l[0] as Node).set(l[1], l[2])
 
 
-## Scenes saved before that hold such copies. Where a node's shape is a copy
-## of its model file's own (the same surfaces, points and size), the node is
-## given the file's own again: the next save is small, and the model is
-## drawn with whatever its file has gained since (lighter versions of
-## itself). Returns how many.
+## What the scene has changed inside its models (a material on a surface, a
+## part hidden, a note on a part: GnInside) is written on each model's node
+## for the time the scene is saved, and the models are written as one node
+## each: a model marked as changed inside would otherwise be written with
+## every part in full, its shapes too. Returns what forget_inside() needs.
+static func note_inside(scene: Node) -> Array:
+	var noted: Array = []
+	var copies := GnInside.Fresh.new()
+	for inst: Node in GnInside.models(scene):
+		var list := GnInside.changes(inst, scene, copies)
+		var editable := scene.is_editable_instance(inst)
+		if not list.is_empty():
+			inst.set_meta(GnInside.META, list)
+		if editable:
+			scene.set_editable_instance(inst, false)
+		if editable or not list.is_empty():
+			noted.append([inst, editable])
+	copies.clear()
+	return noted
+
+
+static func forget_inside(scene: Node, noted: Array) -> void:
+	for pair in noted:
+		var inst: Node = pair[0]
+		if not is_instance_valid(inst):
+			continue
+		inst.remove_meta(GnInside.META)
+		if pair[1]:
+			scene.set_editable_instance(inst, true)
+
+
+## The other way, when a scene is opened: its models are as their files have
+## them, and what the scene changed inside them is made again. Returns how
+## many changes found no part to go to (the model has changed since).
+static func put_back_inside(scene: Node) -> int:
+	var lost := 0
+	for inst: Node in GnInside.models(scene):
+		if inst.has_meta(GnInside.META):
+			var list: Variant = inst.get_meta(GnInside.META)
+			if list is Dictionary:
+				lost += GnInside.apply(inst, list)
+			inst.remove_meta(GnInside.META)
+	return lost
+
+
+## Scenes saved before that hold such copies: of a model that is one shape,
+## and of every part of a model that was marked as changed inside. Where a
+## node's shape is a copy of its model file's own (the same surfaces, points
+## and size), the node is given the file's own again: the next save is small,
+## and the model is drawn with whatever its file has gained since (lighter
+## versions of itself). Returns how many.
 static func own_again(scene: Node) -> int:
 	var n_healed := 0
 	if scene == null:
 		return 0
-	for node in scene.find_children("*", "MeshInstance3D", true, true):
-		var mi := node as MeshInstance3D
-		if mi.scene_file_path == "" or mi.mesh == null or mi.mesh.resource_path.begins_with(mi.scene_file_path + "::"):
-			continue
-		if not ResourceLoader.exists(mi.scene_file_path):
-			continue
-		var packed := ResourceLoader.load(mi.scene_file_path, "PackedScene") as PackedScene
-		var st := packed.get_state() if packed else null
-		if st == null or st.get_node_count() == 0:
-			continue
-		var base: Mesh = null
-		for i in st.get_node_property_count(0):
-			if st.get_node_property_name(0, i) == &"mesh":
-				base = st.get_node_property_value(0, i) as Mesh
-		if base != null and base != mi.mesh and same_shape(mi.mesh, base):
-			mi.mesh = base
-			n_healed += 1
+	var copies := GnInside.Fresh.new()
+	for inst: Node in GnInside.models(scene):
+		var own: String = inst.scene_file_path + "::"
+		for n: Node in GnInside.parts(inst, scene):
+			var mi := n as MeshInstance3D
+			if mi == null or mi.mesh == null:
+				continue
+			# A shape the scene holds itself is inside the scene's file or nowhere:
+			# not the model file's own, and not a file of its own.
+			var at := mi.mesh.resource_path
+			if at.begins_with(own) or (at != "" and not at.contains("::")):
+				continue
+			var fresh := copies.of(inst)
+			if fresh == null:
+				break
+			var twin := (fresh if mi == inst else fresh.get_node_or_null(inst.get_path_to(mi))) as MeshInstance3D
+			if twin and twin.mesh and twin.mesh != mi.mesh and same_shape(mi.mesh, twin.mesh):
+				mi.mesh = twin.mesh
+				n_healed += 1
+	copies.clear()
 	return n_healed
 
 

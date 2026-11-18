@@ -19,6 +19,8 @@ PBS="$(ls -d "$(uv python dir)"/cpython-"$PY_VERSION".*-linux-x86_64-gnu | sort 
 echo "Python: $PBS"
 rm -rf "$OUT"
 mkdir -p "$OUT"
+# Godot's editor leaves the build folder alone (see tools/build_standalone.sh).
+[ -d "$HERE/build" ] && : > "$HERE/build/.gdignore"
 cp -a "$PBS" "$OUT/python"
 PY="$OUT/python/bin/python3"
 uv pip install --quiet --python "$PY" --break-system-packages "bpy==$BPY_VERSION"

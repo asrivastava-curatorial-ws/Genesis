@@ -18,8 +18,12 @@ const GnClouds := preload("res://addons/genesis/core/gn_clouds.gd")
 const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnRoomLight := preload("res://addons/genesis/core/gn_room_light.gd")
 
 signal poll_changed
+## A job that holds the program still for a moment is about to run (its
+## name), or is over ("").
+signal busy(what: String)
 
 var brush: GnBrush
 var measure: GnMeasure
@@ -64,6 +68,8 @@ func on_scene_opened(root: Node) -> void:
 		var ur := GnHost.undo_redo()
 		if ur and not ur.changed.is_connected(_dress_soon):
 			ur.changed.connect(_dress_soon)
+		# Bounced light is worked out from the scene, once it is in the view.
+		_light_in = 0.0
 
 
 var _dress_in := -1.0
@@ -73,6 +79,30 @@ var _dress_in := -1.0
 ## looked at a moment after the last change, not after every one.
 func _dress_soon() -> void:
 	_dress_in = 0.4
+	_light_in = 1.2
+
+
+var _light_in := -1.0
+var _lighting := false
+
+
+## Bounced light follows the scene: looked at a moment after the last change,
+## and worked out again only when what is built is different.
+func _keep_light() -> void:
+	if _lighting or not GnEnvironment.bounce_is_stale():
+		return
+	_lighting = true
+	var making := bool(GnEnvironment.value("bounce")) and not GnEnvironment.bounce_held \
+		and GnRoomLight.fits(GnScene.root())
+	if making:
+		# Said first, and drawn, as the program stands still while it works.
+		busy.emit("Working out the room's light…")
+		await get_tree().process_frame
+		await get_tree().process_frame
+	GnEnvironment.keep_bounce()
+	if making:
+		busy.emit("")
+	_lighting = false
 
 
 var _sky: WeakRef = null
@@ -113,6 +143,10 @@ func _process(delta: float) -> void:
 		_dress_in -= delta
 		if _dress_in < 0.0:
 			GnWind.dress(GnScene.root())
+	if _light_in >= 0.0:
+		_light_in -= delta
+		if _light_in < 0.0:
+			_keep_light()
 	if osc.listening():
 		for cmd in osc.poll():
 			print("Oriel: cue command from outside: %s" % osc.last)

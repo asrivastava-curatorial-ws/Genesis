@@ -704,7 +704,9 @@ func _command_line() -> void:
 			return
 	var d := args.find("--make-demos")
 	if d >= 0 and d + 1 < args.size():
-		var failures: int = await Demos.run(self, args[d + 1])
+		# --make-demos <folder> [interiors|architecture|event]: all of them, or one.
+		var only := args[d + 2] if d + 2 < args.size() and not args[d + 2].begins_with("--") else ""
+		var failures: int = await Demos.run(self, args[d + 1], only)
 		print("GENESIS_DEMO RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return

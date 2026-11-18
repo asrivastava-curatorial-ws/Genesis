@@ -65,6 +65,9 @@ def main():
     ver = version()
     name = "Genesis-Community-%s" % ver
     out_root = os.path.join(ROOT, "release")
+    os.makedirs(out_root, exist_ok=True)
+    # Not part of the project: Godot's editor leaves the folder alone.
+    open(os.path.join(out_root, ".gdignore"), "w").close()
     out = os.path.join(out_root, name)
     if "--skip-build" not in args:
         run(["bash", os.path.join(ROOT, "tools/build_standalone.sh")] + platforms, env=dict(os.environ, GODOT=godot()))

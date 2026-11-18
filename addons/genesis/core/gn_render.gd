@@ -26,6 +26,8 @@ const GnStaging := preload("res://addons/genesis/core/gn_staging.gd")
 const GnAccumulate := preload("res://addons/genesis/core/gn_accumulate.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
+const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
+const GnRoomLight := preload("res://addons/genesis/core/gn_room_light.gd")
 
 # Rendering at a multiple of the output size and filtering down is the
 # cleanest antialiasing there is: no shimmer on thin mullions, no jaggies on
@@ -82,9 +84,14 @@ static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 	GnWind.freeze()
 	var quality: GnQuality.State = GnQuality.begin_high() if high else null
 	var frames := GnQuality.SETTLE_HIGH if high else GnQuality.SETTLE_DRAFT
+	# Bounced light: worked out for the scene as it now is, and given its time to settle.
+	if GnEnvironment.bounce_is_stale():
+		GnEnvironment.keep_bounce()
 	var we := GnScene.find_role("environment") as WorldEnvironment
 	if we and we.environment and we.environment.sdfgi_enabled:
 		frames = maxi(frames, GnQuality.SETTLE_BOUNCE)
+	elif GnRoomLight.is_on():
+		frames = maxi(frames, GnQuality.SETTLE_ROOM)
 	var image: Image
 	var backplate := GnPhotomatch.load_photo(camera)
 	# The Clay look: every surface plain white matte for the capture.

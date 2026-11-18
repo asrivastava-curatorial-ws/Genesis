@@ -103,7 +103,7 @@ func _init() -> void:
 		func(v): GnEnvironment.apply("ambient", v), func(v): return "%.2f" % v)
 	_bounce = CheckBox.new()
 	_bounce.text = "Light bounces (for rooms)"
-	_bounce.tooltip_text = "The sun and the sky light a surface only where they can reach it, and their light goes on from surface to surface: a room is lit by its windows, as in Eevee, Cycles and a baked web walkthrough, and is as dark as in life, so raise the exposure. The view takes a moment to settle after a change, and asks more of the graphics card."
+	_bounce.tooltip_text = "The sun and the sky light a surface only where they can reach it, and light goes on from surface to surface: a room is lit by its windows, by its lamps and by whatever glows in it, as in Eevee, Cycles and a baked web walkthrough. A room lit by daylight alone is as dark as in life: raise the exposure. In a scene up to some 40 m across the light is worked out again a moment after the scene has changed (the program stands still for a second or a few); a wider scene is lit a simpler way, which glowing surfaces take no part in. Asks more of the graphics card."
 	_bounce.toggled.connect(func(on):
 		if bool(GnEnvironment.value("bounce")) != on:
 			GnEnvironment.apply("bounce", on))

@@ -6,6 +6,7 @@ extends RefCounted
 # it only decides which Godot settings a creative intent maps to.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnRoomLight := preload("res://addons/genesis/core/gn_room_light.gd")
 const GnSky := preload("res://addons/genesis/core/gn_sky.gd")
 const GnSun := preload("res://addons/genesis/core/gn_sun.gd")
 const CLOUD_SKY := preload("res://addons/genesis/core/gn_cloud_sky.gdshader")
@@ -240,7 +241,7 @@ static func apply(key: String, v: Variant, undoable := true) -> void:
 		"ambient":
 			changes.append([env, "ambient_light_energy", v])
 		"bounce":
-			changes.append_array(_bounce(env, bool(v)))
+			changes.append_array(_bounce(env, bool(v) and not bounce_held))
 		"haze":
 			# Volumetric fog: light scatters in it, so spotlights show as beams.
 			changes.append([env, "volumetric_fog_enabled", v > 0.0])
@@ -254,24 +255,73 @@ static func apply(key: String, v: Variant, undoable := true) -> void:
 	else:
 		for c in changes:
 			c[0].set(c[1], c[2])
+	if key == "bounce":
+		keep_bounce()
 
 
-# Bounced light in the view (Godot's SDFGI): the sun's and the sky's light
-# reaches a surface only where it really can, and goes on from surface to
-# surface. Out of doors the difference is small; in a room it is everything:
-# without it the whole sky lights every wall, and with it the room is lit by
-# its windows, as in Eevee and Cycles (and as dark as there: an interior
-# wants the exposure raised by three stops or so).
-# The cells are small (0.1 m) so that walls hold the light back; four sizes
-# of them reach some 50 m, and beyond that the sky lights things as before.
+# Bounced light in the view: the sun's and the sky's light reaches a surface
+# only where it really can, and goes on from surface to surface. Out of doors
+# the difference is small; in a room it is everything: without it the whole
+# sky lights every wall, and with it the room is lit by its windows, as in
+# Eevee and Cycles (and as dark as there: a room lit by daylight alone wants
+# the exposure raised by three stops or so).
+#
+# There are two kinds. A compact scene (a room, a house: GnRoomLight.fits())
+# gets voxel light, worked out from the scene by keep_bounce(): glowing
+# surfaces light the room too, and nothing has to settle. A wide scene gets
+# Godot's SDFGI, set here: cells of 0.1 m so that walls hold the light back,
+# four sizes of them reaching some 50 m; beyond that the sky lights things
+# as before.
 static func _bounce(env: Environment, on: bool) -> Array:
-	var changes: Array = [[env, "sdfgi_enabled", on]]
-	if on:
+	var wide := on and not GnRoomLight.fits(GnScene.root())
+	var changes: Array = [[env, "sdfgi_enabled", wide]]
+	if wide:
 		changes.append_array([[env, "sdfgi_cascades", 4], [env, "sdfgi_min_cell_size", 0.1],
 			[env, "sdfgi_use_occlusion", true], [env, "sdfgi_read_sky_light", true],
 			[env, "sdfgi_bounce_feedback", 0.5], [env, "sdfgi_energy", 1.0],
 			[env, "sdfgi_y_scale", Environment.SDFGI_Y_SCALE_75_PERCENT]])
 	return changes
+
+
+## Set while bounced light is to be left out whatever the scene says (a
+## headset cannot afford it).
+static var bounce_held := false
+
+
+## Whether the scene's bounced light is behind the scene: wanted and missing,
+## there and unwanted, or worked out before what is built last changed.
+## Cheap to ask (it looks at the scene, and makes nothing).
+static func bounce_is_stale() -> bool:
+	var we := world()
+	var root := GnScene.root()
+	if we == null or we.environment == null or root == null:
+		return false
+	var env := we.environment
+	var have := GnRoomLight.node()
+	if bounce_held or not bool(value("bounce")):
+		return have != null or env.sdfgi_enabled
+	if not GnRoomLight.fits(root):
+		return have != null or not env.sdfgi_enabled
+	return env.sdfgi_enabled or have == null or have.data == null \
+		or int(have.get_meta(&"gn_signature", 0)) != GnRoomLight.signature(root)
+
+
+## Puts the scene's bounced light in step with the scene: called when a scene
+## opens, a moment after it changes, and before a picture is taken. Working
+## voxel light out takes a second or a few, during which the program stands
+## still. Returns what GnRoomLight.sync() did.
+static func keep_bounce() -> String:
+	var we := world()
+	if we == null or we.environment == null:
+		return "none"
+	var on := bool(value("bounce")) and not bounce_held
+	var did := GnRoomLight.sync(on)
+	# The kind follows the scene as it grows or shrinks.
+	var env := we.environment
+	if env.sdfgi_enabled != (on and did == "wide"):
+		for c in _bounce(env, on):
+			c[0].set(c[1], c[2])
+	return did
 
 
 # Sun and sky together, because with a photo sky they are one decision: the

@@ -13,6 +13,8 @@ const SETTLE_DRAFT := 8
 const SETTLE_HIGH := 24
 ## Bounced light is worked out over many frames: a still waits for it.
 const SETTLE_BOUNCE := 72
+## Voxel light goes from surface to surface a frame at a time: a few do.
+const SETTLE_ROOM := 12
 
 
 class State:

@@ -63,12 +63,17 @@ const FILM_SIZE := Vector2i(960, 540)
 const FILM_FPS := 12
 
 
-static func run(main: Node, out_dir: String) -> int:
+## Builds the demos in `out_dir`: all of them, or the one named by `only`
+## ("interiors", "architecture" or "event").
+static func run(main: Node, out_dir: String, only := "") -> int:
 	var failures := 0
 	DirAccess.make_dir_recursive_absolute(out_dir)
-	failures += await _interiors(main, out_dir)
-	failures += await _architecture(main, out_dir)
-	failures += await _event(main, out_dir)
+	if only in ["", "interiors"]:
+		failures += await _interiors(main, out_dir)
+	if only in ["", "architecture"]:
+		failures += await _architecture(main, out_dir)
+	if only in ["", "event"]:
+		failures += await _event(main, out_dir)
 	App.projects.close()
 	return failures
 
@@ -172,12 +177,13 @@ static func _interiors(main: Node, out_dir: String) -> int:
 		if ground:
 			ground.get_parent().remove_child(ground)
 			ground.queue_free()
+		# (Hidden, not removed: what is inside a model that was brought in is the
+		# model file's, and a scene says only what it changes there.)
 		for box: AABB in room.get("without", []):
 			for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
 				var mat := mi.get_active_material(0) as BaseMaterial3D
 				if mat and mat.emission_enabled and box.has_point(mi.global_transform * mi.get_aabb().get_center()):
-					mi.get_parent().remove_child(mi)
-					mi.queue_free()
+					mi.visible = false
 		# The sun where the room's windows want it: the heading and the hour that come nearest.
 		var want: Vector3 = (room.sun as Vector3).normalized()
 		var best := -2.0
@@ -197,6 +203,8 @@ static func _interiors(main: Node, out_dir: String) -> int:
 			GnEnvironment.apply("sky", "Photo: high cloud", false)
 		GnEnvironment.apply("exposure", float(room.ev), false)
 		GnEnvironment.apply("fog", 0.0, false)
+		# Light that bounces: the room is lit by its windows in the view too.
+		GnEnvironment.apply("bounce", true, false)
 		for spec in room.cameras:
 			var c := Camera3D.new()
 			c.name = spec[0]

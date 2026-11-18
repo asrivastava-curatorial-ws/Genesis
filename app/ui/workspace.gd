@@ -755,6 +755,15 @@ func _build_status() -> void:
 	_status_item(row, "saved", "check", "Save (Ctrl+S)", func(): App.actions.run("project.save"))
 	_status_item(row, "tool", "move", "The tool the mouse uses: click to change", _next_tool)
 	_status_item(row, "picked", "select", "What is selected", func(): App.actions.run("view.frame_selection"))
+	# A job that holds the program still for a moment says so here first.
+	var working := Label.new()
+	working.theme_type_variation = &"StatusLabel"
+	working.add_theme_color_override("font_color", Color("#d29922"))
+	working.visible = false
+	row.add_child(working)
+	App.modules.busy.connect(func(what: String):
+		working.text = "   " + what
+		working.visible = what != "")
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE

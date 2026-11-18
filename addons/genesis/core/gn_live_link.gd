@@ -12,6 +12,7 @@ extends RefCounted
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnModelImport := preload("res://addons/genesis/core/gn_model_import.gd")
+const GnInside := preload("res://addons/genesis/core/gn_inside.gd")
 
 const SOURCE := &"gn_source"
 const SOURCE_TIME := &"gn_source_time"
@@ -138,7 +139,19 @@ static func replace_instance(old: Node3D, path: String) -> Node3D:
 		fresh.set_meta(k, old.get_meta(k))
 	fresh.set_meta(SOURCE_TIME, FileAccess.get_modified_time(str(old.get_meta(SOURCE))))
 	fresh.set_meta(SOURCE_HASH, FileAccess.get_md5(str(old.get_meta(SOURCE))))
-	# Materials the user put on surfaces, by where the mesh is in the model.
+	# What the scene changed inside the model, by where each part is in it: a
+	# part that was hidden, the notes put on a part (a choice of materials)...
+	var root_now := GnScene.root()
+	for part in old.find_children("*", "", true, false):
+		var twin_part := fresh.get_node_or_null(old.get_path_to(part))
+		if twin_part == null or part.owner == root_now:
+			continue
+		if part is Node3D and twin_part is Node3D and not (part as Node3D).visible:
+			(twin_part as Node3D).visible = false
+		for k in part.get_meta_list():
+			if not twin_part.has_meta(k) and not str(k) in GnInside.PASSING:
+				twin_part.set_meta(k, part.get_meta(k))
+	# ...and the materials put on surfaces.
 	for mi in old.find_children("*", "MeshInstance3D", true, false):
 		var twin := fresh.get_node_or_null(old.get_path_to(mi)) as MeshInstance3D
 		if twin == null:
@@ -149,7 +162,7 @@ static func replace_instance(old: Node3D, path: String) -> Node3D:
 			var m: Material = mi.get_surface_override_material(i)
 			if m:
 				twin.set_surface_override_material(i, m)
-	var root := GnScene.root()
+	var root := root_now
 	var parent := old.get_parent()
 	var at := old.get_index()
 	var keep: Array = old.get_children().filter(func(c): return c.owner == root)

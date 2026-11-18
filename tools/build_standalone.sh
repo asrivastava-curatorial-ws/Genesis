@@ -19,6 +19,10 @@ GODOT="${GODOT:-godot}"
 OUT="$HERE/build"
 TREE="$OUT/tree"
 TARGETS=("$@"); [ ${#TARGETS[@]} -eq 0 ] && TARGETS=(linux)
+# What is built is not part of the project: Godot's editor is told to leave
+# the folder alone (the engines carry .blend files, and an editor that meets
+# one without a Blender to open it with imports nothing at all).
+mkdir -p "$OUT"; : > "$OUT/.gdignore"
 
 # The material presets. tools/setup.py builds them from scanned materials when
 # those have been downloaded; without them tools/make_materials.gd draws its

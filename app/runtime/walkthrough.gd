@@ -143,6 +143,10 @@ func _make_hands() -> void:
 ## What a headset cannot afford, or shows wrongly in two eyes, is left out
 ## of this copy of the scene (which is never saved).
 func _calm_environment() -> void:
+	# Bounced light of either kind is one of them, and is not worked out here.
+	var bounced := bool(GnEnvironment.value("bounce"))
+	GnEnvironment.bounce_held = true
+	GnEnvironment.keep_bounce()
 	for we in scene.find_children("*", "WorldEnvironment", true, false):
 		var env: Environment = (we as WorldEnvironment).environment
 		if env == null:
@@ -153,7 +157,7 @@ func _calm_environment() -> void:
 		# A room set up with bounced light has its exposure raised for it:
 		# without the bounce the whole sky would light every wall, far too
 		# brightly, so the sky's light is turned down to about what gets in.
-		if env.sdfgi_enabled:
+		if bounced or env.sdfgi_enabled:
 			env.ambient_light_energy *= GnEnvironment.AMBIENT_INDOORS
 		env.sdfgi_enabled = false
 		env.volumetric_fog_enabled = false
