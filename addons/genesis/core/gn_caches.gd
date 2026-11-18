@@ -27,6 +27,7 @@ static func release() -> void:
 	PageAssets._thumbs.clear()
 	GnAccumulate._encode = null
 	GnWind.release()
+	load("res://addons/genesis/core/gn_web_serve.gd").stop_all()
 	GnClouds.release()
 	GnEffect._dot = null
 	GnCrowd._meshes.clear()

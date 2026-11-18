@@ -23,3 +23,6 @@ __pycache__/
 /tests/local.env
 /build/
 /release/
+# The web viewer's build tools (npm install puts them back) and its font cache.
+/tools/web_viewer/node_modules/
+/tools/web_viewer/fonts.css

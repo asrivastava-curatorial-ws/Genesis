@@ -10,6 +10,7 @@ extends RefCounted
 #
 #   res://renders              ->  <project>/renders
 #   res://assets               ->  <project>/assets
+#   res://web                  ->  <project>/web
 #   res://genesis_data/<what>  ->  <project>/data/<what>    for the folders below
 #
 # and downloaded tools (the AI upscaler) and caches go to the user's own data
@@ -19,7 +20,7 @@ extends RefCounted
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 
 ## genesis_data folders that hold a project's own files.
-const PROJECT_DATA := ["plans", "cad", "backplates", "content", "textures", "tiles", "looks", "weathering", "logos", "sites", "skies"]
+const PROJECT_DATA := ["plans", "cad", "backplates", "content", "textures", "tiles", "looks", "weathering", "logos", "sites", "skies", "web_media"]
 
 
 ## Where `res_path` (one of the paths Genesis has always used) is written now.
@@ -88,7 +89,7 @@ static func cache_dir(what: String) -> String:
 ## For a host that keeps projects in folders: the project-relative place of a
 ## res:// path, or "" when it is not a project path (the bundled library).
 static func project_relative(res_path: String) -> String:
-	for prefix in ["res://renders", "res://assets"]:
+	for prefix in ["res://renders", "res://assets", "res://web"]:
 		if res_path == prefix or res_path.begins_with(prefix + "/"):
 			return res_path.trim_prefix("res://")
 	if res_path.begins_with("res://genesis_data/"):

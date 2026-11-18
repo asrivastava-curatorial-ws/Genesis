@@ -14,6 +14,7 @@ const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 var _controls := {}
 var _real: CheckBox
 var _volumetric: CheckBox
+var _bounce: CheckBox
 var _real_box: VBoxContainer
 var _place: OptionButton
 var _weather: OptionButton
@@ -95,10 +96,18 @@ func _init() -> void:
 		func(v): GnWeather.set_value("wind_heading", v), func(v): return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][int(round(v / 45.0)) % 8])
 	_season = GnUi.option(_body, "Season", GnWeather.SEASONS, func(t): GnWeather.set_value("season", t))
 	GnUi.heading(_body, "Light")
-	_controls.exposure = GnUi.slider(_body, "Exposure", -2.0, 2.0, 0.05,
+	_controls.exposure = GnUi.slider(_body, "Exposure", -2.0, 5.0, 0.05,
 		func(v): GnEnvironment.apply("exposure", v), func(v): return "%+.1f EV" % v)
+	_controls.exposure.tooltip_text = "How bright the picture is. A room lit through its windows wants about +3 EV when light bounces (below)."
 	_controls.ambient = GnUi.slider(_body, "Sky light", 0.0, 2.0, 0.05,
 		func(v): GnEnvironment.apply("ambient", v), func(v): return "%.2f" % v)
+	_bounce = CheckBox.new()
+	_bounce.text = "Light bounces (for rooms)"
+	_bounce.tooltip_text = "The sun and the sky light a surface only where they can reach it, and their light goes on from surface to surface: a room is lit by its windows, as in Eevee, Cycles and a baked web walkthrough, and is as dark as in life, so raise the exposure. The view takes a moment to settle after a change, and asks more of the graphics card."
+	_bounce.toggled.connect(func(on):
+		if bool(GnEnvironment.value("bounce")) != on:
+			GnEnvironment.apply("bounce", on))
+	_body.add_child(_bounce)
 
 
 func refresh() -> void:
@@ -123,6 +132,7 @@ func refresh() -> void:
 	GnUi.show_value(_wind_heading, float(w.get("wind_heading", 0.0)))
 	GnUi.select_text(_season, w.season)
 	_volumetric.set_pressed_no_signal(bool(GnEnvironment.value("volumetric_clouds")))
+	_bounce.set_pressed_no_signal(bool(GnEnvironment.value("bounce")))
 	var real := bool(GnEnvironment.value("real_sun"))
 	_real.set_pressed_no_signal(real)
 	_real_box.visible = real

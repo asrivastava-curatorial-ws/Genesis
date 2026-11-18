@@ -1,0 +1,10 @@
+{
+ "files": [
+  "README.txt",
+  "app/LICENSES.txt",
+  "app/oriel-walk.css",
+  "app/oriel-walk.js",
+  "index.html",
+  "serve.py"
+ ]
+}

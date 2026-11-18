@@ -82,6 +82,9 @@ static func render(camera: Camera3D, size: Vector2i, host: Node, high := true,
 	GnWind.freeze()
 	var quality: GnQuality.State = GnQuality.begin_high() if high else null
 	var frames := GnQuality.SETTLE_HIGH if high else GnQuality.SETTLE_DRAFT
+	var we := GnScene.find_role("environment") as WorldEnvironment
+	if we and we.environment and we.environment.sdfgi_enabled:
+		frames = maxi(frames, GnQuality.SETTLE_BOUNCE)
 	var image: Image
 	var backplate := GnPhotomatch.load_photo(camera)
 	# The Clay look: every surface plain white matte for the capture.

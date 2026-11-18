@@ -38,7 +38,14 @@ const DEFAULTS := {
 	"cloudiness": 0.3,
 	# Clouds with depth, lit from where the sun is; off: painted on the sky (faster).
 	"volumetric_clouds": false,
+	# Light that bounces, and a sky that walls shut out: what a room needs.
+	"bounce": false,
 }
+
+## Sky light without bounced light reaches every surface, indoors too. A room
+## shown that way in a headset (which cannot afford bounced light) is given
+## this much of it.
+const AMBIENT_INDOORS := 0.12
 
 const MAX_ELEVATION := 58.0
 
@@ -232,6 +239,8 @@ static func apply(key: String, v: Variant, undoable := true) -> void:
 			changes.append([env, "fog_density", 0.004 * v])
 		"ambient":
 			changes.append([env, "ambient_light_energy", v])
+		"bounce":
+			changes.append_array(_bounce(env, bool(v)))
 		"haze":
 			# Volumetric fog: light scatters in it, so spotlights show as beams.
 			changes.append([env, "volumetric_fog_enabled", v > 0.0])
@@ -245,6 +254,24 @@ static func apply(key: String, v: Variant, undoable := true) -> void:
 	else:
 		for c in changes:
 			c[0].set(c[1], c[2])
+
+
+# Bounced light in the view (Godot's SDFGI): the sun's and the sky's light
+# reaches a surface only where it really can, and goes on from surface to
+# surface. Out of doors the difference is small; in a room it is everything:
+# without it the whole sky lights every wall, and with it the room is lit by
+# its windows, as in Eevee and Cycles (and as dark as there: an interior
+# wants the exposure raised by three stops or so).
+# The cells are small (0.1 m) so that walls hold the light back; four sizes
+# of them reach some 50 m, and beyond that the sky lights things as before.
+static func _bounce(env: Environment, on: bool) -> Array:
+	var changes: Array = [[env, "sdfgi_enabled", on]]
+	if on:
+		changes.append_array([[env, "sdfgi_cascades", 4], [env, "sdfgi_min_cell_size", 0.1],
+			[env, "sdfgi_use_occlusion", true], [env, "sdfgi_read_sky_light", true],
+			[env, "sdfgi_bounce_feedback", 0.5], [env, "sdfgi_energy", 1.0],
+			[env, "sdfgi_y_scale", Environment.SDFGI_Y_SCALE_75_PERCENT]])
+	return changes
 
 
 # Sun and sky together, because with a photo sky they are one decision: the

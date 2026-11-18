@@ -1,0 +1,91 @@
+/* The page round an Oriel web walkthrough: dark, quiet, out of the picture's way. */
+:root {
+	--bg: #0d1117; --panel: rgba(22, 27, 34, 0.94); --line: #30363d; --text: #c9d1d9; --bright: #f0f6fc; --dim: #8b949e;
+	--accent: #58a6ff; --font: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font: 13px/1.5 var(--font); overscroll-behavior: none; }
+#oriel-view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; touch-action: none; cursor: grab; }
+#oriel-view:active { cursor: grabbing; }
+#oriel-view.o-measuring { cursor: crosshair; }
+#oriel-ui { position: fixed; inset: 0; pointer-events: none; user-select: none; -webkit-user-select: none; }
+#oriel-ui > * { pointer-events: auto; }
+[hidden] { display: none !important; }
+button, a.o-btn { font: inherit; color: inherit; }
+
+.o-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 6px; align-items: center; padding: 10px 12px calc(10px);
+	padding-top: calc(10px + env(safe-area-inset-top)); background: linear-gradient(rgba(13, 17, 23, 0.72), rgba(13, 17, 23, 0)); pointer-events: none !important; flex-wrap: wrap; }
+.o-bar > * { pointer-events: auto; }
+.o-title { color: var(--bright); font-weight: 600; font-size: 14px; margin-right: 8px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); pointer-events: none; }
+.o-gap { flex: 1; pointer-events: none; }
+.o-btn { display: inline-block; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer; text-decoration: none;
+	color: var(--text); transition: border-color 0.12s, color 0.12s, background 0.12s; white-space: nowrap; }
+.o-btn:hover, .o-btn:focus-visible { border-color: var(--dim); color: var(--bright); outline: none; }
+.o-btn.o-on { border-color: var(--accent); color: var(--accent); }
+.o-btn.o-vr { border-color: var(--accent); color: var(--bg); background: var(--accent); font-weight: 600; }
+.o-primary { background: var(--accent); color: var(--bg); border: 0; border-radius: 6px; padding: 10px 26px; font: 600 15px var(--font); cursor: pointer; }
+.o-primary:hover, .o-primary:focus-visible { filter: brightness(1.12); outline: 2px solid var(--bright); outline-offset: 2px; }
+
+.o-panel { position: absolute; top: 56px; right: 12px; width: min(340px, calc(100vw - 24px)); max-height: calc(100vh - 80px); overflow: auto; background: var(--panel);
+	border: 1px solid var(--line); border-radius: 8px; padding: 12px; box-shadow: 0 8px 24px rgba(1, 4, 9, 0.6); backdrop-filter: blur(6px); }
+.o-panel h2 { margin: 0 0 8px; font-size: 13px; color: var(--bright); font-weight: 600; }
+.o-panel h3 { margin: 10px 0 6px; font-size: 12px; color: var(--dim); font-weight: 500; }
+.o-panel p { margin: 8px 0; }
+.o-item { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 6px; padding: 7px 8px; cursor: pointer; color: var(--text); }
+.o-item:hover, .o-item:focus-visible { background: rgba(177, 186, 196, 0.12); color: var(--bright); outline: none; }
+.o-item.o-link { color: var(--dim); border-top: 1px solid var(--line); border-radius: 0 0 6px 6px; margin-top: 6px; padding-top: 10px; }
+.o-spot { width: min(400px, calc(100vw - 24px)); }
+.o-spot img, .o-spot video { width: 100%; border-radius: 6px; display: block; margin: 8px 0; background: #010409; }
+.o-spot .o-btn { margin: 6px 6px 0 0; }
+.o-close { position: absolute; top: 6px; right: 8px; background: none; border: 0; color: var(--dim); font-size: 20px; cursor: pointer; line-height: 1; }
+.o-close:hover { color: var(--bright); }
+.o-help dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.o-help dt { color: var(--bright); }
+.o-help dd { margin: 0; color: var(--dim); }
+.o-credit { color: var(--dim); font-size: 11px; margin-top: 12px; }
+
+.o-chip { background: rgba(110, 118, 129, 0.12); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; margin: 0 6px 6px 0; cursor: pointer; color: var(--text);
+	display: inline-flex; align-items: center; gap: 7px; }
+.o-chip:hover { border-color: var(--dim); }
+.o-chip.o-on { border-color: var(--accent); color: var(--accent); }
+.o-swatch i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(240, 246, 252, 0.25); background: #777 center / cover; display: inline-block; margin-left: -4px; }
+.o-choices { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: calc(100vw - 24px); background: var(--panel);
+	border: 1px solid var(--line); border-radius: 10px; padding: 10px 10px 4px 14px; display: flex; flex-wrap: wrap; align-items: center; box-shadow: 0 8px 24px rgba(1, 4, 9, 0.6); }
+.o-choices-name { color: var(--bright); font-weight: 600; margin: 0 12px 6px 0; }
+.o-choices .o-btn { margin: 0 0 6px 4px; padding: 2px 9px; }
+
+.o-markers, .o-labels { position: absolute; inset: 0; pointer-events: none !important; overflow: hidden; }
+.o-marker { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bright); background: var(--accent); color: var(--bg);
+	font: 700 15px var(--font); cursor: pointer; pointer-events: auto; box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.6); animation: o-pulse 2.2s infinite; padding: 0; }
+.o-marker:hover { filter: brightness(1.15); }
+.o-marker.o-behind { opacity: 0.28; animation: none; }
+@keyframes o-pulse { 0% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.55); } 70% { box-shadow: 0 0 0 12px rgba(88, 166, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); } }
+.o-label { position: absolute; left: 0; top: 0; margin: -12px 0 0 -30px; background: #ffd33d; color: #0d1117; font-weight: 700; padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
+
+.o-plan { position: absolute; left: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); width: min(190px, 34vw); aspect-ratio: 1; border: 1px solid var(--line); border-radius: 8px;
+	overflow: hidden; background: var(--bg); cursor: pointer; box-shadow: 0 8px 24px rgba(1, 4, 9, 0.5); }
+.o-plan canvas { width: 100%; height: 100%; display: block; }
+.o-plan-dot { position: absolute; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 16px solid var(--accent);
+	filter: drop-shadow(0 0 2px #010409); pointer-events: none; }
+
+.o-toast { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 16px;
+	color: var(--bright); pointer-events: none !important; white-space: nowrap; max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; }
+.o-fade { position: absolute; inset: 0; background: #010409; opacity: 0; transition: opacity 0.22s; pointer-events: none !important; }
+.o-fade.o-dark { opacity: 1; }
+
+.o-cover { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 35%, #161b22, #0d1117 70%); display: grid; place-items: center; transition: opacity 0.45s; z-index: 5; }
+.o-cover.o-gone { opacity: 0; pointer-events: none !important; }
+.o-cover-box { text-align: center; padding: 24px; max-width: 640px; }
+.o-cover h1 { color: var(--bright); font-size: clamp(22px, 4.2vw, 38px); margin: 0 0 6px; font-weight: 600; letter-spacing: -0.01em; }
+.o-sub { color: var(--dim); margin: 0 0 22px; font-size: 14px; }
+.o-progress { width: min(320px, 70vw); height: 4px; background: var(--line); border-radius: 2px; margin: 26px auto 12px; overflow: hidden; }
+.o-progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+.o-note { color: var(--dim); min-height: 1.5em; margin: 12px 0 18px; }
+.o-note.o-bad { color: #ff7b72; }
+
+@media (max-width: 640px) {
+	.o-title { display: none; }
+	.o-btn { padding: 6px 9px; }
+	.o-panel { top: auto; bottom: 12px; right: 12px; left: 12px; width: auto; max-height: 60vh; }
+}
+@media (prefers-reduced-motion: reduce) { .o-marker { animation: none; } }

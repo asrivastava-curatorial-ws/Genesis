@@ -64,6 +64,10 @@ class Ctx:
 	var probe: GnSurface
 	## Only the lights (a sun study's other hours).
 	var lights_only := false
+	## Hidden things that carry this mark go too, marked "hidden" (a web
+	## walkthrough's alternatives, of which a visitor shows one at a time).
+	var also_hidden := &""
+	var hidden := 0
 
 	func warn(text: String) -> void:
 		if not text in warnings:
@@ -75,7 +79,10 @@ class Ctx:
 ## the pictures on the materials are packed small (WebP, hardly lossy): a
 ## scene full of textured things is then a tenth the size to write and to
 ## read, which is what a quick render wants; without, they are exact.
-static func export_scene(root: Node, dir: String, light := false) -> Dictionary:
+## `before_write`, when given, is called with what was gathered (a Ctx) just
+## before the file is written: the web walkthrough takes the materials from
+## it, and may take their pictures off so the file holds the shapes alone.
+static func export_scene(root: Node, dir: String, light := false, before_write := Callable(), also_hidden := &"") -> Dictionary:
 	if root == null:
 		return {"error": "There is no scene open.", "glb": "", "scene": {}, "warnings": []}
 	DirAccess.make_dir_recursive_absolute(dir)
@@ -85,6 +92,7 @@ static func export_scene(root: Node, dir: String, light := false) -> Dictionary:
 	ctx.out_root = Node3D.new()
 	ctx.out_root.name = "oriel"
 	ctx.probe = GnSurface.new(root)
+	ctx.also_hidden = also_hidden
 	for c in root.get_children():
 		_walk(ctx, c)
 	var scene := {
@@ -99,6 +107,8 @@ static func export_scene(root: Node, dir: String, light := false) -> Dictionary:
 	var weather := _weather(ctx)
 	if not weather.is_empty():
 		scene["weather"] = weather
+	if before_write.is_valid():
+		before_write.call(ctx)
 	var glb := dir.path_join("scene.glb")
 	var doc := GLTFDocument.new()
 	if light:
@@ -246,7 +256,16 @@ static func lights_spec(root: Node) -> Array:
 
 static func _walk(ctx: Ctx, n: Node) -> void:
 	if n is Node3D and not (n as Node3D).visible:
+		if ctx.also_hidden == &"" or not n.has_meta(ctx.also_hidden):
+			return
+		ctx.hidden += 1
+		_walk_in(ctx, n)
+		ctx.hidden -= 1
 		return
+	_walk_in(ctx, n)
+
+
+static func _walk_in(ctx: Ctx, n: Node) -> void:
 	if n is CanvasItem:
 		return
 	if n.get_script() == AreaLight:
@@ -387,8 +406,10 @@ static func _mesh(ctx: Ctx, mi: MeshInstance3D, extra: Dictionary) -> void:
 	elif mi.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY:
 		spec["shadow_only"] = true
 	spec.merge(extra, true)
+	if ctx.hidden > 0:
+		spec["hidden"] = true
 	ctx.objects[name] = spec
-	if not spec.has("ground"):
+	if not spec.has("ground") and ctx.hidden == 0:
 		_grow(ctx, mi.global_transform * mesh.get_aabb())
 
 
@@ -406,6 +427,8 @@ static func _csg(ctx: Ctx, csg: CSGShape3D) -> void:
 		copy.set_surface_override_material(i, _material(ctx, copy.mesh.surface_get_material(i), copy.mesh, i))
 	ctx.out_root.add_child(copy)
 	ctx.objects[copy.name] = {"path": str(ctx.root.get_path_to(csg)), "id_color": _col(GnStaging._id_colour(csg))}
+	if ctx.hidden > 0:
+		ctx.objects[copy.name]["hidden"] = true
 	_grow(ctx, copy.transform * copy.mesh.get_aabb())
 
 
@@ -445,6 +468,9 @@ static func _multimesh(ctx: Ctx, mmi: MultiMeshInstance3D) -> void:
 	f.close()
 	ctx.instancers.append({"base": base.name, "file": file.get_file(), "count": count})
 	ctx.objects[base.name] = {"path": str(ctx.root.get_path_to(mmi)), "id_color": _col(GnStaging._id_colour(mmi)), "base": true}
+	if ctx.hidden > 0:
+		ctx.objects[base.name]["hidden"] = true
+		ctx.instancers[-1]["hidden"] = true
 	if _role(ctx, mmi) not in ["ground", "site"]:
 		_grow(ctx, box)
 

@@ -15,6 +15,7 @@ extends Node3D
 const App := preload("res://app/core/app.gd")
 const WalkRig := preload("res://app/runtime/walk_rig.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
+const GnEnvironment := preload("res://addons/genesis/core/gn_environment.gd")
 
 const STATUS_FILE := "user://walk_status.json"
 const HELP_VR := "Left stick: walk (squeeze to run)\nRight stick: turn\nTrigger: point at a place, let go to jump there\nB / Y: fly   A / X: next camera\nMenu: these words"
@@ -149,6 +150,11 @@ func _calm_environment() -> void:
 		env = env.duplicate()
 		env.ssr_enabled = false
 		env.ssil_enabled = false
+		# A room set up with bounced light has its exposure raised for it:
+		# without the bounce the whole sky would light every wall, far too
+		# brightly, so the sky's light is turned down to about what gets in.
+		if env.sdfgi_enabled:
+			env.ambient_light_energy *= GnEnvironment.AMBIENT_INDOORS
 		env.sdfgi_enabled = false
 		env.volumetric_fog_enabled = false
 		env.ssao_enabled = false

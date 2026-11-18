@@ -1511,6 +1511,11 @@ def build_instancers():
     Geometry Nodes instancing, so a hundred thousand copies stay cheap."""
     for k, spec in enumerate(SCENE.get("instancers", [])):
         base = OBJECTS.get(spec["base"])
+        if spec.get("hidden"):
+            # An alternative that is not the one shown (a web walkthrough's): its model is kept, its copies are not made.
+            if base is not None:
+                base.hide_render = True
+            continue
         if base is None:
             warn_once("inst:" + spec["base"], "a set of copies lost its model (%s)" % spec["base"])
             continue
@@ -3377,6 +3382,19 @@ def bake_probes(bounds):
 # --------------------------------------------------------------------------
 
 
+def do_web(r, idx):
+    """Baked light and shapes for a web walkthrough: the work is in oriel_web.py, which lies beside this file."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("oriel_web", os.path.join(os.path.dirname(os.path.abspath(__file__)), "oriel_web.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    r = dict(r)
+    r["out"] = _abs(r.get("out", "web"))
+    res = mod.run(globals(), r)
+    STATUS.output(os.path.join(r["out"], "bake.json"))
+    return res
+
+
 def main():
     t0 = time.time()
     if JOB.get("schema") != SCHEMA:
@@ -3392,8 +3410,11 @@ def main():
     build_texts()
     build_haze(SCENE.get("haze"))
     setup_engine()
-    apply_relief()
-    apply_caustics()
+    web = any(r.get("kind") == "web" for r in JOB.get("renders", []))
+    if not web:
+        # A web walkthrough's shapes are written as they are: the browser does not move surfaces.
+        apply_relief()
+        apply_caustics()
     setup_light_groups()        # before the lights and the sky, which join their groups as they are made
     build_lights(SCENE.get("lights", []))
     build_world(SCENE.get("world", {}))
@@ -3421,6 +3442,8 @@ def main():
             do_pass(r, i)
         elif kind == "live":
             do_live(r, i)
+        elif kind == "web":
+            do_web(r, i)
         done += weights[i]
     STATUS.set(state="done", stage="", progress=1.0, message="Finished in %d s" % int(time.time() - t0))
     log("done in %.1f s" % (time.time() - t0))

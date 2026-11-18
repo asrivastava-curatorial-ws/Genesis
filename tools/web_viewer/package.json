@@ -1,0 +1,14 @@
+{
+  "name": "oriel-web-viewer-build",
+  "private": true,
+  "description": "What the build of Oriel's web walkthrough viewer needs (tools/build_web_viewer.sh). Nothing of this is needed to run Oriel.",
+  "license": "MIT",
+  "dependencies": {
+    "three": "0.187.0",
+    "three-mesh-bvh": "0.9.18"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "iwer": "2.8.0"
+  }
+}

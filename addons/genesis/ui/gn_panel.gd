@@ -22,6 +22,7 @@ const PageSet := preload("res://addons/genesis/ui/page_set.gd")
 const PagePlans := preload("res://addons/genesis/ui/page_plans.gd")
 const PageShow := preload("res://addons/genesis/ui/page_show.gd")
 const PageOnline := preload("res://addons/genesis/ui/page_online.gd")
+const PageWeb := preload("res://addons/genesis/ui/page_web.gd")
 const GnBrush := preload("res://addons/genesis/core/gn_brush.gd")
 const GnMeasure := preload("res://addons/genesis/core/gn_measure.gd")
 
@@ -39,6 +40,7 @@ const ABOUT := {
 	"Look": ["page_look", "Light, colour and lens for each camera."],
 	"Render": ["page_render", "Stills, 360° panoramas, virtual tours and passes."],
 	"Movie": ["page_movie", "Fly-throughs, with people and traffic on the move."],
+	"Web": ["globe", "A walkthrough for browsers and VR headsets, opened from a link."],
 	"Show": ["page_show", "Run the event before it happens: live screens and cues."],
 }
 
@@ -114,7 +116,7 @@ func _init() -> void:
 	for page in [_scene, _plans, _assets, PageOnline.new(), PageEnvironment.new(),
 			_landscape, PageSet.new(),
 			PageMaterials.new(),
-			PageCameras.new(), PageLook.new(), PageRender.new(), PageMovie.new(), PageShow.new()]:
+			PageCameras.new(), PageLook.new(), PageRender.new(), PageMovie.new(), PageWeb.new(), PageShow.new()]:
 		# Tall pages scroll rather than stretching the panel.
 		var scroll := ScrollContainer.new()
 		scroll.name = page.name

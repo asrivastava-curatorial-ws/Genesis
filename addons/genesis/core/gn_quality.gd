@@ -11,6 +11,8 @@ const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
 # Frames to wait before capturing, for the screen-space effects to settle.
 const SETTLE_DRAFT := 8
 const SETTLE_HIGH := 24
+## Bounced light is worked out over many frames: a still waits for it.
+const SETTLE_BOUNCE := 72
 
 
 class State:
