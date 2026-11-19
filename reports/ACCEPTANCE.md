@@ -15,6 +15,8 @@ rc6 adds web and VR walkthroughs (as Shapespark makes them), an Interiors demo o
 | A scene keeps only what it changed inside a model | project suite (a material on a part, a part hidden, a note on a part, a choice of materials, a one-shape model's material: saved small, opened whole; scenes saved the old way healed) |
 | Everything rc5 had | the five headless suites (652 checks: app 87, editor 111, projects 187, modules 245, online 22) and the smoke tour (57), the six end-to-end launches from the rc6 AppImage (63 steps, all passed: `reports/E2E_RESULTS_*.md`), and rc5's sixteen lab checks again from the rc6 AppImage (all pass; 262 checks with the web check) |
 
+The AppImage was built once more after the last change: the Start page now scrolls in a window shorter than it (the smoke tour run from the AppImage, which lists the demos, caught it running off a laptop's screen). Only `app/ui/project_manager.gd` differs between the two builds. From the final AppImage the smoke tour and the first two end-to-end launches were run again (*build*, which starts from the Start page, and *verify*): all passed (24 and 6 steps), and at 1600 × 900 the Start page is drawn pixel for pixel as before.
+
 Not tested: a real headset, a real graphics card, Windows. See `docs/KNOWN_LIMITATIONS.md`.
 
 ## The brief's release blockers (as for rc5)
