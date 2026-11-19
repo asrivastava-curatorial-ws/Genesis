@@ -233,8 +233,14 @@ export class Nav {
 		window.addEventListener('keydown', (e) => {
 			if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
 			if (e.metaKey || e.ctrlKey || e.altKey) return;
+			const touring = !!this.tour;
 			input();
 			this.keys.add(e.code);
+			// (T while the tour runs has just stopped it, as any key does: it is not to start it again.)
+			if (e.code === 'KeyT' && touring) {
+				e.preventDefault();
+				return;
+			}
 			if (this.app.ui.key(e)) e.preventDefault();
 			else if (/^(Arrow|Space|Page)/.test(e.code)) e.preventDefault();
 		});

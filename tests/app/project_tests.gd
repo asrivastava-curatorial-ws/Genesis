@@ -758,6 +758,24 @@ func _inside_models(src: String, dir: String) -> void:
 		var roof2 := again.get_node_or_null("Roof") as MeshInstance3D
 		check(again != shed and roof2 != null and not roof2.visible and (again.get_node("Door") as Node).get_meta(&"gn_note", {}) == {"opens": "outwards"},
 			"inside: a model that comes in again keeps its hidden part and its note")
+	# A choice of materials on a part of a model nothing else was changed in (web walkthroughs).
+	check(GnImport.import_runtime(src + "/shed.glb") == "", "inside: the model is brought in a second time")
+	var shed2: Node3D = null
+	for c in scenes.root.get_children():
+		if c != shed and str(c.name).begins_with("Shed") and c.scene_file_path != "" and not scenes.root.is_editable_instance(c):
+			shed2 = c
+	var door2 := shed2.get_node_or_null("Door") as MeshInstance3D if shed2 else null
+	if door2:
+		var GnWebSpots = load("res://addons/genesis/core/gn_web_spots.gd")
+		check(str(GnWebSpots.add_choice(door2, 0, "Oak")) == "" and scenes.root.is_editable_instance(shed2), "inside: keeping a part's material as a choice marks its model as changed inside")
+		var name2 := str(shed2.name)
+		scenes.save()
+		projects.close()
+		projects.open(dir)
+		door2 = scenes.root.get_node_or_null(name2 + "/Door") as MeshInstance3D
+		check(door2 != null and (GnWebSpots.choices(door2, 0) as Array).size() == 1 and str(GnWebSpots.choices(door2, 0)[0].name) == "Oak",
+			"inside: and the choice is there when the project is opened again")
+		shed = scenes.root.get_node_or_null("Shed") as Node3D
 	# A model that is one shape, with another material on it.
 	var pebble := scenes.root.get_node_or_null("Pebble") as MeshInstance3D
 	if pebble:

@@ -11,6 +11,7 @@ extends RefCounted
 # it is selected, moved and removed like any other thing.
 
 const GnScene := preload("res://addons/genesis/core/gn_scene.gd")
+const GnInside := preload("res://addons/genesis/core/gn_inside.gd")
 const GnHost := preload("res://addons/genesis/core/gn_host.gd")
 const GnPaths := preload("res://addons/genesis/core/gn_paths.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
@@ -181,6 +182,8 @@ static func _set_choices(mesh: MeshInstance3D, surface: int, list: Array, action
 		after[str(surface)] = list
 	var ur := GnHost.undo_redo()
 	ur.create_action("Genesis: %s" % action, UndoRedo.MERGE_DISABLE, GnScene.root())
+	# A part of a model brought in: kept only if the model is marked as changed inside.
+	GnInside.mark_changed(ur, mesh)
 	if after.is_empty():
 		ur.add_do_method(mesh, &"remove_meta", CHOICES)
 	else:

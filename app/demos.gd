@@ -183,6 +183,7 @@ static func _interiors(main: Node, out_dir: String) -> int:
 			for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
 				var mat := mi.get_active_material(0) as BaseMaterial3D
 				if mat and mat.emission_enabled and box.has_point(mi.global_transform * mi.get_aabb().get_center()):
+					root.set_editable_instance(model, true)
 					mi.visible = false
 		# The sun where the room's windows want it: the heading and the hour that come nearest.
 		var want: Vector3 = (room.sun as Vector3).normalized()
@@ -582,6 +583,52 @@ static func render_samples_photoreal(main: Node, folder: String, engine: String,
 			_say("ok   %s" % str(dests[k]).get_file())
 	App.projects.close()
 	return failures
+
+
+## The web walkthrough of one scene of a project (its main scene when none
+## is named), as the Web page writes it; `light` ("as-it-is", "draft",
+## "good", "high") instead of the scene's own setting when given, `to`
+## instead of the project's web folder.
+##   Oriel -- --write-web <project folder> [--scene name] [--light draft] [--to folder]
+static func write_web(main: Node, folder: String, scene_name: String, light: String, to: String) -> int:
+	var err: String = App.projects.open(folder)
+	if err != "":
+		print("ORIEL_WEB FAIL %s" % err)
+		return 1
+	for scene in App.projects.scene_files():
+		if scene_name != "" and str(scene).get_file().get_basename() == scene_name and App.scenes.path != scene:
+			App.scenes.open(scene)
+	await _frames(main, 6)
+	if scene_name != "" and App.scenes.path.get_file().get_basename() != scene_name:
+		print("ORIEL_WEB FAIL the project has no scene called %s" % scene_name)
+		App.projects.close()
+		return 1
+	var options := {}
+	var kinds := {"as-it-is": "", "draft": "Draft", "good": "Good", "high": "High"}
+	if light != "":
+		if not kinds.has(light.to_lower()):
+			print("ORIEL_WEB FAIL --light is one of: %s" % ", ".join(kinds.keys()))
+			App.projects.close()
+			return 1
+		options["bake"] = kinds[light.to_lower()]
+	var settings: Dictionary = GnWebWalk.settings()
+	var dir := to if to != "" else GnWebWalk.folder_for(str(settings.title) if str(settings.title) != "" else App.projects.project_name)
+	var t0 := Time.get_ticks_msec()
+	var last := [""]
+	var r: Dictionary = await GnWebWalk.export_web(dir, options, main, func(text: String):
+		# (One line for each stage, not one for each step of it.)
+		var stage := text.get_slice(":", 0).get_slice("(", 0).strip_edges()
+		if stage != last[0]:
+			last[0] = stage
+			print("ORIEL_WEB %s" % text))
+	App.projects.close()
+	if str(r.error) != "":
+		print("ORIEL_WEB FAIL %s" % r.error)
+		return 1
+	for w in r.warnings:
+		print("ORIEL_WEB note %s" % w)
+	print("ORIEL_WEB ok   written to %s in %d s (%s)" % [r.dir, (Time.get_ticks_msec() - t0) / 1000, GnWebWalk.describe(r.stats)])
+	return 0
 
 
 static func _frames(main: Node, n: int) -> void:

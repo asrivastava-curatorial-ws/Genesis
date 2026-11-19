@@ -235,16 +235,16 @@ async function lab(browser) {
   const { page, errors } = await open(browser, '?autostart', '');
   const names = await page.evaluate(() => Object.fromEntries(Object.entries(window.oriel.data.objects).map(([k, v]) => [(v.path || '').split('/').pop(), k])));
   await shot(page, 'inside');
-  // The staircase: from the view at its foot, W climbs ten steps of 0.17 m to the landing.
+  // The staircase: from the view at its foot, W climbs five steps of 0.17 m to the landing.
   await page.evaluate(() => { const o = window.oriel; o.nav.goToView(o.data.views.findIndex((v) => v.name === 'Stairs'), { instant: true }); });
   await page.waitForTimeout(500);
   const foot = await st(page);
   await page.keyboard.down('KeyW');
-  await until(page, () => window.oriel.state().position[0] > 1.3, 300000);
+  await until(page, () => window.oriel.state().position[0] > 0.1, 300000);
   await page.keyboard.up('KeyW');
   await page.waitForTimeout(600);
   const top = await st(page);
-  ok(Math.abs(foot.position[1]) < 0.03 && Math.abs(top.position[1] - 1.7) < 0.04 && top.onGround, `the staircase carries the visitor up: from the floor (${f2(foot.position[1])} m) to the landing (${f2(top.position[1])} m; it is 1.70 m up)`);
+  ok(Math.abs(foot.position[1]) < 0.03 && Math.abs(top.position[1] - 0.85) < 0.04 && top.onGround, `the staircase carries the visitor up: from the floor (${f2(foot.position[1])} m) to the landing (${f2(top.position[1])} m; it is 0.85 m up)`);
   await shot(page, 'landing');
   // The doorway: 1 m wide. Through its middle the walk passes; beside it the wall stops it.
   await page.evaluate(() => { const n = window.oriel.nav; n.settle(new n.pos.constructor(0, 1.6, 0)); n.yaw = 0; n.pitch = 0; });
@@ -324,7 +324,7 @@ async function headset(browser) {
   const xok = (c, t) => ok(c, t, 'XR');
   const { page, errors } = await open(browser, '?autostart&probes=0', '', async (p) => {
     await p.addInitScript({ path: IWER });
-    await p.addInitScript(() => { const d = new IWER.XRDevice(IWER.metaQuest3, { stereoEnabled: true }); d.installRuntime(); d.position.set(0, 1.6, 0); window.xrDevice = d; });
+    await p.addInitScript(() => { const d = new IWER.XRDevice(IWER.metaQuest3, { stereoEnabled: true }); d.installRuntime({ forceInstall: true }); d.position.set(0, 1.6, 0); window.xrDevice = d; });
   });
   const xs = () => page.evaluate(() => { const o = window.oriel, s = o.state(); return { ...s, head: o.xr.headWorld().toArray(), aim: o.xr.aim ? (o.xr.aim.target ? o.xr.aim.target.toArray() : 'none') : null }; });
   let a = await xs();

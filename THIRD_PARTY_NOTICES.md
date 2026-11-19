@@ -10,6 +10,10 @@ Genesis Community is MIT-licensed (see `LICENSE`). It is built on the Godot Engi
 | Godot Engine 4.7.2 and the components compiled into it | MIT, and the licences listed below | the executables |
 | The model library (295 models) | CC0-1.0 | `genesis_assets/`, each with its `.license.json`; see `docs/ASSET_LICENSING.md` |
 | The eight material presets and their textures | CC0-1.0 | drawn by `tools/make_materials.gd` when the program is built; `genesis_data/materials/materials.license.json` |
+| Six scanned surfaces (painted plaster, a wood floor, dark wood, terrazzo, marble tiles, copper) | CC0-1.0, from ambientCG | `genesis_data/external/materials/`, each with its `.license.json`; see "The Interiors demo, skies and surfaces" below |
+| Four photographed skies (high cloud, morning sun, sunset clouds, clear veld) | CC0-1.0, from Poly Haven | `genesis_data/external/skies/`, each with its `.license.json`; see below |
+| The Interiors demo: five furnished rooms | CC BY 3.0 (three rooms) and CC0-1.0 (two) | `demos/interiors/`, with `CREDITS.txt`; see below |
+| The viewer of web walkthroughs: three.js 0.187.0 and three-mesh-bvh 0.9.18 inside one script, JetBrains Mono (its Latin letters) inside one style sheet | MIT, MIT, OFL-1.1 | `addons/genesis/web/viewer/`, and the `app/` folder of every walkthrough Oriel writes, which carries the licence texts as `app/LICENSES.txt`; see "Web walkthroughs" below |
 | JetBrains Mono 2.304 (the interface typeface: Regular, Medium, SemiBold, Bold, Italic) | OFL-1.1 | `app/ui/fonts/`, with its `OFL.txt` and `AUTHORS.txt`; see "Interface" below |
 | Lucide 1.67.0 icons (169 of them; some derived from Feather) | ISC; MIT for the Feather-derived ones | inside `addons/genesis/ui/gn_icons.gd`, which carries the licence text; see "Interface" below |
 | The GitHub Dark Default colour values (from the GitHub VS Code theme 6.3.5, built on Primer primitives 7.10.0) | MIT | the colour constants in `app/ui/genesis_theme.gd`; see "Interface" below |
@@ -1984,6 +1988,36 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 - **IfcOpenShell 0.9.0** (from PyPI, unmodified), which reads IFC building models: GNU Lesser General Public Licence, version 3 or later (`engine/LICENSES/IfcOpenShell-LGPL-3.0.txt`, with the GPL text above, which the LGPL adds to). It carries Open CASCADE Technology (LGPL-2.1 with an exception), CGAL, Boost and others. Source: <https://github.com/IfcOpenShell/IfcOpenShell> (tag v0.9.0).
 - **assimp-py 1.2.0** (MIT) with the **Open Asset Import Library, Assimp** (BSD-3-Clause), which reads Collada, 3DS and other model formats. Source: <https://github.com/ranjian0/assimp_py> and <https://github.com/assimp/assimp>.
 - **numpy, zstandard, requests, urllib3, idna, certifi, charset-normalizer, attrs, cattrs, typing_extensions, pip** and the other Python packages these need: their licences (BSD-3-Clause, Apache-2.0, MIT, MPL-2.0, PSF-2.0) are in `engine/LICENSES/`.
+
+## Web walkthroughs
+
+A walkthrough written by the *Web* page is a folder with a viewer in it, and the viewer is what a visitor's browser runs. It is Oriel's own code (MIT) bundled into one script with:
+
+- **three.js 0.187.0**, © 2010-2026 three.js authors, MIT: the drawing, the glTF reader, WebXR.
+- **three-mesh-bvh 0.9.18**, © 2018 Garrett Johnson, MIT: what a visitor walks on and into.
+- **JetBrains Mono** (the letters of Latin scripts, Regular and SemiBold), OFL-1.1, inside the style sheet.
+
+Their licence texts are in `app/LICENSES.txt` of every walkthrough, so a folder put on a web server carries its notices with it. Nothing in a walkthrough is fetched from anywhere else.
+
+The light of a baked walkthrough is cleaned of noise by **Open Image Denoise** (Intel, Apache-2.0), which is part of the render engines below.
+
+Used to build and to test the viewer, and not shipped: esbuild (MIT), Playwright (Apache-2.0), and Meta's Immersive Web Emulation Runtime, IWER (MIT), which stands in for a headset.
+
+## The Interiors demo, skies and surfaces
+
+The five rooms of the Interiors demo are from Benedikt Bitterli's *Rendering Resources* (<https://benedikt-bitterli.me/resources/>), in the glTF versions made by Garrett Johnson (<https://github.com/gkjohnson/3d-demo-data>). They are used unchanged but for a maker's mark removed from a radio, and a fill light behind the camera of the living room hidden.
+
+| Room | Model, and who made it | Licence |
+|---|---|---|
+| Living room | *The White Room*, Jay-Artist | CC BY 3.0 |
+| Kitchen | *Country Kitchen*, Jay-Artist | CC BY 3.0 |
+| Hall | *The Wooden Staircase*, Wig42 | CC BY 3.0 |
+| Bedroom | *Bedroom*, SlykDrako | CC0-1.0 |
+| Bathroom | *Contemporary Bathroom*, Mareck | CC0-1.0 |
+
+CC BY 3.0: <https://creativecommons.org/licenses/by/3.0/>. **If you publish pictures, films or walkthroughs of the three CC BY rooms, credit their authors**: the demo's `CREDITS.txt` has the wording, and a walkthrough written from the demo shows it by itself.
+
+The four skies are Poly Haven HDRIs (<https://polyhaven.com>, CC0): *aristea_wreck_puresky*, *wasteland_clouds_puresky*, *industrial_sunset_puresky* and *syferfontein_18d_clear*. The six surfaces are ambientCG materials (<https://ambientcg.com>, CC0): *PaintedPlaster017*, *WoodFloor050*, *Wood049*, *Terrazzo018*, *Tiles074* and *Metal008*. `tools/fetch_demo_assets.sh` fetches all of these when Oriel is built, checks each against a recorded SHA-256, and writes the `.license.json` beside it. It uses glTF-Transform (MIT) and Google's Draco decoder (Apache-2.0) to unpack the rooms; neither is shipped.
 
 ## Virtual reality
 

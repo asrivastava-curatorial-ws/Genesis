@@ -1,4 +1,4 @@
-Oriel web walkthrough viewer 1.0.0-rc5
+Oriel web walkthrough viewer 1.0.0-rc6
 Copyright (c) Utopian Academy and the Oriel contributors. MIT License (see Oriel's LICENSE).
 
 ==== three.js 0.187.0 ====

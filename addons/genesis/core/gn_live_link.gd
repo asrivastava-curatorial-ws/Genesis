@@ -165,6 +165,7 @@ static func replace_instance(old: Node3D, path: String) -> Node3D:
 	var root := root_now
 	var parent := old.get_parent()
 	var at := old.get_index()
+	var changed_inside: bool = root != null and root.is_ancestor_of(old) and root.is_editable_instance(old)
 	var keep: Array = old.get_children().filter(func(c): return c.owner == root)
 	# The old copy leaves first, so the new one takes its name.
 	parent.remove_child(old)
@@ -172,6 +173,8 @@ static func replace_instance(old: Node3D, path: String) -> Node3D:
 	parent.move_child(fresh, at)
 	fresh.name = old.name
 	fresh.owner = root
+	if changed_inside:
+		root.set_editable_instance(fresh, true)
 	for c in keep:
 		c.reparent(fresh, false)
 		for n in [c] + c.find_children("*", "", true, false):

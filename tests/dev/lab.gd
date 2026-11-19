@@ -1708,10 +1708,11 @@ static func _web(main: Node) -> void:
 	_box(root, "Wall north left", Vector3(2.5, 2.8, 0.2), Vector3(-1.75, 1.4, -2.1), white)
 	_box(root, "Wall north right", Vector3(2.5, 2.8, 0.2), Vector3(1.75, 1.4, -2.1), white)
 	_box(root, "Lintel", Vector3(1.0, 0.7, 0.2), Vector3(0, 2.45, -2.1), white)
-	# Ten steps of 0.17 m up to a landing 1.7 m above the floor, along the south wall.
-	for k in 10:
+	# Five steps of 0.17 m up to a landing 0.85 m above the floor, along the south wall
+	# (no higher: the ceiling is at 2.8 m, and a visitor's head stops under it).
+	for k in 5:
 		_box(root, "Step %d" % (k + 1), Vector3(0.28, 0.17 * (k + 1), 0.9), Vector3(-1.8 + 0.28 * k + 0.14, 0.17 * (k + 1) * 0.5, 1.45), Color(0.5, 0.36, 0.24))
-	_box(root, "Landing", Vector3(1.2, 1.7, 0.9), Vector3(1.6, 0.85, 1.45), Color(0.5, 0.36, 0.24))
+	_box(root, "Landing", Vector3(1.2, 0.85, 0.9), Vector3(0.2, 0.425, 1.45), Color(0.5, 0.36, 0.24))
 	# A finely made ball: its light is baked at its corners.
 	var ball := MeshInstance3D.new()
 	ball.name = "Ball"
@@ -1750,6 +1751,8 @@ static func _web(main: Node) -> void:
 	crate.scale = Vector3(0.8, 0.8, 0.8)
 	crate.position = Vector3(2.3, 0.4, -1.4)
 	GnScene.add_node(crate, root, "Add a crate")
+	# Its like the right way out, beside it: the two are lit much the same.
+	_box(root, "Crate twin", Vector3(0.8, 0.8, 0.8), Vector3(1.2, 0.4, -1.4), Color(0.3, 0.5, 0.75))
 	# A lamp under the ceiling: the room is lit though the sun hardly reaches into it.
 	var lamp: Node3D = Fixture.new()
 	lamp.kind = "Downlight"
@@ -1859,15 +1862,17 @@ static func _web(main: Node) -> void:
 			for a in atlases:
 				if str(a.file) != "" and FileAccess.file_exists(baked.path_join("scene").path_join(str(a.file))):
 					maps += 1
-			check(maps >= 1 and objects.size() >= 20, "web: %d lightmaps, baked light for %d objects" % [maps, objects.size()])
+			check(maps >= 1 and objects.size() >= 15, "web: %d lightmaps, baked light for %d objects" % [maps, objects.size()])
 			var e_ball: Dictionary = objects.get(names.get("Ball", ""), {})
 			check(bool(e_ball.get("vertex", false)) and float(bake.get("vertex_range", 0.0)) > 0.0, "web: the ball, finely made, has its light at its corners")
 			var e_wall: Dictionary = objects.get(names.get("Wall east", ""), {})
 			check(e_wall.has("rect") and not e_wall.has("vertex"), "web: a wall has a patch of a lightmap")
 			var e_crate: Dictionary = objects.get(names.get("Crate", ""), {})
-			var e_step: Dictionary = objects.get(names.get("Step 1", ""), {})
-			check(float(e_crate.get("env", 0.0)) > 0.25 * float(e_step.get("env", 1.0)) and float(e_crate.get("env", 0.0)) > 0.04,
-				"web: the crate modelled inside out is lit on the side that faces the room (%.3f of the brightest; a step beside it %.3f)" % [float(e_crate.get("env", 0.0)), float(e_step.get("env", 0.0))])
+			var e_twin: Dictionary = objects.get(names.get("Crate twin", ""), {})
+			var lit := float(e_crate.get("env", 0.0))
+			var lit_twin := float(e_twin.get("env", 0.0))
+			check(lit > 0.01 and lit_twin > 0.01 and lit > 0.4 * lit_twin and lit < 2.5 * lit_twin,
+				"web: the crate modelled inside out is lit on the side that faces the room, as the one beside it that is the right way out (%.3f and %.3f of the brightest)" % [lit, lit_twin])
 			bake_ok = true
 	else:
 		print("LAB note web: no Cycles engine named for this run: baked light not tested")

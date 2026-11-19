@@ -540,14 +540,15 @@ static func note_inside(scene: Node) -> Array:
 	var noted: Array = []
 	var copies := GnInside.Fresh.new()
 	for inst: Node in GnInside.models(scene):
-		var list := GnInside.changes(inst, scene, copies)
 		var editable := scene.is_editable_instance(inst)
+		if not editable and not GnInside.own_surfaces_changed(inst):
+			continue
+		var list := GnInside.changes(inst, scene, copies, editable)
 		if not list.is_empty():
 			inst.set_meta(GnInside.META, list)
 		if editable:
 			scene.set_editable_instance(inst, false)
-		if editable or not list.is_empty():
-			noted.append([inst, editable])
+		noted.append([inst, editable])
 	copies.clear()
 	return noted
 
@@ -570,8 +571,11 @@ static func put_back_inside(scene: Node) -> int:
 	for inst: Node in GnInside.models(scene):
 		if inst.has_meta(GnInside.META):
 			var list: Variant = inst.get_meta(GnInside.META)
-			if list is Dictionary:
+			if list is Dictionary and not (list as Dictionary).is_empty():
 				lost += GnInside.apply(inst, list)
+				# Changed inside, as when it was saved: the next save keeps it so.
+				if (list as Dictionary).keys().any(func(k): return str(k) != "."):
+					scene.set_editable_instance(inst, true)
 			inst.remove_meta(GnInside.META)
 	return lost
 

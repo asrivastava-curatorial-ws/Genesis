@@ -725,6 +725,18 @@ func _command_line() -> void:
 		print("GENESIS_DEMO RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 		get_tree().quit(failures)
 		return
+	# A web walkthrough of a project's scene, written without the window:
+	#   Oriel -- --write-web <project folder> [--scene name] [--light as-it-is|draft|good|high] [--to folder]
+	# The scene's own settings on the Web page are used; --light overrides how the light is made.
+	var ww := args.find("--write-web")
+	if ww >= 0 and ww + 1 < args.size():
+		var named := func(flag: String) -> String:
+			var at := args.find(flag)
+			return args[at + 1] if at >= 0 and at + 1 < args.size() else ""
+		var failures: int = await Demos.write_web(self, args[ww + 1], named.call("--scene"), named.call("--light"), named.call("--to"))
+		print("ORIEL_WEB RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
+		get_tree().quit(failures)
+		return
 	var e := args.find("--e2e")
 	if e >= 0 and e + 2 < args.size():
 		var failures: int = await E2E.run(self, args[e + 1], args[e + 2])

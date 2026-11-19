@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.0.0-rc6 (Oriel)
+
+Walkthroughs for the web and for headsets, as Shapespark makes them, and rooms that look like rooms. Every feature of rc5 is kept, and rc5 projects open unchanged.
+
+### Web walkthroughs (the new *Web* page)
+- **A project written out as a folder that any browser opens**: a client walks through the design from a link, on a computer, a phone or a tablet, and **in VR in a headset's own browser** (WebXR: a Meta Quest, without a cable and without installing anything). Plain files, no account and no service: put the folder on any web server. Guide: `docs/WEB_WALKTHROUGH.md`.
+- **Baked light**: Cycles works out once how light falls and bounces, and the walkthrough keeps it. Walls, floors and other large plain shapes get lightmaps; furniture and fittings get their light at their corners; the pictures are cleaned of noise with Open Image Denoise. Faces modelled inside out are baked on the side that shows. Three qualities (draft, good, high), or no baking at all (*as it is*, written in seconds).
+- **Moving about**: click or tap the floor to walk there, W A S D, drag to look; *Orbit* and *Plan* views; every saved camera is a view to go to; a tour from view to view, from the start or when the screen is left alone. The visitor is a body: walls stop them and stairs carry them up. In a headset: point, pull the trigger and let go to be there; the left stick walks, the right turns 30° at a time, A and B step through the views.
+- **Things a visitor can open and change**: hotspots (a title, a note, a picture or a film, a web address, a view to jump to), **materials to choose from** on a surface, **alternatives** (one of several objects shown at a time), a sound in the background.
+- **A plan in the corner**, **measuring** between two points, a link that opens at the very spot (*Copy a link to where I am*), and a line for a page of your own (`?embed`).
+- **The eye adjusts to the light**, as a camera on automatic; and **reflections of the room**: the viewer looks round from each saved view when the page opens, so a polished floor reflects its room and not the open sky.
+- **Showing it**: *Open it in the browser* serves it on this computer; *Show it on a headset or a phone* serves it to your network over https, with a certificate of Oriel's own making (VR needs https); the folder has a small server of its own (`python3 serve.py`).
+- From the command line: `Oriel -- --write-web <project> [--scene name] [--light as-it-is|draft|good|high] [--to folder]`.
+
+### Rooms
+- **Interiors demo**: five furnished rooms (a living room, a kitchen, a bedroom, a bathroom, a hall with a staircase), lit, with cameras, hotspots and the Web page set up. The rooms are by Jay-Artist, Wig42, SlykDrako and Mareck (CC BY 3.0 and CC0; `CREDITS.txt` in the demo). The demos on the Start page now have pictures.
+- **Light bounces (for rooms)** (Environment page): in the 3D view, light goes on from surface to surface, and what glows lights what is near it. A scene up to about 40 m across gets voxel light, worked out from the scene in a second or a few when it opens and after it changes; a wider scene gets Godot's SDFGI. LIVE_VS_CYCLES. `docs/ENVIRONMENT.md` says what to know.
+- **Exposure** goes up to +5 EV (a room lit by daylight alone wants about +3).
+- **Four photographed skies and six scanned surfaces** come with the program (Poly Haven and ambientCG, CC0): plaster, a wood floor, dark wood, terrazzo, marble tiles, copper.
+- A model's pictures are kept as WebP inside its file: the living room is 11 MB where it would have been MEGABYTES_BEFORE.
+
+### Fixes
+- **A material changed on one surface of a model made the scene file hold the whole model.** Outside Godot's editor a model marked as changed inside was written into the scene with every part in full, shapes and all: 23 MB of text for the living room, and as many megabytes as the model has for a building. A scene now keeps only what it changed inside a model (a material, a part hidden, a note on a part), as one list; the living room's scene is 7 KB. Scenes saved before are put right when they are next opened and saved.
+- A model that is a single shape had its pictures left unpacked, and ONE_SHAPE_OVERRIDE.
+- Godot's editor imported nothing at all once the render engines had been built into `build/` (they carry `.blend` files, and the editor stops at one it cannot open). The build and release folders are now marked for it to leave alone.
+
+### Tests
+- TESTS_RC6
+
 ## 1.0.0-rc5 (Oriel)
 
 What Lumion, D5 and V-Ray users would miss, added. Every feature of rc4 is kept, and rc4 projects open unchanged.

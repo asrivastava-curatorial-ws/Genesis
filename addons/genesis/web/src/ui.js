@@ -396,7 +396,8 @@ export class UI {
 			&& (this.app.world.meshes.get(name) || [])[c.slot] === hit.owner.mesh);
 		if (choice) {
 			this.openChoice(choice);
-			return true;
+			// (A floor with materials to choose from is still a floor: the visitor walks there as well.)
+			return hit.normal.y <= 0.6;
 		}
 		this.choiceBar.hidden = true;
 		return false;

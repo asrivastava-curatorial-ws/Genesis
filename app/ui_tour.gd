@@ -12,7 +12,7 @@ const GnFileDialog := preload("res://addons/genesis/core/gn_file_dialog.gd")
 const GnAssets := preload("res://addons/genesis/core/gn_assets.gd")
 const GnCameras := preload("res://addons/genesis/core/gn_cameras.gd")
 const PAGES := ["Scene", "Plans", "Assets", "Online", "Environment", "Landscape", "Set", "Materials",
-	"Cameras", "Look", "Render", "Movie", "Show"]
+	"Cameras", "Look", "Render", "Movie", "Web", "Show"]
 
 
 ## `only_docs`: just the start screen and the workspace, for the documentation.
@@ -121,7 +121,36 @@ static func run(main: Node, project: String, out: String, only_docs := false) ->
 	await shot(main, out, "console")
 	ws.toggle_console()
 	await _new_in_rc5(main, ws, out, picked)
+	await _new_in_rc6(main, ws, out)
 	return 0
+
+
+## What 1.0.0-rc6 added: the Web page's lower parts, and light that bounces
+## (the view of a scene with it on and off, when the scene is compact).
+static func _new_in_rc6(main: Node, ws: Node, out: String) -> void:
+	var panel: Node = ws.genesis_panel
+	for spot in [["Web", "Hotspots", "page_web_hotspots"], ["Web", "Alternatives", "page_web_alternatives"], ["Environment", "Light", "page_environment_light"]]:
+		panel.show_section(spot[0])
+		await _settle(main, 20)
+		var page: Control = panel.page_named(spot[0])
+		var scroll := page.get_parent() as ScrollContainer if page else null
+		if scroll:
+			for l in page.find_children("*", "Label", true, false):
+				if (l as Label).text.to_lower() == str(spot[1]).to_lower() and (l as Label).is_visible_in_tree():
+					scroll.scroll_vertical = int(maxf((l as Control).global_position.y - page.global_position.y - 8.0, 0.0))
+					break
+		await _settle(main, 15)
+		await shot(main, out, spot[2])
+		if scroll:
+			scroll.scroll_vertical = 0
+	var GnEnvironment = load("res://addons/genesis/core/gn_environment.gd")
+	var before := bool(GnEnvironment.value("bounce"))
+	for on in [false, true]:
+		GnEnvironment.apply("bounce", on, false)
+		await _settle(main, 30)
+		await shot(main, out, "view_light_bounces" if on else "view_light_as_before")
+	GnEnvironment.apply("bounce", before, false)
+	await _settle(main, 10)
 
 
 ## What 1.0.0-rc5 added: the timeline, the pages' new parts, a thing shown
