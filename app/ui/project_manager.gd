@@ -14,8 +14,15 @@ var _list: VBoxContainer
 func _init() -> void:
 	name = "ProjectManager"
 	theme_type_variation = &"EditorPanel"
+	# In a window shorter than the page (a laptop's), the page scrolls rather than
+	# making the window taller than the screen.
+	var outer := ScrollContainer.new()
+	outer.name = "Scroll"
+	add_child(outer)
 	var centre := CenterContainer.new()
-	add_child(centre)
+	centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	centre.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_child(centre)
 	var page := VBoxContainer.new()
 	page.custom_minimum_size = Vector2(920, 0)
 	page.add_theme_constant_override("separation", 28)
