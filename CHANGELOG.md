@@ -30,7 +30,10 @@ Walkthroughs for the web and for headsets, as Shapespark makes them, and rooms t
 - Godot's editor imported nothing at all once the render engines had been built into `build/` (they carry `.blend` files, and the editor stops at one it cannot open). The build and release folders are now marked for it to leave alone.
 
 ### Tests
-- TESTS_RC6
+- The headless suites grew from 572 checks to 652 (projects 187, modules 245): what a scene keeps inside a model, light that bounces, the web walkthrough's settings, folders, hotspots, choices, alternatives, packing and certificate.
+- A lab check for web walkthroughs (`web`): a room built with the program's tools, written with its light as it is and baked, served by Oriel over http and https, and walked through in Chromium and in Meta's headset emulator (IWER) standing in for a Quest 3: 101 checks (18 on writing, baking and serving it, 40 walking through it with its light as it is, 43 with its light baked, each in the browser and the headset).
+- `tests/web/walkthrough_check.cjs` walks through any walkthrough in a browser and in the emulated headset; the sample walkthrough of the living room passed all 32 of its checks (19 in the browser, 13 in the emulated headset).
+- From the rc6 AppImage: rc5's sixteen lab checks and the web check (@LABS@), and the six end-to-end launches (@E2E@).
 
 ## 1.0.0-rc5 (Oriel)
 

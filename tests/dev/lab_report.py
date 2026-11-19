@@ -50,6 +50,8 @@ def result(b):
 def renderers(b):
     if b["name"] == "formats":
         return "none: the import is what is checked"
+    if b["name"] == "web":
+        return "Cycles, to bake; Chromium and Meta's headset emulator, to walk through"
     return b["engines"].replace("godot", "real-time").replace("eevee", "Eevee").replace("cycles", "Cycles").replace(" ", ", ") or "real-time"
 
 

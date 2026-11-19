@@ -273,7 +273,7 @@ bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genes
 
 **Tested** on Ubuntu 24.04 with software Vulkan (lavapipe):
 
-- 572 headless checks in five suites, and a smoke tour of the whole program.
+- 652 headless checks in five suites, and a smoke tour of the whole program.
 - The built program's own smoke tour, with the bundled library and the material presets.
 - The end-to-end test in five launches with real renders: 1080p, 4K, 360° (mono, stereo and a virtual tour), photo match, a sun study, render passes, Real-ESRGAN, MP4, a concert render, and a walkthrough film with two people walking along a path drawn with the path tool.
 - Importing glTF, OBJ, FBX and `.blend` (with Ubuntu's Blender 4.0.2), DXF, and PDF plans (as lines and as pictures).
@@ -287,12 +287,15 @@ bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genes
 - **What rc5 added**, each in a scene built with the program's own tools, rendered by the real-time renderer, Eevee and Cycles where it applies, and measured in the pictures ([reports/LAB_RESULTS.md](reports/LAB_RESULTS.md)): IES beams; the light mixer; stage haze; wet surfaces, puddles and snow; wind; relief and light inside; caustics; volumetric clouds; the walk-through on the screen; a film with keys, a dissolve, a title and sound; layered materials; a street with an avenue and traffic; Cycles in the 3D view; a scene of five million triangles (levels of detail, boxes, copies, opening).
 - IFC, USD, Collada, 3DS, STL, PLY and Alembic models: a bench in each format (a wall for IFC) comes in at its size and the right way up.
 - The walk-through on a headset, on a **simulated** headset (Monado's): an OpenXR session starts, both eyes are drawn, and the walk's checks pass.
+- **Web walkthroughs (new in rc6)**: a room built with the program's tools, written with its light as it is and baked by Cycles, served by Oriel over http and https, and walked through in Chromium (drawing in software) and in **Meta's headset emulator** standing in for a Quest 3; the sample walkthrough of the Interiors demo's living room passed all 32 of its checks in the browser and the emulated headset. See [reports/LAB_RESULTS.md](reports/LAB_RESULTS.md).
+- The Interiors demo, built by the program itself and its seven sample pictures rendered by Cycles from it.
 
 **Not tested here:**
 
 - Windows (not part of this delivery).
 - A real GPU.
-- A real VR headset (see above: a simulated one was used). See [docs/VR_WALKTHROUGH.md](docs/VR_WALKTHROUGH.md).
+- A real VR headset (see above: a simulated one was used, and Meta's emulator for web walkthroughs). See [docs/VR_WALKTHROUGH.md](docs/VR_WALKTHROUGH.md) and [docs/WEB_WALKTHROUGH.md](docs/WEB_WALKTHROUGH.md).
+- A web walkthrough in a real Quest's browser, on a phone, or in Safari.
 - DWG plans (the ODA converter is not open source and could not be installed).
 - OpenStreetMap site context from an address (no internet access to the services). Bringing in a saved `.osm` map file is tested.
 - The downloaded library (photographed HDRI skies, scanned materials, 54 plant species). It is not bundled; build it with `python3 tools/setup.py` on a computer with internet access. Your own skies and models work without it.
