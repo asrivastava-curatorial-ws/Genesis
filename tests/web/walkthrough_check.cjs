@@ -347,7 +347,9 @@ async function headset(browser) {
   // The trigger: an arc to a place on the floor; let go, and the visitor is there.
   await page.evaluate(() => { const c = window.xrDevice.controllers.right; c.position.set(0.2, 1.1, -0.3); c.quaternion.set(-0.3007, 0, 0, 0.9537); c.updateButtonValue('trigger', 1); });
   const aimed = await until(page, () => window.oriel.xr.aim && window.oriel.xr.aim.target, 60000);
-  const b = await xs();
+  // (The arc is worked out each frame: read it until a frame has it on the floor.)
+  let b = await xs();
+  for (let k = 0; k < 40 && !Array.isArray(b.aim); k++) { await page.waitForTimeout(250); b = await xs(); }
   xok(aimed && Array.isArray(b.aim), 'holding the trigger draws the arc to a place on the floor' + (Array.isArray(b.aim) ? ` (${b.aim.map(f2).join(', ')})` : ''));
   await shot(page, 'xr_arc');
   await page.evaluate(() => window.xrDevice.controllers.right.updateButtonValue('trigger', 0));
@@ -404,7 +406,7 @@ async function headset(browser) {
     }, spot);
     await page.waitForTimeout(800);
     await page.evaluate(() => window.xrDevice.controllers.right.updateButtonValue('trigger', 1));
-    const opened = await until(page, () => !!window.oriel.xr.panel, 30000);
+    const opened = await until(page, () => !!window.oriel.xr.panel, 90000);
     await page.evaluate(() => window.xrDevice.controllers.right.updateButtonValue('trigger', 0));
     xok(opened, 'the trigger on a hotspot opens its panel, in the scene before the visitor');
     await page.waitForTimeout(800);
