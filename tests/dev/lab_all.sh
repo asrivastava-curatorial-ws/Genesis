@@ -1,14 +1,16 @@
 #!/bin/bash
 # Every lab check, one after another. Restartable: a check that has passed is not run again.
-#   lab_all.sh                                      from the source tree (results: lab/ALL_rc5.txt)
-#   ORIEL_BIN=/path/to/the.AppImage lab_all.sh      from the built program with its own engines (lab_app/ALL_rc5.txt)
+#   lab_all.sh                                      from the source tree (results: lab/ALL_<release>.txt)
+#   ORIEL_BIN=/path/to/the.AppImage lab_all.sh      from the built program with its own engines (lab_app/ALL_<release>.txt)
 #   ONLY="clouds layers" lab_all.sh                 just those
 S=/tmp/claude-0/-home-claude/294e9e57-28d4-5121-a481-cb185f2feb74/scratchpad
 G=/home/claude/work/genesis
 cd $G
 LAB=$S/lab; [ -n "${ORIEL_BIN:-}" ] && LAB=$S/lab_app
 mkdir -p $LAB
-OUT=$LAB/ALL_rc5.txt
+# One results file for each release: the release is the program's version (app/core/app.gd).
+REL=$(sed -n 's/^const VERSION := "1.0.0-\(.*\)"/\1/p' $G/app/core/app.gd)
+OUT=$LAB/ALL_${REL:-dev}.txt
 touch "$OUT"
 run() {
 	local name=$1; shift
@@ -47,5 +49,6 @@ run layers godot cycles
 run street godot cycles
 run live cycles
 run big godot eevee cycles
+run web
 echo "LAB_ALL DONE $(grep -c '^=== .* PASS' "$OUT") passed, $(grep -c '^=== .* FAIL' "$OUT") failed" >> "$OUT"
 grep -E "^=== |LAB_ALL" "$OUT"

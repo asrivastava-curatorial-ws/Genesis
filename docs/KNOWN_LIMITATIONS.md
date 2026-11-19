@@ -1,4 +1,4 @@
-# Known limitations (1.0.0 release candidate 5)
+# Known limitations (1.0.0 release candidate 6)
 
 Honest list of what does not work, is not included, or was not tested.
 
@@ -16,6 +16,16 @@ Honest list of what does not work, is not included, or was not tested.
 - **Scenes that use the downloaded library** (made with the plugin, or on a computer that has the library) open without it. While they are open, Oriel shows stand-ins in place of what is missing: the bundled tree, shrub or grass for a plant, its own sky for a photographed sky, and the drawn preset textures for a scanned material. A model that has no stand-in is an empty marker in its place. Saving keeps every reference, so the originals come back as soon as the library is installed. The stand-ins themselves are never saved.
 
 - **Windows**: this delivery is the Linux AppImage only. The Windows program is built from the same source (`bash tools/build_standalone.sh windows`), but it has never been run on Windows.
+
+## New in rc6
+
+- **Web walkthroughs were not opened on a real headset or a real graphics card.** They were walked through in Chromium drawing in software, and in VR in Meta's headset emulator (IWER) standing in for a Quest 3: the VR button, standing where the page left off, the pointer's arc and jump, both sticks, the A button and a hotspot's panel. How smooth a walkthrough is in a Quest's own browser, and how heavy a scene it carries, was not measured. A Quest's browser asks for https: Oriel serves it so, with a certificate of its own making that the browser warns about once.
+- **No meetings**: several visitors in one walkthrough together, seeing each other, would need a server; Oriel makes plain files.
+- **Nothing moves in a walkthrough**: people, traffic, trees in the wind, a film's keys, falling rain and snow are shown where they stand, or not at all. Particles and decals are left out; wet surfaces and lying snow are kept, as they are part of the materials.
+- **Baked light takes time on a processor**: the living room of the Interiors demo took about 8 minutes at *Draft* on the build machine's two cores. *Good* and *High* bake four and sixteen times as many points, with more samples, and were not timed here: on a processor *Good* is a matter of a quarter of an hour or more and *High* of hours. They are meant for a graphics card (Cycles uses an NVIDIA card through OptiX or CUDA by itself). *Draft* leaves a little mottling on walls lit only by light that has bounced.
+- **Baked light is of the moment it was baked**: a lamp switched off, a choice of material or an alternative chosen by the visitor does not change it. A floor chosen in a darker material keeps the light the floor as designed had.
+- **Light that bounces in the 3D view** (*Environment* > *Light bounces*): in a scene up to about 40 m across, a wall thinner than the cubes the light is worked out in (6 to 16 cm) lets a little light through; a closed room lit by lamps wants *Sky light* turned down. A scene that changes is worked out again a moment after the change, holding the program still for a second or a few. How much it asks of a real graphics card was not measured (there is none on the build machine); on a headset it is left out.
+- **The Interiors demo's rooms** are lit as their makers lit them for a path tracer: by glowing panes in their windows, not by a sky seen through glass. Looking out of a window shows a bright pane, not a view.
 
 ## New in rc5
 

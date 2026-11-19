@@ -22,13 +22,21 @@ The page it makes is yours: plain files, no account, no service behind it. Put t
 
 **Write the web walkthrough** puts it in the project's `web` folder, in a folder named after the title. Every saved camera becomes a *view* the visitor can go to; add cameras where you want people to stand (*Cameras*).
 
+From a terminal, without the window (for a build server, or many scenes at once):
+
+```bash
+./Oriel-1.0.0-rc6-x86_64.AppImage -- --write-web "$HOME/Oriel Projects/My house" --scene main --light draft --to ~/walkthroughs/my-house
+```
+
+`--light` is `as-it-is`, `draft`, `good` or `high` (the scene's own setting when left out); `--to` is the project's `web/` folder when left out. It prints a line for each stage and `ORIEL_WEB RESULT PASS` at the end.
+
 ### Baking takes time, once
 
-| Light | Texels per metre | Samples | The living room of the Interiors demo, on two processor cores |
+| Light | Texels per metre | Samples | The living room of the Interiors demo (583,000 triangles), on two processor cores |
 |---|---|---|---|
-| Draft | 10 | 24 | about 8 minutes |
-| Good | 20 | 96 | see the release notes |
-| High | 40 | 384 | long: for a graphics card |
+| Draft | 10 | 64 | about 8 minutes |
+| Good | 20 | 96 | not timed: by its points and samples, a quarter of an hour or more |
+| High | 40 | 384 | not timed: hours; for a graphics card |
 
 A graphics card that Cycles can use makes this many times faster; the engine uses one by itself when it finds it (an NVIDIA card through OptiX or CUDA). *Stop baking* gives up cleanly.
 

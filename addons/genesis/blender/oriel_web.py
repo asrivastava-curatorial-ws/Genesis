@@ -44,11 +44,13 @@ PAD = 3                    # pixels kept free round a patch
 # Copies of one shape beyond this many share the patches of the first ones.
 MAX_COPIES = 24
 
+# Light in a white room goes from wall to wall many times: with three bounces (tried) a room of white
+# walls came out at about two thirds of its light, grey beside Cycles' picture of it.
 PRESETS = {
     # "ground": the picture of light on the ground round the design (lit from the open sky, it needs half the samples).
-    "Draft": {"density": 10.0, "atlas": 1024, "max_patch": 512, "ground": 512, "samples": 24, "bounces": 3, "max_atlases": 4},
-    "Good": {"density": 20.0, "atlas": 2048, "max_patch": 1024, "ground": 1024, "samples": 96, "bounces": 5, "max_atlases": 6},
-    "High": {"density": 40.0, "atlas": 4096, "max_patch": 2048, "ground": 2048, "samples": 384, "bounces": 8, "max_atlases": 6},
+    "Draft": {"density": 10.0, "atlas": 1024, "max_patch": 512, "ground": 512, "samples": 64, "bounces": 6, "max_atlases": 4},
+    "Good": {"density": 20.0, "atlas": 2048, "max_patch": 1024, "ground": 1024, "samples": 96, "bounces": 8, "max_atlases": 6},
+    "High": {"density": 40.0, "atlas": 4096, "max_patch": 2048, "ground": 2048, "samples": 384, "bounces": 12, "max_atlases": 6},
 }
 
 
@@ -118,6 +120,16 @@ def unwrap(obj, margin):
     obj.hide_set(False)
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.reveal()
+    bpy.ops.mesh.select_all(action="SELECT")
+    # Many models are a heap of separate triangles (each corner its own, for its own normal and
+    # picture coordinates): laid out as they are, every triangle is a patch of its own, baked and
+    # cleaned on its own, and a wall comes out a quilt of triangles of different light. Corners in
+    # the same place are joined first (what each corner carries, its normal and its picture
+    # coordinates, stays as it was), so that a wall is laid out as one piece.
+    try:
+        bpy.ops.mesh.remove_doubles(threshold=0.0002, use_sharp_edge_from_normals=True)
+    except TypeError:
+        bpy.ops.mesh.remove_doubles(threshold=0.0002)
     bpy.ops.mesh.select_all(action="SELECT")
     # (Not "correct aspect": that follows the material's picture, and a palette of colours
     # 64 pixels by 4 would press the whole layout into a sliver.)
@@ -272,6 +284,38 @@ def _grow(rgb, known, rounds):
     return rgb
 
 
+# Shapes made inside out (found by _inside_out before baking): their stand-ins are turned the right way
+# round, so that the light baked is the light on the side that is seen.
+INSIDE_OUT = set()
+
+
+def _inside_out(obj):
+    """Whether the object is a solid made inside out: the volume its faces close, each counted with the
+    way it faces and seen from the middle of the shape, is clearly below nought. A sheet (a wall
+    drawn as one face, a pane) closes no volume and is left alone; so is a shape that is mostly open.
+    The test asks for nothing to be joined up, so a model split at its seams (as glTF models are)
+    is seen as the solid it is."""
+    me = obj.data
+    n = len(me.vertices)
+    if n < 4 or len(me.polygons) < 4:
+        return False
+    co = np.zeros(n * 3, dtype=np.float64)
+    me.vertices.foreach_get("co", co)
+    co = co.reshape(n, 3)
+    me.calc_loop_triangles()
+    tris = np.zeros(len(me.loop_triangles) * 3, dtype=np.int32)
+    me.loop_triangles.foreach_get("vertices", tris)
+    tris = tris.reshape(-1, 3)
+    lo, hi = co.min(0), co.max(0)
+    ext = np.sort(hi - lo)
+    if ext[2] <= 1e-6 or ext[0] < 0.02 * ext[2]:
+        return False
+    c = (lo + hi) * 0.5
+    a, b, d = co[tris[:, 0]] - c, co[tris[:, 1]] - c, co[tris[:, 2]] - c
+    vol = float(np.einsum("ij,ij->i", a, np.cross(b, d)).sum()) / 6.0
+    return vol < -0.2 * float(np.prod(hi - lo))
+
+
 def _turn_faces(obj):
     """Turns every face of the object round (its other side becomes its front)."""
     _activate(obj)
@@ -298,6 +342,8 @@ def _joined(objs, flip=False):
         bpy.context.scene.collection.objects.link(t)
         t.hide_render = False
         t.hide_viewport = False
+        if o.name in INSIDE_OUT:
+            _turn_faces(t)
         twins.append(t)
         o.hide_render = True
     for o in bpy.context.selected_objects:
@@ -334,6 +380,8 @@ def _bake_corners(objs, scene, q, flip=False):
         bpy.context.scene.collection.objects.link(t)
         t.hide_render = False
         t.hide_viewport = False
+        if o.name in INSIDE_OUT:
+            _turn_faces(t)
         twins.append(t)
         o.hide_render = True
     for o in bpy.context.selected_objects:
@@ -353,8 +401,9 @@ def _bake_corners(objs, scene, q, flip=False):
     out = [np.zeros((0, 3), dtype=np.float32) for _ in objs]
     try:
         # Every corner of every triangle is sampled, and some six corners meet at a vertex;
-        # neighbours then even one another out. An eighth of the samples each is plenty.
-        scene.cycles.samples = max(int(samples // 8), 4)
+        # neighbours then even one another out. Half the samples each: a corner stands for a whole
+        # stretch of the surface, and an eighth (tried) left glossy furniture blotched.
+        scene.cycles.samples = max(int(samples // 2), 16)
         scene.render.bake.target = "VERTEX_COLORS"
         bpy.ops.object.bake(type="DIFFUSE", pass_filter={"DIRECT", "INDIRECT"}, target="VERTEX_COLORS")
         me = one.data
@@ -609,6 +658,12 @@ def run(G, r):
                 rest.append(item)
         baked = rest
     log("web: %d objects to bake into lightmaps, %d lit at their corners, %d grounds, %d see-through left out" % (len(baked), len(fine), len(grounds), skipped))
+    INSIDE_OUT.clear()
+    for o in [item[1] for item in baked] + [item[1] for item in fine]:
+        if o.name not in INSIDE_OUT and _inside_out(o):
+            INSIDE_OUT.add(o.name)
+    if INSIDE_OUT:
+        log("web: %d shape%s made inside out, baked on the side that is seen: %s" % (len(INSIDE_OUT), "" if len(INSIDE_OUT) == 1 else "s", ", ".join(sorted(INSIDE_OUT)[:8])))
 
     # One layout per shape, however many times it stands in the scene.
     by_mesh = {}
@@ -734,6 +789,10 @@ def run(G, r):
 
     noted = []
     UNLIT = 1e-7
+    # An object is baked again from the other side of its faces only when most of it found no light at
+    # all: a few texels or corners with none are the noise of a few samples in a dim room (filled from
+    # their lit neighbours below), and the other side of a wall is the outdoors.
+    OTHER_SIDE_SHARE = 0.5
 
     def _other_side(image, group, label):
         """Faces modelled inside out (and shown from both sides, so that nobody noticed) are baked on
@@ -745,7 +804,7 @@ def run(G, r):
         dark = []
         for name, o, (x, y, sz) in group:
             ok = known0[y:y + sz, x:x + sz]
-            if ok.any() and float((lum0[y:y + sz, x:x + sz][ok] <= UNLIT).mean()) > 0.03:
+            if ok.any() and float((lum0[y:y + sz, x:x + sz][ok] <= UNLIT).mean()) > OTHER_SIDE_SHARE:
                 dark.append(o)
         if not dark:
             return
@@ -817,7 +876,7 @@ def run(G, r):
         lights = _bake_corners([o for _, o in fine], sc, q)
         # Shapes modelled inside out: the light on the other side of their faces, where the first found none.
         weights = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
-        turned = [k for k, v in enumerate(lights) if len(v) and float(((v @ weights) <= UNLIT).mean()) > 0.03]
+        turned = [k for k, v in enumerate(lights) if len(v) and float(((v @ weights) <= UNLIT).mean()) > OTHER_SIDE_SHARE]
         if turned:
             backs = _bake_corners([fine[k][1] for k in turned], sc, q, flip=True)
             for k, back in zip(turned, backs):

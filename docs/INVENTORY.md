@@ -1,4 +1,4 @@
-# What was downloaded and installed: Oriel 1.0.0-rc5
+# What was downloaded and installed: Oriel 1.0.0-rc6
 
 This page lists everything that was downloaded or installed to make this release, everything the AppImage contains, and everything it reads, writes or downloads on your computer. Nothing is left out on purpose; if you find something that is not here, it is a mistake in this page.
 
@@ -6,7 +6,7 @@ This page lists everything that was downloaded or installed to make this release
 
 **Nothing was downloaded or installed on your PC to make this release.** Your PC was never connected to the build: all the building and every test ran on the cloud build machine (section 4).
 
-What you put on your PC yourself is one file, `Oriel-1.0.0-rc5-x86_64.AppImage`, wherever you save it (`~/Applications/` is suggested).
+What you put on your PC yourself is one file, `Oriel-1.0.0-rc6-x86_64.AppImage`, wherever you save it (`~/Applications/` is suggested).
 
 ### What the AppImage does when you run it
 
@@ -62,8 +62,8 @@ sudo apt install ffmpeg poppler-utils
 ### Removing everything
 
 ```bash
-./Oriel-1.0.0-rc5-x86_64.AppImage --remove-shortcut   # if you added the menu entry
-rm Oriel-1.0.0-rc5-x86_64.AppImage
+./Oriel-1.0.0-rc6-x86_64.AppImage --remove-shortcut   # if you added the menu entry
+rm Oriel-1.0.0-rc6-x86_64.AppImage
 rm -rf ~/.local/share/Oriel                     # settings, logs, your library (and downloaded assets), tools, caches
 rm -rf ~/.local/share/Genesis                   # the rc3 folder, if you no longer need it
 ```
@@ -90,28 +90,45 @@ What each part is, its version and its licence:
 
 | Part | Version | Licence |
 |---|---|---|
-| Oriel (the program, its scripts and shaders, and the Blender-side scripts `oriel_render.py` and `oriel_convert.py`) | 1.0.0-rc5 | MIT |
+| Oriel (the program, its scripts and shaders, and the Blender-side scripts `oriel_render.py`, `oriel_convert.py` and `oriel_web.py`) | 1.0.0-rc6 | MIT |
+| The viewer of web walkthroughs (`addons/genesis/web/viewer/`: one script with three.js 0.187.0 and three-mesh-bvh 0.9.18 inside it, one style sheet with JetBrains Mono's Latin letters inside it), copied into every walkthrough Oriel writes | 1.0.0-rc6 | MIT (Oriel's, three.js, three-mesh-bvh); OFL-1.1 (the letters) |
+| Four photographed skies and six scanned surfaces (`genesis_data/external/`), each with its `.license.json` | Poly Haven and ambientCG, see section 3 | CC0-1.0 |
 | Godot Engine runtime (the `Oriel.x86_64` executable) | 4.7.2-stable, official export template | MIT, with the licences of its components (see THIRD_PARTY_NOTICES.md) |
 | The model library: 295 models, each with its licence record | as in rc2 | CC0-1.0 |
 | The eight material presets and their textures | drawn when the program is built | CC0-1.0 |
 | JetBrains Mono (Regular, Medium, SemiBold, Bold, Italic) | 2.304 | SIL Open Font Licence 1.1 |
 | 169 Lucide icons, as SVG text inside the program | 1.67.0 | ISC (some derived from Feather: MIT) |
 | GitHub Dark Default colour values | GitHub VS Code theme 6.3.5 / Primer primitives 7.10.0 | MIT |
+| The Interiors demo: five furnished rooms, each a scene, with cameras, hotspots and its Web page set up | rooms by Jay-Artist, Wig42 (CC BY 3.0), SlykDrako and Mareck (CC0), from Benedikt Bitterli's *Rendering Resources* in Garrett Johnson's glTF versions; set up by the program itself (`--make-demos`) | the rooms CC BY 3.0 or CC0-1.0, as in the demo's `CREDITS.txt`; the rest MIT |
 | The two demo projects (Architecture demo, Event production demo) | made for this release by the program itself (`--make-demos`); the architecture demo gained an avenue, a breeze and a second shot with a dissolve and a title | MIT (Oriel's own); their models CC0 |
-| The manual (HTML and PDF) and the guides | 1.0.0-rc5 | MIT |
+| The manual (HTML and PDF) and the guides | 1.0.0-rc6 | MIT |
 | Blender's render engines (Eevee, Cycles) and its glTF importer: `bpy`, Blender as a Python module, by the Blender Foundation | 5.2.3 LTS | GPL-3.0-or-later (Blender), with the licences of the libraries it carries (in `engine/python/lib/python3.13/site-packages/bpy/5.2/license/`) |
 | IfcOpenShell, which reads IFC building models (with Open CASCADE Technology, CGAL and Boost inside it) | 0.9.0.post1 | LGPL-3.0-or-later (Open CASCADE: LGPL-2.1 with an exception) |
 | assimp-py, with the Open Asset Import Library (Assimp), which reads Collada, 3DS and other model formats | 1.2.0 | MIT (assimp-py), BSD-3-Clause (Assimp) |
 | The clouds' noise (`gn_cloud_noise.bin`, 2.3 MB), computed by `tools/make_cloud_noise.py` | made for this release | MIT (Oriel's own) |
 | CPython, the Python that runs the engines (python-build-standalone build) | 3.13.14 | PSF-2.0 |
 | The engines' Python packages: numpy 2.5.4, zstandard 0.25.0, requests 2.34.2, urllib3 2.8.0, idna 3.20, certifi 2026.10.23, charset-normalizer 3.5.2, attrs 26.1.0, cattrs 26.2.1, typing_extensions 4.16.0, pip 26.1.2 | as listed | BSD-3-Clause, BSD-3-Clause, Apache-2.0, MIT, BSD-3-Clause, MPL-2.0, MIT, MIT, MIT, PSF-2.0, MIT |
-| `oriel_assets.py` (the starter-pack script) and `starter_pack.json` | 1.0.0-rc5 | MIT |
+| `oriel_assets.py` (the starter-pack script) and `starter_pack.json` | 1.0.0-rc6 | MIT |
 | AppImage type2 runtime (the start of the AppImage file, which mounts the rest) | continuous build | MIT |
 | `AppRun`, the desktop file, the icon and the AppStream metadata | written for this release | MIT |
 
 No other program is inside: FFmpeg, Blender's own application (its interface), Real-ESRGAN, BlendKit's Client, Poppler and the ODA File Converter are not bundled. The engines are Blender's rendering and file code without its interface; they run only when Oriel asks them to, as a separate process.
 
 ## 3. Downloaded to make this release (on the build machine)
+
+Downloaded on the cloud build machine for rc6 (by `tools/fetch_demo_assets.sh`, which checks each file against the SHA-256 written in it, and by `npm install` in `tools/web_viewer` and `tools/demo_assets`):
+
+| What | From | SHA-256 | Licence | Shipped |
+|---|---|---|---|---|
+| Five rooms as glTF (Draco-compressed): `white-room.glb`, `country-kitchen.glb`, `bedroom.glb`, `contemporary-bathroom.glb`, `wooden-staircase.glb` | `raw.githubusercontent.com/gkjohnson/3d-demo-data/58d698eb4afca19f7f46d87c3aaa9665f7c59124/models/bitterli-rendering-resources/` | `ffc532f2…c301f4`, `782e38b5…bd8e5a`, `3814ccd7…5853a0`, `f61f334f…3961f2e`, `4b89f43f…13ca1a9` | CC BY 3.0 (White Room, Country Kitchen, Wooden Staircase), CC0-1.0 (Bedroom, Contemporary Bathroom) | Yes, as the Interiors demo's models (unpacked from Draco; a maker's mark taken off a radio) |
+| Four HDRI skies, 2K: `aristea_wreck_puresky`, `wasteland_clouds_puresky` (gkjohnson/3d-demo-data, same commit), `industrial_sunset_puresky` (`godotengine/godot-demo-projects` at b761b4c), `syferfontein_18d_clear` (`google/filament` at 5fba07c) | Poly Haven's files, in those repositories | `0f01308e…d60927`, `c9be5b72…ea427c6`, `799e6fa9…54288`, `428f19a2…750b` | CC0-1.0 | Yes: *Photo: high cloud*, *morning sun*, *sunset clouds*, *clear veld* |
+| Six ambientCG surfaces: PaintedPlaster017, WoodFloor050, Wood049, Terrazzo018, Tiles074, Metal008 | `github.com/isl-org/open3d_downloads/releases/download/20220301-data/` (Open3D's copies) | in `tools/fetch_demo_assets.sh` | CC0-1.0 | Yes: the presets *plaster*, *wood floor*, *wood dark*, *terrazzo*, *marble tiles*, *copper* |
+| three.js 0.187.0, three-mesh-bvh 0.9.18 | `registry.npmjs.org` | npm's integrity hashes (`tools/web_viewer/package-lock.json`) | MIT | Yes, inside the viewer's one script |
+| esbuild 0.25.10 | `registry.npmjs.org` | npm's | MIT | No: it bundles the viewer |
+| IWER 2.8.0, Meta's Immersive Web Emulation Runtime | `registry.npmjs.org` | npm's | MIT | No: it stands in for a Quest 3 in the tests |
+| glTF-Transform 4.5.1 (`@gltf-transform/core`, `extensions`), draco3dgltf 1.5.9 | `registry.npmjs.org` | npm's (`tools/demo_assets/package-lock.json`) | MIT; Apache-2.0 | No: they unpack the rooms |
+
+Chromium for the browser tests came with Playwright, which was on the build machine already.
 
 Downloaded on the cloud build machine for rc5:
 

@@ -1,6 +1,6 @@
 # The side panel, section by section
 
-The Oriel panel sits on the right of the window. **Ctrl+B** shows or hides it. Its twelve sections run in working order: model in, surroundings, staging, materials, then shots and output.
+The Oriel panel sits on the right of the window. **Ctrl+B** shows or hides it. Its fourteen sections run in working order: model in, surroundings, staging, materials, then shots and output.
 
 - A section acts on the open scene. Most act on what is selected.
 - Everything they do can be undone with **Ctrl+Z**.
@@ -303,6 +303,24 @@ The walkers walk as they go: their stride follows the distance they cover, so fe
 3. Press *Phase the selection*.
 
 **Render.** Choose the *Size* and press *Render movie*. The frames are rendered and joined into an MP4 in `renders/`. This needs FFmpeg.
+
+## WEB: a walkthrough for browsers and headsets
+
+Writes the open scene as a folder that any web browser opens, and a headset's browser in VR. [WEB_WALKTHROUGH.md](WEB_WALKTHROUGH.md) has all of it.
+
+**Title** and **Under it**: on the cover and in the browser's tab. **Light**: *As it is* (the sun and the brightest lamps, written in seconds) or *Baked* (draft, good, high: Cycles bakes how light falls and bounces; minutes to hours, once). **Pictures**: the longest side of a material's picture. **Start at**: the camera the visitor starts from; every saved camera is a view. Ticks: **A plan in the corner**, **Measuring**, **VR button**, **The eye adjusts to the light**, **Start with the tour**; and **Tour when left alone** (for a screen in a gallery).
+
+**Write the web walkthrough** writes it into the project's `web/` folder; **Stop baking** stops a bake. **Open it in the browser** serves it on this computer and opens it; **Show it on a headset or a phone** serves it to the network over https and lists the addresses to type into the headset's browser; **Stop showing it**; **Show its folder**.
+
+**Hotspots.** *Add a hotspot in front of the view*: a blue ball the walkthrough turns into a marker; give it a title, a note, a picture or film, a web address or a view to jump to.
+
+**Materials to choose from.** Select an object, pick its surface, give it a material on *Materials*, and press *Keep its material as a choice*; then another material, and again. The visitor clicks the surface and picks.
+
+**Alternatives.** Select two or more objects, name the set, *Make alternatives*: one is shown at a time, and the visitor chooses.
+
+**Sound.** A sound file that plays quietly while the visitor walks, with its volume.
+
+From a terminal: `Oriel -- --write-web <project folder> [--scene name] [--light as-it-is|draft|good|high] [--to folder]`.
 
 ## SHOW
 

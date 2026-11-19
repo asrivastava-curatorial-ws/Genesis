@@ -7,6 +7,8 @@ Two ways to stand inside the design, both under *View*:
 
 Either one saves the project and opens it in a window of its own; the editor stays open beside it. The walk starts at the selected camera if one is selected, otherwise at the first saved camera, or at the middle of the scene when there are no cameras.
 
+**For a client, without Oriel:** a web walkthrough opens from a link, in any browser and in a headset's own browser (a Quest needs no cable and no computer running Oriel), with light baked by Cycles. See [WEB_WALKTHROUGH.md](WEB_WALKTHROUGH.md).
+
 Everything is shown as the real-time renderer shows it: the sun and sky, the weather, wind in the trees, traffic and people moving, the film's keys playing. Things shown as boxes in the editor are shown in full.
 
 ## On this screen

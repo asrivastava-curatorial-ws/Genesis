@@ -19,11 +19,14 @@ Walkthroughs for the web and for headsets, as Shapespark makes them, and rooms t
 - **Light bounces (for rooms)** (Environment page): in the 3D view, light goes on from surface to surface, and what glows lights what is near it. A scene up to about 40 m across gets voxel light, worked out from the scene in a second or a few when it opens and after it changes; a wider scene gets Godot's SDFGI. LIVE_VS_CYCLES. `docs/ENVIRONMENT.md` says what to know.
 - **Exposure** goes up to +5 EV (a room lit by daylight alone wants about +3).
 - **Four photographed skies and six scanned surfaces** come with the program (Poly Haven and ambientCG, CC0): plaster, a wood floor, dark wood, terrazzo, marble tiles, copper.
-- A model's pictures are kept as WebP inside its file: the living room is 11 MB where it would have been MEGABYTES_BEFORE.
+- A model's pictures are kept inside its file as WebP: photographs with a little loss, small swatches of colour without any.
 
 ### Fixes
 - **A material changed on one surface of a model made the scene file hold the whole model.** Outside Godot's editor a model marked as changed inside was written into the scene with every part in full, shapes and all: 23 MB of text for the living room, and as many megabytes as the model has for a building. A scene now keeps only what it changed inside a model (a material, a part hidden, a note on a part), as one list; the living room's scene is 7 KB. Scenes saved before are put right when they are next opened and saved.
-- A model that is a single shape had its pictures left unpacked, and ONE_SHAPE_OVERRIDE.
+- A model that is a single shape lost a material put on it when the scene was saved (its shape is lent out while the scene is written, and the material went with it), and its pictures were left out of the packing above. Both are kept now.
+- A material choice put on a part of a model (Web page) was lost on saving unless something else in the model had been changed; it now marks the model as changed inside, as a material does. A model that comes in again from its source (*Live link*) stays marked.
+- Web walkthroughs: *T* stopped the tour and started it again at once; jumping to a view while the tour was gliding let the glide carry on; a click on a floor that has materials to choose from opened the choice but did not walk there.
+- Baked light: a solid made inside out (a box whose faces all face inwards) came out dark, as only light that reached exactly nothing was baked again from the other side. Such shapes are now found by the volume their faces enclose and baked the right way round.
 - Godot's editor imported nothing at all once the render engines had been built into `build/` (they carry `.blend` files, and the editor stops at one it cannot open). The build and release folders are now marked for it to leave alone.
 
 ### Tests

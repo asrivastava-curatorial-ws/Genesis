@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Writes reports/LAB_RESULTS.md from the lab run (scratchpad/lab/ALL_rc5.txt)."""
+"""Writes reports/LAB_RESULTS.md from the lab run (scratchpad/lab/ALL_<release>.txt):
+    lab_report.py <results from the source> <report> [<results from the AppImage>] [what was run again] [release]"""
 import re, sys
 src, dest = sys.argv[1], sys.argv[2]
 app_src = sys.argv[3] if len(sys.argv) > 3 else ""
 # What was run again from the source after the last change to the program, in words (argument 4).
 RERUN = sys.argv[4] if len(sys.argv) > 4 else ""
+REL = sys.argv[5] if len(sys.argv) > 5 else "rc6"
 TITLES = {
     "formats": ("Model formats", "The formats the built-in engine reads: a bench 2 m wide, 0.4 m high and 0.6 m deep in USD, Alembic, Collada, 3DS, STL and PLY, and a wall 4 m long in IFC, each brought in and measured."),
     "ies": ("IES beams", "A downlight 3 m over a floor, seen from straight above. Its IES file is 1000 cd on the axis, half that at 15 degrees and nothing past 40: the pool of light must be brightest in the middle, fall off, and be dark 3 m out, in every renderer; and 3000 K must warm it."),
@@ -21,6 +23,7 @@ TITLES = {
     "layers": ("Layered materials", "A brick wall with concrete laid over it in patches, then green in its joints: the drawn material must hold both, in about the share asked for, and look the same in every renderer."),
     "street": ("A spread and traffic", "A street drawn as the tools make it: an avenue of trees on both sides and two lanes of city traffic. Trees and vehicles must be in the picture in every renderer, and the traffic further on a second later."),
     "live": ("Cycles in the 3D view", "Switched on, Cycles' picture of the view is laid over it; it gets finer while the view is left alone; turning the view takes the picture off until a new one is made; moving a thing in the scene is seen; switched off, the engine is gone."),
+    "web": ("A web walkthrough, in a browser and in a headset", "A room built with the program's tools (a doorway, a staircase, a finely made ball, a crate made inside out, a lamp, a hotspot, a floor with two materials to choose from, two chairs as alternatives, three cameras) is written as a web walkthrough twice: with its light as it is, and baked by Cycles. Each is served by Oriel and walked through in Chromium (drawing in software): the cover, walking, views, a click on the floor, walls that stop the walk, the staircase, the doorway, orbit and plan, the tour, measuring, links to a view and to a spot, the hotspot, the choices; then in Meta's headset emulator standing in for a Quest 3: the VR button, the pointer's arc and jump, both sticks, the A button, a hotspot's panel."),
     "big": ("A large scene", "Fourteen heavy models, each its own file, and twenty more of the first: thirty-four stones of 148,000 triangles, five million in all. Each must get lighter versions of itself, so that from afar the 3D view draws a fraction of the triangles; shown as boxes the view draws next to nothing while every render shows them in full; Eevee and Cycles are handed the twenty copies as copies; the scene file stays small; and the project, closed and opened again, is read in the background with the window alive."),
 }
 def parse(path):
@@ -52,10 +55,10 @@ def renderers(b):
 
 blocks = parse(src)
 from_app = {b["name"]: b for b in parse(app_src)} if app_src else {}
-out = ["# Lab results (1.0.0-rc5)", "",
+out = ["# Lab results (1.0.0-%s)" % REL, "",
        "Each check builds a scene with the program's own tools (the same calls the pages make), renders it with the renderers named, and measures the pictures. They are in `tests/dev/lab.gd`:", "",
        "```bash", "godot --path . -- --script tests/dev/lab.gd <check> <out folder> [godot] [eevee] [cycles]        # from the source",
-       "./Oriel-1.0.0-rc5-x86_64.AppImage -- --script /path/to/tests/dev/lab.gd <check> <out folder> [...]   # from the AppImage, with its own engines",
+       "./Oriel-1.0.0-%s-x86_64.AppImage -- --script /path/to/tests/dev/lab.gd <check> <out folder> [...]   # from the AppImage, with its own engines" % REL,
        "bash tests/dev/lab_all.sh                                                                             # all of them, one after another",
        "```", "",
        "Run on the build machine (two processor cores, software rendering, no graphics card: the real-time renderer on Mesa's lavapipe, Eevee on Mesa's llvmpipe, Cycles on the processor) with the built-in engines (Blender 5.2.3 LTS): against the source as the work went on, then all of them again **from the rc5 AppImage itself**%s." % (
@@ -80,7 +83,7 @@ for b in blocks:
         out.append(re.sub(r"/\S*/scratchpad/", "", re.sub(r"^LAB ", "", l))[:400])
     out += ["```", ""]
 if from_app:
-    out += ["## From the AppImage", "", "The same checks, started from `Oriel-1.0.0-rc5-x86_64.AppImage` (mounted with FUSE, as on a desktop), on an empty profile, with the engines inside it.", "", "```"]
+    out += ["## From the AppImage", "", "The same checks, started from `Oriel-1.0.0-%s-x86_64.AppImage` (mounted with FUSE, as on a desktop), on an empty profile, with the engines inside it." % REL, "", "```"]
     for b in from_app.values():
         out.append("== %s: %s" % (TITLES.get(b["name"], (b["name"], ""))[0], "passed" if b["state"] == "PASS" else "FAILED"))
         for l in b["lines"]:

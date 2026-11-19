@@ -1752,7 +1752,7 @@ static func _web(main: Node) -> void:
 	crate.position = Vector3(2.3, 0.4, -1.4)
 	GnScene.add_node(crate, root, "Add a crate")
 	# Its like the right way out, beside it: the two are lit much the same.
-	_box(root, "Crate twin", Vector3(0.8, 0.8, 0.8), Vector3(1.2, 0.4, -1.4), Color(0.3, 0.5, 0.75))
+	_box(root, "Crate twin", Vector3(0.8, 0.8, 0.8), Vector3(2.3, 0.4, 0.6), Color(0.3, 0.5, 0.75))
 	# A lamp under the ceiling: the room is lit though the sun hardly reaches into it.
 	var lamp: Node3D = Fixture.new()
 	lamp.kind = "Downlight"

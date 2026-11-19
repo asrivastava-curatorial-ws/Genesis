@@ -107,6 +107,8 @@ export class Nav {
 
 	// Puts the visitor at a view at once.
 	placeAt(view) {
+		// Whatever glide was under way ends here: being put somewhere is the last word.
+		this.move = null;
 		const p = view.position;
 		const xr = this.app.xr;
 		if (xr.presenting) {
@@ -367,6 +369,8 @@ export class Nav {
 	stopTour() {
 		if (!this.tour) return;
 		this.tour = null;
+		// The visitor takes over where the tour is now, not at its next view.
+		this.move = null;
 		this.app.ui.tourChanged(false);
 	}
 

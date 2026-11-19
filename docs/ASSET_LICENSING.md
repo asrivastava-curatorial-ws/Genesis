@@ -10,6 +10,13 @@ Every model Oriel ships carries a licence record (`<model>.license.json`) beside
 - Downloaded at setup, not shipped in the repository: HDRI skies (Poly Haven, CC0), scanned materials (ambientCG, CC0), leaf and bark atlases for the plant library (CC0). `tools/fetch_assets.py` writes a `.license.json` beside each.
 - Site context comes from OpenStreetMap at run time and is **ODbL**: renders that show it must credit "© OpenStreetMap contributors". Terrain tiles (Mapzen/AWS Open Data) and USGS imagery are public domain; Sentinel-2 imagery is from the Copernicus programme (free, with attribution: "Contains modified Copernicus Sentinel data").
 
+## Shipped with rc6, beside the library
+
+These are not in the model library; each has its `.license.json` beside it all the same.
+
+- **The Interiors demo's five rooms** (`demos/interiors/assets/`): *The White Room* and *Country Kitchen* by Jay-Artist and *The Wooden Staircase* by Wig42, **CC BY 3.0: credit their authors** in pictures, films and walkthroughs you publish of them (the demo's `CREDITS.txt` has the wording; a web walkthrough of a room shows it); *Bedroom* by SlykDrako and *Contemporary Bathroom* by Mareck, CC0-1.0. From Benedikt Bitterli's *Rendering Resources*, in Garrett Johnson's glTF versions.
+- **Four photographed skies** (Poly Haven, CC0-1.0) and **six scanned surfaces** (ambientCG, CC0-1.0) in `genesis_data/external/`, fetched by `tools/fetch_demo_assets.sh` against recorded SHA-256 sums.
+
 ## By category
 
 | Category | Models | Licence | Source |

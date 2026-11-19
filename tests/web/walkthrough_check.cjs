@@ -327,6 +327,11 @@ async function headset(browser) {
     await p.addInitScript(() => { const d = new IWER.XRDevice(IWER.metaQuest3, { stereoEnabled: true }); d.installRuntime({ forceInstall: true }); d.position.set(0, 1.6, 0); window.xrDevice = d; });
   });
   const xs = () => page.evaluate(() => { const o = window.oriel, s = o.state(); return { ...s, head: o.xr.headWorld().toArray(), aim: o.xr.aim ? (o.xr.aim.target ? o.xr.aim.target.toArray() : 'none') : null }; });
+  // Until the head has stood still for a few frames (a step's or a jump's easing is over).
+  const xstill = () => until(page, () => {
+    const h = window.oriel.xr.headWorld(), k = [h.x, h.y, h.z].map((v) => v.toFixed(3)).join(',');
+    window._xstill = (window._xlast === k) ? (window._xstill || 0) + 1 : 0; window._xlast = k; return window._xstill > 5;
+  }, 120000);
   let a = await xs();
   xok(a.vrSupported && await page.evaluate(() => !window.oriel.ui.btns.vr.hidden), 'the page finds the headset and shows its VR button');
   const before = a;
@@ -346,7 +351,9 @@ async function headset(browser) {
   await shot(page, 'xr_arc');
   await page.evaluate(() => window.xrDevice.controllers.right.updateButtonValue('trigger', 0));
   await until(page, () => !window.oriel.xr.aim, 30000);
-  await page.waitForTimeout(1200 * SLOW);
+  // (The jump fades out and in over a number of frames, which are slow when a headset's two eyes are drawn in software.)
+  if (Array.isArray(b.aim)) await until(page, (t) => { const h = window.oriel.xr.headWorld(); return Math.hypot(h.x - t[0], h.z - t[2]) < 0.08; }, 120000, b.aim);
+  await xstill();
   const c = await xs();
   xok(Array.isArray(b.aim) && Math.hypot(c.head[0] - b.aim[0], c.head[2] - b.aim[2]) < 0.08 && Math.abs(c.position[1] - b.aim[1]) < 0.08, 'letting go jumps there');
   // The left stick walks the way the head faces; the right turns 30 degrees about the head.
@@ -354,7 +361,7 @@ async function headset(browser) {
   await page.evaluate(() => window.xrDevice.controllers.left.updateAxes('thumbstick', 0, -1));
   await until(page, (p0) => { const h = window.oriel.xr.headWorld(); return Math.hypot(h.x - p0[0], h.z - p0[2]) > 0.4; }, 240000, [c.head[0], c.head[2]]);
   await page.evaluate(() => window.xrDevice.controllers.left.updateAxes('thumbstick', 0, 0));
-  await page.waitForTimeout(600);
+  await xstill();
   const d = await xs();
   const moved = Math.hypot(d.head[0] - c.head[0], d.head[2] - c.head[2]);
   const along = ((d.head[0] - c.head[0]) * fwd[0] + (d.head[2] - c.head[2]) * fwd[1]) / Math.max(moved, 1e-6);
@@ -362,7 +369,7 @@ async function headset(browser) {
   await page.evaluate(() => window.xrDevice.controllers.right.updateAxes('thumbstick', 1, 0));
   await until(page, (y) => Math.abs(window.oriel.state().yaw - y) > 0.3, 30000, d.yaw);
   await page.evaluate(() => window.xrDevice.controllers.right.updateAxes('thumbstick', 0, 0));
-  await page.waitForTimeout(600);
+  await xstill();
   const e = await xs();
   const turned = (d.yaw - e.yaw) * 180 / Math.PI;
   xok(Math.abs(turned - 30) < 0.5 && Math.hypot(e.head[0] - d.head[0], e.head[2] - d.head[2]) < 0.03, `the right stick turns ${turned.toFixed(1)} degrees, the head staying where it is`);
