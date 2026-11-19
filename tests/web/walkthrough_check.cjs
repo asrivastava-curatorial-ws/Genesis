@@ -307,7 +307,8 @@ async function lab(browser) {
     // The eye: outside in daylight the exposure is as set; inside the lamp-lit room it opens up.
     const expo = async (view) => { await page.evaluate((v) => { const o = window.oriel; o.nav.goToView(o.data.views.findIndex((x) => x.name === v), { instant: true }); }, view); await page.waitForTimeout(3500 * SLOW); return (await st(page)).light; };
     const outside = await expo('Outside'), inside = await expo('Inside');
-    if (outside && inside) ok(outside.gain < 1.6 && inside.gain >= outside.gain, `the eye adjusts: outside the exposure is held (x${f2(outside.gain)}), in the room it is x${f2(inside.gain)}`);
+    if (outside && inside) // (Outside, the camera looks at the room's north wall, in shade: the eye may open up by a stop, no more.)
+    ok(outside.gain < 2.0 && inside.gain >= outside.gain, `the eye adjusts: outside the exposure is held within a stop (x${f2(outside.gain)}), in the lamp-lit room it is x${f2(inside.gain)}`);
     else note('the eye has no daylight to go by in this scene');
     await shot(page, 'baked_inside');
   }
