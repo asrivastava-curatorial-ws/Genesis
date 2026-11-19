@@ -1,14 +1,14 @@
 # End-to-end test, phase: photoreal
 
-Oriel 1.0.0-rc5 on Linux, 2026-11-10T22:53:22
+Oriel 1.0.0-rc6 on Linux, 2026-11-19T12:43:35
 
 | Step | What | Result |
 |---|---|---|
 | 1 | Launch Oriel directly, without the Godot editor (renderer: forward_plus, llvmpipe (LLVM 20.1.2, 256 bits)) | passed |
 | P0 | Launch Oriel again and reopen the project  | passed |
 | P1 | The Eevee and Cycles engines are the program's own, not an installed Blender (Built-in engines (Blender 5.2.3 LTS)) | passed |
-| P2 | Render a 1280 × 720 still with Eevee, graded like the editor's view (Main_Camera01_20261110_223638_eevee.png, 110 s) [] | passed |
-| P3 | Render a 1280 × 720 still with Cycles, graded like the editor's view (Main_Camera01_20261110_223827_cycles.png, 132 s) [] | passed |
+| P2 | Render a 1280 × 720 still with Eevee, graded like the editor's view (Main_Camera01_20261119_122925_eevee.png, 80 s) [] | passed |
+| P3 | Render a 1280 × 720 still with Cycles, graded like the editor's view (Main_Camera01_20261119_123046_cycles.png, 104 s) [] | passed |
 | P4 | A Cycles sun study, 9:00, 12:00 and 15:00, each lit by its own sun | passed |
 | P5 | Cycles render passes: depth, normal, id, mask, clay | passed |
 | P6 | A Cycles 360° panorama, 2048 × 1024 | passed |
