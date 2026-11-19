@@ -45,6 +45,10 @@ export class Nav {
 		this.tour = null;
 		this.viewIndex = -1;
 		this.lastInput = performance.now();
+		// Put at a view (or where a glide ended): stood exactly there until the visitor moves, though
+		// the body would touch something (a camera by a window, close to its sill), so that a view is
+		// what it shows.
+		this.atView = false;
 		this.raycaster = new Raycaster();
 		this.orbit = { target: new Vector3(), distance: 30, azimuth: 0.6, polar: 1.0 };
 		this.top = { centre: new Vector3(), span: 40, cut: 2.3 };
@@ -141,6 +145,7 @@ export class Nav {
 		}
 		this.velY = 0;
 		this.lastSafe.copy(this.pos);
+		this.atView = true;
 	}
 
 	eyePoint(out = new Vector3()) {
@@ -473,6 +478,10 @@ export class Nav {
 		if (!this.bvh) {
 			this.pos.add(step);
 			return;
+		}
+		if (this.atView) {
+			if (!moving) return;
+			this.atView = false;
 		}
 		const h = dt / STEPS;
 		step.multiplyScalar(1 / STEPS);

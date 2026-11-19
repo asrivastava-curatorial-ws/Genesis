@@ -175,6 +175,8 @@ export class XR {
 		nav.velY = 0;
 		nav.lastSafe.copy(nav.pos);
 		nav.apply();
+		nav.atView = true;
+		this.placedAt = this.headWorld(new Vector3());
 	}
 
 	headWorld(out = new Vector3()) {
@@ -454,8 +456,12 @@ export class XR {
 			step.addScaledVector(_d, -my).addScaledVector(right, mx).multiplyScalar(nav.speed * 1.4 * dt);
 		}
 		const moving = step.lengthSq() > 0;
+		// Put at a view: the head stays exactly there until the visitor moves, by the stick or on foot.
+		if (nav.atView && (moving || !this.placedAt || this.headWorld(_b).distanceTo(this.placedAt) > 0.25)) nav.atView = false;
 		if (nav.hover) {
 			if (moving) nav.pos.add(step);
+		} else if (nav.atView) {
+			// (as placed)
 		} else if (nav.bvh) {
 			const head = this.headWorld();
 			const P = new Vector3(head.x, nav.pos.y, head.z);
