@@ -105,7 +105,15 @@ func _init() -> void:
 	bar.theme_type_variation = &"ActivityBar"
 	var nav := VBoxContainer.new()
 	nav.add_theme_constant_override("separation", 0)
-	bar.add_child(nav)
+	# Fourteen icons are taller than a short window: the strip scrolls (with the wheel) rather
+	# than making the whole window taller than the screen.
+	var strip := ScrollContainer.new()
+	strip.name = "Icons"
+	strip.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	strip.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	strip.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	strip.add_child(nav)
+	bar.add_child(strip)
 	body.add_child(bar)
 	var group := ButtonGroup.new()
 	_assets = PageAssets.new()
