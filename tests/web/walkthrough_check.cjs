@@ -269,7 +269,7 @@ async function lab(browser) {
     await page.mouse.click(marker.x, marker.y);
     await page.waitForTimeout(500);
     const panel = await page.evaluate(() => { const p = window.oriel.ui.panels.spot; return p.hidden ? '' : p.innerText; });
-    ok(panel.includes('The doorway') && panel.includes('One metre wide'), 'the hotspot\'s marker opens its note ("The doorway")');
+    ok(panel.includes('The doorway') && panel.includes('One metre wide') && !/null|undefined/.test(panel), 'the hotspot\'s marker opens its note ("The doorway"), with nothing in it that the hotspot does not have');
     await shot(page, 'hotspot');
     await page.keyboard.press('Escape');
   } else ok(false, 'the hotspot shows as a marker on the page');

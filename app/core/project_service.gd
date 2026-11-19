@@ -191,11 +191,12 @@ func open(dir: String) -> String:
 
 
 # Older projects brought up to date. Format 0 had no data, backups or autosave
-# folders and no settings; they are added.
+# folders and no settings; they are added. What the file says that this
+# version does not know of (a demo's line for the Start page) is kept.
 static func _upgrade(m: Dictionary) -> Dictionary:
 	var out := _new_manifest(str(m.get("name", "Project")))
 	for k in m:
-		if k in out and not k in ["format", "genesis"]:
+		if not k in ["format", "genesis"]:
 			out[k] = m[k]
 	return out
 

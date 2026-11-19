@@ -662,6 +662,17 @@ func _models() -> void:
 		text = FileAccess.get_file_as_string(dir + "/scenes/main.tscn")
 		check(not text.contains('type="ArrayMesh"'), "one shape: so the next save is small again (%d KB)" % (text.length() / 1024))
 	_inside_models(src, dir)
+	# A line the project file holds that this version does not know of (a demo's for the Start page) stays.
+	var mf := dir.path_join(ProjectService.MANIFEST)
+	var m: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(mf))
+	m["about"] = "A line for the Start page."
+	var fm := FileAccess.open(mf, FileAccess.WRITE)
+	fm.store_string(JSON.stringify(m, "\t"))
+	fm.close()
+	projects.close()
+	projects.open(dir)
+	check(str(projects.manifest.get("about", "")) == "A line for the Start page." and str((JSON.parse_string(FileAccess.get_file_as_string(mf)) as Dictionary).get("about", "")) == "A line for the Start page.",
+		"project: what the project file says that the program does not know of is kept when it is opened and written again")
 	check(GnModelImport.convert_file(src + "/box.dwg", dir + "/assets").error.contains("can bring in"), "formats: an unknown format says which ones work")
 	var blend := GnModelImport.convert_file(src + "/house.blend", dir + "/assets")
 	check(blend.error != "", "formats: .blend without the file (or Blender) gives a reason")

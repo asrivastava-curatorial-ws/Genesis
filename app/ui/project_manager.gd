@@ -174,14 +174,21 @@ func _demo_button(demo: String, folder: String) -> Button:
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	words.add_child(title)
 	if about != "":
+		# Two lines at most in the column; all of it in the tip.
 		var line := Label.new()
 		line.text = about
 		line.theme_type_variation = &"MutedLabel"
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.max_lines_visible = 2
+		line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		line.custom_minimum_size = Vector2(150, 0)
 		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		words.add_child(line)
+		b.tooltip_text = "%s\n\nOpens a copy of the demo in your projects folder, to change as you like." % about
 	b.custom_minimum_size = Vector2(300, 76 if picture else 52)
+	# A button does not grow with what is drawn in it: it is made as tall as its row asks.
+	row.minimum_size_changed.connect(func():
+		b.custom_minimum_size.y = maxf(76.0 if picture else 52.0, row.get_combined_minimum_size().y + 12.0))
 	return b
 
 

@@ -220,7 +220,8 @@ export class UI {
 		}
 		const p = this.panels.spot;
 		const film = h.video && /\.(mp4|webm|ogv)(\?|$)/i.test(h.video);
-		p.replaceChildren(
+		// (What a hotspot does not have is left out: replaceChildren would write a missing part as "null".)
+		p.replaceChildren(...[
 			el('button', { class: 'o-close', text: '×', title: 'Close', onclick: () => this.toggle(null) }),
 			el('h2', { text: h.title || h.name }),
 			h.image ? el('img', { src: /^https?:/.test(h.image) ? h.image : app.base + h.image, alt: h.title || '' }) : null,
@@ -229,7 +230,7 @@ export class UI {
 			h.video && !film ? el('a', { class: 'o-btn', href: h.video, target: '_blank', rel: 'noopener', text: 'Watch the film' }) : null,
 			h.url ? el('a', { class: 'o-btn', href: h.url, target: '_blank', rel: 'noopener', text: 'Open the link' }) : null,
 			vi >= 0 ? el('button', { class: 'o-btn', text: 'Go to ' + h.view, onclick: () => { this.toggle(null); app.nav.goToView(vi); } }) : null,
-		);
+		].filter(Boolean));
 		for (const [k, panel] of Object.entries(this.panels)) panel.hidden = k !== 'spot';
 		this.openHotspot = h;
 	}
