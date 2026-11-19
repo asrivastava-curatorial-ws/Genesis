@@ -101,8 +101,9 @@ async function walk(browser) {
     await page.waitForTimeout(600);
     const c = await st(page);
     const v = views[1];
-    ok(c.view === 1 && Math.hypot(c.position[0] - v.position[0], c.position[2] - v.position[2]) < 0.06 && Math.abs(c.position[1] + c.eye - v.position[1]) < 0.06,
-      `] goes to the next view, "${v.name}" (eyes at ${f2(c.position[1] + c.eye)} m)`);
+    // (Horizontally exact; in height the body stands on whatever is under the view: by a window, a sill a few centimetres up.)
+    ok(c.view === 1 && Math.hypot(c.position[0] - v.position[0], c.position[2] - v.position[2]) < 0.06 && Math.abs(c.position[1] + c.eye - v.position[1]) < 0.15,
+      `] goes to the next view, "${v.name}" (eyes at ${f2(c.position[1] + c.eye)} m; the view's at ${f2(v.position[1])} m)`);
     await page.keyboard.press('BracketLeft');
     await until(page, () => { const o = window.oriel, s = o.state(); return s.view === 0 && !s.moving && !o.ui.fading; });
     ok((await st(page)).view === 0, '[ goes back');
@@ -360,6 +361,26 @@ async function headset(browser) {
   const c = await xs();
   xok(Array.isArray(b.aim) && Math.hypot(c.head[0] - b.aim[0], c.head[2] - b.aim[2]) < 0.08 && Math.abs(c.position[1] - b.aim[1]) < 0.08, 'letting go jumps there');
   // The left stick walks the way the head faces; the right turns 30 degrees about the head.
+  // First the head is turned to the most open way (in a furnished room a sofa may stand just ahead).
+  const room = await page.evaluate(() => {
+    const o = window.oriel, V = o.nav.pos.constructor, h = o.xr.headWorld();
+    let best = null;
+    for (let k = 0; k < 16; k++) {
+      const a = k * Math.PI / 8, dir = new V(-Math.sin(a), 0, -Math.cos(a));
+      let free = 6;
+      for (const down of [1.2, 0.6]) {
+        const hit = o.nav.cast(new V(h.x, h.y - down, h.z), dir, 6);
+        free = Math.min(free, hit ? hit.distance : 6);
+      }
+      if (!best || free > best.free) best = { a, free };
+    }
+    const E = o.camera.rotation.constructor, Q = o.camera.quaternion.constructor;
+    const rigYaw = new E().setFromQuaternion(o.rig.getWorldQuaternion(new Q()), 'YXZ').y;
+    const t = (best.a - rigYaw) / 2;
+    window.xrDevice.quaternion.set(0, Math.sin(t), 0, Math.cos(t));
+    return best;
+  });
+  await page.waitForTimeout(1500 * SLOW);
   const fwd = await page.evaluate(() => { const o = window.oriel; const d = o.camera.getWorldDirection(new o.nav.pos.constructor()); d.y = 0; d.normalize(); return [d.x, d.z]; });
   await page.evaluate(() => window.xrDevice.controllers.left.updateAxes('thumbstick', 0, -1));
   await until(page, (p0) => { const h = window.oriel.xr.headWorld(); return Math.hypot(h.x - p0[0], h.z - p0[2]) > 0.4; }, 240000, [c.head[0], c.head[2]]);
@@ -368,7 +389,8 @@ async function headset(browser) {
   const d = await xs();
   const moved = Math.hypot(d.head[0] - c.head[0], d.head[2] - c.head[2]);
   const along = ((d.head[0] - c.head[0]) * fwd[0] + (d.head[2] - c.head[2]) * fwd[1]) / Math.max(moved, 1e-6);
-  xok(moved > 0.3 && along > 0.9, `the left stick walks the way the head faces (${f2(moved)} m, ${along.toFixed(3)} along it)`);
+  if (room.free < 0.8) note(`nowhere to walk from where the jump landed (the most open way is ${f2(room.free)} m): the left stick not tried`, 'XR');
+  else xok(moved > 0.3 && along > 0.9, `the left stick walks the way the head faces (${f2(moved)} m, ${along.toFixed(3)} along it, with ${f2(room.free)} m clear)`);
   await page.evaluate(() => window.xrDevice.controllers.right.updateAxes('thumbstick', 1, 0));
   await until(page, (y) => Math.abs(window.oriel.state().yaw - y) > 0.3, 30000, d.yaw);
   await page.evaluate(() => window.xrDevice.controllers.right.updateAxes('thumbstick', 0, 0));
@@ -388,12 +410,23 @@ async function headset(browser) {
   }
   // A hotspot: stood before it, pointed at, the trigger opens its panel.
   const spot = await page.evaluate(() => { const s = window.oriel.xr.spots[0]; return s ? s.position.toArray() : null; });
-  if (spot) {
-    await page.evaluate((p) => {
-      const o = window.oriel, V = o.nav.pos.constructor;
-      const floor = o.nav.floorUnder(new V(p[0], p[1] + 0.3, p[2] + 1.6), 0.5, 6);
-      o.xr.placeHead(new V(p[0], floor ?? o.nav.pos.y, p[2] + 1.6));
-    }, spot);
+  // Stood 1.6 m from it, on a floor, where nothing is between the eyes and it (round it until such a place is found).
+  const stand = spot && await page.evaluate((p) => {
+    const o = window.oriel, V = o.nav.pos.constructor, target = new V(p[0], p[1], p[2]);
+    for (let k = 0; k < 16; k++) {
+      const a = k * Math.PI / 8, at = new V(p[0] + Math.sin(a) * 1.6, p[1] + 0.3, p[2] + Math.cos(a) * 1.6);
+      const floor = o.nav.floorUnder(at, 0.5, 6);
+      if (floor === null) continue;
+      const eye = new V(at.x, floor + 1.6, at.z), to = target.clone().sub(eye), dist = to.length();
+      const hit = o.nav.cast(eye, to.normalize(), dist);
+      if (hit && hit.distance < dist - 0.2) continue;
+      o.xr.placeHead(new V(at.x, floor, at.z));
+      return [at.x, floor, at.z];
+    }
+    return null;
+  }, spot);
+  if (spot && !stand) note('no place found 1.6 m from the first hotspot with a clear view of it: pointing at it not tried', 'XR');
+  if (stand) {
     await page.waitForTimeout(800);
     await page.evaluate((p) => {
       const o = window.oriel, V = o.nav.pos.constructor, c = window.xrDevice.controllers.right;
