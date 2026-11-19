@@ -13,20 +13,36 @@ And a library to fill the scene: models, materials and skies from **BlendKit**, 
 
 Oriel is built on the [Genesis](https://github.com/Utopian-Academy/Genesis) editor plugin by Utopian Academy (MIT), turned into a standalone desktop application on the Godot engine: **no Godot editor is needed**. It was called Genesis Community up to 1.0.0-rc3.
 
-> **Release candidate 1.0.0-rc5.** Built and tested on Linux with software rendering (no graphics card on the build machine), and delivered as one AppImage. New in rc5: IFC, USD, Collada and 3DS models; IES lights, lumens and kelvin; the light mixer, more passes and EXR; wind, wet, puddles and snow; relief, caustics, light inside, volumetric clouds; layered materials; keyframes, a timeline, transitions, titles and sound; rows, fills and traffic; Cycles in the 3D view; walking through on a VR headset; and large scenes ([CHANGELOG.md](CHANGELOG.md)). The Windows build is made from the same source but has not yet been run on Windows. See [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) before relying on it.
+> **Release candidate 1.0.0-rc6.** Built and tested on Linux with software rendering (no graphics card on the build machine), and delivered as one AppImage. New in rc6: **web walkthroughs** a client opens from a link, in a browser or in a headset's own browser in VR, with light baked by Cycles, hotspots, materials to choose from and alternatives (as Shapespark makes them); an **Interiors demo** of five furnished rooms; and **light that bounces** in the 3D view, so that a room is lit by its windows. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Get started
 
 **Read [START_HERE.md](START_HERE.md) first**: running it, the first ten minutes, a self-test for your computer, and where everything is kept. The whole manual is also one page, `Oriel-Manual.html` (and `.pdf`), which *Help > Documentation* opens from inside the AppImage.
 
-- Linux: `Oriel-1.0.0-rc5-x86_64.AppImage` ([installation](docs/INSTALLATION_LINUX.md))
+- Linux: `Oriel-1.0.0-rc6-x86_64.AppImage` ([installation](docs/INSTALLATION_LINUX.md))
 - Windows: not in this delivery; it is built from the same source ([installation](docs/INSTALLATION_WINDOWS.md))
 - Then the [quick start](docs/QUICK_START.md), [photoreal rendering](docs/RENDERING.md), the [online library](docs/ONLINE_LIBRARY.md) and the [user manual](docs/USER_MANUAL.md).
-- Two demo projects come with it: choose one under *Try a demo* on the start screen.
+- Three demo projects come with it (five furnished rooms, a pavilion, a concert stage): choose one under *Try a demo* on the start screen.
+- [Web walkthroughs](docs/WEB_WALKTHROUGH.md): a project as a folder that any browser and a headset's browser open.
 
 ## What the demos look like
 
-Rendered by the program itself, from its two demo projects (Standard quality, software rendering):
+The Interiors demo, rendered by Cycles inside the program (Draft quality, on two processor cores, no graphics card):
+
+| | |
+|---|---|
+| ![Interiors demo: the living room](docs/screenshots/demo_interiors_living_room.jpg) | ![Interiors demo: the kitchen](docs/screenshots/demo_interiors_kitchen.jpg) |
+| ![Interiors demo: the bedroom](docs/screenshots/demo_interiors_bedroom.jpg) | ![Interiors demo: the bathroom](docs/screenshots/demo_interiors_bathroom.jpg) |
+
+The living room as a web walkthrough (light baked by Cycles at Draft), in Chromium and in an emulated Quest 3:
+
+| | |
+|---|---|
+| ![The web walkthrough of the living room in a browser](docs/screenshots/11_web_walkthrough.jpg) | ![The same walkthrough in VR, both eyes, in Meta's headset emulator](docs/screenshots/14_web_vr.jpg) |
+
+The rooms are by Jay-Artist and Wig42 (CC BY 3.0), SlykDrako and Mareck (CC0), from Benedikt Bitterli's *Rendering Resources*.
+
+Rendered by the program itself, from its other two demo projects (Standard quality, software rendering):
 
 | | |
 |---|---|

@@ -50,7 +50,7 @@ This delivery has no Windows program. One can be built from the source (section 
 
 ![The start screen](docs/screenshots/01_project_manager.png)
 
-1. **Open a demo.** On the start screen, under *Try a demo*, choose *Architecture demo*. Oriel copies it into your projects folder (`~/Documents/Oriel Projects/`) and opens the copy, so the demo itself stays as it was.
+1. **Open a demo.** On the start screen, under *Try a demo*, choose *Interiors demo* (five furnished rooms) or *Architecture demo* (a pavilion in its plaza). Oriel copies it into your projects folder (`~/Documents/Oriel Projects/`) and opens the copy, so the demo itself stays as it was. Each room of the Interiors demo is a scene of its own: *File > Open Scene…* lists them.
 2. **Look around.**
    - Middle-drag orbits, Shift + middle-drag pans and the wheel zooms.
    - On a laptop, Alt + left-drag orbits.
@@ -61,7 +61,7 @@ This delivery has no Windows program. One can be built from the source (section 
    - Drag the arrows to move it. **E** switches to the rings (turn) and **R** to the boxes (resize). Hold **Ctrl** to snap.
    - Every change can be undone with **Ctrl+Z**.
 4. **Change it under Properties.** Every setting of the selected object is there, in sections that fold, down to an LED wall's panel size and pixel pitch.
-5. **Use the side panel on the right.** The strip of icons on the right edge switches between its thirteen pages, in working order: Scene, Plans, Assets, Online, Environment, Landscape, Set, Materials, Cameras, Look, Render, Movie and Show. Hover an icon for its name.
+5. **Use the side panel on the right.** The strip of icons on the right edge switches between its fourteen pages, in working order: Scene, Plans, Assets, Online, Environment, Landscape, Set, Materials, Cameras, Look, Render, Movie, Web and Show. Hover an icon for its name.
    - Try *Environment*: change the time of day and watch the sun move.
    - [docs/SECTION_GUIDE.md](docs/SECTION_GUIDE.md) explains every button on every page.
 6. **Place things.** On *Assets*, click a model in the grid, press *Place …*, and click where it goes: a see-through copy follows the mouse and stands on whatever is under it. **R** turns it, **Shift+click** places another, **Esc** stops. Or drag a model from the grid straight into the 3D view.
@@ -95,6 +95,10 @@ What the demos' cameras give at *Standard* quality:
 **Render it photoreal.** On the Render page, set *Renderer* to *Eevee* or *Cycles*, pick a quality (*Draft* for a first look) and choose *Render still*. The engines are inside Oriel; the render runs in the background, with the time left, and *Stop rendering* stops it. The picture lands in the project's `renders/` folder next to the real-time ones. The Movie page renders films with the same renderer (a stopped film carries on where it stopped). See [docs/RENDERING.md](docs/RENDERING.md).
 
 **Fill your library.** On the *Online* page (the cloud icon), search Poly Haven, ambientCG or BlendKit (*Connect to BlendKit*, then *Log in*: a free account) and download models, materials and skies into your own library; or press *Download the starter pack* for the most useful ones in one go. Everything is kept, and a stopped download carries on later. From a terminal: `./Oriel-1.0.0-rc5-x86_64.AppImage --get-assets --size standard`. See [docs/ONLINE_LIBRARY.md](docs/ONLINE_LIBRARY.md).
+
+**A walkthrough for the web and for headsets** (as Shapespark makes them). Open the *Interiors demo*, go to the *Web* page (the globe), set *Light* to *Baked (draft)* and press *Write the web walkthrough*: Cycles bakes the room's light (some minutes on a processor; much less on a graphics card), and the walkthrough is written to the project's `web/` folder. *Open it in the browser* shows it; *Show it on a headset or a phone* serves it to your Wi-Fi, so that a Meta Quest's browser opens it and its *VR* button puts you in the room. The folder is plain files: put it on any web server. All of it: [docs/WEB_WALKTHROUGH.md](docs/WEB_WALKTHROUGH.md).
+
+**Rooms that look like rooms.** On *Environment*, *Light bounces (for rooms)* makes the 3D view light a room from its windows, as Cycles does. The Interiors demo has it on.
 
 **What rc5 adds, and where it is.**
 
