@@ -8,7 +8,7 @@ The photographed skies of the downloaded library come from Poly Haven via `tools
 
 ## Light that bounces (for rooms)
 
-*Light bounces (for rooms)*, under *Light* on the Environment page. Without it the 3D view lights every surface with the whole sky, indoors as out: a room looks flat, and nothing in it is lit by its windows. With it, light goes on from surface to surface and what glows lights what is near it, as in Eevee and Cycles. At one exposure the 3D view and a Cycles render then come out about equally bright: in the rooms of the Interiors demo, BRIGHTNESS_MATCH.
+*Light bounces (for rooms)*, under *Light* on the Environment page. Without it the 3D view lights every surface with the whole sky, indoors as out: a room looks flat, and nothing in it is lit by its windows. With it, light goes on from surface to surface and what glows lights what is near it, as in Eevee and Cycles. At one exposure the 3D view and a Cycles render then come out about equally bright: in the rooms of the Interiors demo, the picture's mean brightness came within 7 % of Cycles' in the living room, the kitchen and the bathroom, and 16 % below it in the bedroom; the hall, lit from a skylight two floors up, is brighter and flatter in the view than in Cycles (0.41 against 0.28).
 
 There are two kinds, and Oriel picks:
 

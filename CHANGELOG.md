@@ -16,7 +16,7 @@ Walkthroughs for the web and for headsets, as Shapespark makes them, and rooms t
 
 ### Rooms
 - **Interiors demo**: five furnished rooms (a living room, a kitchen, a bedroom, a bathroom, a hall with a staircase), lit, with cameras, hotspots and the Web page set up. The rooms are by Jay-Artist, Wig42, SlykDrako and Mareck (CC BY 3.0 and CC0; `CREDITS.txt` in the demo). The demos on the Start page now have pictures.
-- **Light bounces (for rooms)** (Environment page): in the 3D view, light goes on from surface to surface, and what glows lights what is near it. A scene up to about 40 m across gets voxel light, worked out from the scene in a second or a few when it opens and after it changes; a wider scene gets Godot's SDFGI. LIVE_VS_CYCLES. `docs/ENVIRONMENT.md` says what to know.
+- **Light bounces (for rooms)** (Environment page): in the 3D view, light goes on from surface to surface, and what glows lights what is near it. A scene up to about 40 m across gets voxel light, worked out from the scene in a second or a few when it opens and after it changes; a wider scene gets Godot's SDFGI. At one exposure the view of the Interiors demo's rooms came within 7 % of Cycles' brightness in three of them, 16 % below in the bedroom, brighter in the hall. `docs/ENVIRONMENT.md` says what to know.
 - **Exposure** goes up to +5 EV (a room lit by daylight alone wants about +3).
 - **Four photographed skies and six scanned surfaces** come with the program (Poly Haven and ambientCG, CC0): plaster, a wood floor, dark wood, terrazzo, marble tiles, copper.
 - A model's pictures are kept inside its file as WebP: photographs with a little loss, small swatches of colour without any.
