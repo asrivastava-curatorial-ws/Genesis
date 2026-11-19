@@ -252,7 +252,10 @@ echo "GODOT=$HOME/tools/godot/Godot_v4.7.2-stable_linux.x86_64" | tee tests/loca
 bash tests/run_app_tests.sh                       # headless suites and the smoke tour, about 2 minutes
 bash tools/build_standalone.sh linux              # build/linux, smoke-tested; add "windows" for build/windows
 bash tools/build_engine.sh                        # build/engine: Eevee and Cycles (needs uv, https://docs.astral.sh/uv/)
-build/linux/Oriel.x86_64 -- --make-demos ~/genesis-demos                       # the two demo projects
+bash tools/fetch_demo_assets.sh                   # the Interiors demo's rooms, four skies, six surfaces (checked against SHA-256)
+bash tools/build_web_viewer.sh                    # the viewer of web walkthroughs (kept in the repository; needs node and npm)
+ORIEL_DEMO_ROOMS=$PWD/genesis_data/external/demo_rooms build/linux/Oriel.x86_64 -- --make-demos ~/genesis-demos   # the three demo projects
+ORIEL_ENGINE=$PWD/build/engine/python/bin/python3 build/linux/Oriel.x86_64 -- --render-samples ~/genesis-demos/"Interiors demo" --engine cycles Draft
 build/linux/Oriel.x86_64 -- --render-samples ~/genesis-demos/"Architecture demo" --quality preview   # or standard, high, max
 python3 tools/build_release.py --skip-build --demos ~/genesis-demos --platforms linux   # release/Oriel-<version>-linux-x86_64.zip
 wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
@@ -279,7 +282,7 @@ bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genes
 - Bringing in the original Genesis repository as an old plugin project: its three scenes open, render and save.
 - Outgoing show commands (OSC, text, TCP), and live video on screens from a file, UDP and SRT.
 - Site context from a saved OpenStreetMap file: buildings at their mapped heights, streets, a park and a river.
-- Both demo projects, built and rendered by the program itself.
+- The three demo projects, built and rendered by the program itself (the Interiors demo by Cycles).
 - Eevee and Cycles from the AppImage: stills, a sun study, passes, 360° panoramas, stopping a render, stopping and resuming a film.
 - **What rc5 added**, each in a scene built with the program's own tools, rendered by the real-time renderer, Eevee and Cycles where it applies, and measured in the pictures ([reports/LAB_RESULTS.md](reports/LAB_RESULTS.md)): IES beams; the light mixer; stage haze; wet surfaces, puddles and snow; wind; relief and light inside; caustics; volumetric clouds; the walk-through on the screen; a film with keys, a dissolve, a title and sound; layered materials; a street with an avenue and traffic; Cycles in the 3D view; a scene of five million triangles (levels of detail, boxes, copies, opening).
 - IFC, USD, Collada, 3DS, STL, PLY and Alembic models: a bench in each format (a wall for IFC) comes in at its size and the right way up.

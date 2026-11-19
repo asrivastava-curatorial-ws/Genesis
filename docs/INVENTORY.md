@@ -26,6 +26,10 @@ It installs nothing: no system packages, no services, nothing that needs adminis
 | The light mixer's working files | `~/.local/share/Oriel/cache/light_mix/` (safe to delete); the mix data of a render (`<camera>_lightmix.npz`) is beside the render in the project's `renders/` | when you render for the light mixer, and open it |
 | A walk-through's note of how it is going (`walk_status.json`), read by the editor to say when it has opened or why it could not | `~/.local/share/Oriel/` | when you walk through a project |
 | Pictures drawn for layered materials | the project's `data/textures/layers/` | when you add a layer to a material |
+| Web walkthroughs: the page, its viewer, the scene, its lightmaps and pictures | the project's `web/<title>/` (or the folder you name with `--write-web … --to`) | when you press *Write the web walkthrough* |
+| Pictures and films you give to hotspots, and the sound of a walkthrough | the project's `genesis_data/web_media/` | when you pick them on the Web page |
+| The certificate that lets a headset's browser open a walkthrough over https (made once, self-signed, for ten years; it vouches for nobody) | `~/.local/share/Oriel/cache/web_certificate/` (safe to delete: it is made again) | the first time you press *Show it on a headset or a phone* |
+| A bake's working files: the scene as handed to Cycles, its progress and log | `~/.local/share/Oriel/cache/render_jobs/`, with the render jobs | when a walkthrough's light is baked |
 | BlendKit's Client, its licence, its log, your BlendKit login (the access token, in `account.json`) and its own settings (`bk_client-settings.json`, beside it) | `~/.local/share/Oriel/tools/blendkit/` | only when you press *Connect to BlendKit* |
 | Thumbnails and search results of the online sources | `~/.local/share/Oriel/cache/thumbs_online/`, `cache/polyhaven/`, `cache/blendkit_search/` (safe to delete) | when you use the Online page |
 | Settings, library and tools copied once from the rc3 folder `~/.local/share/Genesis/` (left as it was) | `~/.local/share/Oriel/` | the first start, if that folder is there |
@@ -53,6 +57,7 @@ Nothing else goes out: no updates, no usage statistics, and no account except th
 - **Graphics**: your Vulkan driver (with an NVIDIA card, NVIDIA's own driver). Oriel needs Vulkan 1.2. The driver keeps a shader cache of its own (NVIDIA's in `~/.cache/nvidia/`), as it does for every program that draws in 3D.
 - **FUSE**, to open the AppImage: `fusermount3`, from the `fuse3` package, which Kubuntu 24.04 has. Without it, run the AppImage with `--appimage-extract-and-run`.
 - **Your desktop's file dialogs** (KDE's, through xdg-desktop-portal-kde, part of Plasma). Preferences can switch to Oriel's own.
+- **Your network, when you show a walkthrough**: *Open it in the browser* serves it on this computer (port 8080 or the next free one); *Show it on a headset or a phone* also serves it to your local network over https (port 8443 or the next free one), until you press *Stop showing it* or close Oriel. The small server is the engines' own Python running the walkthrough's `serve.py`; nothing is opened in your firewall for it. The browser opens with your desktop's default browser.
 - **Programs it uses if they are installed** (none is needed; *Tools > Other Programs…* shows which are found): FFmpeg (films and live video), Blender (optional: the built-in engine reads `.blend` files), Poppler's `pdftoppm` (PDF plans), the ODA File Converter (DWG drawings). Install them yourself if you want them:
 
 ```bash

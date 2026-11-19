@@ -64,16 +64,28 @@ out = ["# Lab results (1.0.0-%s)" % REL, "",
        "Run on the build machine (two processor cores, software rendering, no graphics card: the real-time renderer on Mesa's lavapipe, Eevee on Mesa's llvmpipe, Cycles on the processor) with the built-in engines (Blender 5.2.3 LTS): against the source as the work went on, then all of them again **from the rc5 AppImage itself**%s." % (
            "" if len(from_app) >= len(blocks) else " for the checks that depend most on how the program is packed (its own engines, the library and the presets inside it, the noise the clouds are made of)"),
        "", RERUN, "",
-       "| Check | Renderers | From the source | From the AppImage |", "|---|---|---|---|"]
-for b in blocks:
-    title = TITLES.get(b["name"], (b["name"], ""))[0]
-    app = from_app.get(b["name"])
-    out.append("| %s | %s | %s | %s |" % (title, renderers(b), result(b), result(app) if app else "not run"))
+       ]
+# Given the same results twice, the run was from the AppImage only.
+only_app = app_src != "" and app_src == src
+if only_app:
+    out += ["| Check | Renderers | From the AppImage |", "|---|---|---|"]
+    for b in blocks:
+        out.append("| %s | %s | %s |" % (TITLES.get(b["name"], (b["name"], ""))[0], renderers(b), result(b)))
+else:
+    out += ["| Check | Renderers | From the source | From the AppImage |", "|---|---|---|---|"]
+    for b in blocks:
+        title = TITLES.get(b["name"], (b["name"], ""))[0]
+        app = from_app.get(b["name"])
+        out.append("| %s | %s | %s | %s |" % (title, renderers(b), result(b), result(app) if app else "not run"))
 out.append("")
 n_ok = sum(1 for b in blocks if b["state"] == "PASS")
 a_ok = sum(1 for b in from_app.values() if b["state"] == "PASS")
-out += ["%d of %d pass from the source%s." % (n_ok, len(blocks), "; %d of %d from the AppImage" % (a_ok, len(from_app)) if from_app else ""), "",
-        "The measurements below are the run from the source. \"ok\" lines are checks; the others are what was measured.", ""]
+if only_app:
+    out += ["%d of %d pass from the AppImage." % (n_ok, len(blocks)), "",
+            "The measurements below are that run. \"ok\" lines are checks; the others are what was measured.", ""]
+else:
+    out += ["%d of %d pass from the source%s." % (n_ok, len(blocks), "; %d of %d from the AppImage" % (a_ok, len(from_app)) if from_app else ""), "",
+            "The measurements below are the run from the source. \"ok\" lines are checks; the others are what was measured.", ""]
 for b in blocks:
     title, what = TITLES.get(b["name"], (b["name"], ""))
     out += ["## %s" % title, "", what, "", "```"]
@@ -82,7 +94,7 @@ for b in blocks:
             continue
         out.append(re.sub(r"/\S*/scratchpad/", "", re.sub(r"^LAB ", "", l))[:400])
     out += ["```", ""]
-if from_app:
+if from_app and not only_app:
     out += ["## From the AppImage", "", "The same checks, started from `Oriel-1.0.0-%s-x86_64.AppImage` (mounted with FUSE, as on a desktop), on an empty profile, with the engines inside it." % REL, "", "```"]
     for b in from_app.values():
         out.append("== %s: %s" % (TITLES.get(b["name"], (b["name"], ""))[0], "passed" if b["state"] == "PASS" else "FAILED"))

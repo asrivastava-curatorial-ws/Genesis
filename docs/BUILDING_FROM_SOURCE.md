@@ -31,13 +31,14 @@ python3 tools/build_release.py
 python3 tools/build_release.py --platforms linux
 ```
 
-The Linux AppImage (the program, the manual and the two demos in one file):
+The Linux AppImage (the program, the manual and the three demos in one file):
 
 ```bash
 wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
 wget https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
 chmod +x appimagetool-x86_64.AppImage
-build/linux/Oriel.x86_64 -- --make-demos ~/genesis-demos
+bash tools/fetch_demo_assets.sh          # the Interiors demo's rooms, skies and surfaces (needs curl, node, npm, python3 with Pillow)
+ORIEL_DEMO_ROOMS=$PWD/genesis_data/external/demo_rooms build/linux/Oriel.x86_64 -- --make-demos ~/genesis-demos
 python3 tools/build_manual.py
 bash tools/build_appimage.sh appimagetool-x86_64.AppImage runtime-x86_64 ~/genesis-demos
 ```
