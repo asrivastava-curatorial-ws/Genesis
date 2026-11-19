@@ -209,7 +209,8 @@ export class XR {
 			this.openSpot(best.h);
 			return;
 		}
-		if (hit) {
+		// (A floor is for jumping to, choices or none: its materials are chosen on the page.)
+		if (hit && hit.normal.y <= 0.6) {
 			const owner = app.world.ownerOf(hit.faceIndex);
 			const choice = owner && (app.data.choices || []).find((c) => c.objects.includes(owner.name) && (app.world.meshes.get(owner.name) || [])[c.slot] === owner.mesh);
 			if (choice) {

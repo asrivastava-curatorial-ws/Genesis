@@ -83,7 +83,7 @@ The visitor is a body 0.5 m across: walls stop them, stairs carry them up, and f
 All set on the *Web* page; none of it changes renders or films.
 
 - **Hotspots.** *Add a hotspot in front of the view* puts a blue ball in the scene (seen only in the editor). Give it a title, a note, a picture or a film, a web address, or a camera to jump to. In the walkthrough it is a marker that opens a panel; in a headset, a small light to point at.
-- **Materials to choose from.** Select a surface, give it a material, *Keep its material as a choice*; then another material, and again. The visitor clicks the surface (or opens *Options*) and picks: the floor in oak, in terrazzo, in stone.
+- **Materials to choose from.** Select a surface, give it a material, *Keep its material as a choice*; then another material, and again. The visitor clicks the surface (or opens *Options*) and picks: the floor in oak, in terrazzo, in stone. In a headset the trigger on a wall or a piece of furniture with choices shows its next material; on a floor the trigger is for jumping, so a floor's material is chosen on the page.
 - **Alternatives.** Select two or more objects, *Make alternatives*: one is shown at a time, and the visitor chooses which (two layouts of furniture; a wall with and without a door).
 - **Sound.** A sound file that plays quietly in the background, with a button to silence it.
 
